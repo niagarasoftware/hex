@@ -4,8 +4,8 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
-import 'package:oro_drip_irrigation/Constants/properties.dart';
-import 'package:oro_drip_irrigation/services/mqtt_service.dart';
+import 'package:hex/Constants/properties.dart';
+import 'package:hex/services/mqtt_service.dart';
 
 import 'package:provider/provider.dart';
 import '../../../Constants/constants.dart';

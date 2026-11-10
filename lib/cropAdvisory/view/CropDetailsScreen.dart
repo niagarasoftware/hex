@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../widgets/crop_advisory_web_sidebar.dart';
-import 'package:oro_drip_irrigation/cropAdvisory/view/field_information_screen.dart';
+import 'package:hex/cropAdvisory/view/field_information_screen.dart';
 import 'package:path_provider/path_provider.dart';
 import '../../repository/repository.dart';
 import '../../services/http_service.dart';

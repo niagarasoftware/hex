@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:oro_drip_irrigation/Screens/planning/weather/widgets/periodicCard.dart';
-import 'package:oro_drip_irrigation/Screens/planning/weather/widgets/periodicCardCurrent.dart';
+import 'package:hex/Screens/planning/weather/widgets/periodicCard.dart';
+import 'package:hex/Screens/planning/weather/widgets/periodicCardCurrent.dart';
 
 class RainfallCard extends StatelessWidget {
   final String title;

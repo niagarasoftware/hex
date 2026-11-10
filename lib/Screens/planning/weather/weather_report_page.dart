@@ -5,10 +5,10 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-import 'package:oro_drip_irrigation/Screens/planning/weather/weather_report_model.dart';
-import 'package:oro_drip_irrigation/Screens/planning/weather/weather_report_sensor_model.dart'
+import 'package:hex/Screens/planning/weather/weather_report_model.dart';
+import 'package:hex/Screens/planning/weather/weather_report_sensor_model.dart'
     hide parseSensorHourData;
-import 'package:oro_drip_irrigation/Screens/planning/weather/weather_report_sensor_modelGsm.dart';
+import 'package:hex/Screens/planning/weather/weather_report_sensor_modelGsm.dart';
 
 import '../../../repository/repository.dart';
 import '../../../services/http_service.dart';

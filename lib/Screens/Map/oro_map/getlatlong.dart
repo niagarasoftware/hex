@@ -4,7 +4,7 @@ import 'dart:convert';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:oro_drip_irrigation/utils/helpers/log_print.dart';
+import 'package:hex/utils/helpers/log_print.dart';
 
 Future<LatLng?> getLatLngFromInput(String input) async {
   AppLog.log("getLatLngFromInput call");

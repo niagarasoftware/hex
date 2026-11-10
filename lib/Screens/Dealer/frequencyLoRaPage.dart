@@ -10,7 +10,7 @@ import '../../StateManagement/mqtt_payload_provider.dart';
 import '../../repository/repository.dart';
 import '../../services/communication_service.dart';
 import '../../services/http_service.dart';
-import 'package:oro_drip_irrigation/utils/helpers/log_print.dart';
+import 'package:hex/utils/helpers/log_print.dart';
 
 class FrequencyPage extends StatefulWidget {
   final int userId;

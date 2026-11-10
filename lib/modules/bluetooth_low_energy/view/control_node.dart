@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:oro_drip_irrigation/modules/bluetooth_low_energy/view/node_not_get_live.dart';
-import 'package:oro_drip_irrigation/utils/constants.dart';
+import 'package:hex/modules/bluetooth_low_energy/view/node_not_get_live.dart';
+import 'package:hex/utils/constants.dart';
 import 'package:provider/provider.dart';
 import 'package:responsive_grid_list/responsive_grid_list.dart';
 import '../../../Constants/dialog_boxes.dart';

@@ -4,7 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
-import 'package:oro_drip_irrigation/Screens/planning/weather_reports.dart';
+import 'package:hex/Screens/planning/weather_reports.dart';
 import 'package:syncfusion_flutter_gauges/gauges.dart';
 import '../../models/weather_modelnew.dart';
 import '../../Widgets/animated_cloud.dart';

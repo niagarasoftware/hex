@@ -4,7 +4,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:oro_drip_irrigation/models/customer/site_model.dart';
+import 'package:hex/models/customer/site_model.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../StateManagement/mqtt_payload_provider.dart';

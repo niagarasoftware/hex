@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:oro_drip_irrigation/Constants/properties.dart';
-import 'package:oro_drip_irrigation/utils/constants.dart';
+import 'package:hex/Constants/properties.dart';
+import 'package:hex/utils/constants.dart';
 import 'package:provider/provider.dart';
 import 'package:sleek_circular_slider/sleek_circular_slider.dart';
 import '../modules/IrrigationProgram/state_management/irrigation_program_provider.dart';
 import '../StateManagement/overall_use.dart';
-import 'package:oro_drip_irrigation/utils/helpers/log_print.dart';
+import 'package:hex/utils/helpers/log_print.dart';
 
 
 class HoursMinutesSeconds extends StatefulWidget {

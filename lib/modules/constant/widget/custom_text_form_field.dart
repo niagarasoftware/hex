@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:oro_drip_irrigation/Constants/properties.dart';
+import 'package:hex/Constants/properties.dart';
 
 class CustomTextFormField extends StatefulWidget {
   final String value;

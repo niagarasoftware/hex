@@ -1,7 +1,7 @@
 import 'package:data_table_2/data_table_2.dart';
 import 'package:flutter/material.dart';
-import 'package:oro_drip_irrigation/views/customer/scheduled_program/widgets/program_table_helper.dart';
-import 'package:oro_drip_irrigation/views/customer/scheduled_program/widgets/program_updater.dart';
+import 'package:hex/views/customer/scheduled_program/widgets/program_table_helper.dart';
+import 'package:hex/views/customer/scheduled_program/widgets/program_updater.dart';
 import 'package:provider/provider.dart';
 import '../../../models/customer/site_model.dart';
 import '../../../StateManagement/mqtt_payload_provider.dart';

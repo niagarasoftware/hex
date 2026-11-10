@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:oro_drip_irrigation/models/customer/condition_library_model.dart';
+import 'package:hex/models/customer/condition_library_model.dart';
 import 'package:provider/provider.dart';
 import '../../repository/repository.dart';
 import '../../services/communication_service.dart';

@@ -9,10 +9,10 @@ import '../../models/names_model.dart';
 import '../../repository/repository.dart';
 import '../../services/http_service.dart';
 import '../../utils/snack_bar.dart';
-import 'package:oro_drip_irrigation/utils/helpers/log_print.dart';
+import 'package:hex/utils/helpers/log_print.dart';
 
 // AppConstants import path உங்கள் project-க்கு ஏற்ப சரிபார்க்கவும்.
-import 'package:oro_drip_irrigation/utils/constants.dart';
+import 'package:hex/utils/constants.dart';
 
 class Names extends StatefulWidget {
   final int userID;

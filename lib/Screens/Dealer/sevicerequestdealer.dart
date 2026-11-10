@@ -3,14 +3,14 @@ import 'package:data_table_2/data_table_2.dart';
 import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
-import 'package:oro_drip_irrigation/modules/Preferences/widgets/custom_segmented_control.dart';
+import 'package:hex/modules/Preferences/widgets/custom_segmented_control.dart';
 import '../../models/customer/site_model.dart';
 import '../../models/servicerequestdealermodel.dart';
 import '../../repository/repository.dart';
 import '../../services/http_service.dart';
 import '../../utils/snack_bar.dart';
 import '../../views/customer/widgets/alarm_list_items.dart';
-import 'package:oro_drip_irrigation/utils/helpers/log_print.dart';
+import 'package:hex/utils/helpers/log_print.dart';
 
 class ServiceRequestsTable extends StatefulWidget {
   const ServiceRequestsTable({

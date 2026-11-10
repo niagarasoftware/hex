@@ -2,7 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:oro_drip_irrigation/views/common/user_dashboard/widgets/sensor_popover_content.dart';
+import 'package:hex/views/common/user_dashboard/widgets/sensor_popover_content.dart';
 import 'package:popover/popover.dart';
 import 'package:provider/provider.dart';
 

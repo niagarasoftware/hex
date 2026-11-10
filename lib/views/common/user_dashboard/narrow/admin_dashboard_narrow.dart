@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:oro_drip_irrigation/utils/enums.dart';
+import 'package:hex/utils/enums.dart';
 import 'package:provider/provider.dart';
 import '../../../../models/admin_dealer/stock_model.dart';
 import '../../../../view_models/bottom_nav_view_model.dart';

@@ -7,10 +7,10 @@ import 'package:flutter/material.dart' hide Border;
 import 'package:intl/intl.dart';
 import 'package:flutter/painting.dart' as painting;
 
-import 'package:oro_drip_irrigation/Screens/planning/weather/weather_report_model.dart';
-import 'package:oro_drip_irrigation/Screens/planning/weather/weather_report_sensor_modelGsm.dart';
-import 'package:oro_drip_irrigation/Screens/planning/weather/widgets/weather_excel_download_io.dart'
-if (dart.library.html) 'package:oro_drip_irrigation/Screens/planning/weather/widgets/weather_excel_download_web.dart' as excelDownloader;
+import 'package:hex/Screens/planning/weather/weather_report_model.dart';
+import 'package:hex/Screens/planning/weather/weather_report_sensor_modelGsm.dart';
+import 'package:hex/Screens/planning/weather/widgets/weather_excel_download_io.dart'
+if (dart.library.html) 'package:hex/Screens/planning/weather/widgets/weather_excel_download_web.dart' as excelDownloader;
 
 import '../../../repository/repository.dart';
 import '../../../services/http_service.dart';

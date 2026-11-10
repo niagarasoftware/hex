@@ -1,4 +1,4 @@
-import 'package:oro_drip_irrigation/modules/constant/model/constant_setting_model.dart';
+import 'package:hex/modules/constant/model/constant_setting_model.dart';
 
 class ObjectInConstantModel{
   final int objectId;

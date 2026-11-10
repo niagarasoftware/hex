@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:oro_drip_irrigation/modules/Logs/view/power_graph_screen.dart';
-import 'package:oro_drip_irrigation/modules/Logs/view/pump_log.dart';
-import 'package:oro_drip_irrigation/modules/Logs/view/voltage_log.dart';
+import 'package:hex/modules/Logs/view/power_graph_screen.dart';
+import 'package:hex/modules/Logs/view/pump_log.dart';
+import 'package:hex/modules/Logs/view/voltage_log.dart';
 
 import '../../../models/customer/site_model.dart';
 

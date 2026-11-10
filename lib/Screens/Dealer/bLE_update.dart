@@ -9,7 +9,7 @@ import '../../StateManagement/mqtt_payload_provider.dart';
 import '../../services/bluetooth/bluetooth_classic_service.dart';
 import '../../services/sftp_service.dart';
 import '../../utils/snack_bar.dart';
-import 'package:oro_drip_irrigation/utils/helpers/log_print.dart';
+import 'package:hex/utils/helpers/log_print.dart';
 
 
 class FirmwareBLEPage extends StatefulWidget {

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:oro_drip_irrigation/Constants/properties.dart';
+import 'package:hex/Constants/properties.dart';
 import 'package:provider/provider.dart';
 import '../../../views/customer/controller_settings/wide/condition_library_wide.dart';
 import '../state_management/irrigation_program_provider.dart';

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:oro_drip_irrigation/Screens/planning/weather/view/weather_Gsm.dart';
-import 'package:oro_drip_irrigation/Screens/planning/weather/widgets/sensor_tile_new.dart';
+import 'package:hex/Screens/planning/weather/view/weather_Gsm.dart';
+import 'package:hex/Screens/planning/weather/widgets/sensor_tile_new.dart';
 
 class SensorChipGsm extends StatelessWidget {
   final SensorDisplayModel device;

@@ -1,5 +1,5 @@
 import 'package:http/http.dart' as http;
-import 'package:oro_drip_irrigation/services/http_service.dart';
+import 'package:hex/services/http_service.dart';
 
 
 class CalibrationRepository{

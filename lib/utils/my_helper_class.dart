@@ -2,7 +2,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:oro_drip_irrigation/utils/snack_bar.dart';
+import 'package:hex/utils/snack_bar.dart';
 import 'package:provider/provider.dart';
 
 import '../app/app.dart';

@@ -3,9 +3,9 @@ import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:oro_drip_irrigation/Screens/Dealer/pumpTopicChange.dart';
-import 'package:oro_drip_irrigation/utils/constants.dart';
-import 'package:oro_drip_irrigation/utils/environment.dart';
+import 'package:hex/Screens/Dealer/pumpTopicChange.dart';
+import 'package:hex/utils/constants.dart';
+import 'package:hex/utils/environment.dart';
 import 'package:provider/provider.dart';
 import '../../StateManagement/mqtt_payload_provider.dart';
 import '../../repository/repository.dart';
@@ -15,7 +15,7 @@ import '../../utils/shared_preferences_helper.dart';
 import 'configureMqttTopic.dart';
 import 'controllerlogfile.dart';
 import 'frequencyLoRaPage.dart';
-import 'package:oro_drip_irrigation/utils/helpers/log_print.dart';
+import 'package:hex/utils/helpers/log_print.dart';
 
 class ResetVerssion extends StatefulWidget {
   const ResetVerssion(

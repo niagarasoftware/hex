@@ -13,7 +13,7 @@ import '../../services/mqtt_service.dart';
 import '../../services/sftp_service.dart';
 import '../../utils/environment.dart';
 import '../../utils/snack_bar.dart';
-import 'package:oro_drip_irrigation/utils/helpers/log_print.dart';
+import 'package:hex/utils/helpers/log_print.dart';
 
 // Enum for log types
 enum LogType {

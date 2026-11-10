@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:oro_drip_irrigation/utils/constants.dart';
+import 'package:hex/utils/constants.dart';
 import '../../repository/repository.dart';
 
 class ControllerSettingsViewModel extends ChangeNotifier {

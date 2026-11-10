@@ -1,7 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:oro_drip_irrigation/utils/helpers/mc_permission_helper.dart';
+import 'package:hex/utils/helpers/mc_permission_helper.dart';
 import 'package:popover/popover.dart';
 import 'package:provider/provider.dart';
 

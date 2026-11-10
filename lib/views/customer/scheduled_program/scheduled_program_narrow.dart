@@ -2,10 +2,10 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:oro_drip_irrigation/utils/formatters.dart';
-import 'package:oro_drip_irrigation/utils/helpers/mc_permission_helper.dart';
-import 'package:oro_drip_irrigation/views/customer/scheduled_program/widgets/ai_recommendation_button.dart';
-import 'package:oro_drip_irrigation/views/customer/scheduled_program/widgets/program_updater.dart';
+import 'package:hex/utils/formatters.dart';
+import 'package:hex/utils/helpers/mc_permission_helper.dart';
+import 'package:hex/views/customer/scheduled_program/widgets/ai_recommendation_button.dart';
+import 'package:hex/views/customer/scheduled_program/widgets/program_updater.dart';
 import 'package:provider/provider.dart';
 
 import '../../../models/customer/site_model.dart';

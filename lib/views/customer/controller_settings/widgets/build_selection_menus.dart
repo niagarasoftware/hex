@@ -1,8 +1,8 @@
 import 'package:flutter/cupertino.dart';
-import 'package:oro_drip_irrigation/views/customer/controller_settings/widgets/parameter_selection_menu.dart';
-import 'package:oro_drip_irrigation/views/customer/controller_settings/widgets/reason_selection_menu.dart';
-import 'package:oro_drip_irrigation/views/customer/controller_settings/widgets/threshold_selector_widget.dart';
-import 'package:oro_drip_irrigation/views/customer/controller_settings/widgets/value_selector_widget.dart';
+import 'package:hex/views/customer/controller_settings/widgets/parameter_selection_menu.dart';
+import 'package:hex/views/customer/controller_settings/widgets/reason_selection_menu.dart';
+import 'package:hex/views/customer/controller_settings/widgets/threshold_selector_widget.dart';
+import 'package:hex/views/customer/controller_settings/widgets/value_selector_widget.dart';
 
 import '../../../../view_models/customer/condition_library_view_model.dart';
 import 'component_selection_menu.dart';

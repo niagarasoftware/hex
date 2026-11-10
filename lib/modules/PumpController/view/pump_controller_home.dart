@@ -1,11 +1,11 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:oro_drip_irrigation/app.dart';
-import 'package:oro_drip_irrigation/modules/Preferences/view/preference_main_screen.dart';
-import 'package:oro_drip_irrigation/modules/PumpController/view/pump_dashboard_screen.dart';
-import 'package:oro_drip_irrigation/modules/PumpController/widget/custom_outline_button.dart';
-import 'package:oro_drip_irrigation/utils/constants.dart';
-import 'package:oro_drip_irrigation/views/customer/widgets/customer_fab_menu.dart';
+import 'package:hex/app.dart';
+import 'package:hex/modules/Preferences/view/preference_main_screen.dart';
+import 'package:hex/modules/PumpController/view/pump_dashboard_screen.dart';
+import 'package:hex/modules/PumpController/widget/custom_outline_button.dart';
+import 'package:hex/utils/constants.dart';
+import 'package:hex/views/customer/widgets/customer_fab_menu.dart';
 import 'package:provider/provider.dart';
 import 'package:table_calendar/table_calendar.dart';
 

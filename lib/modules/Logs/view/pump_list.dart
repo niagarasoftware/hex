@@ -2,9 +2,9 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:oro_drip_irrigation/Constants/properties.dart';
-import 'package:oro_drip_irrigation/modules/Logs/view/pump_log_dashboard.dart';
-import 'package:oro_drip_irrigation/modules/Logs/view/voltage_log.dart';
+import 'package:hex/Constants/properties.dart';
+import 'package:hex/modules/Logs/view/pump_log_dashboard.dart';
+import 'package:hex/modules/Logs/view/voltage_log.dart';
 import 'package:responsive_grid/responsive_grid.dart';
 import '../../../models/customer/site_model.dart';
 import '../../../services/http_service.dart';

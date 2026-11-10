@@ -7,8 +7,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:provider/provider.dart';
-import 'package:oro_drip_irrigation/utils/helpers/log_print.dart';
-import 'package:oro_drip_irrigation/utils/constants.dart';
+import 'package:hex/utils/helpers/log_print.dart';
+import 'package:hex/utils/constants.dart';
 
 import '../../../repository/repository.dart';
 import '../../../services/http_service.dart';

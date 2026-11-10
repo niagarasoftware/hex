@@ -1,8 +1,8 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:oro_drip_irrigation/Widgets/sized_image.dart';
-import 'package:oro_drip_irrigation/modules/calibration/repository/calibration_repository.dart';
-import 'package:oro_drip_irrigation/services/mqtt_service.dart';
+import 'package:hex/Widgets/sized_image.dart';
+import 'package:hex/modules/calibration/repository/calibration_repository.dart';
+import 'package:hex/services/mqtt_service.dart';
 import 'package:responsive_grid_list/responsive_grid_list.dart';
 import '../../../Constants/properties.dart';
 import '../../../Widgets/custom_buttons.dart';

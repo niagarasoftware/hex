@@ -1,7 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:oro_drip_irrigation/Constants/properties.dart';
-import 'package:oro_drip_irrigation/utils/constants.dart';
+import 'package:hex/Constants/properties.dart';
+import 'package:hex/utils/constants.dart';
 import 'package:provider/provider.dart';
 
 import '../modules/config_maker/model/device_object_model.dart';

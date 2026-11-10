@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:oro_drip_irrigation/modules/config_maker/model/device_object_model.dart';
-import 'package:oro_drip_irrigation/modules/IrrigationProgram/view/schedule_screen.dart';
-import 'package:oro_drip_irrigation/modules/IrrigationProgram/view/sequence_screen.dart';
-import 'package:oro_drip_irrigation/utils/constants.dart';
+import 'package:hex/modules/config_maker/model/device_object_model.dart';
+import 'package:hex/modules/IrrigationProgram/view/schedule_screen.dart';
+import 'package:hex/modules/IrrigationProgram/view/sequence_screen.dart';
+import 'package:hex/utils/constants.dart';
 import 'package:provider/provider.dart';
 import '../../../models/customer/site_model.dart';
 import '../state_management/irrigation_program_provider.dart';

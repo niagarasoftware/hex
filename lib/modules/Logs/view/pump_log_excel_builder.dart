@@ -1,6 +1,6 @@
 import 'package:excel/excel.dart';
-import 'package:oro_drip_irrigation/modules/Logs/model/event_log_model.dart';
-import 'package:oro_drip_irrigation/modules/Logs/model/motor_data_hourly.dart';
+import 'package:hex/modules/Logs/model/event_log_model.dart';
+import 'package:hex/modules/Logs/model/motor_data_hourly.dart';
 
 String formatHms(dynamic val) {
   if (val == null) return '00:00:00';

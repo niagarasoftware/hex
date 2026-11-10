@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:oro_drip_irrigation/modules/constant/widget/custom_check_box.dart';
-import 'package:oro_drip_irrigation/modules/constant/widget/custom_pop_up_button.dart';
+import 'package:hex/modules/constant/widget/custom_check_box.dart';
+import 'package:hex/modules/constant/widget/custom_pop_up_button.dart';
 import 'package:provider/provider.dart';
 
 import '../../../Constants/constants.dart';

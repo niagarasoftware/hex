@@ -1,6 +1,6 @@
 import 'dart:ui';
 
-import 'package:oro_drip_irrigation/utils/constants.dart';
+import 'package:hex/utils/constants.dart';
 
 import 'constant_setting_model.dart';
 import 'constant_setting_type_Model.dart';

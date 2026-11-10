@@ -1,4 +1,4 @@
-import 'package:oro_drip_irrigation/utils/shared_preferences_helper.dart';
+import 'package:hex/utils/shared_preferences_helper.dart';
 
 import '../models/user_model.dart';
 import 'enums.dart';

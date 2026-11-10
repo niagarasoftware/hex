@@ -2,10 +2,10 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
-import 'package:oro_drip_irrigation/modules/bluetooth_low_energy/utils/extra.dart';
-import 'package:oro_drip_irrigation/modules/bluetooth_low_energy/utils/snackbar.dart';
-import 'package:oro_drip_irrigation/modules/bluetooth_low_energy/widget/scan_result_tile.dart';
-import 'package:oro_drip_irrigation/modules/bluetooth_low_energy/widget/system_service_tile.dart';
+import 'package:hex/modules/bluetooth_low_energy/utils/extra.dart';
+import 'package:hex/modules/bluetooth_low_energy/utils/snackbar.dart';
+import 'package:hex/modules/bluetooth_low_energy/widget/scan_result_tile.dart';
+import 'package:hex/modules/bluetooth_low_energy/widget/system_service_tile.dart';
 
 import '../state_management/ble_service.dart';
 import 'device_screen.dart';

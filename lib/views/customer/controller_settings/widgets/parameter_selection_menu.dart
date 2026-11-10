@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:oro_drip_irrigation/view_models/create_account_view_model.dart';
+import 'package:hex/view_models/create_account_view_model.dart';
 import '../../../../view_models/customer/condition_library_view_model.dart';
 
 class ParameterSelectionMenu extends StatelessWidget {

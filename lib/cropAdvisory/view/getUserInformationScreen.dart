@@ -3,13 +3,13 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:geocoding/geocoding.dart';
 import '../widgets/crop_advisory_web_sidebar.dart';
-import 'package:oro_drip_irrigation/cropAdvisory/view/CropDetailsScreen.dart';
-import 'package:oro_drip_irrigation/cropAdvisory/widgets/AppTextField.dart';
-import 'package:oro_drip_irrigation/cropAdvisory/widgets/ContinueButton.dart';
-import 'package:oro_drip_irrigation/cropAdvisory/widgets/ProgressWidget.dart';
-import 'package:oro_drip_irrigation/cropAdvisory/widgets/SectionCard.dart';
-import 'package:oro_drip_irrigation/cropAdvisory/view/map_picker_screen.dart';
-import 'package:oro_drip_irrigation/cropAdvisory/service/location_service.dart';
+import 'package:hex/cropAdvisory/view/CropDetailsScreen.dart';
+import 'package:hex/cropAdvisory/widgets/AppTextField.dart';
+import 'package:hex/cropAdvisory/widgets/ContinueButton.dart';
+import 'package:hex/cropAdvisory/widgets/ProgressWidget.dart';
+import 'package:hex/cropAdvisory/widgets/SectionCard.dart';
+import 'package:hex/cropAdvisory/view/map_picker_screen.dart';
+import 'package:hex/cropAdvisory/service/location_service.dart';
 import '../model/cropadvisory_model.dart';
 
 class Cropinformationscreen extends StatefulWidget {

@@ -2,9 +2,9 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:oro_drip_irrigation/Constants/properties.dart';
-import 'package:oro_drip_irrigation/services/mqtt_service.dart';
-import 'package:oro_drip_irrigation/utils/constants.dart';
+import 'package:hex/Constants/properties.dart';
+import 'package:hex/services/mqtt_service.dart';
+import 'package:hex/utils/constants.dart';
 import 'package:provider/provider.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
 import '../../../Constants/constants.dart';

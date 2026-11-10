@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:oro_drip_irrigation/modules/Logs/widgets/time_line_event_card.dart';
+import 'package:hex/modules/Logs/widgets/time_line_event_card.dart';
 
 import '../model/event_log_model.dart';
 class Timeline2 extends StatelessWidget {

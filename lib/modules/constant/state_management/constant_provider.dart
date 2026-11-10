@@ -1,13 +1,13 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
-import 'package:oro_drip_irrigation/modules/constant/model/common_alarm_model.dart';
-import 'package:oro_drip_irrigation/modules/constant/model/constant_menu_model.dart';
-import 'package:oro_drip_irrigation/modules/constant/model/constant_setting_model.dart';
-import 'package:oro_drip_irrigation/modules/constant/model/ec_ph_in_constant_model.dart';
-import 'package:oro_drip_irrigation/modules/constant/model/normal_critical_alarm_model.dart';
-import 'package:oro_drip_irrigation/modules/constant/model/object_in_constant_model.dart';
-import 'package:oro_drip_irrigation/modules/constant/widget/arrow_tab.dart';
-import 'package:oro_drip_irrigation/utils/constants.dart';
+import 'package:hex/modules/constant/model/common_alarm_model.dart';
+import 'package:hex/modules/constant/model/constant_menu_model.dart';
+import 'package:hex/modules/constant/model/constant_setting_model.dart';
+import 'package:hex/modules/constant/model/ec_ph_in_constant_model.dart';
+import 'package:hex/modules/constant/model/normal_critical_alarm_model.dart';
+import 'package:hex/modules/constant/model/object_in_constant_model.dart';
+import 'package:hex/modules/constant/widget/arrow_tab.dart';
+import 'package:hex/utils/constants.dart';
 import '../model/constant_setting_type_Model.dart';
 
 class ConstantProvider extends ChangeNotifier {

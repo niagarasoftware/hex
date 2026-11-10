@@ -1,5 +1,5 @@
-import 'package:oro_drip_irrigation/modules/fertilizer_set/model/channel_setting_model.dart';
-import 'package:oro_drip_irrigation/modules/fertilizer_set/model/ec_ph_setting_model.dart';
+import 'package:hex/modules/fertilizer_set/model/channel_setting_model.dart';
+import 'package:hex/modules/fertilizer_set/model/ec_ph_setting_model.dart';
 
 class FertilizerSiteSettingModel{
   final int objectId;

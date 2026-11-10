@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:oro_drip_irrigation/modules/IrrigationProgram/view/preview_screen.dart';
-import 'package:oro_drip_irrigation/modules/IrrigationProgram/view/schedule_screen.dart';
-import 'package:oro_drip_irrigation/modules/IrrigationProgram/view/selection_screen.dart';
-import 'package:oro_drip_irrigation/modules/IrrigationProgram/view/sequence_screen.dart';
-import 'package:oro_drip_irrigation/modules/IrrigationProgram/view/water_and_fertilizer_screen.dart';
+import 'package:hex/modules/IrrigationProgram/view/preview_screen.dart';
+import 'package:hex/modules/IrrigationProgram/view/schedule_screen.dart';
+import 'package:hex/modules/IrrigationProgram/view/selection_screen.dart';
+import 'package:hex/modules/IrrigationProgram/view/sequence_screen.dart';
+import 'package:hex/modules/IrrigationProgram/view/water_and_fertilizer_screen.dart';
 import 'package:provider/provider.dart';
 import '../../../models/customer/site_model.dart';
 import '../../../utils/constants.dart';

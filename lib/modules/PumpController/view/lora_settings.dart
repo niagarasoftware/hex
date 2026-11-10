@@ -1,10 +1,10 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:oro_drip_irrigation/modules/PumpController/repository/lora_settings_repository.dart';
-import 'package:oro_drip_irrigation/services/http_service.dart';
-import 'package:oro_drip_irrigation/services/mqtt_service.dart';
-import 'package:oro_drip_irrigation/utils/environment.dart';
+import 'package:hex/modules/PumpController/repository/lora_settings_repository.dart';
+import 'package:hex/services/http_service.dart';
+import 'package:hex/services/mqtt_service.dart';
+import 'package:hex/utils/environment.dart';
 
 import '../../../repository/repository.dart';
 

@@ -1,6 +1,6 @@
 import 'package:drop_down_search_field/drop_down_search_field.dart';
 import 'package:flutter/material.dart';
-import 'package:oro_drip_irrigation/Constants/dialog_boxes.dart';
+import 'package:hex/Constants/dialog_boxes.dart';
 import 'package:provider/provider.dart';
 
 import '../state_management/config_maker_provider.dart';

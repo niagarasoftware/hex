@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'package:oro_drip_irrigation/utils/helpers/log_print.dart';
+import 'package:hex/utils/helpers/log_print.dart';
 
 
 MapConfigModel mapConfigModelFromJson(String str) =>

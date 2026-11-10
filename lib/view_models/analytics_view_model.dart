@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/cupertino.dart';
-import 'package:oro_drip_irrigation/view_models/safe_change_notifier.dart';
+import 'package:hex/view_models/safe_change_notifier.dart';
 import '../models/sales_data_model.dart';
 import '../repository/repository.dart';
 import '../utils/enums.dart';

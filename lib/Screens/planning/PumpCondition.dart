@@ -8,7 +8,7 @@ import '../../repository/repository.dart';
 import '../../services/http_service.dart';
 import '../../services/mqtt_service.dart';
 import '../../utils/constants.dart';
-import 'package:oro_drip_irrigation/utils/helpers/log_print.dart';
+import 'package:hex/utils/helpers/log_print.dart';
 import '../../utils/snack_bar.dart';
 
 class PumpConditionScreen extends StatefulWidget {

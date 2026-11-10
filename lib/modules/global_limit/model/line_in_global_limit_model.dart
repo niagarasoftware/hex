@@ -1,4 +1,4 @@
-import 'package:oro_drip_irrigation/modules/global_limit/model/valve_with_central_local_channel_model.dart';
+import 'package:hex/modules/global_limit/model/valve_with_central_local_channel_model.dart';
 
 class LineInGlobalLimitModel {
   final int objectId;

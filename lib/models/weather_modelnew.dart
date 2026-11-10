@@ -1,4 +1,4 @@
-import 'package:oro_drip_irrigation/utils/helpers/log_print.dart';
+import 'package:hex/utils/helpers/log_print.dart';
 
 class WeatherStation {
   final int deviceId; // Device ID (S_No for the weather station)

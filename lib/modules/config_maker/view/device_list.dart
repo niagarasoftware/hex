@@ -1,8 +1,8 @@
 import 'dart:convert';
 import 'package:data_table_2/data_table_2.dart';
 import 'package:flutter/material.dart';
-import 'package:oro_drip_irrigation/modules/config_maker/widget/drop_down_search_field.dart';
-import 'package:oro_drip_irrigation/utils/constants.dart';
+import 'package:hex/modules/config_maker/widget/drop_down_search_field.dart';
+import 'package:hex/utils/constants.dart';
 import 'package:provider/provider.dart';
 import '../../../Constants/communication_codes.dart';
 import '../../../Constants/dialog_boxes.dart';

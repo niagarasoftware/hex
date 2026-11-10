@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:oro_drip_irrigation/utils/constants.dart';
+import 'package:hex/utils/constants.dart';
 import 'package:provider/provider.dart';
 
 import '../../../Constants/dialog_boxes.dart';

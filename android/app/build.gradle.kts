@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "com.niagaraautomations.oro_drip_irrigation"
+    namespace = "com.niagaraautomations.hex"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 

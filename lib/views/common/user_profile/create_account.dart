@@ -2,7 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl_phone_field/intl_phone_field.dart';
-import 'package:oro_drip_irrigation/utils/Theme/oro_theme.dart';
+import 'package:hex/utils/Theme/oro_theme.dart';
 import 'package:provider/provider.dart';
 
 import '../../../repository/repository.dart';

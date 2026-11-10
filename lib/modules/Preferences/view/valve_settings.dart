@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:oro_drip_irrigation/modules/IrrigationProgram/widgets/custom_native_time_picker.dart';
-import 'package:oro_drip_irrigation/modules/Preferences/model/preference_data_model.dart';
-import 'package:oro_drip_irrigation/modules/Preferences/state_management/preference_provider.dart';
+import 'package:hex/modules/IrrigationProgram/widgets/custom_native_time_picker.dart';
+import 'package:hex/modules/Preferences/model/preference_data_model.dart';
+import 'package:hex/modules/Preferences/state_management/preference_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:responsive_grid_list/responsive_grid_list.dart';
 

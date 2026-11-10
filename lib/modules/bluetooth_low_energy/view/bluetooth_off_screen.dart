@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
-import 'package:oro_drip_irrigation/modules/bluetooth_low_energy/utils/snackbar.dart';
+import 'package:hex/modules/bluetooth_low_energy/utils/snackbar.dart';
 
 class BluetoothOffScreen extends StatelessWidget {
   const BluetoothOffScreen({super.key, this.adapterState});

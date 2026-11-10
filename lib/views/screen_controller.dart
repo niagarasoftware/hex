@@ -10,7 +10,7 @@ import '../utils/auth_pref_checker.dart';
 import '../utils/enums.dart';
 import '../utils/shared_preferences_helper.dart';
 import 'common/login/login_screen.dart';
-import 'package:oro_drip_irrigation/utils/helpers/log_print.dart';
+import 'package:hex/utils/helpers/log_print.dart';
 
 
 class ScreenController extends StatelessWidget {

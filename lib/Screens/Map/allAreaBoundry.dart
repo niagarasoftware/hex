@@ -1,12 +1,12 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:oro_drip_irrigation/Screens/Map/MapAreaModel.dart';
+import 'package:hex/Screens/Map/MapAreaModel.dart';
 import 'package:widget_to_marker/widget_to_marker.dart';
 import '../../repository/repository.dart';
 import '../../services/http_service.dart';
 import 'areaboundry.dart';
-import 'package:oro_drip_irrigation/utils/helpers/log_print.dart';
+import 'package:hex/utils/helpers/log_print.dart';
 
 
 class MapScreenAllArea extends StatefulWidget {

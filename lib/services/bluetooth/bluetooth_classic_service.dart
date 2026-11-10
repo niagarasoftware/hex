@@ -9,7 +9,7 @@ import 'package:flutter_bluetooth_serial_plus/flutter_bluetooth_serial_plus.dart
 import 'package:permission_handler/permission_handler.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:oro_drip_irrigation/services/mqtt_service.dart';
+import 'package:hex/services/mqtt_service.dart';
 
 import '../../Constants/constants.dart';
 import '../../StateManagement/mqtt_payload_provider.dart';
@@ -1668,7 +1668,7 @@ import 'package:flutter_bluetooth_serial_plus/flutter_bluetooth_serial_plus.dart
 import 'package:permission_handler/permission_handler.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:oro_drip_irrigation/services/mqtt_service.dart';
+import 'package:hex/services/mqtt_service.dart';
 
 import '../../Constants/constants.dart';
 import '../../StateManagement/mqtt_payload_provider.dart';

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl_phone_field/intl_phone_field.dart';
 import 'package:loading_indicator/loading_indicator.dart';
-import 'package:oro_drip_irrigation/modules/bluetooth_low_energy/state_management/ble_service.dart';
-import 'package:oro_drip_irrigation/utils/constants.dart';
+import 'package:hex/modules/bluetooth_low_energy/state_management/ble_service.dart';
+import 'package:hex/utils/constants.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter/foundation.dart';
 import '../../../../Screens/Dealer/controllerverssionupdate.dart';

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:oro_drip_irrigation/views/customer/widgets/site_selector_widget.dart';
+import 'package:hex/views/customer/widgets/site_selector_widget.dart';
 import 'package:provider/provider.dart';
 
 import '../../../models/customer/site_model.dart';

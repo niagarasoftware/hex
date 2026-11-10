@@ -1,6 +1,6 @@
 
 import 'package:flutter/material.dart';
-import 'package:oro_drip_irrigation/Screens/Dealer/configureMqttTopic.dart';
+import 'package:hex/Screens/Dealer/configureMqttTopic.dart';
 
 import 'bLE_update.dart';
 import 'controllerlogfile.dart';

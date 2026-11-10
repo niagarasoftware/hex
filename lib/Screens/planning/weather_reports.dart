@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:oro_drip_irrigation/Screens/planning/sensor_table.dart';
+import 'package:hex/Screens/planning/sensor_table.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
 
 import '../../repository/repository.dart';

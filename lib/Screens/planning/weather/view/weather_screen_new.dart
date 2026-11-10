@@ -19,7 +19,7 @@ import '../widgets/info_box.dart';
 import '../widgets/sensor_chip.dart';
 import '../widgets/sun_time_card.dart';
 import '../widgets/time_of_day_icon_new.dart';
-import 'package:oro_drip_irrigation/utils/helpers/log_print.dart';
+import 'package:hex/utils/helpers/log_print.dart';
 import 'dart:async';
 
 Color sensorStatusColor(int code) {

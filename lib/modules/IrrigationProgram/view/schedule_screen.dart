@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
-import 'package:oro_drip_irrigation/Constants/properties.dart';
-import 'package:oro_drip_irrigation/modules/IrrigationProgram/view/preview_screen.dart';
-import 'package:oro_drip_irrigation/utils/constants.dart';
+import 'package:hex/Constants/properties.dart';
+import 'package:hex/modules/IrrigationProgram/view/preview_screen.dart';
+import 'package:hex/utils/constants.dart';
 import 'package:provider/provider.dart';
 import '../state_management/irrigation_program_provider.dart';
 import '../widgets/custom_animated_switcher.dart';

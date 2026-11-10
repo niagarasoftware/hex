@@ -4,7 +4,7 @@ import 'dart:async';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:oro_drip_irrigation/Screens/login_screenOTP/user.dart';
+import 'package:hex/Screens/login_screenOTP/user.dart';
  import 'package:provider/provider.dart';
 
 class AuthService{

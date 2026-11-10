@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:oro_drip_irrigation/modules/Preferences/widgets/custom_segmented_control.dart';
-import 'package:oro_drip_irrigation/modules/PumpController/view/set_serial.dart';
+import 'package:hex/modules/Preferences/widgets/custom_segmented_control.dart';
+import 'package:hex/modules/PumpController/view/set_serial.dart';
 
 import '../../../models/customer/site_model.dart';
 import 'lora_settings.dart';

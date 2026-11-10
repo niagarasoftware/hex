@@ -3,7 +3,7 @@ import 'dart:convert';
 import '../utils/constants.dart';
 import '../utils/shared_preferences_helper.dart';
 import 'api_service.dart';
-import 'package:oro_drip_irrigation/utils/helpers/log_print.dart';
+import 'package:hex/utils/helpers/log_print.dart';
 
 
 class HttpService implements ApiService {

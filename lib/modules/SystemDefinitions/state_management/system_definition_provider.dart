@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'dart:developer';
 
 import 'package:flutter/cupertino.dart';
-import 'package:oro_drip_irrigation/modules/SystemDefinitions/repository/system_definitions_repo.dart';
+import 'package:hex/modules/SystemDefinitions/repository/system_definitions_repo.dart';
 
 import '../model/system_definition_model.dart';
 import '../../../services/http_service.dart';

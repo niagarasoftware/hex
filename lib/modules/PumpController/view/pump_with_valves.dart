@@ -1,9 +1,9 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:oro_drip_irrigation/services/mqtt_service.dart';
-import 'package:oro_drip_irrigation/utils/constants.dart';
-import 'package:oro_drip_irrigation/utils/environment.dart';
+import 'package:hex/services/mqtt_service.dart';
+import 'package:hex/utils/constants.dart';
+import 'package:hex/utils/environment.dart';
 import 'package:popover/popover.dart';
 import 'package:provider/provider.dart';
 

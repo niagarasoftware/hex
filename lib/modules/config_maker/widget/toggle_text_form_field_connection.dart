@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:oro_drip_irrigation/Constants/dialog_boxes.dart';
-import 'package:oro_drip_irrigation/utils/constants.dart';
+import 'package:hex/Constants/dialog_boxes.dart';
+import 'package:hex/utils/constants.dart';
 import '../model/device_model.dart';
 import '../model/device_object_model.dart';
 import '../state_management/config_maker_provider.dart';

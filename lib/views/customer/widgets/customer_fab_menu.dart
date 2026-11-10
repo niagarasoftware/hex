@@ -4,7 +4,7 @@ import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:oro_drip_irrigation/views/customer/widgets/password_field.dart';
+import 'package:hex/views/customer/widgets/password_field.dart';
 import 'package:provider/provider.dart';
 
 import '../../../Screens/Map/oro_map/map_oro.dart';
@@ -809,7 +809,7 @@ import 'dart:convert';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:oro_drip_irrigation/views/customer/widgets/password_field.dart';
+import 'package:hex/views/customer/widgets/password_field.dart';
 import 'package:provider/provider.dart';
 
 import '../../../Screens/Map/oro_map/map_oro.dart';

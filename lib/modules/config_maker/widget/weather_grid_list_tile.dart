@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:oro_drip_irrigation/Widgets/sized_image.dart';
+import 'package:hex/Widgets/sized_image.dart';
 import 'package:responsive_grid_list/responsive_grid_list.dart';
 import '../../../Constants/properties.dart';
 import '../model/device_model.dart';

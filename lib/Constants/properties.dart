@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:oro_drip_irrigation/utils/Theme/smart_comm_theme.dart';
+import 'package:hex/utils/Theme/smart_comm_theme.dart';
 
 import '../flavors.dart';
 

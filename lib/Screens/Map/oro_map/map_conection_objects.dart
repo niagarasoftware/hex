@@ -1,7 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:oro_drip_irrigation/Screens/Map/oro_map/set_oro_device_location.dart';
+import 'package:hex/Screens/Map/oro_map/set_oro_device_location.dart';
 import 'package:provider/provider.dart';
 import '../../../StateManagement/mqtt_payload_provider.dart';
 import '../../../repository/repository.dart';
@@ -10,7 +10,7 @@ import '../../../utils/snack_bar.dart';
 import '../set_device_areator_location.dart';
 import 'SetSelectAreatorLocation.dart';
 import 'SetSelectValveOroLocation.dart';
-import 'package:oro_drip_irrigation/utils/helpers/log_print.dart';
+import 'package:hex/utils/helpers/log_print.dart';
 
 import 'map_oro.dart';
 

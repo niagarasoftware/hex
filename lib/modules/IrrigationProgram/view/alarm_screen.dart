@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_material_design_icons/flutter_material_design_icons.dart';
-import 'package:oro_drip_irrigation/Constants/properties.dart';
-import 'package:oro_drip_irrigation/modules/IrrigationProgram/model/sequence_model.dart';
-import 'package:oro_drip_irrigation/utils/constants.dart';
+import 'package:hex/Constants/properties.dart';
+import 'package:hex/modules/IrrigationProgram/model/sequence_model.dart';
+import 'package:hex/utils/constants.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:responsive_grid_list/responsive_grid_list.dart';

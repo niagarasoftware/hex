@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:oro_drip_irrigation/utils/constants.dart';
+import 'package:hex/utils/constants.dart';
 import 'package:responsive_grid_list/responsive_grid_list.dart';
 import '../../../Constants/communication_codes.dart';
 import '../../../Constants/properties.dart';

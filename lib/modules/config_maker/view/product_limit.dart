@@ -1,7 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/painting.dart';
-import 'package:oro_drip_irrigation/utils/constants.dart';
+import 'package:hex/utils/constants.dart';
 import '../../../Constants/communication_codes.dart';
 import '../../../Constants/properties.dart';
 import '../model/device_model.dart';

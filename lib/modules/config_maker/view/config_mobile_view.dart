@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:oro_drip_irrigation/modules/config_maker/view/product_limit.dart';
-import 'package:oro_drip_irrigation/modules/config_maker/view/site_configure.dart';
-import 'package:oro_drip_irrigation/utils/constants.dart';
+import 'package:hex/modules/config_maker/view/product_limit.dart';
+import 'package:hex/modules/config_maker/view/site_configure.dart';
+import 'package:hex/utils/constants.dart';
 import 'package:provider/provider.dart';
 import '../../../Constants/dialog_boxes.dart';
 import '../../config_maker/model/device_object_model.dart';

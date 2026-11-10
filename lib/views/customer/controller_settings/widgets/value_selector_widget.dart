@@ -1,5 +1,5 @@
 import 'package:flutter/cupertino.dart';
-import 'package:oro_drip_irrigation/views/customer/controller_settings/widgets/sensor_value_button.dart';
+import 'package:hex/views/customer/controller_settings/widgets/sensor_value_button.dart';
 
 import '../../../../models/customer/condition_library_model.dart';
 import '../../../../utils/my_function.dart';

@@ -1,5 +1,5 @@
 import 'package:flutter/cupertino.dart';
-import 'package:oro_drip_irrigation/utils/constants.dart';
+import 'package:hex/utils/constants.dart';
 import 'alarm_in_constant_model.dart';
 import 'constant_setting_model.dart';
 

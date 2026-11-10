@@ -12,7 +12,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../repository/repository.dart';
 import '../../services/http_service.dart';
 import '../../utils/shared_preferences_helper.dart';
-import 'package:oro_drip_irrigation/utils/helpers/log_print.dart';
+import 'package:hex/utils/helpers/log_print.dart';
 
 
 // ignore: must_be_immutable

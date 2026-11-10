@@ -2,8 +2,8 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:oro_drip_irrigation/modules/IrrigationProgram/view/program_library.dart';
-import 'package:oro_drip_irrigation/modules/IrrigationProgram/view/schedule_screen.dart';
+import 'package:hex/modules/IrrigationProgram/view/program_library.dart';
+import 'package:hex/modules/IrrigationProgram/view/schedule_screen.dart';
 import 'package:provider/provider.dart';
 import '../../../Constants/constants.dart';
 import '../../../Constants/properties.dart';

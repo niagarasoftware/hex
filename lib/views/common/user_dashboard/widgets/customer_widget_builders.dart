@@ -1,6 +1,6 @@
 import 'package:flutter/cupertino.dart';
-import 'package:oro_drip_irrigation/views/common/user_dashboard/widgets/sensor_widget.dart';
-import 'package:oro_drip_irrigation/views/common/user_dashboard/widgets/valve_widget.dart';
+import 'package:hex/views/common/user_dashboard/widgets/sensor_widget.dart';
+import 'package:hex/views/common/user_dashboard/widgets/valve_widget.dart';
 
 import '../../../../models/customer/site_model.dart';
 import '../../../customer/widgets/fan_widget.dart';

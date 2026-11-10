@@ -2,8 +2,8 @@ import 'dart:math' as math;
 import 'dart:typed_data';
 
 import 'package:intl/intl.dart';
-import 'package:oro_drip_irrigation/modules/Logs/model/event_log_model.dart';
-import 'package:oro_drip_irrigation/modules/Logs/model/motor_data_hourly.dart';
+import 'package:hex/modules/Logs/model/event_log_model.dart';
+import 'package:hex/modules/Logs/model/motor_data_hourly.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 

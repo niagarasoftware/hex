@@ -20,7 +20,7 @@ import '../../../../utils/snack_bar.dart';
 import '../../../../view_models/customer/customer_screen_controller_view_model.dart';
 import '../../../../view_models/customer/node_list_view_model.dart';
 import '../../../../view_models/customer/current_program_view_model.dart';
-import 'package:oro_drip_irrigation/utils/Theme/agritel_theme.dart';
+import 'package:hex/utils/Theme/agritel_theme.dart';
 
 import '../../../customer/widgets/alarm_button.dart';
 

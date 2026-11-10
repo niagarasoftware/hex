@@ -2,11 +2,11 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
-import 'package:oro_drip_irrigation/modules/bluetooth_low_energy/utils/extra.dart';
-import 'package:oro_drip_irrigation/modules/bluetooth_low_energy/utils/snackbar.dart';
-import 'package:oro_drip_irrigation/modules/bluetooth_low_energy/widget/characteristic_tile.dart';
-import 'package:oro_drip_irrigation/modules/bluetooth_low_energy/widget/descriptor_tile.dart';
-import 'package:oro_drip_irrigation/modules/bluetooth_low_energy/widget/service_tile.dart';
+import 'package:hex/modules/bluetooth_low_energy/utils/extra.dart';
+import 'package:hex/modules/bluetooth_low_energy/utils/snackbar.dart';
+import 'package:hex/modules/bluetooth_low_energy/widget/characteristic_tile.dart';
+import 'package:hex/modules/bluetooth_low_energy/widget/descriptor_tile.dart';
+import 'package:hex/modules/bluetooth_low_energy/widget/service_tile.dart';
 
 class DeviceScreen extends StatefulWidget {
   final BluetoothDevice device;

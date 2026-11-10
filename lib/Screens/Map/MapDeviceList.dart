@@ -8,7 +8,7 @@ import '../../services/http_service.dart';
 import '../../utils/snack_bar.dart';
 import 'oro_map/SetSelectAreatorLocation.dart';
 import 'googlemap_model.dart';
-import 'package:oro_drip_irrigation/utils/helpers/log_print.dart';
+import 'package:hex/utils/helpers/log_print.dart';
 
 
 class DeviceListScreen extends StatefulWidget {

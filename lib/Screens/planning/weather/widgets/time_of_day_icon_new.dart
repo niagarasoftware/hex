@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:oro_drip_irrigation/Screens/planning/weather/widgets/time_icon_new.dart';
+import 'package:hex/Screens/planning/weather/widgets/time_icon_new.dart';
 
 class TimeOfDayIconNew extends StatelessWidget {
   final String time;

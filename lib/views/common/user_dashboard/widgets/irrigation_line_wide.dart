@@ -2,8 +2,8 @@ import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:oro_drip_irrigation/views/common/user_dashboard/widgets/sensor_widget.dart';
-import 'package:oro_drip_irrigation/views/common/user_dashboard/widgets/valve_widget.dart';
+import 'package:hex/views/common/user_dashboard/widgets/sensor_widget.dart';
+import 'package:hex/views/common/user_dashboard/widgets/valve_widget.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../Widgets/pump_widget.dart';
@@ -542,8 +542,8 @@ class IrrigationLineWide extends StatelessWidget {
 /*
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:oro_drip_irrigation/views/common/user_dashboard/widgets/sensor_widget.dart';
-import 'package:oro_drip_irrigation/views/common/user_dashboard/widgets/valve_widget.dart';
+import 'package:hex/views/common/user_dashboard/widgets/sensor_widget.dart';
+import 'package:hex/views/common/user_dashboard/widgets/valve_widget.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../Widgets/pump_widget.dart';

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:linked_scroll_controller/linked_scroll_controller.dart';
-import 'package:oro_drip_irrigation/modules/irrigation_report/view/widgets/pump_ct_card.dart';
+import 'package:hex/modules/irrigation_report/view/widgets/pump_ct_card.dart';
 import '../model/data_parsing_and_sorting_model.dart';
 import 'reason_lookup.dart';
 

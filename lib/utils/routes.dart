@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:oro_drip_irrigation/Screens/login_screenOTP/login_screenotp.dart';
+import 'package:hex/Screens/login_screenOTP/login_screenotp.dart';
 import '../views/screen_controller.dart';
 import '../views/common/login/login_screen.dart';
 import '../views/splash_screen.dart';

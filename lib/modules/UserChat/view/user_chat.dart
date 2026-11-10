@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:oro_drip_irrigation/utils/shared_preferences_helper.dart';
+import 'package:hex/utils/shared_preferences_helper.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../services/http_service.dart';

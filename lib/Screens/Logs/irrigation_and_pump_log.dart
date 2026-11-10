@@ -2,10 +2,10 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:oro_drip_irrigation/modules/Logs/view/pump_log_dashboard.dart';
+import 'package:hex/modules/Logs/view/pump_log_dashboard.dart';
 import 'package:provider/provider.dart';
 
-import 'package:oro_drip_irrigation/utils/constants.dart';
+import 'package:hex/utils/constants.dart';
 
 import '../../StateManagement/customer_provider.dart';
 import '../../models/customer/site_model.dart';

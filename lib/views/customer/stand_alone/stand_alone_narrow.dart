@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:oro_drip_irrigation/views/customer/stand_alone/widgets/fertilizer_site_card.dart';
-import 'package:oro_drip_irrigation/views/customer/stand_alone/widgets/filter_site_card.dart';
-import 'package:oro_drip_irrigation/views/customer/stand_alone/widgets/irrigation_line_card.dart';
-import 'package:oro_drip_irrigation/views/customer/stand_alone/widgets/irrigation_pump_card.dart';
-import 'package:oro_drip_irrigation/views/customer/stand_alone/widgets/main_valve_card.dart';
-import 'package:oro_drip_irrigation/views/customer/stand_alone/widgets/source_pump_card.dart';
-import 'package:oro_drip_irrigation/views/customer/stand_alone/widgets/valve_card_table.dart';
+import 'package:hex/views/customer/stand_alone/widgets/fertilizer_site_card.dart';
+import 'package:hex/views/customer/stand_alone/widgets/filter_site_card.dart';
+import 'package:hex/views/customer/stand_alone/widgets/irrigation_line_card.dart';
+import 'package:hex/views/customer/stand_alone/widgets/irrigation_pump_card.dart';
+import 'package:hex/views/customer/stand_alone/widgets/main_valve_card.dart';
+import 'package:hex/views/customer/stand_alone/widgets/source_pump_card.dart';
+import 'package:hex/views/customer/stand_alone/widgets/valve_card_table.dart';
 import 'package:provider/provider.dart';
 
 import '../../../models/customer/site_model.dart';

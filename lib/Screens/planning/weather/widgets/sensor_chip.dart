@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:oro_drip_irrigation/Screens/planning/weather/widgets/sensor_tile_new.dart';
+import 'package:hex/Screens/planning/weather/widgets/sensor_tile_new.dart';
 
 import '../model/weather_model.dart';
 import '../view_model/weather_view_model.dart';

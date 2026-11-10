@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:oro_drip_irrigation/views/customer/stand_alone/widgets/valve_card_table.dart';
+import 'package:hex/views/customer/stand_alone/widgets/valve_card_table.dart';
 
 import '../../../../models/customer/site_model.dart';
 

@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:data_table_2/data_table_2.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:oro_drip_irrigation/utils/environment.dart';
+import 'package:hex/utils/environment.dart';
 
 import '../../../models/customer/site_model.dart';
 import '../../../services/mqtt_service.dart';

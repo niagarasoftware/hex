@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:oro_drip_irrigation/views/customer/widgets/valve_sensors_popover.dart';
+import 'package:hex/views/customer/widgets/valve_sensors_popover.dart';
 import 'package:popover/popover.dart';
 import 'package:provider/provider.dart';
 

@@ -2,7 +2,7 @@ import 'dart:convert';
 
 import 'package:data_table_2/data_table_2.dart';
 import 'package:flutter/material.dart';
-import 'package:oro_drip_irrigation/modules/constant/model/object_in_constant_model.dart';
+import 'package:hex/modules/constant/model/object_in_constant_model.dart';
 import 'package:provider/provider.dart';
 
 import '../../../Constants/dialog_boxes.dart';
