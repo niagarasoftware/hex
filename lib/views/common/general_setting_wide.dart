@@ -225,294 +225,240 @@ class _GeneralSettingWideState extends State<GeneralSettingWide> {
     }
   }
 
-  Widget generalSetting(BuildContext context, GeneralSettingViewModel viewModel){
+  // Presentation-only helpers for the refreshed General Settings screen.
+  static const Color _ink = Color(0xFF192D32);
+  static const Color _muted = Color(0xFF657C83);
+  static const Color _teal = Color(0xFF00616C);
+  static const Color _border = Color(0xFFE1E9EA);
 
-    return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: Container(
-        color: Colors.white,
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              SizedBox(
-                height: 385,
-                child: Row(
-                  children: [
-                    Flexible(
-                      flex: 1,
-                      child: Column(
-                        children: [
-                          ListTile(
-                            title: const Text('Farm Name'),
-                            leading: const Icon(Icons.label_outline),
-                            trailing: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(viewModel.farmName, style: const TextStyle(fontWeight: FontWeight.bold)),
-                                const SizedBox(width: 16),
-                                IconButton(
-                                  onPressed: () {
-                                    showEditControllerDialog(context, 'Farm Name', viewModel.farmName, (farmName) {
-                                      viewModel.farmName = farmName;
-                                      viewModel.updateMasterDetails(context);
-                                    });
-                                  },
-                                  icon: const Icon(Icons.edit),
-                                ),
-                              ],
-                            ),
-                          ),
-                          Divider(color: Colors.grey.shade200),
-                          ListTile(
-                            title: const Text('Controller Name'),
-                            leading: const Icon(Icons.developer_board),
-                            trailing: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(viewModel.controllerCategory, style: const TextStyle(fontWeight: FontWeight.bold)),
-                                const SizedBox(width: 16),
-                                IconButton(
-                                  onPressed: () {
-                                    showEditControllerDialog(context, 'Controller Name', viewModel.controllerCategory, (category) {
-                                      viewModel.controllerCategory = category;
-                                      viewModel.updateMasterDetails(context);
-                                    });
-                                  },
-                                  icon: const Icon(Icons.edit),
-                                ),
-                              ],
-                            ),
-                          ),
-                          Divider(color: Colors.grey.shade200),
-                          ListTile(
-                            title: const Text('Device Category'),
-                            leading: const Icon(Icons.category_outlined),
-                            trailing: Text(
-                              viewModel.categoryName,
-                              style: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold),
-                            ),
-                          ),
-                          Divider(color: Colors.grey.shade200),
-                          ListTile(
-                            title: const Text('Model'),
-                            leading: const Icon(Icons.model_training),
-                            trailing: Text(
-                              viewModel.modelName,
-                              style: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold),
-                            ),
-                          ),
-                          Divider(color: Colors.grey.shade200),
-                          ListTile(
-                            title: const Text('Device ID'),
-                            leading: const Icon(Icons.numbers_outlined),
-                            trailing: SelectableText(
-                              viewModel.deviceId,
-                              style: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold),
-                            ),
-                          ),
-                          Divider(color: Colors.grey.shade200),
-                          ListTile(
-                            title: const Text('Version'),
-                            leading: const Icon(Icons.perm_device_info),
-                            trailing: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  viewModel.controllerVersion,
-                                  style: const TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.bold),
-                                ),
-                                viewModel.controllerVersion != viewModel.newVersion? const SizedBox(width: 16,):
-                                const SizedBox(),
-                                viewModel.controllerVersion != viewModel.newVersion? TextButton(
-                                  onPressed: () {
-                                  },
-                                  child: AnimatedOpacity(
-                                    opacity: viewModel.opacity,
-                                    duration: const Duration(seconds: 2),
-                                    child: Text('New Version available - ${viewModel.newVersion}', style: const TextStyle(color: Colors.black54),),
-                                  ),
-                                ):
-                                const SizedBox(),
-                              ],
-                            ),
-                          ),
-                          Divider(color: Colors.grey.shade300),
-                        ],
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 15),
-                      child: VerticalDivider(width: 0, color: Colors.grey.shade200),
-                    ),
-                    Flexible(
-                      flex: 1,
-                      child: Column(
-                        children: [
-                          if([...AppConstants.ecoGemModelList, ...AppConstants.pumpList].contains(viewModel.modelId))...[
-                            ListTile(
-                              title: const Text('Sim card number'),
-                              leading: const Icon(Icons.sim_card_outlined),
-                              trailing: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text('${viewModel.countryCode} - ${viewModel.simNumber}',
-                                      style: const TextStyle(fontWeight: FontWeight.bold)),
-                                  const SizedBox(width: 16),
-                                  IconButton(
-                                    onPressed: () {
-                                      showSimEditControllerDialog(context, 'SIM card Number',
-                                          viewModel.countryCode ?? '91',viewModel.simNumber ?? '0', (cCode, sNumber) {
-                                        viewModel.countryCode = cCode;
-                                        viewModel.simNumber = sNumber;
-                                        viewModel.updateMasterDetails(context);
-                                      });
-                                    },
-                                    icon: const Icon(Icons.edit),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            Divider(color: Colors.grey.shade300),
-                          ],
-                          ListTile(
-                            title: const Text('UTC'),
-                            leading: const Icon(Icons.timer_outlined),
-                            trailing: DropdownButton<String>(
-                              hint: const Text('Select Time Zone'),
-                              value: viewModel.selectedTimeZone,
-                              onChanged: (String? newValue) {
-                                if (newValue != null) {
-                                  viewModel.updateCurrentDateTime(newValue);
-                                }
-                              },
-                              items: viewModel.timeZones
-                                  .map<DropdownMenuItem<String>>(
-                                      (String value) {
-                                    return DropdownMenuItem<String>(
-                                      value: value,
-                                      child: Text(value),
-                                    );
-                                  }).toList(),
-                            ),
-                          ),
-                          Divider(color: Colors.grey.shade200),
-                          ListTile(
-                            title: const Text('Current Date'),
-                            leading: const Icon(Icons.date_range),
-                            trailing: Text(
-                              viewModel.currentDate,
-                              style: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold),
-                            ),
-                          ),
-                          Divider(color: Colors.grey.shade200),
-                          ListTile(
-                            title: const Text('Current UTC Time'),
-                            leading: const Icon(Icons.date_range),
-                            trailing: Text(
-                              viewModel.currentTime,
-                              style: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold),
-                            ),
-                          ),
-                          Divider(color: Colors.grey.shade200),
-                          ListTile(
-                            title: const Text('Controller Location'),
-                            leading: const Icon(Icons.location_on_outlined),
-                            trailing: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(viewModel.controllerLocation, style: const TextStyle(fontWeight: FontWeight.bold)),
-                                const SizedBox(width: 16),
-                                IconButton(
-                                  onPressed: () {
-                                    showEditControllerDialog(context, 'Location', viewModel.controllerLocation, (location) {
-                                      viewModel.controllerLocation = location;
-                                      viewModel.updateMasterDetails(context);
-                                    });
-                                  },
-                                  icon: const Icon(Icons.edit),
-                                ),
-                              ],
-                            ),
-                          ),
-                          Divider(color: Colors.grey.shade200),
-                          const ListTile(
-                            title: Text('Time Format'),
-                            leading: Icon(Icons.date_range),
-                            trailing: Text(
-                              '24 Hrs',
-                              style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold),
-                            ),
-                          ),
-                          Divider(color: Colors.grey.shade200),
-                          if([...AppConstants.gemModelList].contains(viewModel.modelId))...[
-                            const ListTile(
-                              title: Text('Unit'),
-                              leading: Icon(Icons.ac_unit_rounded),
-                              trailing: Text(
-                                'm3',
-                                style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.bold),
-                              ),
-                            ),
-                            Divider(color: Colors.grey.shade300),
-                          ],
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              SizedBox(
-                height: 50,
-                width: MediaQuery.sizeOf(context).width,
-                child: ListTile(
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      MaterialButton(
-                        color: Colors.teal,
-                        textColor: Colors.white,
-                        onPressed: () async {
-                        },
-                        child: const Text('Restart the controller'),
-                      ),
-                      const SizedBox(width: 16),
-                      MaterialButton(
-                        color: Theme.of(context).primaryColorDark,
-                        textColor: Colors.white,
-                        onPressed: () => viewModel.updateMasterDetails(context),
-                        child: const Text('Save Changes'),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              if(!widget.isSubUser)...[
-                ListTile(
-                  leading: const Icon(Icons.supervised_user_circle_outlined),
-                  title: const Text(
-                    'My Sub users',
-                    style:
-                    TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
-                  ),
-                  trailing: widget.userId != 0
-                      ? IconButton(
-                      tooltip: 'Add new sub user',
+  Widget _panel({required Widget child, EdgeInsetsGeometry? padding}) => Container(
+    padding: padding ?? const EdgeInsets.all(20),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(14),
+      border: Border.all(color: _border),
+      boxShadow: const [BoxShadow(color: Color(0x070F2742), blurRadius: 12, offset: Offset(0, 3))],
+    ),
+    child: child,
+  );
+
+  Widget _heading(IconData icon, String title, {String? subtitle}) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Row(children: [Icon(icon, color: _teal, size: 19), const SizedBox(width: 9),
+        Flexible(child: Text(title, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: _ink)))]),
+      if (subtitle != null) ...[const SizedBox(height: 6), Text(subtitle, style: const TextStyle(fontSize: 12, color: _muted))],
+    ],
+  );
+
+  Widget _field(String label, Widget content, {VoidCallback? onEdit}) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: _muted)),
+      const SizedBox(height: 7),
+      Container(
+        constraints: const BoxConstraints(minHeight: 45),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+        decoration: BoxDecoration(color: const Color(0xFFF2F5F5), border: Border.all(color: _border), borderRadius: BorderRadius.circular(9)),
+        child: Row(children: [Expanded(child: content), if (onEdit != null) ...[
+          const SizedBox(width: 6),
+          IconButton(onPressed: onEdit, icon: const Icon(Icons.edit_outlined, size: 17),
+              color: _muted, tooltip: 'Edit $label', visualDensity: VisualDensity.compact, constraints: const BoxConstraints(minWidth: 32, minHeight: 32)),
+        ]]),
+      ),
+    ],
+  );
+
+  Widget _value(String text) => Text(text, maxLines: 2, overflow: TextOverflow.ellipsis,
+      style: const TextStyle(color: _ink, fontSize: 13, fontWeight: FontWeight.w600));
+
+  Widget _metric(IconData icon, String label, String value, String detail) => _panel(
+    padding: const EdgeInsets.all(16),
+    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+        Expanded(child: Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: _muted))),
+        Icon(icon, size: 18, color: _teal),
+      ]),
+      const SizedBox(height: 12),
+      Text(value, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: _ink, fontSize: 16, fontWeight: FontWeight.w800)),
+      const SizedBox(height: 5),
+      Text(detail, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(color: _muted, fontSize: 11)),
+    ]),
+  );
+
+  Widget _pill(String text) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(30), border: Border.all(color: _border)),
+    child: Text(text, maxLines: 1, overflow: TextOverflow.ellipsis,
+        style: const TextStyle(fontSize: 11, color: _ink, fontWeight: FontWeight.w600)),
+  );
+
+  Widget _actionFooter(GeneralSettingViewModel viewModel, BuildContext context, bool isCompact) {
+    final restart = OutlinedButton.icon(
+      onPressed: () async {}, // Existing restart callback is intentionally empty.
+      icon: const Icon(Icons.restart_alt, size: 18),
+      label: const Text('Restart the controller'),
+      style: OutlinedButton.styleFrom(
+        foregroundColor: const Color(0xFFD8242B),
+        side: const BorderSide(color: Color(0xFFE85B61)),
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 15),
+      ),
+    );
+    final save = FilledButton.icon(
+      onPressed: () => viewModel.updateMasterDetails(context),
+      icon: const Icon(Icons.check, size: 17),
+      label: const Text('Save changes'),
+      style: FilledButton.styleFrom(
+        backgroundColor: _teal,
+        padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 15),
+      ),
+    );
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.symmetric(horizontal: isCompact ? 14 : 28, vertical: 12),
+      decoration: const BoxDecoration(color: Colors.white, border: Border(top: BorderSide(color: _border))),
+      child: Center(child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 1200),
+        child: isCompact
+            ? Wrap(spacing: 12, runSpacing: 10, alignment: WrapAlignment.spaceBetween, children: [restart, save])
+            : Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [restart, save]),
+      )),
+    );
+  }
+
+  Widget generalSetting(BuildContext context, GeneralSettingViewModel viewModel) {
+    final isCompact = MediaQuery.sizeOf(context).width < 850;
+    final hasSim = [...AppConstants.ecoGemModelList, ...AppConstants.pumpList].contains(viewModel.modelId);
+    final hasUnit = [...AppConstants.gemModelList].contains(viewModel.modelId);
+
+    final details = _panel(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      _heading(Icons.perm_device_information_outlined, 'Controller details', subtitle: 'Names and location shown across the dashboard.'),
+      const SizedBox(height: 21),
+      _field('Farm name', _value(viewModel.farmName), onEdit: () {
+        showEditControllerDialog(context, 'Farm Name', viewModel.farmName, (farmName) {
+          viewModel.farmName = farmName;
+          viewModel.updateMasterDetails(context);
+        });
+      }),
+      const SizedBox(height: 15),
+      _field('Controller name', _value(viewModel.controllerCategory), onEdit: () {
+        showEditControllerDialog(context, 'Controller Name', viewModel.controllerCategory, (category) {
+          viewModel.controllerCategory = category;
+          viewModel.updateMasterDetails(context);
+        });
+      }),
+      const SizedBox(height: 15),
+      _field('Controller location', _value(viewModel.controllerLocation), onEdit: () {
+        showEditControllerDialog(context, 'Location', viewModel.controllerLocation, (location) {
+          viewModel.controllerLocation = location;
+          viewModel.updateMasterDetails(context);
+        });
+      }),
+      if (hasSim) ...[
+        const SizedBox(height: 15),
+        _field('SIM card number', _value('${viewModel.countryCode} - ${viewModel.simNumber}'), onEdit: () {
+          showSimEditControllerDialog(context, 'SIM card Number',
+              viewModel.countryCode ?? '91', viewModel.simNumber ?? '0', (cCode, sNumber) {
+                viewModel.countryCode = cCode;
+                viewModel.simNumber = sNumber;
+                viewModel.updateMasterDetails(context);
+              });
+        }),
+      ],
+    ]));
+
+    final clock = _panel(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      _heading(Icons.schedule_outlined, 'Date & time', subtitle: 'How the controller keeps time.'),
+      const SizedBox(height: 21),
+      _field('Time zone', DropdownButtonHideUnderline(child: DropdownButton<String>(
+        isExpanded: true,
+        hint: const Text('Select Time Zone'),
+        value: viewModel.selectedTimeZone,
+        onChanged: (String? newValue) {
+          if (newValue != null) viewModel.updateCurrentDateTime(newValue);
+        },
+        items: viewModel.timeZones.map<DropdownMenuItem<String>>((String value) =>
+            DropdownMenuItem<String>(value: value, child: Text(value, overflow: TextOverflow.ellipsis))).toList(),
+      ))),
+      const SizedBox(height: 15),
+      LayoutBuilder(builder: (context, constraints) {
+        final date = _field('Current date', _value(viewModel.currentDate));
+        final time = _field('Current UTC time', _value(viewModel.currentTime));
+        final format = _field('Time format', _value('24 Hrs'));
+        if (constraints.maxWidth < 460) {
+          return Column(children: [date, const SizedBox(height: 12), time, const SizedBox(height: 12), format]);
+        }
+        return Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Expanded(child: date), const SizedBox(width: 10),
+          Expanded(child: time), const SizedBox(width: 10),
+          Expanded(child: format),
+        ]);
+      }),
+
+    ]));
+
+    return ColoredBox(
+      color: const Color(0xFFF5F2F8),
+      child: Column(children: [Expanded(child: SingleChildScrollView(
+        padding: EdgeInsets.symmetric(horizontal: isCompact ? 14 : 28, vertical: 32),
+        child: Center(child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 1200),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+            _panel(child: Row(children: [
+              Container(width: 46, height: 46, alignment: Alignment.center,
+                  decoration: BoxDecoration(color: const Color(0xFFE5FAF4), borderRadius: BorderRadius.circular(12)),
+                  child: Text(viewModel.farmName.isNotEmpty ? viewModel.farmName[0].toUpperCase() : 'F', style: const TextStyle(fontSize: 20, color: _teal, fontWeight: FontWeight.w800))),
+              const SizedBox(width: 13),
+              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text(viewModel.farmName, maxLines: 1, overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: _ink)),
+                const SizedBox(height: 4),
+                Text('${viewModel.controllerCategory}  •  ${viewModel.controllerLocation}',
+                    maxLines: 2, overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontSize: 12, color: _muted)),
+              ])),
+              if (!isCompact) ...[
+                const SizedBox(width: 12),
+                Flexible(child: _pill('Version: ${viewModel.controllerVersion}')),
+                const SizedBox(width: 8),
+                Flexible(child: _pill('${viewModel.currentDate} · ${viewModel.currentTime} UTC')),
+              ],
+            ])),
+            const SizedBox(height: 16),
+            LayoutBuilder(builder: (context, constraints) {
+              final cards = [
+                _metric(Icons.category_outlined, 'Device category', viewModel.categoryName, 'Controller category'),
+                _metric(Icons.memory_outlined, 'Model identifier', viewModel.modelName, 'Controller model'),
+                _metric(Icons.key_outlined, 'Device ID', viewModel.deviceId, 'Controller identifier'),
+                _metric(Icons.straighten_outlined, 'Unit', hasUnit ? 'm³' : '—', 'Flow measurement'),
+              ];
+              final count = constraints.maxWidth >= 850 ? 4 : (constraints.maxWidth >= 470 ? 2 : 1);
+              final gap = 12.0;
+              final itemWidth = (constraints.maxWidth - gap * (count - 1)) / count;
+              return Wrap(spacing: gap, runSpacing: gap, children: [
+                for (final card in cards) SizedBox(width: itemWidth, child: card),
+              ]);
+            }),
+            if (viewModel.controllerVersion != viewModel.newVersion) ...[
+              const SizedBox(height: 10),
+              AnimatedOpacity(opacity: viewModel.opacity, duration: const Duration(seconds: 2),
+                  child: Text('New Version available - ${viewModel.newVersion}',
+                      style: const TextStyle(color: _teal, fontSize: 12))),
+            ],
+            const SizedBox(height: 16),
+            if (isCompact) ...[details, const SizedBox(height: 16), clock]
+            else Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Expanded(child: details), const SizedBox(width: 16), Expanded(child: clock),
+            ]),
+            if (!widget.isSubUser) ...[
+              const SizedBox(height: 18),
+              _panel(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Row(children: [
+                  Expanded(child: _heading(Icons.groups_outlined, 'My sub users',
+                      subtitle: 'Manage users and controller access permissions.')),
+                  if (widget.userId != 0) ...[
+                    const SizedBox(width: 8),
+                    OutlinedButton.icon(
                       onPressed: () async {
                         showModalBottomSheet(
                           context: context,
@@ -526,53 +472,80 @@ class _GeneralSettingWideState extends State<GeneralSettingWide> {
                                   color: Colors.white,
                                   borderRadius: BorderRadius.vertical(top: Radius.circular(8.0)),
                                 ),
-                                child: CreateAccount(userId: widget.userId, role: UserRole.subUser, customerId: widget.customerId, onAccountCreated: viewModel.updateCustomerList),
+                                child: CreateAccount(userId: widget.userId, role: UserRole.subUser,
+                                    customerId: widget.customerId, onAccountCreated: viewModel.updateCustomerList),
                               ),
                             );
                           },
                         );
                       },
-                      icon: const Icon(Icons.add))
-                      : null,
-                ),
-                Divider(height:0, color: Colors.grey.shade300),
-                SizedBox(
-                  height: 70,
-                  child: viewModel.subUsers.isNotEmpty ?
-                  ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    itemCount: viewModel.subUsers.length,
-                    itemBuilder: (context, index) {
-                      final user = viewModel.subUsers[index];
-                      return SizedBox(
-                        width: 250,
-                        child: Card(
-                          surfaceTintColor: Colors.teal,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(5.0),
-                          ),
-                          child: ListTile(
-                            title: Text(user['userName']),
-                            subtitle: Text(
-                                '+${user['countryCode']} ${user['mobileNumber']}'),
-                            trailing: IconButton(
-                              tooltip: 'User Permission',
-                              onPressed: () => _showAlertDialog(
-                                  context, viewModel, user['userName'], user['userId']),
-                              icon: const Icon(Icons.menu),
-                            ),
-                          ),
-                        ),
-                      );
-                    },
-                  ) :
-                  const Center(child: Text('No Sub user available for this controller')),
-                ),
-              ],
+                      icon: const Icon(Icons.add, size: 17), label: Text(isCompact ? 'Add' : 'Add sub user'),
+                      style: OutlinedButton.styleFrom(foregroundColor: _teal),
+                    ),
+                  ],
+                ]),
+                const SizedBox(height: 17),
+                const Divider(color: _border),
+                if (viewModel.subUsers.isEmpty)
+                  const Padding(padding: EdgeInsets.symmetric(vertical: 36),
+                      child: Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
+                        CircleAvatar(radius: 24, backgroundColor: Color(0xFFE4F2F3), child: Icon(Icons.group_outlined, color: _teal)),
+                        SizedBox(height: 12),
+                        Text('No sub users yet', style: TextStyle(color: _ink, fontWeight: FontWeight.w700)),
+                        SizedBox(height: 5),
+                        Text('No sub user is available for this controller.', style: TextStyle(color: _muted)),
+                      ])))
+                else ...[
+                  if (!isCompact) const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      child: Row(children: [
+                        Expanded(flex: 3, child: Text('USER & CONTACT', style: TextStyle(color: _muted, fontSize: 10, fontWeight: FontWeight.bold))),
+                        Expanded(flex: 2, child: Text('MOBILE NUMBER', style: TextStyle(color: _muted, fontSize: 10, fontWeight: FontWeight.bold))),
+                        SizedBox(width: 150, child: Text('ACTIONS', textAlign: TextAlign.end, style: TextStyle(color: _muted, fontSize: 10, fontWeight: FontWeight.bold))),
+                      ])),
+                  for (final user in viewModel.subUsers) ...[
+                    Padding(padding: const EdgeInsets.symmetric(vertical: 9, horizontal: 6), child:
+                    isCompact
+                        ? Row(children: [
+                      CircleAvatar(backgroundColor: const Color(0xFFE3F5F2),
+                          child: Text((user['userName']?.toString().isNotEmpty ?? false)
+                              ? user['userName'].toString().substring(0, 1).toUpperCase() : '?',
+                              style: const TextStyle(color: _teal))),
+                      const SizedBox(width: 10),
+                      Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                        _value(user['userName'].toString()),
+                        Text('+${user['countryCode']} ${user['mobileNumber']}',
+                            style: const TextStyle(color: _muted, fontSize: 12)),
+                      ])),
+                      IconButton(tooltip: 'User Permission', icon: const Icon(Icons.manage_accounts_outlined),
+                          onPressed: () => _showAlertDialog(context, viewModel, user['userName'], user['userId'])),
+                    ])
+                        : Row(children: [
+                      CircleAvatar(backgroundColor: const Color(0xFFE3F5F2),
+                          child: Text((user['userName']?.toString().isNotEmpty ?? false)
+                              ? user['userName'].toString().substring(0, 1).toUpperCase() : '?',
+                              style: const TextStyle(color: _teal))),
+                      const SizedBox(width: 5),
+                      Expanded(flex: 3, child: _value(user['userName'].toString())),
+                      Expanded(flex: 2, child: Text('+${user['countryCode']} ${user['mobileNumber']}',
+                          style: const TextStyle(color: _muted, fontSize: 12))),
+                      SizedBox(width: 150, child: TextButton.icon(
+                        onPressed: () => _showAlertDialog(context, viewModel, user['userName'], user['userId']),
+                        icon: const Icon(Icons.manage_accounts_outlined, size: 17),
+                        label: const Text('Permissions'),
+                      )),
+                    ])),
+                    const Divider(height: 1, color: _border),
+                  ],
+                ],
+              ])),
             ],
-          ),
-        ),
-      ),
+            const SizedBox(height: 22),
+          ]),
+        )),
+      )),
+        _actionFooter(viewModel, context, isCompact),
+      ]),
     );
   }
 

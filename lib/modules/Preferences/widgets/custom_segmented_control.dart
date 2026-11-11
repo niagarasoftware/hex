@@ -9,39 +9,54 @@ class CustomSegmentedControl extends StatelessWidget {
   final Color unselectedColor;
   final EdgeInsets padding;
 
-  const CustomSegmentedControl({super.key,
+  const CustomSegmentedControl({
+    super.key,
     required this.segmentTitles,
     required this.groupValue,
     required this.onChanged,
     this.selectedColor = Colors.black,
     this.unselectedColor = Colors.white,
-    this.padding = const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+    this.padding = const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
   });
 
   @override
   Widget build(BuildContext context) {
-    return CupertinoSlidingSegmentedControl<int>(
-      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 5),
-      children: segmentTitles.map((key, title) {
-        return MapEntry(
-          key,
-          Padding(
-            padding: padding,
-            child: Text(
-              title,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                  color: groupValue == key ? Colors.black : Theme.of(context).primaryColor,
-                  fontWeight: FontWeight.bold
+    final primaryColor = Theme.of(context).primaryColor;
+    return Container(
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: primaryColor.withOpacity(0.15),
+          width: 1,
+        ),
+      ),
+      padding: const EdgeInsets.all(4),
+      child: CupertinoSlidingSegmentedControl<int>(
+        padding: const EdgeInsets.all(2),
+        children: segmentTitles.map((key, title) {
+          final isSelected = groupValue == key;
+          return MapEntry(
+            key,
+            Padding(
+              padding: padding,
+              child: Text(
+                title,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: isSelected ? Colors.black87 : primaryColor,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                  fontSize: 13,
+                ),
               ),
             ),
-          ),
-        );
-      }),
-      groupValue: groupValue,
-      onValueChanged: onChanged,
-      thumbColor: Colors.white,
-      backgroundColor: Theme.of(context).primaryColor.withOpacity(0.1),
+          );
+        }),
+        groupValue: groupValue,
+        onValueChanged: onChanged,
+        thumbColor: Colors.white,
+        backgroundColor: Colors.transparent,
+      ),
     );
   }
 }

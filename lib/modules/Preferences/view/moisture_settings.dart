@@ -10,37 +10,61 @@ class MoistureSettings extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final primaryColor = Theme.of(context).primaryColor;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        IntrinsicWidth(
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 15),
-            height: 30,
-            decoration: BoxDecoration(
-                color: Theme.of(context).primaryColorLight,
-                borderRadius: const BorderRadius.only(topRight: Radius.circular(20), topLeft: Radius.circular(3))
-            ),
-            child: const Center(
-              child: Text(
-                "Moisture Settings",
-                style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white,),
-              ),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          decoration: BoxDecoration(
+            color: Theme.of(context).primaryColorLight,
+            borderRadius: const BorderRadius.only(
+              topRight: Radius.circular(16),
+              topLeft: Radius.circular(6),
             ),
           ),
+          child: const Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.water_drop_outlined, color: Colors.white, size: 18),
+              SizedBox(width: 8),
+              Text(
+                "Moisture Settings",
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                  fontSize: 14,
+                ),
+              ),
+            ],
+          ),
         ),
-        Flexible(
+        Expanded(
           child: Container(
             decoration: BoxDecoration(
-                borderRadius: const BorderRadius.only(topRight: Radius.circular(10), bottomLeft: Radius.circular(10), bottomRight: Radius.circular(10)),
-                color: Colors.white,
-                border: Border.all(color: Theme.of(context).primaryColorLight, width: 0.3)
-              // boxShadow: AppProperties.customBoxShadowLiteTheme
+              borderRadius: const BorderRadius.only(
+                topRight: Radius.circular(12),
+                bottomLeft: Radius.circular(12),
+                bottomRight: Radius.circular(12),
+              ),
+              color: Colors.white,
+              border: Border.all(
+                color: Theme.of(context).primaryColorLight.withOpacity(0.4),
+                width: 0.5,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: primaryColor.withOpacity(0.04),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
             ),
             child: Consumer<PreferenceProvider>(
-              builder: (context, provider, _) => ListView.builder(
-                padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+              builder: (context, provider, _) => ListView.separated(
+                padding: const EdgeInsets.all(16),
                 itemCount: provider.moistureSettings?.setting.length ?? 0,
+                separatorBuilder: (context, index) => const Divider(height: 24, thickness: 0.5),
                 itemBuilder: (context, index) => _buildSettingItem(
                   context,
                   provider,
@@ -55,10 +79,10 @@ class MoistureSettings extends StatelessWidget {
   }
 
   Widget _buildSettingItem(
-      BuildContext context,
-      PreferenceProvider provider,
-      WidgetSetting item,
-      ) {
+    BuildContext context,
+    PreferenceProvider provider,
+    WidgetSetting item,
+  ) {
     const settingOptions = ["Both", "Any", "Moisture 1", "Moisture 2"];
 
     switch (item.serialNumber) {
@@ -66,7 +90,8 @@ class MoistureSettings extends StatelessWidget {
         return _SwitchTile(
           title: item.title,
           value: item.value as bool,
-          onChanged: (value) => provider.updateMoistureSwitchValue(item.title, value),
+          onChanged: (value) =>
+              provider.updateMoistureSwitchValue(item.title, value),
         );
       case 2:
         return _RadioTile(
@@ -78,27 +103,50 @@ class MoistureSettings extends StatelessWidget {
       default:
         final values = (item.value as String).split(',');
         return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if(item.serialNumber == 3)
-              Row(
-                children: [
-                  Expanded(child: Container()),
-                  const SizedBox(
-                    width: 80,
-                    child: Text("Min"),
-                  ),
-                  const SizedBox(
-                    width: 80,
-                    child: Text("Max"),
-                  ),
-                ],
+            if (item.serialNumber == 3)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Row(
+                  children: [
+                    const Expanded(child: SizedBox()),
+                    SizedBox(
+                      width: 80,
+                      child: Text(
+                        "Min",
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: Theme.of(context).primaryColor,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    SizedBox(
+                      width: 80,
+                      child: Text(
+                        "Max",
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: Theme.of(context).primaryColor,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             _RangeInputTile(
               title: item.title,
               firstValue: values[0],
               secondValue: values[1],
-              onChanged1: (value) => provider.updateMoistureSettingValue(item.title, value, true),
-              onChanged2: (value) => provider.updateMoistureSettingValue(item.title, value, false),
+              onChanged1: (value) =>
+                  provider.updateMoistureSettingValue(item.title, value, true),
+              onChanged2: (value) =>
+                  provider.updateMoistureSettingValue(item.title, value, false),
             ),
           ],
         );
@@ -119,14 +167,26 @@ class _SwitchTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      contentPadding: EdgeInsets.zero,
-      title: Text(title),
-      trailing: IntrinsicWidth(
-        child: Switch(
-          value: value,
-          onChanged: onChanged,
-        ),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.2),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Expanded(
+            child: Text(
+              title,
+              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+            ),
+          ),
+          Switch(
+            value: value,
+            onChanged: onChanged,
+          ),
+        ],
       ),
     );
   }
@@ -147,28 +207,42 @@ class _RadioTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      contentPadding: EdgeInsets.zero,
-      title: Text(title),
-      subtitle: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: Row(
-          children: options.asMap().entries.map((entry) => Padding(
-            padding: const EdgeInsets.only(right: 10),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Radio<int>(
-                  value: (entry.key+1),
-                  groupValue: value,
-                  onChanged: onChanged,
-                ),
-                Text(entry.value),
-              ],
-            ),
-          )).toList(),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
         ),
-      ),
+        const SizedBox(height: 8),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: options.asMap().entries.map((entry) {
+              final optionIndex = entry.key + 1;
+              final isSelected = value == optionIndex;
+              return Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: ChoiceChip(
+                  label: Text(entry.value),
+                  selected: isSelected,
+                  onSelected: (selected) {
+                    if (selected) onChanged(optionIndex);
+                  },
+                  selectedColor: Theme.of(context).primaryColor.withOpacity(0.15),
+                  labelStyle: TextStyle(
+                    color: isSelected
+                        ? Theme.of(context).primaryColor
+                        : Colors.black87,
+                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                    fontSize: 13,
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -191,11 +265,16 @@ class _RangeInputTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Expanded(child: Text(title)),
+          Expanded(
+            child: Text(
+              title,
+              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+            ),
+          ),
           _NumberInputField(
             value: firstValue,
             onChanged: onChanged1,
@@ -229,13 +308,22 @@ class _NumberInputField extends StatelessWidget {
         textAlign: TextAlign.center,
         keyboardType: TextInputType.number,
         onChanged: onChanged,
-        decoration: const InputDecoration(
+        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+        decoration: InputDecoration(
           hintText: "000",
           isDense: true,
-          contentPadding: EdgeInsets.symmetric(vertical: 5),
+          contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.all(Radius.circular(8)),
-            borderSide: BorderSide.none,
+            borderRadius: BorderRadius.circular(8),
+            borderSide: BorderSide(color: Colors.grey.shade300),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: BorderSide(color: Colors.grey.shade300),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: BorderSide(color: Theme.of(context).primaryColor, width: 1.5),
           ),
           fillColor: cardColor,
           filled: true,

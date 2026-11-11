@@ -1,12 +1,10 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:mqtt_client/mqtt_client.dart';
 import 'package:hex/modules/Preferences/state_management/preference_provider.dart';
 import 'package:provider/provider.dart';
 import '../../../Constants/constants.dart';
 import '../../../services/communication_service.dart';
 import '../../../services/mqtt_service.dart';
-import '../../../utils/environment.dart';
 
 class PayloadProgressDialog extends StatefulWidget {
   final List<String> payloads;
@@ -65,26 +63,30 @@ class _PayloadProgressDialogState extends State<PayloadProgressDialog> {
   @override
   void initState() {
     super.initState();
-    if(mounted){
+    if (mounted) {
       payloadStatuses = widget.payloads.map((payload) {
         try {
-          var payloadToDecode = widget.isToGem ? payload.split('+')[4] : payload;
+          var payloadToDecode =
+              widget.isToGem ? payload.split('+')[4] : payload;
           var decodedData = jsonDecode(payloadToDecode);
           var key = decodedData.keys.first;
 
           return {
             'payload': payload,
             'status': 'Pending',
-            'reference': widget.isToGem ? payload.split('+')[2] : 'Device payload',
+            'reference':
+                widget.isToGem ? payload.split('+')[2] : 'Device payload',
             'selected': true,
             'key': key,
           };
         } catch (error, stackTrace) {
-          print("==================== ERROR PARSING PAYLOAD ====================");
+          print(
+              "==================== ERROR PARSING PAYLOAD ====================");
           print("Payload: $payload");
           print("Error: $error");
           print("StackTrace:\n$stackTrace");
-          print("===============================================================");
+          print(
+              "===============================================================");
           return {
             'payload': payload,
             'status': 'Failed',
@@ -98,10 +100,14 @@ class _PayloadProgressDialogState extends State<PayloadProgressDialog> {
   }
 
   void _checkAllProcessed() {
-    bool allProcessed = payloadStatuses.where((s) => s['selected']).every((p) => p['status'] != 'Pending');
-    bool allSent = payloadStatuses.where((s) => s['selected']).every((p) => p['status'] == 'Sent');
+    bool allProcessed = payloadStatuses
+        .where((s) => s['selected'])
+        .every((p) => p['status'] != 'Pending');
+    bool allSent = payloadStatuses
+        .where((s) => s['selected'])
+        .every((p) => p['status'] == 'Sent');
 
-    if(mounted){
+    if (mounted) {
       setState(() {
         if (allProcessed) {
           isAllProcessed = true;
@@ -128,7 +134,7 @@ class _PayloadProgressDialogState extends State<PayloadProgressDialog> {
 
       bool isAcknowledged = await _waitForControllerResponse(payload, key, i);
 
-      if(mounted){
+      if (mounted) {
         setState(() {
           payloadStatuses[i]['status'] = isAcknowledged ? 'Sent' : 'Failed';
         });
@@ -137,7 +143,8 @@ class _PayloadProgressDialogState extends State<PayloadProgressDialog> {
     _checkAllProcessed();
   }
 
-  Future<bool> _waitForControllerResponse(String payload, String key, int index) async {
+  Future<bool> _waitForControllerResponse(
+      String payload, String key, int index) async {
     try {
       Map<String, dynamic> gemPayload = {};
       if (widget.isToGem) {
@@ -148,24 +155,27 @@ class _PayloadProgressDialogState extends State<PayloadProgressDialog> {
         };
       }
       final result = await context.read<CommunicationService>().sendCommand(
-        serverMsg: '',
-        payload: widget.isToGem ? jsonEncode(gemPayload) : widget.isWlc ? Constants.sendPayloadWithCrc(jsonDecode(payload)[key]) :
-        jsonDecode(payload)[key],
-      );
+            serverMsg: '',
+            payload: widget.isToGem
+                ? jsonEncode(gemPayload)
+                : widget.isWlc
+                    ? Constants.sendPayloadWithCrc(jsonDecode(payload)[key])
+                    : jsonDecode(payload)[key],
+          );
       debugPrint("progress dialog result => $result");
-      // await widget.mqttService.topicToPublishAndItsMessage(
-      //   widget.isToGem ? jsonEncode(gemPayload) : widget.isWlc ? Constants.sendPayloadWithCrc(jsonDecode(payload)[key]) :
-      //   jsonDecode(payload)[key],
-      //   "${Environment.mqttPublishTopic}/${widget.deviceId}",);
 
       bool isAcknowledged = false;
       int maxWaitTime = 20;
       int elapsedTime = 0;
       int oroPumpIndex = 0;
-      if(widget.isToGem) {
-        oroPumpIndex = context.read<PreferenceProvider>().commonPumpSettings!.indexWhere((element) => element.deviceId == payload.split('+')[2]);
+      if (widget.isToGem) {
+        oroPumpIndex = context
+            .read<PreferenceProvider>()
+            .commonPumpSettings!
+            .indexWhere((element) => element.deviceId == payload.split('+')[2]);
       }
-      await for (var mqttMessage in widget.mqttService.preferenceAckStream.timeout(
+      await for (var mqttMessage
+          in widget.mqttService.preferenceAckStream.timeout(
         Duration(seconds: maxWaitTime),
         onTimeout: (sink) {
           sink.close();
@@ -173,12 +183,15 @@ class _PayloadProgressDialogState extends State<PayloadProgressDialog> {
       )) {
         if (elapsedTime >= maxWaitTime || breakLoop) break;
 
-        if (mqttMessage!['cM'].contains(key) && (widget.isToGem ? mqttMessage['cC'] == payload.split('+')[2] : true)) {
+        if (mqttMessage!['cM'].contains(key) &&
+            (widget.isToGem
+                ? mqttMessage['cC'] == payload.split('+')[2]
+                : true)) {
           context.read<PreferenceProvider>().updateControllerReaStatus(
-              key: key,
-              oroPumpIndex: oroPumpIndex,
-              failed: widget.shouldSendFailedPayloads
-          );
+                key: key,
+                oroPumpIndex: oroPumpIndex,
+                failed: widget.shouldSendFailedPayloads,
+              );
           isAcknowledged = true;
           break;
         }
@@ -189,10 +202,12 @@ class _PayloadProgressDialogState extends State<PayloadProgressDialog> {
 
       return isAcknowledged;
     } catch (error, stackTrace) {
-      print("==================== ERROR IN WAIT FOR RESPONSE ====================");
+      print(
+          "==================== ERROR IN WAIT FOR RESPONSE ====================");
       print("Error: $error");
       print("StackTrace:\n$stackTrace");
-      print("====================================================================");
+      print(
+          "====================================================================");
       return false;
     }
   }
@@ -204,7 +219,8 @@ class _PayloadProgressDialogState extends State<PayloadProgressDialog> {
     });
 
     for (int i = 0; i < payloadStatuses.length; i++) {
-      if (payloadStatuses[i]['selected'] && payloadStatuses[i]['status'] == 'Failed') {
+      if (payloadStatuses[i]['selected'] &&
+          payloadStatuses[i]['status'] == 'Failed') {
         var payload = payloadStatuses[i]['payload'];
         var payloadToDecode = widget.isToGem ? payload.split('+')[4] : payload;
         var decodedData = jsonDecode(payloadToDecode);
@@ -253,107 +269,249 @@ class _PayloadProgressDialogState extends State<PayloadProgressDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Text("Processing Payloads", style: TextStyle(fontWeight: FontWeight.bold)),
-          const SizedBox(height: 10),
-          SizedBox(
-            height: 350,
-            width: 300,
-            child: ListView.builder(
-              itemCount: payloadStatuses.length,
-              itemBuilder: (context, index) {
-                var status = payloadStatuses[index];
-                String? key = status['key'];
-                print("key : $key");
-                String message = statusMessages[key] ?? "Unknown setting";
+    final primaryColor = Theme.of(context).primaryColor;
+    final sentCount = payloadStatuses.where((s) => s['status'] == 'Sent').length;
+    final totalCount = payloadStatuses.length;
 
-                return CheckboxListTile(
-                  secondary: SizedBox(
-                    height: 32,
-                    width: 32,
-                    child: Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        Container(
-                          height: 30,
-                          width: 30,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: status['status'] == 'Sent'
-                                ? Colors.green
-                                : (status['status'] == 'Failed' ? Colors.red : Theme.of(context).primaryColor),
-                          ),
-                          child: Center(
-                            child: Text(
-                              '${index + 1}',
-                              style: const TextStyle(color: Colors.white),
-                            ),
-                          ),
-                        ),
-                        if (status['status'] == 'Sending' || status['status'] == 'Retrying')
-                          const SizedBox(
-                            height: 30,
-                            width: 30,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 4,
-                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                            ),
-                          ),
-                      ],
-                    ),
+    return Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      surfaceTintColor: Colors.transparent,
+      elevation: 6,
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Header
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: primaryColor.withOpacity(0.1),
+                    shape: BoxShape.circle,
                   ),
-                  title: Text("${status['reference']}"),
-                  subtitle: Text(message),
-                  value: payloadStatuses[index]['selected'],
-                  onChanged: (bool? value) {
-                    setState(() {
-                      payloadStatuses[index]['selected'] = value!;
-                    });
-                  },
-                );
-              },
+                  child: Icon(
+                    Icons.sync_alt_rounded,
+                    color: primaryColor,
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        "Processing Payloads",
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        "Progress: $sentCount / $totalCount sent",
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey.shade600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
-          ),
-          if (mqttError.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Text(
-                mqttError,
-                style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+            const SizedBox(height: 16),
+            if (isSending && !isAllProcessed) ...[
+              ClipRRect(
+                borderRadius: BorderRadius.circular(4),
+                child: LinearProgressIndicator(
+                  value: totalCount > 0 ? sentCount / totalCount : null,
+                  backgroundColor: primaryColor.withOpacity(0.1),
+                  valueColor: AlwaysStoppedAnimation<Color>(primaryColor),
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
+            // Payload list container
+            Container(
+              height: 320,
+              width: MediaQuery.of(context).size.width > 400 ? 360 : 300,
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.grey.withOpacity(0.2)),
+              ),
+              child: ListView.separated(
+                padding: const EdgeInsets.all(8),
+                itemCount: payloadStatuses.length,
+                separatorBuilder: (context, index) => const SizedBox(height: 6),
+                itemBuilder: (context, index) {
+                  var status = payloadStatuses[index];
+                  String? key = status['key'];
+                  String message = statusMessages[key] ?? "Unknown setting";
+                  String currentStatus = status['status'];
+
+                  Color statusColor = Colors.grey;
+                  IconData statusIcon = Icons.hourglass_empty;
+
+                  if (currentStatus == 'Sent') {
+                    statusColor = Colors.green;
+                    statusIcon = Icons.check_circle_rounded;
+                  } else if (currentStatus == 'Failed') {
+                    statusColor = Colors.red;
+                    statusIcon = Icons.error_outline_rounded;
+                  } else if (currentStatus == 'Sending' || currentStatus == 'Retrying') {
+                    statusColor = primaryColor;
+                    statusIcon = Icons.autorenew;
+                  }
+
+                  return Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: currentStatus == 'Failed'
+                            ? Colors.red.withOpacity(0.3)
+                            : Colors.grey.withOpacity(0.15),
+                      ),
+                    ),
+                    child: CheckboxListTile(
+                      dense: true,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      secondary: SizedBox(
+                        height: 36,
+                        width: 36,
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            if (currentStatus == 'Sending' || currentStatus == 'Retrying')
+                              SizedBox(
+                                height: 32,
+                                width: 32,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 3,
+                                  valueColor: AlwaysStoppedAnimation<Color>(primaryColor),
+                                ),
+                              )
+                            else
+                              Container(
+                                height: 30,
+                                width: 30,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: statusColor.withOpacity(0.15),
+                                ),
+                                child: Center(
+                                  child: Icon(
+                                    statusIcon,
+                                    size: 18,
+                                    color: statusColor,
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                      title: Text(
+                        "${status['reference']}",
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                        ),
+                      ),
+                      subtitle: Text(
+                        message,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey.shade700,
+                        ),
+                      ),
+                      value: payloadStatuses[index]['selected'],
+                      onChanged: (bool? value) {
+                        setState(() {
+                          payloadStatuses[index]['selected'] = value!;
+                        });
+                      },
+                    ),
+                  );
+                },
               ),
             ),
-        ],
+            if (mqttError.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.red.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.red.withOpacity(0.3)),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.error, color: Colors.red, size: 20),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        mqttError,
+                        style: const TextStyle(
+                          color: Colors.red,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+            const SizedBox(height: 16),
+            // Actions
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                if (isAllProcessed && isAllSent) ...[
+                  FilledButton.icon(
+                    onPressed: () {
+                      Navigator.of(context).pop(true);
+                    },
+                    icon: const Icon(Icons.check, size: 18),
+                    label: const Text("Done"),
+                  ),
+                ] else ...[
+                  OutlinedButton(
+                    onPressed: () {
+                      breakLoop = true;
+                      Navigator.of(context).pop(false);
+                    },
+                    child: const Text("Cancel"),
+                  ),
+                ],
+                if (isAllProcessed && !isAllSent) ...[
+                  const SizedBox(width: 8),
+                  FilledButton.icon(
+                    onPressed: handleRetry,
+                    style: FilledButton.styleFrom(backgroundColor: Colors.orange.shade700),
+                    icon: const Icon(Icons.refresh, size: 18),
+                    label: const Text("Retry"),
+                  ),
+                ],
+                if (!isSending && !isAllProcessed) ...[
+                  const SizedBox(width: 8),
+                  FilledButton.icon(
+                    onPressed: _processPayloads,
+                    icon: const Icon(Icons.send_rounded, size: 18),
+                    label: const Text("Send"),
+                  ),
+                ],
+              ],
+            ),
+          ],
+        ),
       ),
-      actions: [
-        if(isAllProcessed && isAllSent)
-          FilledButton(
-            onPressed: () {
-              Navigator.of(context).pop(true);
-            },
-            child: const Text("Done"),
-          )
-        else
-          FilledButton(
-            onPressed: () {
-              breakLoop = true;
-              Navigator.of(context).pop(false);
-            },
-            child: const Text("Cancel"),
-          ),
-        if (isAllProcessed && !isAllSent)
-          FilledButton(
-            onPressed: handleRetry,
-            child: const Text("Retry"),
-          ),
-        if (!isSending && !isAllProcessed)
-          FilledButton(
-            onPressed: _processPayloads,
-            child: const Text("Send"),
-          ),
-      ],
     );
   }
 }
