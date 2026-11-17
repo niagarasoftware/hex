@@ -9,7 +9,6 @@ import 'package:hex/utils/helpers/log_print.dart';
 
 import '../../../repository/repository.dart';
 import '../../../services/http_service.dart';
-import '../MapDeviceList.dart';
 import 'map_conection_objects.dart';
 
 

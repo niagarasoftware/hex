@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:math';
+import 'dart:ui';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -332,333 +333,532 @@ class _ResetVerssionState extends State<ResetVerssion> {
       mqttPayloadProvider.proogressstatus.replaceAll('%', '').trim(),
     ) ?? 0).clamp(0, 100).toDouble() / 100;
 
-    final screenWidth = MediaQuery.of(context).size.width;
-
     return SafeArea(
       child: Scaffold(
-        backgroundColor: Colors.teal.shade100,
+        backgroundColor: const Color(0xFFF3E8FF),
         appBar: AppBar(
-          title: const Text('Controller Info'),
+          backgroundColor: const Color(0xFFF3E8FF),
+          foregroundColor: const Color(0xFF1E1B4B),
+          elevation: 0,
+          scrolledUnderElevation: 0,
+          title: const Text(
+            'Controller Info',
+            style: TextStyle(
+              color: Color(0xFF1E1B4B),
+              fontWeight: FontWeight.bold,
+            ),
+          ),
         ),
         body: RefreshIndicator(
           onRefresh: fetchData,
-          child: Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: GridView.builder(
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: kIsWeb? 3:1,
-                crossAxisSpacing: 5,
-                mainAxisSpacing: 40,
-                mainAxisExtent: 500,
-              ),
-              padding: const EdgeInsets.all(5),
-              itemCount: mergedList.length,
-              itemBuilder: (context, index) {
-                return Card(
-                  elevation: 6,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      const SizedBox(height: 10),
-                      Text(
-                        mergedList[index]['categoryName']!,
-                        style: const TextStyle(
-                            fontSize: 18, fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(height: 10),
-                      //Settings icons
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const SizedBox(
-                            width: 10,
+          child: Align(
+            alignment: Alignment.topCenter,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 720),
+              child: Padding(
+                padding: const EdgeInsets.all(20.0),
+                child: GridView.builder(
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: kIsWeb ? 2 : 1,
+                    crossAxisSpacing: 20,
+                    mainAxisSpacing: 24,
+                    mainAxisExtent: 480,
+                  ),
+                  padding: const EdgeInsets.all(5),
+                  itemCount: mergedList.length,
+                  itemBuilder: (context, index) {
+                return ClipRRect(
+                  borderRadius: BorderRadius.circular(20),
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 12.0, sigmaY: 12.0),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.45),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: Colors.white.withOpacity(0.7), width: 1.5),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFF7C3AED).withOpacity(0.06),
+                            blurRadius: 20,
+                            offset: const Offset(0, 8),
                           ),
-
-                          Tooltip(
-                            message: "Controller Log",
-                            child: IconButton(
-                              style: ButtonStyle(
-                                  backgroundColor: MaterialStateProperty.all(
-                                      Colors.teal.shade100)),
-                              onPressed: () {
-                                setState(() {
-                                  selectindex = index;
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => ControllerLog(
-                                        deviceID: '${mergedList[index]['deviceId'
-                                        ]!}', communicationType: 'MQTT',),
-                                    ),
-                                  );
-                                });
-                              },
-                              icon: const Icon(Icons.arrow_circle_right_outlined),
-                            ),
-                          ),
-                          if(![...AppConstants.ecoGemModelList,
-                            ...AppConstants.shine2V, ...AppConstants.shine4V, ...AppConstants.elite10V]
-                              .contains(widget.modeID))...[   Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Tooltip(
-                              message: "Config Hardware",
-                              child: IconButton(
-                                style: ButtonStyle(
-                                    backgroundColor: MaterialStateProperty.all(
-                                        Colors.teal.shade100)),
-                                onPressed: () {
-                                  setState(() {
-                                    AppLog.log('mergedList[index]:${mergedList[index]['modelId']}');
-                                    selectindex = index;
-                                    if (AppConstants.pumpList.contains(mergedList[index]['modelId'])) {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) => PumpTopicChangePage(
-                                            deviceID: '${mergedList[index]['deviceId'
-                                            ]!}', userId: widget.userId, controllerId: widget.controllerId, modelId:mergedList[index]['modelId'],communicationType: "MQTT",),
-                                        ),
-                                      );
-                                    }
-                                    else{
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) => ConfigureMqtt(
-                                            deviceID: '${mergedList[index]['deviceId'
-                                            ]!}', userId: widget.userId, controllerId: widget.controllerId, communicationType: "MQTT",),
-                                        ),
-                                      ) ;
-
-                                    }
-
-                                  });
-                                },
-                                icon: const Icon(Icons.settings_outlined),
-                              ),
-                            ),
-                          ) ,],
-                          Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Tooltip(
-                              message: "LoRa Frequency Set ",
-                              child: IconButton(
-                                style: ButtonStyle(
-                                    backgroundColor: MaterialStateProperty.all(
-                                        Colors.teal.shade100)),
-
-                                onPressed: () {
-                                  setState(() {
-                                    selectindex = index;
-                                  });
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => FrequencyPage(
-                                        userId: widget.userId,
-                                        controllerId:  widget.controllerId,
-                                        // deviceId:  widget.deviceID,
-                                        deviceId:  mergedList[index]['deviceId'] ?? widget.deviceID,
-                                        plusTrue: true,
-                                        loraValue: mergedList[index]['loraFrequency'] ?? '',
-                                        loara1Version: mqttPayloadProvider.Loara1verssion,
-                                        loara2Version: mqttPayloadProvider.Loara2verssion,
-                                      ),
-                                    ),
-                                  );
-
-                                },
-
-                                icon: const Icon(Icons.settings_applications),
-                              ),
-                            ),
-                          ),
-
-                          userRole == 'admin' ?  Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Tooltip(
-                              message: "LoRa Update ",
-                              child: IconButton(
-                                style: ButtonStyle(
-                                    backgroundColor: MaterialStateProperty.all(
-                                        Colors.teal.shade100)),
-                                onPressed: () {
-                                  setState(() {
-                                    selectindex = index;
-
-                                    //Call Siva Ble update Lora class
-
-                                  });
-                                },
-                                icon: const Icon(Icons.upgrade),
-                              ),
-                            ),
-                          ): Container(),
-
-
-
                         ],
                       ),
-                      Container(
-                        height: 1,
-                        color: Colors.black,
-                      ),
-                      const SizedBox(
-                        height: 20,
-                      ),
-                      SelectableText(mergedList[index]['deviceId']!,
-                        style:
-                        const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),),
-
-                      // const SizedBox(height: 10),
-                      // Text(
-                      //   'SiteName:${mergedList[index]['groupName'] ?? ''}',
-                      //   style:
-                      //   const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-                      // ),
-
-                      const SizedBox(height: 10),
-                      Text(
-                        'Model:${mergedList[index]['modelName'] ?? ''}',
-                        style:
-                        const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(height: 10),
-                      Text(
-                        'Controller version:${mergedList[index]['currentVersion'] ?? ''}',
-                        style:
-                        const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(height: 10),
-                      if(![...AppConstants.ecoGemModelList,
-                        ...AppConstants.shine2V, ...AppConstants.shine4V, ...AppConstants.elite10V]
-                          .contains(widget.modeID))...[ Text(
-                        'Server version:${mergedList[index]['latestVersion']!}',
-                        style:
-                        const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-                      ),],
-                      const SizedBox(height: 10),
-                      imeicheck != mergedList[index]['deviceId']!
-                          ? mergedList[index]['status'] != 'Status'
-                          ? Container(
-                        width: 200,
-                        child: Icon(
-                          iconData,
-                          color: iconcolor,
-                          size: 40.0,
-                        ),
-                      )
-                          : Container()
-                          : Container(),
-                      if(![...AppConstants.ecoGemModelList,
-                        ...AppConstants.shine2V, ...AppConstants.shine4V, ...AppConstants.elite10V]
-                          .contains(widget.modeID))...[  imeicheck != mergedList[index]['deviceId']!
-                          ? Text(
-                        '${mergedList[index]['status']}',
-                        style: const TextStyle(
-                            fontSize: 14, fontWeight: FontWeight.bold),
-                      )
-                          : const Text('Status'),],
-
-                      mergedList[index]['status'] != 'Status'
-                          ?  Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Row(
+                      child: Padding(
+                        padding: const EdgeInsets.all(20.0),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            IconButton(
-
-                              onPressed: () {
-                                setState(() {
-                                  statusCheck(index);
-
-                                  //Call Siva Ble update Lora class
-
-                                });
-                              },
-                              icon: const Icon(Icons.refresh),
+                            // Top Center Icon Box & Title Section
+                            Column(
+                              children: [
+                                Container(
+                                  width: 72,
+                                  height: 72,
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withOpacity(0.4),
+                                    borderRadius: BorderRadius.circular(16),
+                                    border: Border.all(color: Colors.white.withOpacity(0.6), width: 1),
+                                  ),
+                                  child: const Icon(
+                                    Icons.memory,
+                                    size: 36,
+                                    color: Color(0xFF4C1D95),
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                                const Text(
+                                  'CONTROLLER SPECIFICATION',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF4338CA),
+                                    letterSpacing: 1.2,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  mergedList[index]['categoryName'] ?? '',
+                                  style: const TextStyle(
+                                    fontSize: 26,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF1E1B4B),
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ],
                             ),
-                            Expanded(
-                              child: LinearProgressIndicator(
-                                value: progressValue,
-                                minHeight: 8,
-                                backgroundColor: Colors.grey[300],
-                                valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+
+                            // Action Pills Row
+                            Wrap(
+                              alignment: WrapAlignment.center,
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: [
+                                OutlinedButton.icon(
+                                  style: OutlinedButton.styleFrom(
+                                    side: BorderSide(color: Colors.white.withOpacity(0.6)),
+                                    backgroundColor: Colors.white.withOpacity(0.3),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                                  ),
+                                  onPressed: () {
+                                    setState(() {
+                                      selectindex = index;
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => ControllerLog(
+                                            deviceID: '${mergedList[index]['deviceId']!}',
+                                            communicationType: 'MQTT',
+                                          ),
+                                        ),
+                                      );
+                                    });
+                                  },
+                                  icon: const Icon(Icons.arrow_circle_right_outlined, size: 16, color: Color(0xFF4C1D95)),
+                                  label: const Text(
+                                    'Logs',
+                                    style: TextStyle(color: Color(0xFF1E1B4B), fontSize: 12, fontWeight: FontWeight.w600),
+                                  ),
+                                ),
+                                if (![
+                                  ...AppConstants.ecoGemModelList,
+                                  ...AppConstants.shine2V,
+                                  ...AppConstants.shine4V,
+                                  ...AppConstants.elite10V
+                                ].contains(widget.modeID))
+                                  OutlinedButton.icon(
+                                    style: OutlinedButton.styleFrom(
+                                      side: BorderSide(color: Colors.white.withOpacity(0.6)),
+                                      backgroundColor: Colors.white.withOpacity(0.3),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(20),
+                                      ),
+                                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                                    ),
+                                    onPressed: () {
+                                      setState(() {
+                                        AppLog.log('mergedList[index]:${mergedList[index]['modelId']}');
+                                        selectindex = index;
+                                        if (AppConstants.pumpList.contains(mergedList[index]['modelId'])) {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) => PumpTopicChangePage(
+                                                deviceID: '${mergedList[index]['deviceId']!}',
+                                                userId: widget.userId,
+                                                controllerId: widget.controllerId,
+                                                modelId: mergedList[index]['modelId'],
+                                                communicationType: "MQTT",
+                                              ),
+                                            ),
+                                          );
+                                        } else {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) => ConfigureMqtt(
+                                                deviceID: '${mergedList[index]['deviceId']!}',
+                                                userId: widget.userId,
+                                                controllerId: widget.controllerId,
+                                                communicationType: "MQTT",
+                                              ),
+                                            ),
+                                          );
+                                        }
+                                      });
+                                    },
+                                    icon: const Icon(Icons.settings_outlined, size: 16, color: Color(0xFF4C1D95)),
+                                    label: const Text(
+                                      'Setting Update',
+                                      style: TextStyle(color: Color(0xFF1E1B4B), fontSize: 12, fontWeight: FontWeight.w600),
+                                    ),
+                                  ),
+                                OutlinedButton.icon(
+                                  style: OutlinedButton.styleFrom(
+                                    side: BorderSide(color: Colors.white.withOpacity(0.6)),
+                                    backgroundColor: Colors.white.withOpacity(0.3),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                                  ),
+                                  onPressed: () {
+                                    setState(() {
+                                      selectindex = index;
+                                    });
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => FrequencyPage(
+                                          userId: widget.userId,
+                                          controllerId: widget.controllerId,
+                                          deviceId: mergedList[index]['deviceId'] ?? widget.deviceID,
+                                          plusTrue: true,
+                                          loraValue: mergedList[index]['loraFrequency'] ?? '',
+                                          loara1Version: mqttPayloadProvider.Loara1verssion,
+                                          loara2Version: mqttPayloadProvider.Loara2verssion,
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                  icon: const Icon(Icons.settings_applications, size: 16, color: Color(0xFF4C1D95)),
+                                  label: const Text(
+                                    'LoRa Key',
+                                    style: TextStyle(color: Color(0xFF1E1B4B), fontSize: 12, fontWeight: FontWeight.w600),
+                                  ),
+                                ),
+                                if (userRole == 'admin')
+                                  OutlinedButton.icon(
+                                    style: OutlinedButton.styleFrom(
+                                      side: BorderSide(color: Colors.white.withOpacity(0.6)),
+                                      backgroundColor: Colors.white.withOpacity(0.3),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(20),
+                                      ),
+                                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                                    ),
+                                    onPressed: () {
+                                      setState(() {
+                                        selectindex = index;
+                                      });
+                                    },
+                                    icon: const Icon(Icons.upgrade, size: 16, color: Color(0xFF4C1D95)),
+                                    label: const Text(
+                                      'LoRa Update',
+                                      style: TextStyle(color: Color(0xFF1E1B4B), fontSize: 12, fontWeight: FontWeight.w600),
+                                    ),
+                                  ),
+                              ],
+                            ),
+
+                            // Card Body Data Grid
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.3),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: Colors.white.withOpacity(0.5)),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                                children: [
+                                  // MAC ADDRESS
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.center,
+                                      children: [
+                                        const Text(
+                                          'MAC ADDRESS',
+                                          style: TextStyle(
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.bold,
+                                            color: Color(0xFF4338CA),
+                                            letterSpacing: 0.5,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Row(
+                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Flexible(
+                                              child: SelectableText(
+                                                mergedList[index]['deviceId'] ?? '',
+                                                style: const TextStyle(
+                                                  fontFamily: 'monospace',
+                                                  fontSize: 12,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: Color(0xFF1E1B4B),
+                                                ),
+                                              ),
+                                            ),
+                                            const SizedBox(width: 2),
+                                            InkWell(
+                                              onTap: () {
+                                                final deviceId = mergedList[index]['deviceId']?.toString() ?? '';
+                                                if (deviceId.isNotEmpty) {
+                                                  Clipboard.setData(ClipboardData(text: deviceId));
+                                                  _showSnackBar('Device ID copied to clipboard');
+                                                }
+                                              },
+                                              child: const Icon(Icons.copy, size: 12, color: Color(0xFF4338CA)),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  // MODEL
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.center,
+                                      children: [
+                                        const Text(
+                                          'MODEL',
+                                          style: TextStyle(
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.bold,
+                                            color: Color(0xFF4338CA),
+                                            letterSpacing: 0.5,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          mergedList[index]['modelName'] ?? '',
+                                          style: const TextStyle(
+                                            fontFamily: 'monospace',
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.bold,
+                                            color: Color(0xFF1E1B4B),
+                                          ),
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  // FIRMWARE BUILD
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.center,
+                                      children: [
+                                        const Text(
+                                          'FIRMWARE BUILD',
+                                          style: TextStyle(
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.bold,
+                                            color: Color(0xFF4338CA),
+                                            letterSpacing: 0.5,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          mergedList[index]['currentVersion'] ?? '',
+                                          style: const TextStyle(
+                                            fontFamily: 'monospace',
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.bold,
+                                            color: Color(0xFF1E1B4B),
+                                          ),
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  // SERVER TARGET
+                                  if (![
+                                    ...AppConstants.ecoGemModelList,
+                                    ...AppConstants.shine2V,
+                                    ...AppConstants.shine4V,
+                                    ...AppConstants.elite10V
+                                  ].contains(widget.modeID))
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.center,
+                                        children: [
+                                          const Text(
+                                            'SERVER TARGET',
+                                            style: TextStyle(
+                                              fontSize: 10,
+                                              fontWeight: FontWeight.bold,
+                                              color: Color(0xFF4338CA),
+                                              letterSpacing: 0.5,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            mergedList[index]['latestVersion'] ?? '',
+                                            style: const TextStyle(
+                                              fontFamily: 'monospace',
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.bold,
+                                              color: Color(0xFF1E1B4B),
+                                            ),
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                ],
                               ),
                             ),
-                            SizedBox(width: 12),
-                            // Text('${(0.6 * 100).toStringAsFixed(0)}%'),
-                            Text('${ mqttPayloadProvider.proogressstatus}'),
+
+                            // Status / Progress indicator if active
+                            if (mergedList[index]['status'] != 'Status')
+                              Padding(
+                                padding: const EdgeInsets.only(top: 4.0),
+                                child: Row(
+                                  children: [
+                                    IconButton(
+                                      onPressed: () {
+                                        setState(() {
+                                          statusCheck(index);
+                                        });
+                                      },
+                                      icon: const Icon(Icons.refresh, color: Color(0xFF6D28D9), size: 16),
+                                    ),
+                                    Expanded(
+                                      child: LinearProgressIndicator(
+                                        value: progressValue,
+                                        minHeight: 6,
+                                        backgroundColor: Colors.white.withOpacity(0.4),
+                                        valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF6D28D9)),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      '${mqttPayloadProvider.proogressstatus}',
+                                      style: const TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.bold,
+                                        color: Color(0xFF1E1B4B),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+
+                            // Card Footer Action Buttons
+                            SizedBox(
+                              height: 48,
+                              child: Row(
+                                children: [
+                                  if (!_isSpecialModel) ...[
+                                    Expanded(
+                                      child: OutlinedButton.icon(
+                                        style: OutlinedButton.styleFrom(
+                                          side: BorderSide(color: Colors.white.withOpacity(0.6)),
+                                          backgroundColor: Colors.white.withOpacity(0.3),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(10),
+                                          ),
+                                          padding: const EdgeInsets.symmetric(vertical: 12),
+                                        ),
+                                        onPressed: () {
+                                          if (checkupdatediable == 0) {
+                                            resetItem(index);
+                                          } else {
+                                            _showSnackBar('Please wait ....');
+                                          }
+                                        },
+                                        icon: const Icon(Icons.refresh, size: 16, color: Color(0xFF4C1D95)),
+                                        label: const Text(
+                                          'Restart Controller',
+                                          style: TextStyle(
+                                            color: Color(0xFF1E1B4B),
+                                            fontWeight: FontWeight.w600,
+                                            fontSize: 13,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: FilledButton.icon(
+                                        style: FilledButton.styleFrom(
+                                          backgroundColor: checkupdatediable == 0
+                                              ? const Color(0xFF6D28D9)
+                                              : Colors.grey,
+                                          foregroundColor: Colors.white,
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(10),
+                                          ),
+                                          padding: const EdgeInsets.symmetric(vertical: 12),
+                                        ),
+                                        onPressed: () {
+                                          if (checkupdatediable == 0) {
+                                            updateItem(index);
+                                          } else {
+                                            _showSnackBar('Please wait ....');
+                                          }
+                                        },
+                                        icon: const Icon(Icons.upload, size: 16),
+                                        label: checkupdatediable == 0 &&
+                                                mergedList[index]['currentVersion'] !=
+                                                    mergedList[index]['latestVersion']
+                                            ? const BlinkingText(
+                                                text: 'Update Firmware',
+                                                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                                                blinkDuration: Duration(milliseconds: 500),
+                                              )
+                                            : const Text(
+                                                'Update Firmware',
+                                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                                              ),
+                                      ),
+                                    ),
+                                  ] else ...[
+                                    Expanded(
+                                      child: FilledButton.icon(
+                                        style: FilledButton.styleFrom(
+                                          backgroundColor: const Color(0xFF6D28D9),
+                                          foregroundColor: Colors.white,
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(10),
+                                          ),
+                                          padding: const EdgeInsets.symmetric(vertical: 12),
+                                        ),
+                                        onPressed: _specialUpdateBusy
+                                            ? null
+                                            : () => showAdminPasswordDialog(index),
+                                        icon: const Icon(Icons.upload, size: 16),
+                                        label: const Text(
+                                          'Update Firmware',
+                                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            ),
                           ],
                         ),
-                      ) : Container(),
-
-                      // Center(child: Text('${mqttPayloadProvider.messageFromHw ?? 'Status'} ',style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),)),
-                      Container(
-                        height: 1,
-                        color: Colors.grey,
                       ),
-                      Padding(
-                        padding: EdgeInsets.zero,
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceAround,
-                          children: [
-                            if (!_isSpecialModel) ...[
-                              FilledButton(
-                                style: FilledButton.styleFrom(
-                                  backgroundColor: checkupdatediable == 0
-                                      ? Colors.red : Colors.grey,
-                                ),
-                                onPressed: () {
-                                  if (checkupdatediable == 0) {
-                                    resetItem(index);
-                                  } else {
-                                    _showSnackBar('Please wait ....');
-                                  }
-                                },
-                                child: const Text('Restart'),
-                              ),
-                              const SizedBox(width: 10),
-                              FilledButton(
-                                style: FilledButton.styleFrom(
-                                  backgroundColor: checkupdatediable == 0
-                                      ? Colors.green : Colors.grey,
-                                ),
-                                onPressed: () {
-                                  if (checkupdatediable == 0) {
-                                    updateItem(index);
-                                  } else {
-                                    _showSnackBar('Please wait ....');
-                                  }
-                                },
-                                child: checkupdatediable == 0 &&
-                                    mergedList[index]['currentVersion'] !=
-                                        mergedList[index]['latestVersion']
-                                    ? const BlinkingText(
-                                  text: 'Update!',
-                                  style: TextStyle(color: Colors.white),
-                                  blinkDuration: Duration(milliseconds: 500),
-                                )
-                                    : const Text('Update'),
-                              ),
-                            ] else ...[
-                              FilledButton.icon(
-                                style: FilledButton.styleFrom(
-                                  backgroundColor: Colors.green,
-                                  foregroundColor: Colors.white,
-                                ),
-                                onPressed: _specialUpdateBusy
-                                    ? null
-                                    : () => showAdminPasswordDialog(index),
-                                icon: const Icon(Icons.system_update_alt),
-                                label: const Text('Update'),
-                              ),
-                            ],
-                          ],
-                        ),
-                      ),
-
-                      // SizedBox(height: 10),
-                    ],
+                    ),
                   ),
                 );
               },
@@ -666,8 +866,10 @@ class _ResetVerssionState extends State<ResetVerssion> {
           ),
         ),
       ),
-    );
-  }
+    ),
+  ),
+);
+}
 
   void _showSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(

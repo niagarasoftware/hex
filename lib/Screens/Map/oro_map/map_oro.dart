@@ -13,7 +13,6 @@ import 'package:hex/utils/constants.dart';
 import '../../../repository/repository.dart';
 import '../../../services/http_service.dart';
 import '../../../views/common/user_dashboard/widgets/valve_status_legend.dart';
-import '../MapDeviceList.dart';
 import '../polygon_area_calculator.dart';
 import 'map_conection_objects.dart';
 import '../../../services/mqtt_service.dart';

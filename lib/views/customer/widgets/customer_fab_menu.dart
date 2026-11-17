@@ -8,6 +8,7 @@ import 'package:hex/views/customer/widgets/password_field.dart';
 import 'package:provider/provider.dart';
 
 import '../../../Screens/Map/oro_map/map_oro.dart';
+import '../../../Screens/Map/testmap.dart';
 import '../../../models/customer/site_model.dart';
 import '../../../Screens/Dealer/ble_mobile_screen.dart';
 import '../../../StateManagement/customer_provider.dart';
@@ -245,7 +246,8 @@ class CustomerFabMenu extends StatelessWidget {
         Navigator.push(
           context,
           MaterialPageRoute(
-              builder: (context) => MapScreenOro(userId: loggedInUser.id, customerId: vm.mySiteList.data[vm.sIndex].customerId, controllerId: currentMaster.controllerId, imeiNo: currentMaster.deviceId, modelId: currentMaster.modelId,)
+              builder: (context) => MapTestPage()
+                  // MapScreenOro(userId: loggedInUser.id, customerId: vm.mySiteList.data[vm.sIndex].customerId, controllerId: currentMaster.controllerId, imeiNo: currentMaster.deviceId, modelId: currentMaster.modelId,)
           ),
         );
         break;

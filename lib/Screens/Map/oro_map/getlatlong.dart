@@ -70,7 +70,7 @@ Future<LatLng?> getLatLngFromInput(String input) async {
 
     final response = await http.get(Uri.parse(url));
     final data = jsonDecode(response.body);
-    AppLog.log('data:$data');
+    AppLog.log('Google Maps ApiKey data:$data');
     if (data["status"] == "OK") {
       final location = data["results"][0]["geometry"]["location"];
       return LatLng(location["lat"], location["lng"]);

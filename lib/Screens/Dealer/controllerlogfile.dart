@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'dart:io';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
@@ -54,13 +53,11 @@ class _ControllerLogState extends State<ControllerLog> with SingleTickerProvider
     _tabController = TabController(length: 5, vsync: this);
 
     // MQTT subscriptions
-    if(widget.communicationType == 'MQTT')
-      {
-        manager.topicToUnSubscribe('${Environment.mqttSubscribeTopic}/${widget.deviceID}');
-        manager.topicToUnSubscribe('${Environment.mqttLogTopic}/${widget.deviceID}');
-        manager.topicToSubscribe('${Environment.mqttLogTopic}/${widget.deviceID}');
-      }
-
+    if (widget.communicationType == 'MQTT') {
+      manager.topicToUnSubscribe('${Environment.mqttSubscribeTopic}/${widget.deviceID}');
+      manager.topicToUnSubscribe('${Environment.mqttLogTopic}/${widget.deviceID}');
+      manager.topicToSubscribe('${Environment.mqttLogTopic}/${widget.deviceID}');
+    }
   }
 
   Future<String> getLogFilePath() async {
@@ -85,19 +82,8 @@ class _ControllerLogState extends State<ControllerLog> with SingleTickerProvider
   }
 
   Widget _buildScrollableText(String text) {
-
-    final ScrollController scrollController = ScrollController();
-    // WidgetsBinding.instance.addPostFrameCallback((_) {
-    //   if (scrollController.hasClients) {
-    //     scrollController.jumpTo(scrollController.position.maxScrollExtent);
-    //   }
-    // });
-    return Padding(
-        padding: const EdgeInsets.all(8.0),
-        child:  ScrollableTextWithSearch(text: text.isNotEmpty ? text : "Waiting...",)   //SelectableText(),
-    );
+    return ScrollableTextWithSearch(text: text.isNotEmpty ? text : "Waiting...");
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -105,38 +91,92 @@ class _ControllerLogState extends State<ControllerLog> with SingleTickerProvider
     status();
     return SafeArea(
       child: Scaffold(
-        appBar: AppBar(
-          backgroundColor: Theme.of(context).primaryColor,
-          title: const Text('Controller Log'),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.refresh),
-              tooltip: 'Refresh Logs',
-              onPressed: () => getlog(currentLogType.value),
+        backgroundColor: const Color(0xFFF8FAFC),
+        appBar: PreferredSize(
+          preferredSize: const Size.fromHeight(110),
+          child: Container(
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              border: Border(
+                bottom: BorderSide(color: Color(0xFFE2E8F0), width: 1),
+              ),
             ),
-            IconButton(
-              icon: const Icon(Icons.clear_all),
-              tooltip: 'Clear All Logs',
-              onPressed: () => _clearLog(),
+            child: Column(
+              children: [
+                AppBar(
+                  backgroundColor: Colors.white,
+                  elevation: 0,
+                  scrolledUnderElevation: 0,
+                  leading: IconButton(
+                    icon: const Icon(Icons.arrow_back, color: Color(0xFF334155)),
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
+                  title: const Text(
+                    'Controller Log',
+                    style: TextStyle(
+                      color: Color(0xFF0F172A),
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  actions: [
+                    IconButton(
+                      icon: const Icon(Icons.refresh_rounded, color: Color(0xFF334155)),
+                      tooltip: 'Refresh Logs',
+                      onPressed: () => getlog(currentLogType.value),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.clear_all_rounded, color: Color(0xFF334155)),
+                      tooltip: 'Clear All Logs',
+                      onPressed: () => _clearLog(),
+                    ),
+                  ],
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                  child: Container(
+                    height: 42,
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF1F5F9),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: TabBar(
+                      controller: _tabController,
+                      indicator: BoxDecoration(
+                        color: Colors.lightBlue,
+                        borderRadius: BorderRadius.circular(8),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.05),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      indicatorSize: TabBarIndicatorSize.tab,
+                      labelColor: const Color(0xFF0F172A),
+                      unselectedLabelColor: const Color(0xFFA8C4EC),
+                      labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                      unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13),
+                      dividerColor: Colors.transparent,
+                      onTap: (index) {
+                        setState(() {
+                          currentLogType = LogType.values[index];
+                        });
+                      },
+                      tabs: const [
+                        Tab(text: 'Schedule'),
+                        Tab(text: 'UART'),
+                        Tab(text: 'UART-0'),
+                        Tab(text: 'UART-4'),
+                        Tab(text: 'Mqtt'),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ],
-          bottom: TabBar(
-            controller: _tabController,
-            indicatorColor: Colors.white,
-            labelColor: Colors.white,
-            unselectedLabelColor: Colors.white70,
-            onTap: (index) {
-              setState(() {
-                currentLogType = LogType.values[index];
-              });
-            },
-            tabs: const [
-              Tab(text: 'Schedule'),
-              Tab(text: 'UART'),
-              Tab(text: 'UART-0'),
-              Tab(text: 'UART-4'),
-              Tab(text: 'Mqtt'),
-            ],
           ),
         ),
         body: Stack(
@@ -147,7 +187,6 @@ class _ControllerLogState extends State<ControllerLog> with SingleTickerProvider
                   child: TabBarView(
                     controller: _tabController,
                     children: [
-      
                       _buildScrollableText(mqttPayloadProvider.sheduleLog),
                       _buildScrollableText(mqttPayloadProvider.uardLog),
                       _buildScrollableText(mqttPayloadProvider.uard0Log),
@@ -160,7 +199,14 @@ class _ControllerLogState extends State<ControllerLog> with SingleTickerProvider
               ],
             ),
             if (isLoading)
-              const Center(child: CircularProgressIndicator()),
+              Container(
+                color: Colors.white.withOpacity(0.6),
+                child: const Center(
+                  child: CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF0F766E)),
+                  ),
+                ),
+              ),
           ],
         ),
       ),
@@ -173,11 +219,7 @@ class _ControllerLogState extends State<ControllerLog> with SingleTickerProvider
       elevation: 4,
       child: Padding(
         padding: const EdgeInsets.all(8.0),
-        child :_buildScrollableText(text.isNotEmpty ? text : "Waiting..."),
-        // child: ScrollableTextWithSearch(
-        //   key: ValueKey(text), // Ensure widget rebuilds on text change
-        //   text: text.isNotEmpty ? text : "Waiting...",
-        // ),
+        child: _buildScrollableText(text.isNotEmpty ? text : "Waiting..."),
       ),
     );
   }
@@ -186,12 +228,12 @@ class _ControllerLogState extends State<ControllerLog> with SingleTickerProvider
     final String dateString = DateFormat('yyyy-MM-dd').format(DateTime.now());
 
     mqttPayloadProvider = Provider.of<MqttPayloadProvider>(context, listen: false);
-    AppLog.log(' mqttPayloadProvider.traceLog----->${ mqttPayloadProvider.traceLog}');
-   List<String> traceData =  mqttPayloadProvider.traceLog;
-   AppLog.log('traceData----->$traceData');
+    AppLog.log(' mqttPayloadProvider.traceLog---->${mqttPayloadProvider.traceLog}');
+    List<String> traceData = mqttPayloadProvider.traceLog;
+    AppLog.log('traceData----->$traceData');
     SftpService sftpService = SftpService();
-    int connectResponse =  await sftpService.connect();
-    if(connectResponse == 200){
+    int connectResponse = await sftpService.connect();
+    if (connectResponse == 200) {
       await Future.delayed(const Duration(seconds: 1));
       String localFileNameForTrace = "gem_log";
       Directory appDocDir = await getApplicationDocumentsDirectory();
@@ -199,25 +241,25 @@ class _ControllerLogState extends State<ControllerLog> with SingleTickerProvider
       String filePath = '$appDocPath/$localFileNameForTrace.txt';
       final localFile = File(filePath);
       await localFile.writeAsString(traceData.join('\n'));
-      int uploadResponse = await sftpService.uploadFile(localFileName: localFileNameForTrace, remoteFilePath: '/home/ubuntu/oro2024/OroGem/OroGemLogs/${widget.deviceID}_${type}_${dateString}.txt');
-      if(uploadResponse == 200){
-        _showSnackBar("/home/ubuntu/oro2024/OroGem/OroGemLogs/${widget.deviceID}_${type}_${dateString}.txt \n FTP upload success'...");
+      int uploadResponse = await sftpService.uploadFile(
+          localFileName: localFileNameForTrace,
+          remoteFilePath: '/home/ubuntu/oro2024/OroGem/OroGemLogs/${widget.deviceID}_${type}_$dateString.txt');
+      if (uploadResponse == 200) {
+        _showSnackBar("/home/ubuntu/oro2024/OroGem/OroGemLogs/${widget.deviceID}_${type}_$dateString.txt \n FTP upload success'...");
         AppLog.log('upload success');
-      }else{
+      } else {
         _showSnackBar("FTP upload failed...");
         AppLog.log('upload failed');
       }
       sftpService.disconnect();
     }
-
   }
 
   Future<void> showBluetoothLoadingDialog(BuildContext context) async {
     showDialog(
       context: context,
-      barrierDismissible: false, // prevents closing by tapping outside
+      barrierDismissible: false,
       builder: (BuildContext context) {
-
         return Dialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           child: Padding(
@@ -250,11 +292,11 @@ class _ControllerLogState extends State<ControllerLog> with SingleTickerProvider
                       icon: const Icon(Icons.close),
                       label: const Text("Close"),
                       style: ElevatedButton.styleFrom(
-                         foregroundColor: Colors.white,
+                        foregroundColor: Colors.white,
                       ),
                       onPressed: () {
-                        Navigator.of(context).pop(); // dismiss dialog
-                        provider.setTraceLoading(false); // stop loading manually
+                        Navigator.of(context).pop();
+                        provider.setTraceLoading(false);
                       },
                     ),
                   ],
@@ -267,159 +309,180 @@ class _ControllerLogState extends State<ControllerLog> with SingleTickerProvider
     );
   }
 
-
   Widget _buildActionButtons() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 16.0),
-      child: currentLogType != LogType.mqtt
-          ? Wrap(
-        spacing: 5,
-        runSpacing: 5,
-        // mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          _buildButton(
-            label: 'Start',
-            color: Colors.green,
-            icon: Icons.play_arrow,
-            onPressed: () {
-              _showSnackBar("Start sending to Controller log...");
-              getlog(currentLogType.value);
-            },
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: const Border(
+          top: BorderSide(color: Color(0xFFE2E8F0), width: 1),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 6,
+            offset: const Offset(0, -2),
           ),
-          const SizedBox(width: 10),
-          _buildButton(
-            label: 'Stop',
-            color: Colors.red,
-            icon: Icons.stop,
-            onPressed: () {
-              _showSnackBar("Stop sending to Controller log...");
-              getlog(LogType.mqtt.value);
-            },
-          ),
-          const SizedBox(width: 10),
-          _buildButton(
-            label: 'Clear',
-            color: Colors.grey,
-            icon: Icons.clear,
-            onPressed: () => _clearLog(),
-          ),
-          const SizedBox(width: 10),
-          _buildButton(
-            label: 'Today FTP',
-            color: Colors.blue,
-            icon: Icons.cloud_upload,
-            onPressed: () {
-              // if(widget.communicationType != "MQTT") {
-                mqttPayloadProvider.setTraceLoading(true);
-
-              _showSnackBar("Today log send FTP...");
-              getlog(currentLogType.value + 5);
-                showBluetoothLoadingDialog(context);
-
-            },
-          ), const SizedBox(width: 10),
-          widget.communicationType != "MQTT" ? _buildButton(
-            label: 'Today FTP upload',
-            color: Colors.blue,
-            icon: Icons.cloud_upload,
-            onPressed: () {
-               _showSnackBar("Today log send FTP...");
-              uploadToFile('$currentLogType');
-            },
-          ) : Container(),
-          const SizedBox(width: 10),
-          _buildButton(
-            label: 'Yesterday FTP',
-            color: Colors.blue,
-            icon: Icons.cloud_upload,
-            onPressed: () {
-                 mqttPayloadProvider.setTraceLoading(true);
-
-              _showSnackBar("Yesterday log send FTP...");
-              getlog(currentLogType.value + 10);
-                 showBluetoothLoadingDialog(context);
-
-            },
-          ),
-
-
-          const SizedBox(width: 10),
-          widget.communicationType != "MQTT" ? _buildButton(
-            label: 'Yesterday FTP Upload',
-            color: Colors.blue,
-            icon: Icons.cloud_upload,
-            onPressed: () {
-              _showSnackBar("Yesterday log send FTP...");
-              uploadToFile('$currentLogType');
-            },
-          ) : Container()
-        ],
-      )
-          : Wrap(
-        spacing: 5,
-        runSpacing: 5,
-        children: [
-          _buildButton(
-            label: 'Today Mqtt FTP',
-            color: Colors.cyan,
-            icon: Icons.cloud_upload,
-            onPressed: () {
-              _showSnackBar("Today Mqtt log send FTP...");
-              getlog(16);
-            },
-          ),
-          const SizedBox(width: 10),
-          _buildButton(
-            label: 'Yesterday Mqtt FTP',
-            color: Colors.cyan,
-            icon: Icons.cloud_upload,
-            onPressed: () {
-              _showSnackBar("Yesterday Mqtt log FTP...");
-              getlog(21);
-            },
-          ),
-
-
-          widget.communicationType != "MQTT" ? _buildButton(
-            label: 'Yesterday FTP Upload BLE',
-            color: Colors.blue,
-            icon: Icons.cloud_upload,
-            onPressed: () {
-              _showSnackBar("Yesterday log send FTP...");
-              uploadToFile('$currentLogType');
-
-            },
-          ) : Container(),
-          const SizedBox(width: 10),
-          widget.communicationType != "MQTT" ? _buildButton(
-            label: 'Today FTP upload BLE',
-            color: Colors.blue,
-            icon: Icons.cloud_upload,
-            onPressed: () {
-              _showSnackBar("Today log send FTP... ");
-              uploadToFile('$currentLogType');
-            },
-          ) : Container(),
         ],
       ),
+      child: currentLogType != LogType.mqtt
+          ? Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              alignment: WrapAlignment.start,
+              children: [
+                _buildButton(
+                  label: 'Start',
+                  bgColor: const Color(0xFFDCFCE7),
+                  fgColor: const Color(0xFF15803D),
+                  icon: Icons.play_arrow_rounded,
+                  onPressed: () {
+                    _showSnackBar("Start sending to Controller log...");
+                    getlog(currentLogType.value);
+                  },
+                ),
+                _buildButton(
+                  label: 'Stop',
+                  bgColor: const Color(0xFFFFE4E6),
+                  fgColor: const Color(0xFFBE123C),
+                  icon: Icons.stop_rounded,
+                  onPressed: () {
+                    _showSnackBar("Stop sending to Controller log...");
+                    getlog(LogType.mqtt.value);
+                  },
+                ),
+                _buildButton(
+                  label: 'Clear',
+                  bgColor: Colors.white,
+                  fgColor: const Color(0xFF475569),
+                  borderColor: const Color(0xFFCBD5E1),
+                  icon: Icons.clear_all_rounded,
+                  onPressed: () => _clearLog(),
+                ),
+                _buildButton(
+                  label: 'Today FTP',
+                  bgColor: const Color(0xFFE0F2FE),
+                  fgColor: const Color(0xFF0369A1),
+                  icon: Icons.cloud_upload_rounded,
+                  onPressed: () {
+                    mqttPayloadProvider.setTraceLoading(true);
+                    _showSnackBar("Today log send FTP...");
+                    getlog(currentLogType.value + 5);
+                    showBluetoothLoadingDialog(context);
+                  },
+                ),
+                if (widget.communicationType != "MQTT")
+                  _buildButton(
+                    label: 'Today FTP upload',
+                    bgColor: const Color(0xFFE0F2FE),
+                    fgColor: const Color(0xFF0369A1),
+                    icon: Icons.cloud_upload_rounded,
+                    onPressed: () {
+                      _showSnackBar("Today log send FTP...");
+                      uploadToFile('$currentLogType');
+                    },
+                  ),
+                _buildButton(
+                  label: 'Yesterday FTP',
+                  bgColor: const Color(0xFFE0F2FE),
+                  fgColor: const Color(0xFF0369A1),
+                  icon: Icons.cloud_upload_rounded,
+                  onPressed: () {
+                    mqttPayloadProvider.setTraceLoading(true);
+                    _showSnackBar("Yesterday log send FTP...");
+                    getlog(currentLogType.value + 10);
+                    showBluetoothLoadingDialog(context);
+                  },
+                ),
+                if (widget.communicationType != "MQTT")
+                  _buildButton(
+                    label: 'Yesterday FTP Upload',
+                    bgColor: const Color(0xFFE0F2FE),
+                    fgColor: const Color(0xFF0369A1),
+                    icon: Icons.cloud_upload_rounded,
+                    onPressed: () {
+                      _showSnackBar("Yesterday log send FTP...");
+                      uploadToFile('$currentLogType');
+                    },
+                  ),
+              ],
+            )
+          : Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              alignment: WrapAlignment.start,
+              children: [
+                _buildButton(
+                  label: 'Today Mqtt FTP',
+                  bgColor: const Color(0xFFE0F2FE),
+                  fgColor: const Color(0xFF0369A1),
+                  icon: Icons.cloud_upload_rounded,
+                  onPressed: () {
+                    _showSnackBar("Today Mqtt log send FTP...");
+                    getlog(16);
+                  },
+                ),
+                _buildButton(
+                  label: 'Yesterday Mqtt FTP',
+                  bgColor: const Color(0xFFE0F2FE),
+                  fgColor: const Color(0xFF0369A1),
+                  icon: Icons.cloud_upload_rounded,
+                  onPressed: () {
+                    _showSnackBar("Yesterday Mqtt log FTP...");
+                    getlog(21);
+                  },
+                ),
+                if (widget.communicationType != "MQTT")
+                  _buildButton(
+                    label: 'Yesterday FTP Upload BLE',
+                    bgColor: const Color(0xFFE0F2FE),
+                    fgColor: const Color(0xFF0369A1),
+                    icon: Icons.cloud_upload_rounded,
+                    onPressed: () {
+                      _showSnackBar("Yesterday log send FTP...");
+                      uploadToFile('$currentLogType');
+                    },
+                  ),
+                if (widget.communicationType != "MQTT")
+                  _buildButton(
+                    label: 'Today FTP upload BLE',
+                    bgColor: const Color(0xFFE0F2FE),
+                    fgColor: const Color(0xFF0369A1),
+                    icon: Icons.cloud_upload_rounded,
+                    onPressed: () {
+                      _showSnackBar("Today log send FTP... ");
+                      uploadToFile('$currentLogType');
+                    },
+                  ),
+              ],
+            ),
     );
   }
 
   Widget _buildButton({
     required String label,
-    required Color color,
+    required Color bgColor,
+    required Color fgColor,
     required IconData icon,
     required VoidCallback onPressed,
+    Color? borderColor,
   }) {
-    return ElevatedButton.icon(
-      style: ElevatedButton.styleFrom(
-        backgroundColor: color,
-        foregroundColor: Colors.white,
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+    return FilledButton.icon(
+      style: FilledButton.styleFrom(
+        backgroundColor: bgColor,
+        foregroundColor: fgColor,
+        elevation: 0,
+        side: borderColor != null ? BorderSide(color: borderColor, width: 1) : null,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        minimumSize: const Size(0, 40),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
-      icon: Icon(icon, size: 20),
-      label: Text(label, style: const TextStyle(fontSize: 14)),
+      icon: Icon(icon, size: 16, color: fgColor),
+      label: Text(
+        label,
+        style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: fgColor),
+      ),
       onPressed: onPressed,
     );
   }
@@ -500,7 +563,7 @@ class _ControllerLogState extends State<ControllerLog> with SingleTickerProvider
   Future<void> getlog(int data) async {
     setState(() => isLoading = true);
 
-    if(widget.communicationType == "MQTT") {
+    if (widget.communicationType == "MQTT") {
       try {
         manager.topicToUnSubscribe(
             '${Environment.mqttLogTopic}/${widget.deviceID}');
@@ -543,26 +606,22 @@ class _ControllerLogState extends State<ControllerLog> with SingleTickerProvider
       } finally {
         setState(() => isLoading = false);
       }
-    }
-    else
-    {
-      //bluetooth
+    } else {
       try {
-             String payLoadFinal = jsonEncode({
-             "5700": {"5701": "$data"},
-           });
-            final result = await context.read<CommunicationService>().sendCommand(payload: payLoadFinal,
-               serverMsg: '');
-           if (result['http'] == true) {
-             debugPrint("Payload sent to Server");
-           }
-           if (result['mqtt'] == true) {
-             debugPrint("Payload sent to MQTT Box");
-           }
-           if (result['bluetooth'] == true) {
-             debugPrint("Payload sent via Bluetooth");
-           }
-
+        String payLoadFinal = jsonEncode({
+          "5700": {"5701": "$data"},
+        });
+        final result = await context.read<CommunicationService>().sendCommand(
+            payload: payLoadFinal, serverMsg: '');
+        if (result['http'] == true) {
+          debugPrint("Payload sent to Server");
+        }
+        if (result['mqtt'] == true) {
+          debugPrint("Payload sent to MQTT Box");
+        }
+        if (result['bluetooth'] == true) {
+          debugPrint("Payload sent via Bluetooth");
+        }
       } finally {
         setState(() => isLoading = false);
       }
@@ -577,10 +636,12 @@ class _ControllerLogState extends State<ControllerLog> with SingleTickerProvider
     super.dispose();
   }
 }
+
 class ScrollableTextWithSearch extends StatefulWidget {
   final String text;
 
-  ScrollableTextWithSearch({
+  const ScrollableTextWithSearch({
+    super.key,
     required this.text,
   });
 
@@ -590,10 +651,10 @@ class ScrollableTextWithSearch extends StatefulWidget {
 }
 
 class _ScrollableTextWithSearchState extends State<ScrollableTextWithSearch> {
-  String _searchQuery = '';  // Query text to match
-  ScrollController _scrollController = ScrollController();
-  List<int> _matches = [];   // List of match positions
-  TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+  final ScrollController _scrollController = ScrollController();
+  List<int> _matches = [];
+  final TextEditingController _searchController = TextEditingController();
   int _matchCount = 0;
 
   @override
@@ -610,7 +671,6 @@ class _ScrollableTextWithSearchState extends State<ScrollableTextWithSearch> {
     super.dispose();
   }
 
-  // Handle search query change from the controller
   void _onSearchChanged() {
     setState(() {
       _searchQuery = _searchController.text;
@@ -618,27 +678,106 @@ class _ScrollableTextWithSearchState extends State<ScrollableTextWithSearch> {
     });
   }
 
-  // Highlights the matched text and returns a list of TextSpan
   List<TextSpan> _highlightText(String text, List<int> matchPositions) {
-    if (_searchQuery.isEmpty) return [TextSpan(text: text)];
+    if (_searchQuery.isEmpty) return _formatTerminalLogText(text);
 
     List<TextSpan> children = [];
     int start = 0;
 
     for (int pos in matchPositions) {
-      if (start < pos) children.add(TextSpan(text: text.substring(start, pos)));
+      if (start < pos) {
+        children.addAll(_formatTerminalLogText(text.substring(start, pos)));
+      }
       children.add(TextSpan(
         text: text.substring(pos, pos + _searchQuery.length),
-        style: TextStyle(backgroundColor: Colors.yellow),
+        style: const TextStyle(
+          backgroundColor: Color(0xFFCA8A04),
+          color: Colors.white,
+          fontWeight: FontWeight.bold,
+          fontFamily: 'monospace',
+        ),
       ));
       start = pos + _searchQuery.length;
     }
 
-    if (start < text.length) children.add(TextSpan(text: text.substring(start)));
+    if (start < text.length) {
+      children.addAll(_formatTerminalLogText(text.substring(start)));
+    }
     return children;
   }
 
-  // Finds matches and returns a list of start positions of the matches
+  List<TextSpan> _formatTerminalLogText(String rawText) {
+    if (rawText.isEmpty) return [];
+
+    final pattern = RegExp(
+      r'(\d{4}-\d{2}-\d{2}[\sT]\d{2}:\d{2}:\d{2}(?:\.\d+)?|\d{2}:\d{2}:\d{2}(?:\.\d+)?)'
+      r'|(Urt0 Received|Process|Received|Sent|Schedule|ERROR|FAIL|Failed|SUCCESS|ACK|MQTT|UART|BLE)'
+      r'|(\{[^}]*\}|\[[^\]]*\])',
+      caseSensitive: false,
+    );
+
+    final List<TextSpan> spans = [];
+    int lastMatchEnd = 0;
+
+    for (final match in pattern.allMatches(rawText)) {
+      if (match.start > lastMatchEnd) {
+        spans.add(TextSpan(
+          text: rawText.substring(lastMatchEnd, match.start),
+          style: const TextStyle(color: Color(0xFFE2E8F0), fontFamily: 'monospace', fontSize: 13, height: 1.45),
+        ));
+      }
+
+      final matchedText = match.group(0)!;
+      Color textColor = const Color(0xFFE2E8F0);
+      FontWeight weight = FontWeight.normal;
+
+      if (match.group(1) != null) {
+        textColor = const Color(0xFF94A3B8);
+      } else if (match.group(2) != null) {
+        final lower = matchedText.toLowerCase();
+        if (lower.contains('error') || lower.contains('fail')) {
+          textColor = const Color(0xFFF87171);
+          weight = FontWeight.bold;
+        } else if (lower.contains('urt0') || lower.contains('received')) {
+          textColor = const Color(0xFF38BDF8);
+          weight = FontWeight.w600;
+        } else if (lower.contains('process') || lower.contains('success') || lower.contains('ack')) {
+          textColor = const Color(0xFF34D399);
+          weight = FontWeight.w600;
+        } else if (lower.contains('mqtt') || lower.contains('uart') || lower.contains('ble')) {
+          textColor = const Color(0xFFFBBF24);
+          weight = FontWeight.w600;
+        } else {
+          textColor = const Color(0xFF818CF8);
+        }
+      } else if (match.group(3) != null) {
+        textColor = const Color(0xFFA78BFA);
+      }
+
+      spans.add(TextSpan(
+        text: matchedText,
+        style: TextStyle(
+          color: textColor,
+          fontWeight: weight,
+          fontFamily: 'monospace',
+          fontSize: 13,
+          height: 1.45,
+        ),
+      ));
+
+      lastMatchEnd = match.end;
+    }
+
+    if (lastMatchEnd < rawText.length) {
+      spans.add(TextSpan(
+        text: rawText.substring(lastMatchEnd),
+        style: const TextStyle(color: Color(0xFFE2E8F0), fontFamily: 'monospace', fontSize: 13, height: 1.45),
+      ));
+    }
+
+    return spans;
+  }
+
   List<int> _findMatches(String text, String query) {
     if (query.isEmpty) return [];
     List<int> matches = [];
@@ -657,23 +796,20 @@ class _ScrollableTextWithSearchState extends State<ScrollableTextWithSearch> {
     return matches;
   }
 
-  // Auto-scroll to bottom
   void _scrollToBottom() {
     if (!_scrollController.hasClients) return;
 
     _scrollController.animateTo(
       _scrollController.position.maxScrollExtent,
-      duration: Duration(milliseconds: 300),
+      duration: const Duration(milliseconds: 300),
       curve: Curves.easeOut,
     );
   }
 
-  // Detect new text and scroll
   @override
   void didUpdateWidget(covariant ScrollableTextWithSearch oldWidget) {
     super.didUpdateWidget(oldWidget);
 
-    // If new text is added, scroll to bottom
     if (widget.text.length > oldWidget.text.length) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _scrollToBottom();
@@ -686,47 +822,92 @@ class _ScrollableTextWithSearchState extends State<ScrollableTextWithSearch> {
     _matches = _searchQuery.isEmpty ? [] : _findMatches(widget.text, _searchQuery);
     _matchCount = _matches.length;
 
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: TextField(
-            controller: _searchController,
-            decoration: InputDecoration(
-              labelText: 'Search',
-              border: OutlineInputBorder(),
-              suffixIcon: IconButton(
-                icon: Icon(Icons.search),
-                onPressed: () {
-                  setState(() {
-                    _searchQuery = _searchController.text;
-                    _matches = _findMatches(widget.text, _searchQuery);
-                  });
-                },
+    return Padding(
+      padding: const EdgeInsets.all(12.0),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Container(
+                  height: 42,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFFE2E8F0), width: 1),
+                  ),
+                  child: TextField(
+                    controller: _searchController,
+                    style: const TextStyle(color: Color(0xFF0F172A), fontSize: 13),
+                    decoration: InputDecoration(
+                      hintText: 'Search logs, timestamps, or payloads...',
+                      hintStyle: const TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
+                      prefixIcon: const Icon(Icons.search_rounded, color: Color(0xFF94A3B8), size: 18),
+                      suffixIcon: _searchQuery.isNotEmpty
+                          ? IconButton(
+                              icon: const Icon(Icons.cancel_rounded, color: Color(0xFF94A3B8), size: 16),
+                              onPressed: () {
+                                _searchController.clear();
+                              },
+                            )
+                          : null,
+                      border: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                    ),
+                  ),
+                ),
               ),
-            ),
+              const SizedBox(width: 12),
+              Text(
+                'Matches found: $_matchCount',
+                style: const TextStyle(
+                  color: Color(0xFF64748B),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
           ),
-        ),
-        Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Text('Matches found: $_matchCount', style: TextStyle(fontSize: 16)),
-        ),
-        Expanded(
-          child: SingleChildScrollView(
-            controller: _scrollController,
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: SelectableText.rich(
-                TextSpan(
-                  children: _highlightText(widget.text, _matches),
+          const SizedBox(height: 12),
+          Expanded(
+            child: Container(
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: const Color(0xFF0F172A),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: const Color(0xFF334155), width: 1),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.2),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: SingleChildScrollView(
+                  controller: _scrollController,
+                  padding: const EdgeInsets.all(16.0),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: SelectableText.rich(
+                      TextSpan(
+                        children: _highlightText(widget.text, _matches),
+                      ),
+                      style: const TextStyle(
+                        fontFamily: 'monospace',
+                        fontSize: 13,
+                        height: 1.45,
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
-
-
