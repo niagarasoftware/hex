@@ -1,4 +1,3 @@
-
 import 'dart:async';
 import 'dart:convert';
 
@@ -463,181 +462,259 @@ class _FrequencyPageState extends State<FrequencyPage> {
     }
   }
 
-  Widget _buildCard({
+  // UI-only helpers: all controllers, validation, and communication logic remain unchanged.
+  Widget _settingTile({
     required String title,
-    required TextEditingController freqCtrl,
-    required TextEditingController sfCtrl,
-    required int loraIndex,
+    required IconData icon,
+    required Widget child,
   }) {
-    final version = loraIndex == 1
-        ? loRa1VersionState
-        : loRa2VersionState;
-
-    return Card(
-      elevation: 3,
-      shape: RoundedRectangleBorder(
+    final primaryColor = Theme.of(context).primaryColor;
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.035),
+            blurRadius: 16,
+            offset: const Offset(0, 5),
+          ),
+        ],
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(children: [
+            Container(
+              padding: const EdgeInsets.all(9),
+              decoration: BoxDecoration(
+                color: primaryColor.withOpacity(0.09),
+                borderRadius: BorderRadius.circular(11),
+              ),
+              child: Icon(icon, color: primaryColor, size: 20),
+            ),
+            const SizedBox(width: 11),
+            Expanded(child: Text(title, style: const TextStyle(
+              fontSize: 14, fontWeight: FontWeight.w700,
+              color: Color(0xFF1E293B),
+            ))),
+          ]),
+          const SizedBox(height: 16),
+          child,
+        ],
+      ),
+    );
+  }
+
+  Widget _frequencyInput(TextEditingController controller) {
+    return TextField(
+      controller: controller,
+      style: const TextStyle(fontSize: 14, color: Color(0xFF1E293B), fontWeight: FontWeight.w600),
+      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+      inputFormatters: [
+        FilteringTextInputFormatter.allow(RegExp(r'^\d{0,3}(\.\d?)?$')),
+      ],
+      decoration: _inputDecoration('LoRa Frequency (000.0)'),
+    );
+  }
+
+  Widget _sfInput(TextEditingController controller) {
+    return TextField(
+      controller: controller,
+      style: const TextStyle(fontSize: 14, color: Color(0xFF1E293B), fontWeight: FontWeight.w600),
+      keyboardType: TextInputType.number,
+      inputFormatters: [
+        FilteringTextInputFormatter.digitsOnly,
+        LengthLimitingTextInputFormatter(2),
+      ],
+      decoration: _inputDecoration('SF Value (7-12)'),
+    );
+  }
+
+  InputDecoration _inputDecoration(String hint) {
+    final primaryColor = Theme.of(context).primaryColor;
+    return InputDecoration(
+      hintText: hint,
+      hintStyle: const TextStyle(fontSize: 13, color: Color(0xFF94A3B8)),
+      filled: true,
+      fillColor: const Color(0xFFF8FAFC),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(11)),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(11),
+        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(11),
+        borderSide: BorderSide(color: primaryColor, width: 1.5),
+      ),
+    );
+  }
+
+  Widget _frequencySection({
+    required int index,
+    required TextEditingController frequencyController,
+    required TextEditingController sfController,
+    required double tileWidth,
+  }) {
+    final version = index == 1 ? loRa1VersionState : loRa2VersionState;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: Text('FREQUENCY $index SETTINGS', style: const TextStyle(
+            fontSize: 12, letterSpacing: 1.2,
+            fontWeight: FontWeight.w800, color: Color(0xFF64748B),
+          )),
+        ),
+        Wrap(
+          spacing: 14,
+          runSpacing: 14,
           children: [
-            Text(
-              title,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
+            SizedBox(
+              width: tileWidth,
+              child: _settingTile(
+                title: 'LoRa Frequency $index',
+                icon: Icons.wifi_tethering_rounded,
+                child: _frequencyInput(frequencyController),
               ),
             ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: freqCtrl,
-              keyboardType:
-              const TextInputType.numberWithOptions(
-                decimal: true,
-              ),
-              inputFormatters: [
-                FilteringTextInputFormatter.allow(
-                  RegExp(r'^\d{0,3}(\.\d?)?$'),
-                ),
-              ],
-              decoration: const InputDecoration(
-                prefixIcon: Icon(Icons.wifi_tethering),
-                labelText: 'LoRa Frequency (000.0)',
-                border: OutlineInputBorder(),
+            SizedBox(
+              width: tileWidth,
+              child: _settingTile(
+                title: 'Spreading Factor $index',
+                icon: Icons.settings_input_antenna_rounded,
+                child: _sfInput(sfController),
               ),
             ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: sfCtrl,
-              keyboardType: TextInputType.number,
-              inputFormatters: [
-                FilteringTextInputFormatter.digitsOnly,
-                LengthLimitingTextInputFormatter(2),
-              ],
-              decoration: const InputDecoration(
-                prefixIcon: Icon(Icons.settings_input_antenna),
-                labelText: 'SF Value (7-12)',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    'Device Version: '
-                        '${version.isEmpty ? "--" : version}',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w500,
-                    ),
+            SizedBox(
+              width: tileWidth,
+              child: _settingTile(
+                title: 'Device $index Version',
+                icon: Icons.memory_rounded,
+                child: Row(children: [
+                  Expanded(child: Text(
+                    version.isEmpty ? '--' : version,
+                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Color(0xFF1E293B)),
+                    overflow: TextOverflow.ellipsis,
+                  )),
+                  const SizedBox(width: 8),
+                  OutlinedButton.icon(
+                    onPressed: (_isLoading || _isSending)
+                        ? null : () => _handleView(index),
+                    icon: const Icon(Icons.refresh, size: 17),
+                    label: const Text('View'),
                   ),
-                ),
-                OutlinedButton.icon(
-                  onPressed: (_isLoading || _isSending)
-                      ? null
-                      : () => _handleView(loraIndex),
-                  icon: const Icon(Icons.refresh, size: 18),
-                  label: const Text('View'),
-                ),
-              ],
+                ]),
+              ),
             ),
           ],
         ),
-      ),
+      ],
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.sizeOf(context).width;
-
-    final contentWidth =
-    screenWidth > 700 ? 650.0 : screenWidth;
-
+    final primaryColor = Theme.of(context).primaryColor;
     return Scaffold(
+      backgroundColor: primaryColor.withOpacity(0.01),
       appBar: AppBar(
         title: const Text('LoRa Frequency Settings'),
+        backgroundColor: primaryColor,
+        foregroundColor: Colors.white,
+        elevation: 0,
         actions: [
           IconButton(
             tooltip: 'Refresh saved frequency',
             onPressed: (_isLoading || _isSending)
-                ? null
-                : _refreshFrequencyFromApi,
+                ? null : _refreshFrequencyFromApi,
             icon: const Icon(Icons.sync),
           ),
         ],
       ),
-      body: Stack(
-        children: [
-          Center(
-            child: ConstrainedBox(
-              constraints: BoxConstraints(
-                maxWidth: contentWidth,
-              ),
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
-                child: Column(
+      body: Stack(children: [
+        LayoutBuilder(builder: (context, constraints) {
+          const horizontalPadding = 18.0;
+          const spacing = 14.0;
+          final availableWidth = constraints.maxWidth - horizontalPadding * 2;
+          return SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(
+              horizontal: horizontalPadding, vertical: 22,
+            ),
+            child: Center(child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 1200),
+              child: Builder(builder: (context) {
+                final contentWidth = availableWidth > 1200 ? 1200.0 : availableWidth;
+                final count = contentWidth >= 900 ? 3 : contentWidth >= 560 ? 2 : 1;
+                final cardWidth = (contentWidth - spacing * (count - 1)) / count;
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildCard(
-                      title: 'Frequency 1 Settings',
-                      freqCtrl: frequency1Controller,
-                      sfCtrl: sf1Controller,
-                      loraIndex: 1,
+                    const Text('Configure LoRa', style: TextStyle(
+                      fontSize: 24, fontWeight: FontWeight.w800,
+                      color: Color(0xFF1E293B),
+                    )),
+                    const SizedBox(height: 5),
+                    const Text('Manage device frequency and spreading factor settings',
+                        style: TextStyle(fontSize: 13, color: Color(0xFF64748B))),
+                    const SizedBox(height: 24),
+                    _frequencySection(
+                      index: 1,
+                      frequencyController: frequency1Controller,
+                      sfController: sf1Controller,
+                      tileWidth: cardWidth,
                     ),
                     if (widget.plusTrue) ...[
-                      const SizedBox(height: 16),
-                      _buildCard(
-                        title: 'Frequency 2 Settings',
-                        freqCtrl: frequency2Controller,
-                        sfCtrl: sf2Controller,
-                        loraIndex: 2,
+                      const SizedBox(height: 28),
+                      _frequencySection(
+                        index: 2,
+                        frequencyController: frequency2Controller,
+                        sfController: sf2Controller,
+                        tileWidth: cardWidth,
                       ),
                     ],
-                    const SizedBox(height: 24),
-                    Row(
+                    const SizedBox(height: 26),
+                    Wrap(
+                      spacing: 12,
+                      runSpacing: 12,
                       children: [
-                        Expanded(
-                          child: OutlinedButton(
-                            onPressed: _isSending
-                                ? null
-                                : () => Navigator.pop(context),
-                            child: const Text('Cancel'),
+                        OutlinedButton.icon(
+                          onPressed: _isSending ? null : () => Navigator.pop(context),
+                          icon: const Icon(Icons.close_rounded, size: 18),
+                          label: const Text('Cancel'),
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
                           ),
                         ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: ElevatedButton(
-                            onPressed:
-                            _isSending || _isLoading
-                                ? null
-                                : _handleSend,
-                            child: Text(
-                              _isSending ? 'Sending...' : 'Send',style: TextStyle(color: Colors.white),
-                            ),
+                        ElevatedButton.icon(
+                          onPressed: (_isSending || _isLoading) ? null : _handleSend,
+                          icon: const Icon(Icons.send_rounded, size: 18),
+                          label: Text(_isSending ? 'Sending...' : 'Send'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: primaryColor,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 16),
                           ),
                         ),
-                        const SizedBox(width: 12),
                       ],
                     ),
-                    const SizedBox(height: 24),
                   ],
-                ),
-              ),
-            ),
-          ),
-          if (_isLoading || _isSending)
-            Positioned.fill(
-              child: ColoredBox(
-                color: Colors.black38,
-                child: const Center(
-                  child: CircularProgressIndicator(),
-                ),
-              ),
-            ),
-        ],
-      ),
+                );
+              }),
+            )),
+          );
+        }),
+        if (_isLoading || _isSending)
+          Positioned.fill(child: ColoredBox(
+            color: Colors.black38,
+            child: const Center(child: CircularProgressIndicator()),
+          )),
+      ]),
     );
   }
 
