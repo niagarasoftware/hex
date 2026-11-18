@@ -24,6 +24,9 @@ class HexSidebar extends StatefulWidget {
   final ValueChanged<int> onDestinationSelected;
   final MasterControllerModel master;
   final UserModel? loggedInUser;
+  final UserModel? viewedCustomer;
+  final String? userName;
+  final String? userMobile;
   final VoidCallback? onHelpTap;
   final VoidCallback? onProfileTap;
   final bool isCollapsible;
@@ -35,9 +38,12 @@ class HexSidebar extends StatefulWidget {
     required this.onDestinationSelected,
     required this.master,
     this.loggedInUser,
+    this.viewedCustomer,
+    this.userName,
+    this.userMobile,
     this.onHelpTap,
     this.onProfileTap,
-    this.isCollapsible = true,
+    this.isCollapsible = false,
     this.initiallyExpanded = true,
   });
 
@@ -148,28 +154,12 @@ class _HexSidebarState extends State<HexSidebar> {
 
   String _getUserInitials(String name) {
     final trimmed = name.trim();
-    if (trimmed.isEmpty) return 'SK';
+    if (trimmed.isEmpty) return 'U';
     final parts = trimmed.split(RegExp(r'\s+'));
-    if (parts.length >= 2) {
+    if (parts.length >= 2 && parts[1].isNotEmpty) {
       return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
     }
-    return trimmed.length >= 2
-        ? trimmed.substring(0, 2).toUpperCase()
-        : trimmed.toUpperCase();
-  }
-
-  String _formatUserRole(UserRole? role) {
-    if (role == null) return 'Farm Owner';
-    switch (role) {
-      case UserRole.customer:
-        return 'Farm Owner';
-      case UserRole.admin:
-        return 'Administrator';
-      case UserRole.dealer:
-        return 'Dealer';
-      default:
-        return 'Farm Owner';
-    }
+    return trimmed.isNotEmpty ? trimmed[0].toUpperCase() : 'U';
   }
 
   void _defaultHelpAction() {
@@ -208,12 +198,25 @@ class _HexSidebarState extends State<HexSidebar> {
   @override
   Widget build(BuildContext context) {
     final items = HexSidebar.buildItems(widget.master);
-    final user = widget.loggedInUser;
-    final userName = (user?.name != null && user!.name.trim().isNotEmpty)
-        ? user.name
-        : 'Shivandam';
-    final userRole = _formatUserRole(user?.role);
-    final initials = _getUserInitials(userName);
+
+    // Dynamic resolution of username and mobile number (avoid static text)
+    final String displayName = (widget.userName != null && widget.userName!.trim().isNotEmpty)
+        ? widget.userName!.trim()
+        : (widget.viewedCustomer?.name != null && widget.viewedCustomer!.name.trim().isNotEmpty)
+            ? widget.viewedCustomer!.name.trim()
+            : (widget.loggedInUser?.name != null && widget.loggedInUser!.name.trim().isNotEmpty)
+                ? widget.loggedInUser!.name.trim()
+                : 'User';
+
+    final String displayMobile = (widget.userMobile != null && widget.userMobile!.trim().isNotEmpty)
+        ? widget.userMobile!.trim()
+        : (widget.viewedCustomer?.mobileNo != null && widget.viewedCustomer!.mobileNo.trim().isNotEmpty)
+            ? widget.viewedCustomer!.mobileNo.trim()
+            : (widget.loggedInUser?.mobileNo != null && widget.loggedInUser!.mobileNo.trim().isNotEmpty)
+                ? widget.loggedInUser!.mobileNo.trim()
+                : '';
+
+    final initials = _getUserInitials(displayName);
 
     final sidebarWidth = _isExpanded ? 240.0 : 72.0;
 
@@ -242,7 +245,7 @@ class _HexSidebarState extends State<HexSidebar> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // -------------------------------------------------------------------
-          // Header: Brand Logo & Title
+          // Header: Brand Logo & Title (Arrow removed as requested)
           // -------------------------------------------------------------------
           Padding(
             padding: EdgeInsets.symmetric(
@@ -276,46 +279,15 @@ class _HexSidebarState extends State<HexSidebar> {
                 ),
                 if (_isExpanded) ...[
                   const SizedBox(width: 12),
-                  const Expanded(
-                    child: Text(
-                      'HEX',
-                      style: TextStyle(
-                        fontSize: 19,
-                        fontWeight: FontWeight.w800,
-                        color: textDark,
-                        letterSpacing: 0.6,
-                      ),
+                  const Text(
+                    'HEX',
+                    style: TextStyle(
+                      fontSize: 19,
+                      fontWeight: FontWeight.w800,
+                      color: textDark,
+                      letterSpacing: 0.6,
                     ),
                   ),
-                  if (widget.isCollapsible)
-                    InkWell(
-                      borderRadius: BorderRadius.circular(8),
-                      onTap: () => setState(() => _isExpanded = false),
-                      child: Padding(
-                        padding: const EdgeInsets.all(4.0),
-                        child: Icon(
-                          Icons.chevron_left_rounded,
-                          size: 20,
-                          color: Colors.grey.shade500,
-                        ),
-                      ),
-                    ),
-                ] else ...[
-                  if (widget.isCollapsible)
-                    Expanded(
-                      child: InkWell(
-                        borderRadius: BorderRadius.circular(8),
-                        onTap: () => setState(() => _isExpanded = true),
-                        child: const Padding(
-                          padding: EdgeInsets.only(left: 4.0),
-                          child: Icon(
-                            Icons.chevron_right_rounded,
-                            size: 18,
-                            color: Colors.grey,
-                          ),
-                        ),
-                      ),
-                    ),
                 ],
               ],
             ),
@@ -502,7 +474,7 @@ class _HexSidebarState extends State<HexSidebar> {
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Text(
-                                    userName,
+                                    displayName,
                                     style: const TextStyle(
                                       fontSize: 13,
                                       fontWeight: FontWeight.w600,
@@ -511,16 +483,18 @@ class _HexSidebarState extends State<HexSidebar> {
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                   ),
-                                  const SizedBox(height: 1.5),
-                                  Text(
-                                    userRole,
-                                    style: const TextStyle(
-                                      fontSize: 11,
-                                      color: iconMuted,
+                                  if (displayMobile.isNotEmpty) ...[
+                                    const SizedBox(height: 1.5),
+                                    Text(
+                                      displayMobile,
+                                      style: const TextStyle(
+                                        fontSize: 11,
+                                        color: iconMuted,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
                                     ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
+                                  ],
                                 ],
                               ),
                             ),

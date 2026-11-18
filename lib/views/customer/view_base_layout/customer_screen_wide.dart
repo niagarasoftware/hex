@@ -32,14 +32,17 @@ class _CustomerScreenWideState
 
   @override
   Widget build(BuildContext context) {
+    final vm = context.watch<CustomerScreenControllerViewModel>();
+    final navRail = context.watch<NavRailViewModel>();
 
     final userProvider = context.read<UserProvider>();
     final loggedInUser = userProvider.loggedInUser;
+    final activeCustomer = userProvider.viewedCustomer ?? loggedInUser;
+    final customerName = activeCustomer.name.isNotEmpty
+        ? activeCustomer.name
+        : (vm.mySiteList.data.isNotEmpty ? vm.mySiteList.data[vm.sIndex].customerName : '');
+    final customerMobile = activeCustomer.mobileNo;
     print("loggedInUser => ${loggedInUser.toJson()}");
-
-
-    final vm = context.watch<CustomerScreenControllerViewModel>();
-    final navRail = context.watch<NavRailViewModel>();
 
     if (vm.isLoading) return const SiteLoadingOrEmpty(isLoading: true);
     if (vm.mySiteList.data.isEmpty) return const SiteLoadingOrEmpty(isLoading: false);
@@ -74,6 +77,9 @@ class _CustomerScreenWideState
             },
             master: cMaster,
             loggedInUser: loggedInUser,
+            viewedCustomer: userProvider.viewedCustomer,
+            userName: customerName,
+            userMobile: customerMobile,
           ),
           Expanded(
             child: Column(

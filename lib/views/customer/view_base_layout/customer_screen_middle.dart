@@ -33,12 +33,16 @@ class _CustomerScreenMiddleState
 
   @override
   Widget build(BuildContext context) {
+    final vm = context.watch<CustomerScreenControllerViewModel>();
+    final navRail = context.watch<NavRailViewModel>();
 
     final userProvider = context.read<UserProvider>();
     final loggedInUser = userProvider.loggedInUser;
-
-    final vm = context.watch<CustomerScreenControllerViewModel>();
-    final navRail = context.watch<NavRailViewModel>();
+    final activeCustomer = userProvider.viewedCustomer ?? loggedInUser;
+    final customerName = activeCustomer.name.isNotEmpty
+        ? activeCustomer.name
+        : (vm.mySiteList.data.isNotEmpty ? vm.mySiteList.data[vm.sIndex].customerName : '');
+    final customerMobile = activeCustomer.mobileNo;
 
     if (vm.isLoading) return const SiteLoadingOrEmpty(isLoading: true);
     if (vm.mySiteList.data.isEmpty) return const SiteLoadingOrEmpty(isLoading: false);
@@ -70,6 +74,9 @@ class _CustomerScreenMiddleState
             },
             master: cMaster,
             loggedInUser: loggedInUser,
+            viewedCustomer: userProvider.viewedCustomer,
+            userName: customerName,
+            userMobile: customerMobile,
           ),
           Expanded(
             child: Column(
