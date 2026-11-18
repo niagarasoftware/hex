@@ -9,6 +9,7 @@ import '../../../view_models/nav_rail_view_model.dart';
 import '../widgets/connection_banner.dart';
 import '../widgets/customer_app_bar.dart';
 import '../widgets/customer_main_screen.dart';
+import '../widgets/hex_sidebar.dart';
 import '../widgets/navigation_rail_destination.dart';
 import '../widgets/side_action_menu.dart';
 import '../widgets/site_loading_or_empty.dart';
@@ -64,16 +65,15 @@ class _CustomerScreenWideState
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: buildCustomerAppBar(context, vm, cMaster, _scaffoldKey, showMenu: false, isNarrow: false),
       body: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          NavigationRail(
+          HexSidebar(
             selectedIndex: navRail.selectedIndex,
-            labelType: NavigationRailLabelType.all,
-            elevation: 5,
             onDestinationSelected: (index) async {
               navRail.onDestinationSelectingChange(index);
             },
-            destinations: NavigationDestinationsBuilder.build(context, cMaster),
+            master: cMaster,
+            loggedInUser: loggedInUser,
           ),
           Expanded(
             child: Column(

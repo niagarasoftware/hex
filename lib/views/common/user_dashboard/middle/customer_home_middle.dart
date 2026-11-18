@@ -90,7 +90,7 @@ class CustomerHomeMiddle extends StatelessWidget {
                         child: Column(
                           children: [
                             SizedBox(
-                              width: MediaQuery.sizeOf(context).width,
+                              width: double.infinity,
                               height: 40,
                               child: Card(
                                 color: Colors.white,
@@ -135,9 +135,25 @@ class CustomerHomeMiddle extends StatelessWidget {
                                 ),
                               ),
                             ),
-                            isAquaculture ? AquacultureLine(irrLine: line, customerId: customerId,
-                                controllerId: controllerId, modelId: modelId, deviceId: deviceId) :
-                            buildIrrigationLine(context, line, customerId, controllerId, modelId, deviceId),
+                            isAquaculture
+                                ? AquacultureLine(
+                                    irrLine: line,
+                                    customerId: customerId,
+                                    controllerId: controllerId,
+                                    modelId: modelId,
+                                    deviceId: deviceId,
+                                  )
+                                : SingleChildScrollView(
+                                    scrollDirection: Axis.horizontal,
+                                    child: buildIrrigationLine(
+                                      context,
+                                      line,
+                                      customerId,
+                                      controllerId,
+                                      modelId,
+                                      deviceId,
+                                    ),
+                                  ),
                           ],
                         ),
                       ),

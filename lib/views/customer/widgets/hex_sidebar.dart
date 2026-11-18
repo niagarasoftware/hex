@@ -1,0 +1,540 @@
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+import '../../../models/customer/site_model.dart';
+import '../../../models/user_model.dart';
+import '../../../utils/constants.dart';
+import '../../../utils/enums.dart';
+import '../../common/user_profile/user_profile.dart';
+import '../help_support.dart';
+
+class HexSidebarItem {
+  final int index;
+  final String title;
+  final IconData icon;
+
+  const HexSidebarItem({
+    required this.index,
+    required this.title,
+    required this.icon,
+  });
+}
+
+class HexSidebar extends StatefulWidget {
+  final int selectedIndex;
+  final ValueChanged<int> onDestinationSelected;
+  final MasterControllerModel master;
+  final UserModel? loggedInUser;
+  final VoidCallback? onHelpTap;
+  final VoidCallback? onProfileTap;
+  final bool isCollapsible;
+  final bool initiallyExpanded;
+
+  const HexSidebar({
+    super.key,
+    required this.selectedIndex,
+    required this.onDestinationSelected,
+    required this.master,
+    this.loggedInUser,
+    this.onHelpTap,
+    this.onProfileTap,
+    this.isCollapsible = true,
+    this.initiallyExpanded = true,
+  });
+
+  /// Build list of items dynamically matching the active model
+  static List<HexSidebarItem> buildItems(MasterControllerModel master) {
+    int idx = 0;
+    final items = <HexSidebarItem>[];
+
+    // 0: Dashboard
+    items.add(HexSidebarItem(
+      index: idx++,
+      title: 'Dashboard',
+      icon: Icons.grid_view_rounded,
+    ));
+
+    // 1: All My Devices
+    items.add(HexSidebarItem(
+      index: idx++,
+      title: 'All My Devices',
+      icon: Icons.developer_board_outlined,
+    ));
+
+    // 2: Send & Received
+    items.add(HexSidebarItem(
+      index: idx++,
+      title: 'Send & Received',
+      icon: Icons.swap_horiz_rounded,
+    ));
+
+    // 3: Controller Log (conditional)
+    if ([
+      ...AppConstants.gemModelList,
+      ...AppConstants.ecoGemModelList,
+      ...AppConstants.omsGemList,
+    ].contains(master.modelId)) {
+      items.add(HexSidebarItem(
+        index: idx++,
+        title: 'Controller Log',
+        icon: Icons.description_outlined,
+      ));
+    }
+
+    // 4: Settings
+    items.add(HexSidebarItem(
+      index: idx++,
+      title: 'Settings',
+      icon: Icons.settings_outlined,
+    ));
+
+    // 5: Configuration
+    items.add(HexSidebarItem(
+      index: idx++,
+      title: 'Configuration',
+      icon: Icons.tune_rounded,
+    ));
+
+    // 6: Service Request
+    items.add(HexSidebarItem(
+      index: idx++,
+      title: 'Service Request',
+      icon: Icons.build_outlined,
+    ));
+
+    // 7: Weather (conditional)
+    if ([...AppConstants.gemModelList].contains(master.modelId) &&
+        ![...AppConstants.aquacultureModelList].contains(master.modelId)) {
+      items.add(HexSidebarItem(
+        index: idx++,
+        title: 'Weather',
+        icon: Icons.wb_sunny_outlined,
+      ));
+    }
+
+    // 8: Geography (conditional)
+    if ([...AppConstants.aquacultureModelList].contains(master.modelId) ||
+        [...AppConstants.gemModelList].contains(master.modelId)) {
+      items.add(HexSidebarItem(
+        index: idx++,
+        title: 'Geography',
+        icon: Icons.location_on_outlined,
+      ));
+    }
+
+    return items;
+  }
+
+  @override
+  State<HexSidebar> createState() => _HexSidebarState();
+}
+
+class _HexSidebarState extends State<HexSidebar> {
+  late bool _isExpanded;
+
+  // Visual Theme Palette
+  static const Color primaryPurple = Color(0xFF673AB7);
+  static const Color activeBgLavender = Color(0xFFEDE7F6);
+  static const Color brandIconBg = Color(0xFF5B22B6);
+  static const Color textDark = Color(0xFF1E293B);
+  static const Color textMuted = Color(0xFF475569);
+  static const Color iconMuted = Color(0xFF64748B);
+  static const Color avatarGreen = Color(0xFF1B873F);
+
+  @override
+  void initState() {
+    super.initState();
+    _isExpanded = widget.initiallyExpanded;
+  }
+
+  String _getUserInitials(String name) {
+    final trimmed = name.trim();
+    if (trimmed.isEmpty) return 'SK';
+    final parts = trimmed.split(RegExp(r'\s+'));
+    if (parts.length >= 2) {
+      return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
+    }
+    return trimmed.length >= 2
+        ? trimmed.substring(0, 2).toUpperCase()
+        : trimmed.toUpperCase();
+  }
+
+  String _formatUserRole(UserRole? role) {
+    if (role == null) return 'Farm Owner';
+    switch (role) {
+      case UserRole.customer:
+        return 'Farm Owner';
+      case UserRole.admin:
+        return 'Administrator';
+      case UserRole.dealer:
+        return 'Dealer';
+      default:
+        return 'Farm Owner';
+    }
+  }
+
+  void _defaultHelpAction() {
+    if (widget.onHelpTap != null) {
+      widget.onHelpTap!();
+      return;
+    }
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const DashboardHelpPage()),
+    );
+  }
+
+  void _defaultProfileAction() {
+    if (widget.onProfileTap != null) {
+      widget.onProfileTap!();
+      return;
+    }
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) => FractionallySizedBox(
+        heightFactor: 0.84,
+        widthFactor: 0.75,
+        child: Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(8)),
+          ),
+          child: const UserProfile(isNarrow: false),
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final items = HexSidebar.buildItems(widget.master);
+    final user = widget.loggedInUser;
+    final userName = (user?.name != null && user!.name.trim().isNotEmpty)
+        ? user.name
+        : 'Shivandam';
+    final userRole = _formatUserRole(user?.role);
+    final initials = _getUserInitials(userName);
+
+    final sidebarWidth = _isExpanded ? 240.0 : 72.0;
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      curve: Curves.easeInOut,
+      width: sidebarWidth,
+      height: double.infinity,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border(
+          right: BorderSide(
+            color: Colors.grey.shade200,
+            width: 1.2,
+          ),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.02),
+            blurRadius: 8,
+            offset: const Offset(2, 0),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // -------------------------------------------------------------------
+          // Header: Brand Logo & Title
+          // -------------------------------------------------------------------
+          Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: _isExpanded ? 18.0 : 16.0,
+              vertical: 20.0,
+            ),
+            child: Row(
+              children: [
+                // Purple squircle logo
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: brandIconBg,
+                    borderRadius: BorderRadius.circular(10),
+                    boxShadow: [
+                      BoxShadow(
+                        color: brandIconBg.withOpacity(0.3),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: const Center(
+                    child: Icon(
+                      Icons.hexagon_rounded,
+                      color: Colors.white,
+                      size: 20,
+                    ),
+                  ),
+                ),
+                if (_isExpanded) ...[
+                  const SizedBox(width: 12),
+                  const Expanded(
+                    child: Text(
+                      'HEX',
+                      style: TextStyle(
+                        fontSize: 19,
+                        fontWeight: FontWeight.w800,
+                        color: textDark,
+                        letterSpacing: 0.6,
+                      ),
+                    ),
+                  ),
+                  if (widget.isCollapsible)
+                    InkWell(
+                      borderRadius: BorderRadius.circular(8),
+                      onTap: () => setState(() => _isExpanded = false),
+                      child: Padding(
+                        padding: const EdgeInsets.all(4.0),
+                        child: Icon(
+                          Icons.chevron_left_rounded,
+                          size: 20,
+                          color: Colors.grey.shade500,
+                        ),
+                      ),
+                    ),
+                ] else ...[
+                  if (widget.isCollapsible)
+                    Expanded(
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(8),
+                        onTap: () => setState(() => _isExpanded = true),
+                        child: const Padding(
+                          padding: EdgeInsets.only(left: 4.0),
+                          child: Icon(
+                            Icons.chevron_right_rounded,
+                            size: 18,
+                            color: Colors.grey,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ],
+            ),
+          ),
+
+          // -------------------------------------------------------------------
+          // Nav Items List
+          // -------------------------------------------------------------------
+          Expanded(
+            child: ListView.separated(
+              padding: EdgeInsets.symmetric(
+                horizontal: _isExpanded ? 14.0 : 10.0,
+                vertical: 4.0,
+              ),
+              itemCount: items.length,
+              separatorBuilder: (_, __) => const SizedBox(height: 4),
+              itemBuilder: (context, i) {
+                final item = items[i];
+                final isSelected = widget.selectedIndex == item.index;
+
+                final tile = Material(
+                  color: Colors.transparent,
+                  borderRadius: BorderRadius.circular(10),
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(10),
+                    onTap: () => widget.onDestinationSelected(item.index),
+                    hoverColor: isSelected
+                        ? activeBgLavender
+                        : const Color(0xFFF8FAFC),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 150),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: _isExpanded ? 14.0 : 0.0,
+                        vertical: 10.5,
+                      ),
+                      decoration: BoxDecoration(
+                        color: isSelected ? activeBgLavender : Colors.transparent,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: _isExpanded
+                            ? MainAxisAlignment.start
+                            : MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            item.icon,
+                            size: 20,
+                            color: isSelected ? primaryPurple : iconMuted,
+                          ),
+                          if (_isExpanded) ...[
+                            const SizedBox(width: 14),
+                            Expanded(
+                              child: Text(
+                                item.title,
+                                style: TextStyle(
+                                  fontSize: 13.5,
+                                  fontWeight: isSelected
+                                      ? FontWeight.w600
+                                      : FontWeight.w500,
+                                  color: isSelected ? primaryPurple : textMuted,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+
+                if (!_isExpanded) {
+                  return Tooltip(
+                    message: item.title,
+                    preferBelow: false,
+                    child: tile,
+                  );
+                }
+
+                return tile;
+              },
+            ),
+          ),
+
+          // -------------------------------------------------------------------
+          // Bottom Section: Help + Divider + User Profile
+          // -------------------------------------------------------------------
+          Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: _isExpanded ? 14.0 : 10.0,
+              vertical: 8.0,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Help button
+                Material(
+                  color: Colors.transparent,
+                  borderRadius: BorderRadius.circular(10),
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(10),
+                    onTap: _defaultHelpAction,
+                    hoverColor: const Color(0xFFF8FAFC),
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: _isExpanded ? 14.0 : 0.0,
+                        vertical: 10.0,
+                      ),
+                      child: Row(
+                        mainAxisAlignment: _isExpanded
+                            ? MainAxisAlignment.start
+                            : MainAxisAlignment.center,
+                        children: [
+                          const Icon(
+                            Icons.help_outline_rounded,
+                            size: 20,
+                            color: iconMuted,
+                          ),
+                          if (_isExpanded) ...[
+                            const SizedBox(width: 14),
+                            const Expanded(
+                              child: Text(
+                                'Help',
+                                style: TextStyle(
+                                  fontSize: 13.5,
+                                  fontWeight: FontWeight.w500,
+                                  color: textMuted,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+
+                // Divider
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8.0),
+                  child: Divider(
+                    height: 1,
+                    thickness: 1,
+                    color: Colors.grey.shade200,
+                  ),
+                ),
+
+                // User Profile Tile
+                Material(
+                  color: Colors.transparent,
+                  borderRadius: BorderRadius.circular(10),
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(10),
+                    onTap: _defaultProfileAction,
+                    hoverColor: const Color(0xFFF8FAFC),
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: _isExpanded ? 8.0 : 0.0,
+                        vertical: 6.0,
+                      ),
+                      child: Row(
+                        mainAxisAlignment: _isExpanded
+                            ? MainAxisAlignment.start
+                            : MainAxisAlignment.center,
+                        children: [
+                          CircleAvatar(
+                            radius: 17,
+                            backgroundColor: avatarGreen,
+                            child: Text(
+                              initials,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 12.5,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                          if (_isExpanded) ...[
+                            const SizedBox(width: 11),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    userName,
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                      color: textDark,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  const SizedBox(height: 1.5),
+                                  Text(
+                                    userRole,
+                                    style: const TextStyle(
+                                      fontSize: 11,
+                                      color: iconMuted,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

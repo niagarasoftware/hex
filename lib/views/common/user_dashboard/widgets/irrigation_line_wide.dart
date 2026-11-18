@@ -85,127 +85,134 @@ class IrrigationLineWide extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final screenW = MediaQuery.sizeOf(context).width;
+        final maxW = constraints.maxWidth.isFinite && constraints.maxWidth > 0
+            ? constraints.maxWidth
+            : (screenW - 320);
+        final availW = math.max(300.0, maxW - 20);
 
-    final allValveWidgets = [
+        final allValveWidgets = [
 
-      ...mainValveList(
-        list: mainValves,
-        customerId: customerId,
-        controllerId: controllerId,
-        modelId: modelId,
-        isNarrow: false,
-      ),
+          ...mainValveList(
+            list: mainValves,
+            customerId: customerId,
+            controllerId: controllerId,
+            modelId: modelId,
+            isNarrow: false,
+          ),
 
-      ...valveList(
-        valves: valves,
-        customerId: customerId,
-        controllerId: controllerId,
-        modelId: modelId,
-        isNarrow: false,
-        prsOutIsAval: pressureOut.isNotEmpty,
-      ),
+          ...valveList(
+            valves: valves,
+            customerId: customerId,
+            controllerId: controllerId,
+            modelId: modelId,
+            isNarrow: false,
+            prsOutIsAval: pressureOut.isNotEmpty,
+          ),
 
-    ];
+        ];
 
-    final gateWidgets = gates.asMap().entries.map((entry) {
-      return GateWidget(objGate: entry.value);
-    }).toList();
+        final gateWidgets = gates.asMap().entries.map((entry) {
+          return GateWidget(objGate: entry.value);
+        }).toList();
 
-    final fanWidgets = fans.asMap().entries.map((entry) {
-      return FanWidget(objFan: entry.value, isWide: true);
-    }).toList();
+        final fanWidgets = fans.asMap().entries.map((entry) {
+          return FanWidget(objFan: entry.value, isWide: true);
+        }).toList();
 
-    final lightWidgets = lights.asMap().entries.map((entry) {
-      return LightWidget(objLight: entry.value, isWide: true);
-    }).toList();
+        final lightWidgets = lights.asMap().entries.map((entry) {
+          return LightWidget(objLight: entry.value, isWide: true);
+        }).toList();
 
-    final foggerWidgets = fogger.asMap().entries.map((entry) {
-      return FoggerWidget(objFogger: entry.value, isWide: true);
-    }).toList();
+        final foggerWidgets = fogger.asMap().entries.map((entry) {
+          return FoggerWidget(objFogger: entry.value, isWide: true);
+        }).toList();
 
-    final allItems = [
-      if (inletWaterSources.isNotEmpty)
-        ..._buildWaterSource(context, inletWaterSources, true, true, cFertilizerSite.isNotEmpty? true : false),
+        final allItems = [
+          if (inletWaterSources.isNotEmpty)
+            ..._buildWaterSource(context, inletWaterSources, true, true, cFertilizerSite.isNotEmpty? true : false),
 
-      if (outletWaterSources.isNotEmpty)
-        ..._buildWaterSource(context, outletWaterSources, inletWaterSources.isNotEmpty, false, cFertilizerSite.isNotEmpty),
+          if (outletWaterSources.isNotEmpty)
+            ..._buildWaterSource(context, outletWaterSources, inletWaterSources.isNotEmpty, false, cFertilizerSite.isNotEmpty),
 
-      if (cFilterSite.isNotEmpty)
-        ...buildFilter(context, cFilterSite, cFertilizerSite.isNotEmpty, false, false),
+          if (cFilterSite.isNotEmpty)
+            ...buildFilter(context, cFilterSite, cFertilizerSite.isNotEmpty, false, false),
 
-      if (lFilterSite.isNotEmpty)
-        ...buildFilter(context, lFilterSite, (cFertilizerSite.isNotEmpty || lFertilizerSite.isNotEmpty), false, false),
+          if (lFilterSite.isNotEmpty)
+            ...buildFilter(context, lFilterSite, (cFertilizerSite.isNotEmpty || lFertilizerSite.isNotEmpty), false, false),
 
-      if (cFertilizerSite.isNotEmpty)
-        ..._buildFertilizer(context, cFertilizerSite, isNava),
+          if (cFertilizerSite.isNotEmpty)
+            ..._buildFertilizer(context, cFertilizerSite, isNava, availW),
 
-      if (lFertilizerSite.isNotEmpty)
-        ..._buildFertilizer(context, lFertilizerSite, isNava),
+          if (lFertilizerSite.isNotEmpty)
+            ..._buildFertilizer(context, lFertilizerSite, isNava, availW),
 
-      ...lightWidgets,
-      ...fanWidgets,
-      ..._buildSensorItems(prsSwitch, 'Pressure Switch', 'assets/png/pressure_switch_wj.png'),
-      ..._buildSensorItems(pressureIn, 'Pressure Sensor', 'assets/png/pressure_sensor_wj.png'),
-      ..._buildSensorItems(waterMeter, 'Water Meter', 'assets/png/water_meter_wj.png'),
-      ...allValveWidgets,
-      ..._buildSensorItems(pressureOut, 'Pressure Sensor', 'assets/png/pressure_sensor_wjl.png'),
-      ..._buildSensorItems(co2, 'CO2 Sensor', 'assets/png/co2_sensor_wj.png'),
-      ..._buildSensorItems(humidity, 'Humidity Sensor', 'assets/png/humidity_sensor_wj.png'),
-      ..._buildSensorItems(temperature, 'Temperature Sensor', 'assets/png/temperature_sensor.png'),
-      ..._buildSensorItems(soilTemperature, 'Soil Temperature Sensor', 'assets/png/Soil_temperature.png'),
-      ...gateWidgets,
-      ...foggerWidgets,
-    ];
+          ...lightWidgets,
+          ...fanWidgets,
+          ..._buildSensorItems(prsSwitch, 'Pressure Switch', 'assets/png/pressure_switch_wj.png'),
+          ..._buildSensorItems(pressureIn, 'Pressure Sensor', 'assets/png/pressure_sensor_wj.png'),
+          ..._buildSensorItems(waterMeter, 'Water Meter', 'assets/png/water_meter_wj.png'),
+          ...allValveWidgets,
+          ..._buildSensorItems(pressureOut, 'Pressure Sensor', 'assets/png/pressure_sensor_wjl.png'),
+          ..._buildSensorItems(co2, 'CO2 Sensor', 'assets/png/co2_sensor_wj.png'),
+          ..._buildSensorItems(humidity, 'Humidity Sensor', 'assets/png/humidity_sensor_wj.png'),
+          ..._buildSensorItems(temperature, 'Temperature Sensor', 'assets/png/temperature_sensor.png'),
+          ..._buildSensorItems(soilTemperature, 'Soil Temperature Sensor', 'assets/png/Soil_temperature.png'),
+          ...gateWidgets,
+          ...foggerWidgets,
+        ];
 
-    final availW = MediaQuery.sizeOf(context).width - 140;
+        int cFrtChannelCount = 0;
+        int lFrtChannelCount = 0;
 
-    int cFrtChannelCount = 0;
-    int lFrtChannelCount = 0;
+        if (cFertilizerSite.isNotEmpty) {
+          cFrtChannelCount = (cFertilizerSite[0].channel.length + cFertilizerSite[0].agitator.length + 2) +
+              _extraTankCols(cFertilizerSite[0], availW);
+        }
+        if (lFertilizerSite.isNotEmpty) {
+          lFrtChannelCount = (lFertilizerSite[0].channel.length + lFertilizerSite[0].agitator.length + 2) +
+              _extraTankCols(lFertilizerSite[0], availW);
+        }
 
-    if (cFertilizerSite.isNotEmpty) {
-      cFrtChannelCount = (cFertilizerSite[0].channel.length + cFertilizerSite[0].agitator.length + 2) +
-          _extraTankCols(cFertilizerSite[0], availW);
-    }
-    if (lFertilizerSite.isNotEmpty) {
-      lFrtChannelCount = (lFertilizerSite[0].channel.length + lFertilizerSite[0].agitator.length + 2) +
-          _extraTankCols(lFertilizerSite[0], availW);
-    }
-
-    int itemsPerRow = ((MediaQuery.sizeOf(context).width - 140) / 67).floor() -
-        (cFrtChannelCount + lFrtChannelCount);
+        int itemsPerRow = (availW / 67).floor() -
+            (cFrtChannelCount + lFrtChannelCount);
 
 
-    return Padding(
-      padding: const EdgeInsets.only(top: 8),
-      child: Align(
-        alignment: Alignment.topLeft,
-        child: Wrap(
-          alignment: WrapAlignment.start,
-          spacing: 0,
-          children: allItems.asMap().entries.map<Widget>((entry) {
+        return Padding(
+          padding: const EdgeInsets.only(top: 8),
+          child: Align(
+            alignment: Alignment.topLeft,
+            child: Wrap(
+              alignment: WrapAlignment.start,
+              spacing: 0,
+              children: allItems.asMap().entries.map<Widget>((entry) {
 
-            final index = entry.key;
-            final item = entry.value;
+                final index = entry.key;
+                final item = entry.value;
 
-            if(cFertilizerSite.isNotEmpty) {
-              if (((item is ValveWidget) || (item is BuildMainValve)
-                  ||(item is LightWidget)||(item is SensorWidget))
-                  ||(item is FoggerWidget) && index < itemsPerRow) {
-                return Padding(
-                  padding: const EdgeInsets.only(top: 30),
-                  child: item,
-                );
-              }
-              else{
-                return item;
-              }
-            }
-            else{
-              return item;
-            }
-          }).toList(),
-        ),
-      ),
+                if(cFertilizerSite.isNotEmpty) {
+                  if (((item is ValveWidget) || (item is BuildMainValve)
+                      ||(item is LightWidget)||(item is SensorWidget))
+                      ||(item is FoggerWidget) && index < itemsPerRow) {
+                    return Padding(
+                      padding: const EdgeInsets.only(top: 30),
+                      child: item,
+                    );
+                  }
+                  else{
+                    return item;
+                  }
+                }
+                else{
+                  return item;
+                }
+              }).toList(),
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -314,6 +321,7 @@ class IrrigationLineWide extends StatelessWidget {
       BuildContext context,
       List<FertilizerSiteModel> fertilizerSite,
       bool isNova,
+      double availW,
       ) {
     return List.generate(fertilizerSite.length, (siteIndex) {
       final site = fertilizerSite[siteIndex];
@@ -367,7 +375,7 @@ class IrrigationLineWide extends StatelessWidget {
 
       // Web + tank system: adaptive layout (widgets is now complete)
       if (site.hasTankSystem) {
-        return _buildWebTankSite(context, site, widgets);
+        return _buildWebTankSite(context, site, widgets, availW);
       }
 
       return SingleChildScrollView(
@@ -412,8 +420,7 @@ class IrrigationLineWide extends StatelessWidget {
 
   /// Web only: tank system + booster/channels, adaptive.
   Widget _buildWebTankSite(
-      BuildContext context, FertilizerSiteModel site, List<Widget> rest) {
-    final avail = MediaQuery.sizeOf(context).width - 140;
+      BuildContext context, FertilizerSiteModel site, List<Widget> rest, double avail) {
     final restW =
         (site.channel.length + site.agitator.length + 1) * 67.0 + 10;
     final system = site.tankSystem!;
@@ -432,7 +439,7 @@ class IrrigationLineWide extends StatelessWidget {
     final side = FertTankSystemWidget.measure(system, maxWidth: sideMax);
 
     Widget body;
-    if (side.width <= sideMax) {
+    if (sideMax > 220 && side.width <= sideMax) {
       // tanks wrap to fit, booster + channels stay on the right
       body = Row(
         mainAxisSize: MainAxisSize.min,
@@ -455,24 +462,27 @@ class IrrigationLineWide extends StatelessWidget {
       );
     }
 
-    return Stack(
-      children: [
-        body,
-        Positioned(
-          left: 3,
-          bottom: 0,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(4),
-              border: Border.all(color: Colors.grey, width: 0.5),
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Stack(
+        children: [
+          body,
+          Positioned(
+            left: 3,
+            bottom: 0,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(4),
+                border: Border.all(color: Colors.grey, width: 0.5),
+              ),
+              child: Text(site.name,
+                  style: const TextStyle(fontSize: 10, color: Colors.black)),
             ),
-            child: Text(site.name,
-                style: const TextStyle(fontSize: 10, color: Colors.black)),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
