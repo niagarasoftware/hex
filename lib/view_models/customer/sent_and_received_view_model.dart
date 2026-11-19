@@ -22,6 +22,7 @@ class SentAndReceivedViewModel extends ChangeNotifier {
 
   DateTime focusedDay = DateTime.now();
   DateTime? selectedDay;
+  DateTime windowEndDate = DateTime.now();
 
   SentAndReceivedViewModel(this.repository);
 
@@ -195,14 +196,56 @@ class SentAndReceivedViewModel extends ChangeNotifier {
   }
 
   String convertTo12hrs(String timeString) {
-    final dateTime = DateFormat("HH:mm:ss").parse(timeString);
-    return DateFormat("h:mm a").format(dateTime);
+    if (timeString.isEmpty) return '';
+    try {
+      final dateTime = DateFormat("HH:mm:ss").parse(timeString);
+      return DateFormat("h:mm a").format(dateTime);
+    } catch (_) {
+      try {
+        final dateTime = DateFormat("hh:mm a").parse(timeString);
+        return DateFormat("h:mm a").format(dateTime);
+      } catch (_) {
+        return timeString;
+      }
+    }
+  }
+
+  void shiftDatesBack([int days = 7]) {
+    windowEndDate = windowEndDate.subtract(Duration(days: days));
+    safeNotify();
+  }
+
+  void shiftDatesForward([int days = 7]) {
+    final now = DateTime.now();
+    var next = windowEndDate.add(Duration(days: days));
+    if (next.isAfter(now)) {
+      next = now;
+    }
+    windowEndDate = next;
+    safeNotify();
+  }
+
+  void selectDate(DateTime date) {
+    selectedDay = date;
+    focusedDay = date;
+    final earliest = windowEndDate.subtract(const Duration(days: 13));
+    if (date.isBefore(earliest) || date.isAfter(windowEndDate)) {
+      final now = DateTime.now();
+      var candidate = date.add(const Duration(days: 3));
+      if (candidate.isAfter(now)) candidate = now;
+      if (candidate.isBefore(date)) candidate = date;
+      windowEndDate = candidate;
+    }
+    String formattedDate = DateFormat('yyyy-MM-dd').format(date);
+    getSentAndReceivedData(formattedDate);
+  }
+
+  void selectToday() {
+    windowEndDate = DateTime.now();
+    selectDate(DateTime.now());
   }
 
   void onDateChanged(DateTime sDate, DateTime fDate) {
-    selectedDay = sDate;
-    focusedDay = fDate;
-    String formattedDate = DateFormat('yyyy-MM-dd').format(sDate);
-    getSentAndReceivedData(formattedDate);
+    selectDate(sDate);
   }
 }
