@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:hex/modules/IrrigationProgram/view/program_library.dart';
-import 'package:hex/modules/IrrigationProgram/view/schedule_screen.dart';
 import 'package:hex/modules/Preferences/state_management/preference_provider.dart';
 import 'package:hex/modules/Preferences/view/moisture_settings.dart';
 import 'package:hex/services/http_service.dart';
@@ -15,6 +14,7 @@ import '../model/preference_data_model.dart';
 import '../repository/preferences_repo.dart';
 import '../widgets/progress_dialog.dart';
 import '../../IrrigationProgram/widgets/custom_native_time_picker.dart';
+import '../../SystemDefinitions/widgets/custom_snack_bar.dart';
 
 class StandAloneSettings extends StatefulWidget {
   final int userId, customerId, selectedIndex;
@@ -52,40 +52,44 @@ class _StandAloneSettingsState extends State<StandAloneSettings> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     final valves = widget.masterData.configObjects
         .where((e) =>
-            e.objectId ==
-            (AppConstants.pumpWithLightModelList
-                    .contains(widget.masterData.modelId)
-                ? 19
-                : 13))
+    e.objectId ==
+        (AppConstants.pumpWithLightModelList
+            .contains(widget.masterData.modelId)
+            ? 19
+            : 13))
         .map((ele) => ele.name)
         .toList();
 
     return Scaffold(
+      backgroundColor: colorScheme.surfaceContainerLowest,
       body: Consumer<PreferenceProvider>(
         builder: (context, provider, child) {
           return (provider.standaloneSettings == null ||
-                  provider.programSettings == null)
+              provider.programSettings == null)
               ? const Center(child: CircularProgressIndicator())
               : Padding(
-                  padding: const EdgeInsets.all(10),
-                  child: Column(
-                    children: [
-                      Expanded(
-                        child: _selectedSetting == 0
-                            ? _buildValveSettings(context, valves, provider)
-                            : const MoistureSettings(),
-                      ),
-                    ],
-                  ),
-                );
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              children: [
+                Expanded(
+                  child: _selectedSetting == 0
+                      ? _buildValveSettings(context, valves, provider)
+                      : const MoistureSettings(),
+                ),
+              ],
+            ),
+          );
         },
       ),
       floatingActionButton: FloatingActionButton.extended(
+        backgroundColor: colorScheme.primary,
+        foregroundColor: colorScheme.onPrimary,
         onPressed: () {
           final provider =
-              Provider.of<PreferenceProvider>(context, listen: false);
+          Provider.of<PreferenceProvider>(context, listen: false);
           if (widget.selectedIndex == 1 &&
               provider.standaloneSettings!.setting[0].value == true &&
               provider.standaloneSettings!.setting
@@ -103,16 +107,17 @@ class _StandAloneSettingsState extends State<StandAloneSettings> {
   }
 
   void _showAlert() {
+    final colorScheme = Theme.of(context).colorScheme;
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: const Row(
+          title: Row(
             children: [
-              Icon(Icons.warning_amber_rounded, color: Colors.red),
-              SizedBox(width: 8),
-              Text("Alert!", style: TextStyle(color: Colors.red, fontSize: 18, fontWeight: FontWeight.bold)),
+              Icon(Icons.warning_amber_rounded, color: colorScheme.error),
+              const SizedBox(width: 8),
+              Text("Alert!", style: TextStyle(color: colorScheme.error, fontSize: 18, fontWeight: FontWeight.bold)),
             ],
           ),
           content: const Text(
@@ -132,32 +137,32 @@ class _StandAloneSettingsState extends State<StandAloneSettings> {
 
   Widget _buildValveSettings(
       BuildContext context, List<String> valves, PreferenceProvider provider) {
-    final primaryColor = Theme.of(context).primaryColor;
+    final colorScheme = Theme.of(context).colorScheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
           decoration: BoxDecoration(
-            color: Theme.of(context).primaryColorLight,
+            color: colorScheme.primaryContainer,
             borderRadius: const BorderRadius.only(
-              topRight: Radius.circular(16),
+              topRight: Radius.circular(14),
               topLeft: Radius.circular(6),
             ),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.settings_input_component_rounded,
-                  color: Colors.white, size: 18),
+              Icon(Icons.settings_input_component_rounded,
+                  color: colorScheme.onPrimaryContainer, size: 18),
               const SizedBox(width: 8),
               Text(
                 widget.selectedIndex == 1
                     ? "Standalone Settings"
                     : "Program settings",
-                style: const TextStyle(
+                style: TextStyle(
                   fontWeight: FontWeight.bold,
-                  color: Colors.white,
+                  color: colorScheme.onPrimaryContainer,
                   fontSize: 14,
                 ),
               ),
@@ -168,45 +173,45 @@ class _StandAloneSettingsState extends State<StandAloneSettings> {
           child: Container(
             decoration: BoxDecoration(
               borderRadius: const BorderRadius.only(
-                topRight: Radius.circular(12),
-                bottomLeft: Radius.circular(12),
-                bottomRight: Radius.circular(12),
+                topRight: Radius.circular(14),
+                bottomLeft: Radius.circular(14),
+                bottomRight: Radius.circular(14),
               ),
-              color: Colors.white,
+              color: colorScheme.surface,
               border: Border.all(
-                color: Theme.of(context).primaryColorLight.withOpacity(0.4),
-                width: 0.5,
+                color: colorScheme.outlineVariant.withOpacity(0.5),
+                width: 1,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: primaryColor.withOpacity(0.04),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
+                  color: Colors.black.withOpacity(0.025),
+                  blurRadius: 10,
+                  offset: const Offset(0, 3),
                 ),
               ],
             ),
             padding: const EdgeInsets.all(12),
             child: ResponsiveGridList(
               desiredItemWidth:
-                  MediaQuery.of(context).size.width <= 500 ? 150 : 200,
+              MediaQuery.of(context).size.width <= 500 ? 150 : 200,
               minSpacing: 10,
               children: widget.selectedIndex == 1
                   ? List.generate(
-                      valves.length + 1,
-                      (i) => _buildSettingTile(
-                          context,
-                          provider.standaloneSettings!.setting[i],
-                          valves,
-                          i - 1),
-                    )
+                valves.length + 1,
+                    (i) => _buildSettingTile(
+                    context,
+                    provider.standaloneSettings!.setting[i],
+                    valves,
+                    i - 1),
+              )
                   : List.generate(
-                      valves.length + 4,
-                      (i) => _buildSettingTile(
-                          context,
-                          provider.programSettings!.setting[i],
-                          valves,
-                          i - 4),
-                    ),
+                valves.length + 4,
+                    (i) => _buildSettingTile(
+                    context,
+                    provider.programSettings!.setting[i],
+                    valves,
+                    i - 4),
+              ),
             ),
           ),
         ),
@@ -216,48 +221,51 @@ class _StandAloneSettingsState extends State<StandAloneSettings> {
 
   Widget _buildSettingTile(BuildContext context, WidgetSetting setting,
       List<String> titles, int index) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.15),
+        color: colorScheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
-          color: Theme.of(context).primaryColorLight.withOpacity(0.3),
+          color: colorScheme.outlineVariant.withOpacity(0.4),
           width: 0.5,
         ),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       child: widget.selectedIndex == 1
           ? SwitchListTile(
-              contentPadding: EdgeInsets.zero,
-              title: Text(
-                widget.selectedIndex == 1
-                    ? setting.serialNumber == 1
-                        ? setting.title
-                        : titles[index]
-                    : [1, 2, 3, 4].contains(setting.serialNumber)
-                        ? setting.title
-                        : titles[index],
-                style:
-                    const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
-              ),
-              value: setting.value,
-              onChanged: (value) => setState(() => setting.value = value),
-            )
+        contentPadding: EdgeInsets.zero,
+        title: Text(
+          widget.selectedIndex == 1
+              ? setting.serialNumber == 1
+              ? setting.title
+              : titles[index]
+              : [1, 2, 3, 4].contains(setting.serialNumber)
+              ? setting.title
+              : titles[index],
+          style:
+          TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: colorScheme.onSurface),
+        ),
+        value: setting.value,
+        activeColor: colorScheme.primary,
+        onChanged: (value) => setState(() => setting.value = value),
+      )
           : ListTile(
-              contentPadding: EdgeInsets.zero,
-              title: Text(
-                [1, 2, 3, 4].contains(setting.serialNumber)
-                    ? setting.title
-                    : titles[index],
-                style:
-                    const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
-              ),
-              trailing: _buildTrailingWidget(context, setting),
-            ),
+        contentPadding: EdgeInsets.zero,
+        title: Text(
+          [1, 2, 3, 4].contains(setting.serialNumber)
+              ? setting.title
+              : titles[index],
+          style:
+          TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: colorScheme.onSurface),
+        ),
+        trailing: _buildTrailingWidget(context, setting),
+      ),
     );
   }
 
   Widget _buildTrailingWidget(BuildContext context, WidgetSetting setting) {
+    final colorScheme = Theme.of(context).colorScheme;
     switch (setting.widgetTypeId) {
       case 3:
         return CustomNativeTimePicker(
@@ -269,6 +277,7 @@ class _StandAloneSettingsState extends State<StandAloneSettings> {
       case 2:
         return Switch(
           value: setting.value,
+          activeColor: colorScheme.primary,
           onChanged: (value) => setState(() => setting.value = value),
         );
       case 1:
@@ -280,26 +289,25 @@ class _StandAloneSettingsState extends State<StandAloneSettings> {
             keyboardType: TextInputType.number,
             onChanged: (value) => setState(() => setting.value = value),
             onTapOutside: (_) => FocusScope.of(context).unfocus(),
-            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+            style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: colorScheme.onSurface),
             decoration: InputDecoration(
               isDense: true,
               hintText: "000",
               contentPadding:
-                  const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
+              const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(color: Colors.grey.shade300),
+                borderSide: BorderSide(color: colorScheme.outlineVariant.withOpacity(0.5)),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(color: Colors.grey.shade300),
+                borderSide: BorderSide(color: colorScheme.outlineVariant.withOpacity(0.5)),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(
-                    color: Theme.of(context).primaryColor, width: 1.5),
+                borderSide: BorderSide(color: colorScheme.primary, width: 1.5),
               ),
-              fillColor: cardColor,
+              fillColor: colorScheme.surfaceContainerLow,
               filled: true,
             ),
           ),
@@ -316,13 +324,13 @@ class _StandAloneSettingsState extends State<StandAloneSettings> {
     if (widget.selectedIndex == 1) {
       rawPayload = {
         "sentSms":
-            'standalone,${provider.standaloneSettings!.setting.map((e) => e.value ? '1' : '0').join(',')}'
+        'standalone,${provider.standaloneSettings!.setting.map((e) => e.value ? '1' : '0').join(',')}'
       };
     } else {
       if (_selectedSetting == 0) {
         rawPayload = {
           "sentSms":
-              'valvesetting,${provider.programSettings!.setting.map((e) {
+          'valvesetting,${provider.programSettings!.setting.map((e) {
             if (e.widgetTypeId == 2) {
               return e.value ? '1' : '0';
             } else if (e.value is String && (e.value as String).isEmpty) {
@@ -344,12 +352,12 @@ class _StandAloneSettingsState extends State<StandAloneSettings> {
       } else {
         rawPayload = {
           "sentSms":
-              'moisturesetting,${provider.standaloneSettings!.setting.map((e) => e.widgetTypeId == 2 ? (e.value ? '1' : '0') : e.value).join(',')}'
+          'moisturesetting,${provider.standaloneSettings!.setting.map((e) => e.widgetTypeId == 2 ? (e.value ? '1' : '0') : e.value).join(',')}'
         };
       }
     }
     final payload =
-        jsonEncode({_selectedSetting == 0 ? "55" : "57": jsonEncode(rawPayload)});
+    jsonEncode({_selectedSetting == 0 ? "55" : "57": jsonEncode(rawPayload)});
 
     final resultFromDialog = await showDialog(
       context: context,
@@ -378,21 +386,48 @@ class _StandAloneSettingsState extends State<StandAloneSettings> {
         "moistureSetting": provider.moistureSettings!.toJson()
     };
 
-    if (resultFromDialog) {
+    if (resultFromDialog == true) {
       try {
         final result = widget.selectedIndex == 1
             ? await repository.createUserPreferenceValveStandaloneSetting(userData)
             : _selectedSetting == 0
-                ? await repository.createUserPreferenceValveSetting(userData)
-                : await repository.createUserPreferenceMoistureSetting(userData);
+            ? await repository.createUserPreferenceValveSetting(userData)
+            : await repository.createUserPreferenceMoistureSetting(userData);
         final response = jsonDecode(result.body);
-        showSnackBar(message: response['message'], context: context);
+        if (!mounted) return;
+        showSnackBar(
+          message: response['message'] ?? 'Settings updated successfully!',
+          context: context,
+          color: Colors.green.shade700,
+        );
       } catch (error, stackTrace) {
-        if (kDebugMode) {
-          // print('Stack trace in the sending valve settings :: $stackTrace');
-        }
-        showSnackBar(message: '$error', context: context);
+        if (!mounted) return;
+        showSnackBar(
+          message: 'Failed to save settings: $error',
+          context: context,
+          color: Colors.red.shade700,
+        );
       }
+    } else {
+      if (!mounted) return;
+      showSnackBar(
+        message: 'Failed to send settings. Please try again.',
+        context: context,
+        color: Colors.red.shade700,
+      );
     }
+  }
+
+  void showSnackBar({required String message, required BuildContext context, Color? color}) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    ScaffoldMessenger.of(context).showSnackBar(
+      CustomSnackBar(
+        message: message,
+        color: color ?? (message.toLowerCase().contains('failed') || message.toLowerCase().contains('error')
+            ? Colors.red.shade700
+            : Colors.green.shade700),
+      ),
+    );
   }
 }
