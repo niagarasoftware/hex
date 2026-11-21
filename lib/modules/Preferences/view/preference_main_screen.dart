@@ -23,10 +23,6 @@ import '../../IrrigationProgram/view/program_library.dart';
 import '../widgets/custom_segmented_control.dart';
 import '../widgets/progress_dialog.dart';
 
-const Color kFieldBg = Color(0xFFF0F1F6);
-const Color kCardBorder = Color(0xFFEDEEF3);
-const Color kMuted = Color(0xFF6B7080);
-
 final otherSettingsIcons = [
   MdiIcons.lightbulbMultipleOutline,
   MdiIcons.alphaRCircleOutline,
@@ -285,10 +281,11 @@ class _PreferenceMainScreenState extends State<PreferenceMainScreen>
         selectedOroPumpList = oroPumpList;
       }
     }
+
     if (preferenceProvider.generalData != null &&
         preferenceProvider.commonPumpSettings != null) {
       return Scaffold(
-        backgroundColor: const Color(0xFFF4F5FA),
+        backgroundColor: colorScheme.surfaceContainerLowest,
         appBar: (MediaQuery.of(context).size.width <= 500 && !isValveSetting)
             ? AppBar(
           title: const Text("Preference"),
@@ -324,129 +321,8 @@ class _PreferenceMainScreenState extends State<PreferenceMainScreen>
                             if (preferenceProvider.commonPumpSettings!.isNotEmpty)
                               if (!viewConfig)
                                 Expanded(
-                                  flex: 5,
-                                  child: CustomSegmentedControl(
-                                    segmentTitles: const {
-                                      0: 'Common setting',
-                                      1: 'Individual setting',
-                                      2: 'Calibration'
-                                    },
-                                    groupValue: selectedSetting,
-                                    onChanged: (value) {
-                                      setState(() {
-                                        selectedSetting = value!;
-                                        if (selectedSetting == 2) {
-                                          showDialog(
-                                              context: context,
-                                              builder: (BuildContext context) {
-                                                return Consumer(builder:
-                                                    (BuildContext context,
-                                                    PreferenceProvider
-                                                    preferenceProvider,
-                                                    _) {
-                                                  return AlertDialog(
-                                                    title: const Text("Calibration Password"),
-                                                    content: Column(
-                                                      mainAxisSize:
-                                                      MainAxisSize.min,
-                                                      children: [
-                                                        TextFormField(
-                                                          controller:
-                                                          passwordController,
-                                                          autofocus: true,
-                                                          obscureText: true,
-                                                          decoration:
-                                                          const InputDecoration(
-                                                              hintText:
-                                                              "Enter password",
-                                                              isDense: true),
-                                                        ),
-                                                        const SizedBox(height: 10),
-                                                        if (preferenceProvider
-                                                            .passwordValidationCode ==
-                                                            404)
-                                                          Text(
-                                                            'Invalid password',
-                                                            style: TextStyle(
-                                                                color: colorScheme.error),
-                                                          )
-                                                      ],
-                                                    ),
-                                                    actions: [
-                                                      TextButton(
-                                                          onPressed: () {
-                                                            passwordController
-                                                                .text = "";
-                                                            preferenceProvider
-                                                                .updateValidationCode();
-                                                            selectedSetting = 1;
-                                                            Navigator.of(context)
-                                                                .pop();
-                                                          },
-                                                          child:
-                                                          const Text("CANCEL")),
-                                                      FilledButton(
-                                                          onPressed: () async {
-                                                            if (isNova || isToGem) {
-                                                              final pump = preferenceProvider
-                                                                  .commonPumpSettings![
-                                                              preferenceProvider
-                                                                  .selectedTabIndex];
-                                                              final payload =
-                                                              jsonEncode({
-                                                                "sentSms":
-                                                                "viewconfig,4"
-                                                              });
-                                                              final payload2 =
-                                                              jsonEncode({
-                                                                "0": payload
-                                                              });
-                                                              final viewConfig = {
-                                                                "5900": {
-                                                                  "5901":
-                                                                  "${pump.serialNumber}+${pump.referenceNumber}+${pump.deviceId}+${pump.interfaceTypeId}+$payload2+${4}"
-                                                                }
-                                                              };
-                                                              mqttService.topicToPublishAndItsMessage(
-                                                                  isToGem
-                                                                      ? jsonEncode(
-                                                                      viewConfig)
-                                                                      : payload,
-                                                                  "${Environment.mqttPublishTopic}/${preferenceProvider.generalData!.deviceId}");
-                                                            }
-                                                            await Future.delayed(
-                                                                Duration.zero, () {
-                                                              preferenceProvider
-                                                                  .updateValidationCode();
-                                                            });
-                                                            await preferenceProvider
-                                                                .checkPassword(
-                                                                userId: widget
-                                                                    .customerId,
-                                                                password:
-                                                                passwordController
-                                                                    .text);
-                                                            if (preferenceProvider
-                                                                .passwordValidationCode ==
-                                                                200) {
-                                                              if (!mounted) return;
-                                                              Navigator.of(context)
-                                                                  .pop();
-                                                              passwordController
-                                                                  .text = "";
-                                                            }
-                                                          },
-                                                          child: const Text("OK")),
-                                                    ],
-                                                  );
-                                                });
-                                              });
-                                        } else {
-                                          preferenceProvider.updateValidationCode();
-                                        }
-                                      });
-                                    },
-                                  ),
+                                  flex: 6,
+                                  child: _buildStepNavigationBar(context),
                                 )
                               else
                                 Expanded(child: Container()),
@@ -455,7 +331,7 @@ class _PreferenceMainScreenState extends State<PreferenceMainScreen>
                               const SizedBox(width: 16),
                             if (constraints.maxWidth >= 700)
                               Expanded(
-                                flex: 7,
+                                flex: 6,
                                 child: _getDefaultTabController(),
                               ),
                             if (selectedSetting == 0 &&
@@ -507,8 +383,10 @@ class _PreferenceMainScreenState extends State<PreferenceMainScreen>
                                 commonSettingIndex <
                                     preferenceProvider.commonPumpSettings!.length;
                                 commonSettingIndex++)
-                                  buildSettingsCategory(
+                                  _buildMainCategoryContainer(
                                       context: context,
+                                      title: "Common setting",
+                                      description: "Configure global pump thresholds, voltage protection, tank level sensors, and auxiliary controls.",
                                       settingList: preferenceProvider
                                           .commonPumpSettings![commonSettingIndex]
                                           .settingList,
@@ -520,8 +398,10 @@ class _PreferenceMainScreenState extends State<PreferenceMainScreen>
                                       preferenceProvider
                                           .individualPumpSetting!.length;
                                   pumpSettingIndex++)
-                                    buildSettingsCategory(
+                                    _buildMainCategoryContainer(
                                         context: context,
+                                        title: "Individual setting",
+                                        description: "Configure pump-specific delays, current thresholds, RTC timer schedules, and level cutoffs.",
                                         settingList: preferenceProvider
                                             .individualPumpSetting![pumpSettingIndex]
                                             .settingList,
@@ -544,8 +424,10 @@ class _PreferenceMainScreenState extends State<PreferenceMainScreen>
                               calibrationSettingIndex <
                                   preferenceProvider.calibrationSetting!.length;
                               calibrationSettingIndex++)
-                                buildSettingsCategory(
+                                _buildMainCategoryContainer(
                                     context: context,
+                                    title: "Calibration",
+                                    description: "Calibrate voltage, current, and sensor reference multipliers.",
                                     settingList: preferenceProvider
                                         .calibrationSetting![calibrationSettingIndex]
                                         .settingList,
@@ -558,225 +440,423 @@ class _PreferenceMainScreenState extends State<PreferenceMainScreen>
               );
             }),
         bottomNavigationBar: !viewConfig
-            ? Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-          decoration: BoxDecoration(
-            color: colorScheme.surface,
-            border: Border(
-              top: BorderSide(color: colorScheme.outlineVariant.withOpacity(0.4)),
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.04),
-                blurRadius: 8,
-                offset: const Offset(0, -2),
+            ? _buildBottomNavigationBar(context)
+            : null,
+      );
+    } else {
+      return Scaffold(
+        backgroundColor: colorScheme.surfaceContainerLowest,
+        body:
+        const Center(child: CircularProgressIndicator(semanticsLabel: "Loading")),
+      );
+    }
+  }
+
+  Widget _buildStepNavigationBar(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final steps = [
+      {"index": 0, "number": "1", "title": "Common setting"},
+      {"index": 1, "number": "2", "title": "Individual setting"},
+      {"index": 2, "number": "3", "title": "Calibration"},
+    ];
+
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: colorScheme.outlineVariant.withOpacity(0.4),
+        ),
+      ),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: steps.map((step) {
+            final idx = step["index"] as int;
+            final isSelected = selectedSetting == idx;
+
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 2),
+              child: InkWell(
+                onTap: () {
+                  if (idx == 2) {
+                    _handleCalibrationTap();
+                  } else {
+                    setState(() {
+                      selectedSetting = idx;
+                      preferenceProvider.updateValidationCode();
+                    });
+                  }
+                },
+                borderRadius: BorderRadius.circular(10),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: isSelected ? colorScheme.primary : Colors.transparent,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 22,
+                        height: 22,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: isSelected
+                              ? colorScheme.onPrimary
+                              : colorScheme.primaryContainer,
+                        ),
+                        child: Center(
+                          child: Text(
+                            step["number"] as String,
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: isSelected
+                                  ? colorScheme.primary
+                                  : colorScheme.onPrimaryContainer,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        step["title"] as String,
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                          color: isSelected
+                              ? colorScheme.onPrimary
+                              : colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
-            ],
+            );
+          }).toList(),
+        ),
+      ),
+    );
+  }
+
+  void _handleCalibrationTap() {
+    final colorScheme = Theme.of(context).colorScheme;
+    if (selectedSetting == 2) return;
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Consumer(
+          builder: (BuildContext context, PreferenceProvider preferenceProvider, _) {
+            return AlertDialog(
+              title: const Text("Calibration Password"),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextFormField(
+                    controller: passwordController,
+                    autofocus: true,
+                    obscureText: true,
+                    decoration: const InputDecoration(
+                      hintText: "Enter password",
+                      isDense: true,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  if (preferenceProvider.passwordValidationCode == 404)
+                    Text(
+                      'Invalid password',
+                      style: TextStyle(color: colorScheme.error),
+                    )
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    passwordController.text = "";
+                    preferenceProvider.updateValidationCode();
+                    Navigator.of(context).pop();
+                  },
+                  child: const Text("CANCEL"),
+                ),
+                FilledButton(
+                  onPressed: () async {
+                    if (isNova || isToGem) {
+                      final pump = preferenceProvider.commonPumpSettings![
+                      preferenceProvider.selectedTabIndex];
+                      final payload = jsonEncode({"sentSms": "viewconfig,4"});
+                      final payload2 = jsonEncode({"0": payload});
+                      final viewConfig = {
+                        "5900": {
+                          "5901":
+                          "${pump.serialNumber}+${pump.referenceNumber}+${pump.deviceId}+${pump.interfaceTypeId}+$payload2+${4}"
+                        }
+                      };
+                      mqttService.topicToPublishAndItsMessage(
+                        isToGem ? jsonEncode(viewConfig) : payload,
+                        "${Environment.mqttPublishTopic}/${preferenceProvider.generalData!.deviceId}",
+                      );
+                    }
+                    await Future.delayed(Duration.zero, () {
+                      preferenceProvider.updateValidationCode();
+                    });
+                    await preferenceProvider.checkPassword(
+                      userId: widget.customerId,
+                      password: passwordController.text,
+                    );
+                    if (preferenceProvider.passwordValidationCode == 200) {
+                      if (!mounted) return;
+                      setState(() {
+                        selectedSetting = 2;
+                      });
+                      Navigator.of(context).pop();
+                      passwordController.text = "";
+                    }
+                  },
+                  child: const Text("OK"),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  bool _hasFailedPayloads() {
+    if (preferenceProvider.passwordValidationCode == 200) {
+      return getCalibrationPayload(isToGem: isToGem).split(';')[0].isNotEmpty;
+    }
+    return getFailedPayload(sendAll: false, isToGem: isToGem).split(';')[0].isNotEmpty;
+  }
+
+  Widget _buildBottomNavigationBar(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        border: Border(
+          top: BorderSide(
+            color: colorScheme.outlineVariant.withOpacity(0.4),
           ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 8,
+            offset: const Offset(0, -2),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
             children: [
-              if (!isValveSetting &&
-                  (preferenceProvider.passwordValidationCode == 200 &&
-                      preferenceProvider.calibrationSetting![0]
-                          .settingList[1].controllerReadStatus ==
-                          "0"
-                      ? getCalibrationPayload(isToGem: isToGem)
-                      .split(';')[0]
-                      .isNotEmpty
-                      : getFailedPayload(sendAll: false, isToGem: isToGem)
-                      .split(';')[0]
-                      .isNotEmpty))
+              if (selectedSetting > 0) ...[
                 OutlinedButton.icon(
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.red,
-                    side: const BorderSide(color: Colors.red),
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                     shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10)),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      selectedSetting--;
+                    });
+                  },
+                  icon: const Icon(Icons.arrow_back_rounded, size: 18),
+                  label: const Text("Back"),
+                ),
+                const SizedBox(width: 12),
+              ],
+              if (!isValveSetting && _hasFailedPayloads())
+                OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: colorScheme.error,
+                    side: BorderSide(color: colorScheme.error),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                   ),
                   onPressed: () async {
                     final failedPayload =
                     preferenceProvider.passwordValidationCode == 200
-                        ? getCalibrationPayload(isToGem: isToGem)
-                        .split(';')
-                        : getFailedPayload(
-                        sendAll: false, isToGem: isToGem)
-                        .split(';');
+                        ? getCalibrationPayload(isToGem: isToGem).split(';')
+                        : getFailedPayload(sendAll: false, isToGem: isToGem).split(';');
                     List temp = List.from(selectedOroPumpList);
                     preferenceProvider.temp.clear();
                     showDialog(
                       context: context,
                       builder: (BuildContext context) {
-                        return StatefulBuilder(builder:
-                            (BuildContext context,
-                            StateSetter stateSetter) {
-                          return AlertDialog(
-                            content: SizedBox(
-                              height: 450,
-                              width: 300,
-                              child: SingleChildScrollView(
-                                child: Column(
-                                  children: [
-                                    for (var i = 0;
-                                    i <
-                                        preferenceProvider
-                                            .commonPumpSettings!
-                                            .length;
-                                    i++)
-                                      CheckboxListTile(
-                                          title: Text(preferenceProvider
-                                              .commonPumpSettings![i]
-                                              .deviceName),
-                                          subtitle: Text(
-                                              preferenceProvider
-                                                  .commonPumpSettings![i]
-                                                  .deviceId),
-                                          value: temp.contains(
-                                              preferenceProvider
-                                                  .commonPumpSettings![i]
-                                                  .deviceId),
-                                          onChanged: (newValue) {
-                                            stateSetter(() {
-                                              if (!mounted) return;
-                                              setState(() {
-                                                if (temp.contains(
-                                                    preferenceProvider
-                                                        .commonPumpSettings![
-                                                    i]
-                                                        .deviceId)) {
-                                                  temp.remove(
-                                                      preferenceProvider
-                                                          .commonPumpSettings![
-                                                      i]
-                                                          .deviceId);
-                                                } else {
-                                                  temp.add(preferenceProvider
-                                                      .commonPumpSettings![
-                                                  i]
-                                                      .deviceId);
-                                                }
-                                              });
-                                            });
-                                          }),
-                                    ListView.builder(
-                                      shrinkWrap: true,
-                                      physics:
-                                      const NeverScrollableScrollPhysics(),
-                                      itemCount: failedPayload.length,
-                                      itemBuilder:
-                                          (BuildContext context, int i) {
-                                        var payloadToDecode = isToGem
-                                            ? failedPayload[i]
-                                            .split('+')[4]
-                                            : failedPayload[i];
-                                        var decodedData =
-                                        jsonDecode(payloadToDecode);
-                                        var key = decodedData.keys.first;
-                                        int oroPumpIndex = 0;
-                                        if (isToGem) {
-                                          oroPumpIndex =
-                                              preferenceProvider
+                        return StatefulBuilder(
+                            builder: (BuildContext context, StateSetter stateSetter) {
+                              return AlertDialog(
+                                content: SizedBox(
+                                  height: 450,
+                                  width: 300,
+                                  child: SingleChildScrollView(
+                                    child: Column(
+                                      children: [
+                                        for (var i = 0;
+                                        i < preferenceProvider.commonPumpSettings!.length;
+                                        i++)
+                                          CheckboxListTile(
+                                              title: Text(preferenceProvider
+                                                  .commonPumpSettings![i].deviceName),
+                                              subtitle: Text(preferenceProvider
+                                                  .commonPumpSettings![i].deviceId),
+                                              value: temp.contains(preferenceProvider
+                                                  .commonPumpSettings![i].deviceId),
+                                              onChanged: (newValue) {
+                                                stateSetter(() {
+                                                  if (!mounted) return;
+                                                  setState(() {
+                                                    if (temp.contains(preferenceProvider
+                                                        .commonPumpSettings![i].deviceId)) {
+                                                      temp.remove(preferenceProvider
+                                                          .commonPumpSettings![i].deviceId);
+                                                    } else {
+                                                      temp.add(preferenceProvider
+                                                          .commonPumpSettings![i].deviceId);
+                                                    }
+                                                  });
+                                                });
+                                              }),
+                                        ListView.builder(
+                                          shrinkWrap: true,
+                                          physics: const NeverScrollableScrollPhysics(),
+                                          itemCount: failedPayload.length,
+                                          itemBuilder: (BuildContext context, int i) {
+                                            var payloadToDecode = isToGem
+                                                ? failedPayload[i].split('+')[4]
+                                                : failedPayload[i];
+                                            var decodedData = jsonDecode(payloadToDecode);
+                                            var key = decodedData.keys.first;
+                                            int oroPumpIndex = 0;
+                                            if (isToGem) {
+                                              oroPumpIndex = preferenceProvider
                                                   .commonPumpSettings!
                                                   .indexWhere((element) =>
                                               element.deviceId ==
-                                                  failedPayload[i]
-                                                      .split('+')[2]);
-                                        }
-                                        return temp.contains(
-                                            preferenceProvider
-                                                .commonPumpSettings![
-                                            oroPumpIndex]
+                                                  failedPayload[i].split('+')[2]);
+                                            }
+                                            return temp.contains(preferenceProvider
+                                                .commonPumpSettings![oroPumpIndex]
                                                 .deviceId)
-                                            ? ListTile(
-                                          leading: Container(
-                                            height: 30,
-                                            width: 30,
-                                            decoration:
-                                            BoxDecoration(
-                                              shape:
-                                              BoxShape.circle,
-                                              gradient: AppProperties
-                                                  .linearGradientLeading,
-                                            ),
-                                            child: Center(
-                                              child: Text(
-                                                '${i + 1}',
-                                                style:
-                                                const TextStyle(
-                                                    color: Colors
-                                                        .white),
+                                                ? ListTile(
+                                              leading: Container(
+                                                height: 30,
+                                                width: 30,
+                                                decoration: BoxDecoration(
+                                                  shape: BoxShape.circle,
+                                                  gradient: AppProperties
+                                                      .linearGradientLeading,
+                                                ),
+                                                child: Center(
+                                                  child: Text(
+                                                    '${i + 1}',
+                                                    style: const TextStyle(
+                                                        color: Colors.white),
+                                                  ),
+                                                ),
                                               ),
-                                            ),
-                                          ),
-                                          title: Text(
-                                            preferenceProvider
-                                                .commonPumpSettings![
-                                            oroPumpIndex]
-                                                .deviceName,
-                                            style: const TextStyle(
-                                                fontWeight:
-                                                FontWeight
-                                                    .w400),
-                                          ),
-                                          subtitle: Text(
-                                            statusMessages[key]!,
-                                            style: const TextStyle(
-                                                fontSize: 13,
-                                                fontWeight:
-                                                FontWeight
-                                                    .bold),
-                                          ),
-                                        )
-                                            : Container();
-                                      },
+                                              title: Text(
+                                                preferenceProvider
+                                                    .commonPumpSettings![oroPumpIndex]
+                                                    .deviceName,
+                                                style: const TextStyle(
+                                                    fontWeight: FontWeight.w400),
+                                              ),
+                                              subtitle: Text(
+                                                statusMessages[key]!,
+                                                style: const TextStyle(
+                                                    fontSize: 13,
+                                                    fontWeight: FontWeight.bold),
+                                              ),
+                                            )
+                                                : Container();
+                                          },
+                                        ),
+                                      ],
                                     ),
-                                  ],
+                                  ),
                                 ),
-                              ),
-                            ),
-                            actions: [
-                              FilledButton(
-                                  onPressed: temp.isNotEmpty
-                                      ? () async {
-                                    await Future.delayed(
-                                        Duration.zero, () {
-                                      if (!mounted) return;
-                                      setState(() {
-                                        shouldSendFailedPayloads =
-                                        true;
-                                        selectedOroPumpList =
-                                            List.from(temp);
-                                      });
-                                    });
-                                    if (!mounted) return;
-                                    Navigator.pop(context);
-                                    await sendFunction();
-                                  }
-                                      : null,
-                                  child: const Text("Resend")),
-                              TextButton(
-                                  onPressed: () {
-                                    Navigator.pop(context);
-                                  },
-                                  child: const Text("Cancel"))
-                            ],
-                          );
-                        });
+                                actions: [
+                                  FilledButton(
+                                      onPressed: temp.isNotEmpty
+                                          ? () async {
+                                        await Future.delayed(Duration.zero, () {
+                                          if (!mounted) return;
+                                          setState(() {
+                                            shouldSendFailedPayloads = true;
+                                            selectedOroPumpList = List.from(temp);
+                                          });
+                                        });
+                                        if (!mounted) return;
+                                        Navigator.pop(context);
+                                        await sendFunction();
+                                      }
+                                          : null,
+                                      child: const Text("Resend")),
+                                  TextButton(
+                                      onPressed: () {
+                                        Navigator.pop(context);
+                                      },
+                                      child: const Text("Cancel"))
+                                ],
+                              );
+                            });
                       },
                     );
                   },
                   icon: const Icon(Icons.warning_amber_rounded, size: 18),
                   label: const Text("Failed"),
-                )
-              else
-                const SizedBox(),
+                ),
+            ],
+          ),
+
+          Row(
+            children: [
+              if (selectedSetting < 2) ...[
+                FilledButton.tonalIcon(
+                  style: FilledButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  onPressed: () {
+                    if (selectedSetting == 1) {
+                      _handleCalibrationTap();
+                    } else {
+                      setState(() {
+                        selectedSetting++;
+                      });
+                    }
+                  },
+                  icon: const Icon(Icons.arrow_forward_rounded, size: 18),
+                  label: const Text("Next"),
+                ),
+                const SizedBox(width: 12),
+              ],
               FilledButton.icon(
                 style: FilledButton.styleFrom(
                   backgroundColor: colorScheme.primary,
                   foregroundColor: colorScheme.onPrimary,
                   padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10)),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                 ),
                 onPressed: () async {
                   final rtcError = validateAllRtcSettings();
@@ -854,7 +934,7 @@ class _PreferenceMainScreenState extends State<PreferenceMainScreen>
                 icon: const Icon(Icons.send_rounded, size: 18),
                 label: Text(
                   preferenceProvider.passwordValidationCode == 200
-                      ? "Send calibration"
+                      ? "Send Calibration"
                       : isValveSetting
                       ? "Send"
                       : "Send Preference",
@@ -863,16 +943,9 @@ class _PreferenceMainScreenState extends State<PreferenceMainScreen>
               ),
             ],
           ),
-        )
-            : null,
-      );
-    } else {
-      return Scaffold(
-        backgroundColor: colorScheme.surfaceContainerLowest,
-        body:
-        const Center(child: CircularProgressIndicator(semanticsLabel: "Loading")),
-      );
-    }
+        ],
+      ),
+    );
   }
 
   Widget _getDefaultTabController() {
@@ -1042,126 +1115,173 @@ class _PreferenceMainScreenState extends State<PreferenceMainScreen>
     return false;
   }
 
+  Widget _buildMainCategoryContainer({
+    required BuildContext context,
+    required String title,
+    required String description,
+    required List<SettingList> settingList,
+    required BoxConstraints constraints,
+    required int pumpIndex,
+  }) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.only(bottom: 50),
+      child: Container(
+        decoration: BoxDecoration(
+          color: colorScheme.surface,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(
+            color: colorScheme.outlineVariant.withOpacity(0.4),
+            width: 1,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.025),
+              blurRadius: 10,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: colorScheme.onSurface,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              description,
+              style: TextStyle(
+                fontSize: 13,
+                color: colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 20),
+            buildSettingsCategory(
+              context: context,
+              settingList: settingList,
+              constraints: constraints,
+              pumpIndex: pumpIndex,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget buildSettingsCategory(
       {required BuildContext context,
         required List<SettingList> settingList,
         required BoxConstraints constraints,
-        required int pumpIndex})
-  {
+        required int pumpIndex}) {
     try {
-      return LayoutBuilder(
-        builder: (context, bc) {
-          const spacing = 16.0;
-          final isMobile = bc.maxWidth < 700;
+      debugPrint("modelId ::: ${widget.masterData['modelId']}");
 
-          final visible = <SettingList>[];
+      return LayoutBuilder(
+        builder: (context, boxConstraints) {
+          const spacing = 16.0;
+          final isMobile = boxConstraints.maxWidth < 700;
+
+          final visibleCategories = <SettingList>[];
           for (var i = 0; i < settingList.length; i++) {
             if (_shouldShowCategory(settingList[i], pumpIndex)) {
-              visible.add(settingList[i]);
+              visibleCategories.add(settingList[i]);
             }
           }
-          if (visible.isEmpty) return const SizedBox();
 
-          final fullW = bc.maxWidth;
-          final colW = isMobile ? fullW : (fullW - spacing) / 2;
+          if (visibleCategories.isEmpty) {
+            return const SizedBox();
+          }
 
-          Widget card(SettingList cat, double w) => SizedBox(
-            width: w,
-            child: _buildCategoryCard(
+          if (isMobile) {
+            return Column(
+              children: [
+                for (final cat in visibleCategories) ...[
+                  _buildCategoryCard(
+                    context: context,
+                    settingCategory: cat,
+                    constraints: boxConstraints,
+                    pumpIndex: pumpIndex,
+                  ),
+                  const SizedBox(height: spacing),
+                ],
+              ],
+            );
+          }
+
+          // Desktop / Tablet: Independent Dual-Column Masonry Layout
+          final leftColumn = <Widget>[];
+          final rightColumn = <Widget>[];
+          final fullWidthWidgets = <Widget>[];
+
+          for (int i = 0; i < visibleCategories.length; i++) {
+            final cat = visibleCategories[i];
+            final cardWidget = _buildCategoryCard(
               context: context,
               settingCategory: cat,
-              width: w,
+              constraints: boxConstraints,
               pumpIndex: pumpIndex,
-            ),
-          );
+            );
 
-          // Card height estimate - shorter column-ku next card poga
-          double estHeight(SettingList cat) {
-            double h = 80;
-            for (final st in cat.setting) {
-              if (st.display == false || st.hidden == true) continue;
-              final t = st.title.toUpperCase();
-              if (t == "RTC TIMER") {
-                h += 320;
-              } else if (t == "2 PHASE" ||
-                  t == "AUTO RESTART 2 PHASE" ||
-                  t.contains("LINEAR LEVEL SENSOR")) {
-                h += 60 +
-                    56.0 *
-                        (preferenceProvider.individualPumpSetting?.length ?? 1);
-              } else if (st.widgetTypeId == 2) {
-                h += 64;
+            if (_isFullWidthCategory(cat)) {
+              fullWidthWidgets.add(cardWidget);
+            } else {
+              if (leftColumn.length <= rightColumn.length) {
+                leftColumn.add(cardWidget);
               } else {
-                h += 44; // half-row (2 column grid)
+                rightColumn.add(cardWidget);
               }
             }
-            return h;
           }
 
-          Widget columnOf(List<SettingList> list) => SizedBox(
-            width: colW,
-            child: Column(
-              children: [
-                for (int i = 0; i < list.length; i++) ...[
-                  if (i > 0) const SizedBox(height: spacing),
-                  card(list[i], colW),
-                ],
+          final colWidth = (boxConstraints.maxWidth - spacing) / 2;
+
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (leftColumn.isNotEmpty || rightColumn.isNotEmpty)
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SizedBox(
+                      width: colWidth,
+                      child: Column(
+                        children: [
+                          for (int i = 0; i < leftColumn.length; i++) ...[
+                            leftColumn[i],
+                            if (i < leftColumn.length - 1)
+                              const SizedBox(height: spacing),
+                          ],
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: spacing),
+                    SizedBox(
+                      width: colWidth,
+                      child: Column(
+                        children: [
+                          for (int i = 0; i < rightColumn.length; i++) ...[
+                            rightColumn[i],
+                            if (i < rightColumn.length - 1)
+                              const SizedBox(height: spacing),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              for (final fw in fullWidthWidgets) ...[
+                const SizedBox(height: spacing),
+                fw,
               ],
-            ),
-          );
-
-          final rows = <Widget>[];
-          var segment = <SettingList>[];
-          void flush() {
-            if (segment.isEmpty) return;
-            if (segment.length == 1) {
-              // thaniya oru card irundha full width - empty space varadhu
-              rows.add(card(segment[0], fullW));
-            } else {
-              final left = <SettingList>[];
-              final right = <SettingList>[];
-              double lh = 0, rh = 0;
-              for (final c in segment) {
-                if (lh <= rh) {
-                  left.add(c);
-                  lh += estHeight(c) + spacing;
-                } else {
-                  right.add(c);
-                  rh += estHeight(c) + spacing;
-                }
-              }
-              rows.add(Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  columnOf(left),
-                  const SizedBox(width: spacing),
-                  columnOf(right),
-                ],
-              ));
-            }
-            segment = <SettingList>[];
-          }
-
-          for (final cat in visible) {
-            if (isMobile) {
-              rows.add(card(cat, fullW));
-            } else if (_isFullWidthCategory(cat)) {
-              flush();
-              rows.add(card(cat, fullW));
-            } else {
-              segment.add(cat);
-            }
-          }
-          flush();
-
-          return SingleChildScrollView(
-            padding: const EdgeInsets.only(bottom: 90),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                for (final r in rows) ...[r, const SizedBox(height: spacing)],
-              ],
-            ),
+            ],
           );
         },
       );
@@ -1172,133 +1292,133 @@ class _PreferenceMainScreenState extends State<PreferenceMainScreen>
     }
   }
 
-  String? _categoryDescription(String name) {
-    final n = name.toLowerCase();
-    if (n.contains('voltage')) {
-      return 'Under-voltage and over-voltage trip thresholds and differentials.';
-    }
-    if (n.contains('current')) return 'Dry run, overload and current trip settings.';
-    if (n.contains('timer') || n.contains('delay')) {
-      return 'On delay, cyclic, max run time and RTC timers.';
-    }
-    if (n.contains('level') || n.contains('tank')) {
-      return 'Reservoir dimensions, level cutoffs, and linear level probes.';
-    }
-    if (n.contains('pressure') || n.contains('flow')) {
-      return 'Line pressure scanning intervals, flow cutoffs, and pressure switch settings.';
-    }
-    if (n.contains('auxiliary') || n.contains('other')) {
-      return 'Station lighting output and utility peak-hour tariff restrictions.';
-    }
-    if (n.contains('calibration')) return 'Sensor calibration values.';
-    return null;
-  }
-
   Widget _buildCategoryCard({
     required BuildContext context,
     required SettingList settingCategory,
-    required double width,
+    required BoxConstraints constraints,
     required int pumpIndex,
-  })
-  {
-    final inner = width - 40; // card padding 20 + 20
-    final half = (inner - 16) / 2; // 2-column grid
-    final desc = _categoryDescription(settingCategory.name);
-
-    final items = <Widget>[];
-    for (var i = 0; i < settingCategory.setting.length; i++) {
-      final title = settingCategory.setting[i].title.toUpperCase();
-      if (title == "RTC TIMER") {
-        items.add(SizedBox(
-            width: inner,
-            child: _buildRtcTimer(0, i, pumpIndex, [settingCategory])));
-      } else if (title == "2 PHASE" ||
-          title == "AUTO RESTART 2 PHASE" ||
-          (title == "AUTO RESTART" &&
-              settingCategory.setting[i].serialNumber == 8) ||
-          (isNova &&
-              (title == "UPPER TANK LINEAR LEVEL SENSOR" ||
-                  title == "LOWER TANK LINEAR LEVEL SENSOR"))) {
-        items.add(SizedBox(
-            width: inner,
-            child: _buildTwoPhaseCard(0, i, pumpIndex, [settingCategory])));
-      } else {
-        items.add(buildCustomListTileWidget(
-          context: context,
-          title: settingCategory.setting[i].title,
-          widgetType: _getWidgetType(0, i, [settingCategory]),
-          inputFormatters: [
-            FilteringTextInputFormatter.deny(RegExp('[^0-9.]')),
-            LengthLimitingTextInputFormatter(6),
-          ],
-          dataList: title == "SENSOR HEIGHT"
-              ? ["20", "35"]
-              : title == 'CABLE SELECT'
-              ? ['0', '1', '2', '3']
-              : ["10", "12"],
-          value: _getInitialValue(0, i, [settingCategory], pumpIndex),
-          leading: _buildLeading(0, i, [settingCategory]), // OLD ICON
-          onValueChange: (newValue) => onChangeValue(
-              0, i, [settingCategory], newValue,
-              pumpIndex: pumpIndex),
-          conditionToShow: getConditionToShow(
-            type: settingCategory.type,
-            serialNumber: settingCategory.setting[i].serialNumber,
-            value: settingCategory.setting[i].value,
-          ),
-          subTitle: _getSubTitle(0, i, [settingCategory], pumpIndex),
-          display: settingCategory.setting[i].display,
-          hidden: (settingCategory.setting[i].title == "Schedule by Days" ||
-              (!isNova &&
-                  AppConstants.otherCalibration
-                      .contains(settingCategory.type) &&
-                  [7, 8].contains(settingCategory.setting[i].serialNumber)))
-              ? true
-              : settingCategory.setting[i].hidden,
-          enabled: true,
-          modelId: widget.masterData['modelId'],
-          fullWidth: inner,
-          halfWidth: half,
-        ));
-      }
-    }
+  }) {
+    final colorScheme = Theme.of(context).colorScheme;
 
     return Container(
-      width: width,
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: kCardBorder),
+        border: Border.all(
+          color: colorScheme.outlineVariant.withOpacity(0.4),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.025),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(settingCategory.name,
-              style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w600)),
-          if (desc != null) ...[
-            const SizedBox(height: 4),
-            Text(desc, style: const TextStyle(color: kMuted, fontSize: 13)),
-          ],
-          const SizedBox(height: 14),
-          Wrap(spacing: 16, runSpacing: 0, children: items),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: colorScheme.surfaceContainerLow,
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(16),
+                topRight: Radius.circular(16),
+              ),
+              border: Border(
+                bottom: BorderSide(
+                  color: colorScheme.outlineVariant.withOpacity(0.3),
+                ),
+              ),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    settingCategory.name,
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                      color: colorScheme.onSurface,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          ClipRRect(
+            borderRadius: const BorderRadius.only(
+              bottomLeft: Radius.circular(16),
+              bottomRight: Radius.circular(16),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                for (var settingIndex = 0;
+                settingIndex < settingCategory.setting.length;
+                settingIndex++)
+                  if (settingCategory.setting[settingIndex].title.toUpperCase() == "RTC TIMER")
+                    _buildRtcTimer(
+                        0,
+                        settingIndex,
+                        pumpIndex,
+                        [settingCategory])
+                  else if (settingCategory.setting[settingIndex].title.toUpperCase() == "2 PHASE" ||
+                      settingCategory.setting[settingIndex].title.toUpperCase() == "AUTO RESTART 2 PHASE" ||
+                      (settingCategory.setting[settingIndex].title.toUpperCase() == "AUTO RESTART" &&
+                          settingCategory.setting[settingIndex].serialNumber == 8) ||
+                      (isNova &&
+                          (settingCategory.setting[settingIndex].title.toUpperCase() == "UPPER TANK LINEAR LEVEL SENSOR" ||
+                              settingCategory.setting[settingIndex].title.toUpperCase() == "LOWER TANK LINEAR LEVEL SENSOR")))
+                    _buildTwoPhaseCard(0, settingIndex, pumpIndex, [settingCategory])
+                  else
+                    buildCustomListTileWidget(
+                      context: context,
+                      title: settingCategory.setting[settingIndex].title,
+                      widgetType: _getWidgetType(0, settingIndex, [settingCategory]),
+                      inputFormatters: [
+                        FilteringTextInputFormatter.deny(RegExp('[^0-9.]')),
+                        LengthLimitingTextInputFormatter(6),
+                      ],
+                      dataList: settingCategory.setting[settingIndex].title.toUpperCase() == "SENSOR HEIGHT"
+                          ? ["20", "35"]
+                          : settingCategory.setting[settingIndex].title.toUpperCase() == 'CABLE SELECT'
+                          ? ['0', '1', '2', '3']
+                          : ["10", "12"],
+                      value: _getInitialValue(0, settingIndex, [settingCategory], pumpIndex),
+                      leading: _buildLeading(0, settingIndex, [settingCategory]),
+                      onValueChange: (newValue) => onChangeValue(
+                          0, settingIndex, [settingCategory], newValue,
+                          pumpIndex: pumpIndex),
+                      conditionToShow: getConditionToShow(
+                        type: settingCategory.type,
+                        serialNumber: settingCategory.setting[settingIndex].serialNumber,
+                        value: settingCategory.setting[settingIndex].value,
+                      ),
+                      subTitle: _getSubTitle(0, settingIndex, [settingCategory], pumpIndex),
+                      display: settingCategory.setting[settingIndex].display,
+                      hidden: (settingCategory.setting[settingIndex].title == "Schedule by Days" ||
+                          (!isNova &&
+                              AppConstants.otherCalibration.contains(settingCategory.type) &&
+                              [7, 8].contains(settingCategory.setting[settingIndex].serialNumber)))
+                          ? true
+                          : settingCategory.setting[settingIndex].hidden,
+                      enabled: true,
+                      modelId: widget.masterData['modelId'],
+                    )
+              ],
+            ),
+          ),
         ],
       ),
     );
   }
 
-  // OLD design icon: white ring + cardColor circle + primary icon
   Widget _buildLeading(int categoryIndex, int settingIndex, List settingList) {
-    return Container(
-      decoration:
-      const BoxDecoration(shape: BoxShape.circle, color: Colors.white),
-      child: CircleAvatar(
-        radius: 18,
-        backgroundColor: cardColor,
-        child: _buildIcon(categoryIndex, settingIndex, settingList),
-      ),
-    );
+    return _buildIcon(categoryIndex, settingIndex, settingList);
   }
 
   int _rtcTimeToSeconds(String timeStr) {
@@ -1645,31 +1765,39 @@ class _PreferenceMainScreenState extends State<PreferenceMainScreen>
     return Column(
       children: [
         if (showTitle)
-          ListTile(
-            dense: true,
-            leading: Container(
-              width: 32,
-              height: 32,
-              decoration: BoxDecoration(
-                color: colorScheme.primaryContainer.withOpacity(0.3),
-                shape: BoxShape.circle,
-              ),
-              child: Center(
-                child: Icon(
-                  settingIndex < otherSettingsIcons.length
-                      ? otherSettingsIcons[settingIndex]
-                      : Icons.power_rounded,
-                  color: colorScheme.primary,
-                  size: 17,
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            child: Row(
+              children: [
+                if (settingIndex < otherSettingsIcons.length) ...[
+                  Container(
+                    width: 32,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      color: colorScheme.primaryContainer.withOpacity(0.4),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Center(
+                      child: Icon(
+                        otherSettingsIcons[settingIndex],
+                        color: colorScheme.primary,
+                        size: 17,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                ],
+                Expanded(
+                  child: Text(
+                    settingList[categoryIndex].setting[settingIndex].title,
+                    style: TextStyle(
+                      color: colorScheme.onSurface,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                    ),
+                  ),
                 ),
-              ),
-            ),
-            title: Text(
-              settingList[categoryIndex].setting[settingIndex].title,
-              style: TextStyle(
-                  color: colorScheme.onSurface,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 13),
+              ],
             ),
           ),
         if (showPumpList)
@@ -1686,39 +1814,52 @@ class _PreferenceMainScreenState extends State<PreferenceMainScreen>
                       .length
                       : preferenceProvider.individualPumpSetting!.length);
               index++)
-                SwitchListTile(
-                    dense: true,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 10),
-                    title: Text(
-                      isToGem
-                          ? preferenceProvider.individualPumpSetting!
-                          .where((e) =>
-                      e.deviceId ==
-                          preferenceProvider
-                              .commonPumpSettings![pumpIndex].deviceId)
-                          .elementAt(index)
-                          .name
-                          : preferenceProvider
-                          .individualPumpSetting![index].name,
-                      style: TextStyle(fontSize: 13, color: colorScheme.onSurface),
-                    ),
-                    value: settingList[categoryIndex]
-                        .setting[settingIndex]
-                        .value[index],
-                    onChanged: (newValue) {
-                      if (!mounted) return;
-                      setState(() {
-                        settingList[categoryIndex]
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        isToGem
+                            ? preferenceProvider.individualPumpSetting!
+                            .where((e) =>
+                        e.deviceId ==
+                            preferenceProvider
+                                .commonPumpSettings![pumpIndex].deviceId)
+                            .elementAt(index)
+                            .name
+                            : preferenceProvider
+                            .individualPumpSetting![index].name,
+                        style: TextStyle(fontSize: 13, color: colorScheme.onSurface),
+                      ),
+                      Switch(
+                        value: settingList[categoryIndex]
                             .setting[settingIndex]
-                            .value[index] = newValue;
-                        settingList[categoryIndex]
-                            .setting[settingIndex]
-                            .isChanged = true;
-                        settingList[categoryIndex].changed = true;
-                      });
-                    }),
+                            .value[index],
+                        activeColor: colorScheme.primary,
+                        onChanged: (newValue) {
+                          if (!mounted) return;
+                          setState(() {
+                            settingList[categoryIndex]
+                                .setting[settingIndex]
+                                .value[index] = newValue;
+                            settingList[categoryIndex]
+                                .setting[settingIndex]
+                                .isChanged = true;
+                            settingList[categoryIndex].changed = true;
+                          });
+                        },
+                      ),
+                    ],
+                  ),
+                ),
             ],
-          )
+          ),
+        Divider(
+          height: 1,
+          thickness: 0.5,
+          color: colorScheme.outlineVariant.withOpacity(0.3),
+        ),
       ],
     );
   }
@@ -1734,6 +1875,7 @@ class _PreferenceMainScreenState extends State<PreferenceMainScreen>
   }
 
   Widget _buildIcon(int categoryIndex, int settingIndex, List settingList) {
+    final colorScheme = Theme.of(context).colorScheme;
     final type = settingList[categoryIndex].type;
     IconData iconData = Icons.tune_rounded;
 
@@ -1757,7 +1899,21 @@ class _PreferenceMainScreenState extends State<PreferenceMainScreen>
       iconData = additionalSettingsIcons[settingIndex];
     }
 
-    return Icon(iconData, size: 20, color: Theme.of(context).primaryColor);
+    return Container(
+      width: 32,
+      height: 32,
+      decoration: BoxDecoration(
+        color: colorScheme.primaryContainer.withOpacity(0.4),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Center(
+        child: Icon(
+          iconData,
+          color: colorScheme.primary,
+          size: 17,
+        ),
+      ),
+    );
   }
 
   dynamic _getSubTitle(
@@ -1997,8 +2153,8 @@ class _PreferenceMainScreenState extends State<PreferenceMainScreen>
   }
 
   List<String> extractValues(int rtcIndex, List<String> valuesList) {
-    int startIndex = rtcIndex * 2;
-    return valuesList.sublist(startIndex, startIndex + 2);
+    final start = rtcIndex * 2;
+    return valuesList.sublist(start, start + 2);
   }
 
   String _getValue(
@@ -3076,16 +3232,17 @@ Widget buildCustomListTileWidget(
       double fullWidth = 400,
       double halfWidth = 190}) {
   debugPrint("$title == $widgetType ");
+  final colorScheme = Theme.of(context).colorScheme;
   const mono = TextStyle(
-      fontFamily: 'monospace', fontSize: 15, fontWeight: FontWeight.w600);
+      fontFamily: 'monospace', fontSize: 14, fontWeight: FontWeight.w600);
 
   Widget filledBox({required Widget child}) => Container(
     width: double.infinity,
-    height: 46,
-    padding: const EdgeInsets.symmetric(horizontal: 14),
+    height: 42,
+    padding: const EdgeInsets.symmetric(horizontal: 12),
     alignment: Alignment.centerLeft,
     decoration: BoxDecoration(
-        color: kFieldBg, borderRadius: BorderRadius.circular(10)),
+        color: colorScheme.surfaceContainerLow, borderRadius: BorderRadius.circular(8)),
     child: child,
   );
 
@@ -3094,14 +3251,14 @@ Widget buildCustomListTileWidget(
     case 1:
     case 4:
       customWidget = Container(
-        height: 46,
+        height: 42,
         decoration: BoxDecoration(
-            color: kFieldBg, borderRadius: BorderRadius.circular(10)),
+            color: colorScheme.surfaceContainerLow, borderRadius: BorderRadius.circular(8)),
         child: TextFormField(
           key: Key(title),
           enabled: enabled,
           initialValue: value is String ? value : "",
-          style: mono,
+          style: mono.copyWith(color: colorScheme.onSurface),
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
           inputFormatters:
           (widgetType == 1 && AppConstants.gemModelList.contains(modelId))
@@ -3110,7 +3267,7 @@ Widget buildCustomListTileWidget(
           decoration: const InputDecoration(
             hintText: "000",
             isDense: true,
-            contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+            contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
             border: InputBorder.none,
           ),
           onTapOutside: (_) => FocusScope.of(context).unfocus(),
@@ -3121,6 +3278,7 @@ Widget buildCustomListTileWidget(
     case 2:
       customWidget = Switch(
         value: enabled ? (value != "" ? value : false) ?? false : false,
+        activeColor: colorScheme.primary,
         onChanged: (newValue) {
           if (enabled) onValueChange?.call(newValue);
         },
@@ -3135,11 +3293,11 @@ Widget buildCustomListTileWidget(
           onChanged: (newValue) => onValueChange?.call(newValue),
           modelId: 1,
         )
-            : Text(value ?? "00:00:00", style: mono),
+            : Text(value ?? "00:00:00", style: mono.copyWith(color: colorScheme.onSurface)),
       );
       break;
     case 6:
-      customWidget = filledBox(child: Text(value ?? "Wait", style: mono));
+      customWidget = filledBox(child: Text(value ?? "Wait", style: mono.copyWith(color: colorScheme.onSurface)));
       break;
     case 7:
       customWidget = buildPopUpMenuButton(
@@ -3151,8 +3309,14 @@ Widget buildCustomListTileWidget(
         child: filledBox(
           child: Row(
             children: [
-              Expanded(child: Text('$value', style: mono)),
-              const Icon(Icons.arrow_drop_down, color: kMuted),
+              Expanded(
+                child: Text(
+                  '$value',
+                  style: mono.copyWith(color: colorScheme.onSurface),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              Icon(Icons.arrow_drop_down, color: colorScheme.onSurfaceVariant, size: 20),
             ],
           ),
         ),
@@ -3173,27 +3337,29 @@ Widget buildCustomListTileWidget(
       ? Container(
     width: fullWidth,
     padding: const EdgeInsets.symmetric(vertical: 10),
-    decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: kCardBorder))),
+    decoration: BoxDecoration(
+        border: Border(bottom: BorderSide(color: colorScheme.outlineVariant.withOpacity(0.3), width: 0.5))),
     child: Row(
       children: [
-        if (showLeading) ...[leading, const SizedBox(width: 12)], // OLD ICON
+        if (showLeading) ...[leading, const SizedBox(width: 10)],
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
             children: [
               Text(title,
-                  style: const TextStyle(
-                      fontSize: 15, fontWeight: FontWeight.w600)),
+                  style: TextStyle(
+                      fontSize: 14, fontWeight: FontWeight.w600, color: colorScheme.onSurface)),
               if (description != null)
                 Text(description,
-                    style: const TextStyle(color: kMuted, fontSize: 12.5)),
+                    style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 12)),
               if (subTitle != null)
                 Text(subTitle,
-                    style: const TextStyle(color: kMuted, fontSize: 12)),
+                    style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 11.5)),
             ],
           ),
         ),
+        const SizedBox(width: 8),
         if (showTrailing) customWidget,
       ],
     ),
@@ -3204,16 +3370,21 @@ Widget buildCustomListTileWidget(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
           Row(
             children: [
-              if (showLeading) ...[leading, const SizedBox(width: 8)], // OLD ICON
+              if (showLeading) ...[leading, const SizedBox(width: 8)],
               Expanded(
-                child: Text(title,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                        fontSize: 13.5, color: Color(0xFF3A3F51))),
+                child: Text(
+                  title,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: colorScheme.onSurface),
+                ),
               ),
             ],
           ),
@@ -3223,7 +3394,7 @@ Widget buildCustomListTileWidget(
             Padding(
               padding: const EdgeInsets.only(top: 4),
               child: Text(subTitle,
-                  style: const TextStyle(color: kMuted, fontSize: 12)),
+                  style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 11.5)),
             ),
         ],
       ),

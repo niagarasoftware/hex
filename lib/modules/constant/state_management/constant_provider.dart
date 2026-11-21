@@ -953,4 +953,54 @@ class ConstantProvider extends ChangeNotifier {
       ].join(',');
     }).join(';');
   }
+
+  Map<String, dynamic> getConstantHardwarePayload() {
+    var generalPayload = getGeneralPayload();
+    var globalAlarmPayload = getGlobalAlarmPayload();
+    var levelSensorPayload = getObjectInConstantPayload(level);
+    var pumpPayload = getObjectInConstantPayload(pump);
+    var channelPayload = getObjectInConstantPayload(channel);
+    var fertilizerSitePayload = getFertilizerSitePayload();
+    var waterMeterPayload = getObjectInConstantPayload(waterMeter);
+    var mainValvePayload = getObjectInConstantPayload(mainValve);
+    var valvePayload = getObjectInConstantPayload(valve);
+
+    var rawModelId = userData['modelId'] ??
+        userData['modelid'] ??
+        (userData['masterData'] is Map
+            ? (userData['masterData']['modelId'] ??
+                userData['masterData']['modelid'])
+            : null);
+    int? modelId = rawModelId is int
+        ? rawModelId
+        : int.tryParse(rawModelId?.toString() ?? '');
+
+    bool isNova = AppConstants.ecoGemAndPlusModelList.contains(modelId);
+    var normalCriticalPayload = isNova
+        ? getNormalCriticalAlarmForEcoGem()
+        : getNormalCriticalAlarm();
+    var commonAlarmPayload = isNova
+        ? getCommonAlarmPayloadForEcoGem()
+        : getCommonAlarmPayload();
+    var filterPayload = getFilterSitePayload();
+
+    bool isGem = AppConstants.gemModelList.contains(modelId);
+    bool isOms = AppConstants.omsGemList.contains(modelId);
+    var hardwarePayload = {
+      "300": {
+        "301": isOms ? '' : generalPayload,
+        if (isGem) "302": mainValvePayload,
+        "303": valvePayload,
+        "304": waterMeterPayload,
+        "305": channelPayload,
+        if (isGem) "306": fertilizerSitePayload,
+        if (isGem) "307": levelSensorPayload,
+        "308": normalCriticalPayload,
+        "309": pumpPayload,
+        "310": filterPayload,
+        if (isGem) "311": commonAlarmPayload,
+      }
+    };
+    return hardwarePayload;
+  }
 }
