@@ -627,6 +627,284 @@ class _ProgramLibraryScreenNewState extends State<ProgramLibraryScreenNew> {
     return rawName;
   }
 
+  Widget buildRtcWidget({required String title, required String dataString}) {
+    return Expanded(
+      child: Column(
+        children: [
+          Text(
+            title,
+            style: const TextStyle(color: Color(0xFF5B21B6), fontSize: 12, fontWeight: FontWeight.bold, overflow: TextOverflow.ellipsis),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            dataString,
+            style: const TextStyle(fontSize: 14, overflow: TextOverflow.ellipsis, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPlanningMethodCard(Program programItem) {
+    const primaryPurple = Color(0xFF5B21B6);
+
+    final scheduleByDays = programItem.schedule['selected'] == irrigationProgramMainProvider.scheduleTypes[1];
+    final scheduleAsRunList = programItem.schedule['selected'] == irrigationProgramMainProvider.scheduleTypes[2];
+
+    final startDate = scheduleByDays
+        ? (programItem.schedule['scheduleAsRunList']?['schedule']?['startDate'] ?? programItem.schedule['scheduleByDays']?['schedule']?['startDate'] ?? DateTime.now().toString())
+        : scheduleAsRunList
+        ? (programItem.schedule['scheduleByDays']?['schedule']?['startDate'] ?? programItem.schedule['scheduleAsRunList']?['schedule']?['startDate'] ?? DateTime.now().toString())
+        : DateTime.now().toString();
+
+    final endDate = scheduleByDays
+        ? (programItem.schedule['scheduleAsRunList']?['schedule']?['endDate'] ?? programItem.schedule['scheduleByDays']?['schedule']?['endDate'] ?? DateTime.now().toString())
+        : scheduleAsRunList
+        ? (programItem.schedule['scheduleByDays']?['schedule']?['endDate'] ?? programItem.schedule['scheduleAsRunList']?['schedule']?['endDate'] ?? DateTime.now().toString())
+        : DateTime.now().toString();
+
+    final isForceToEndDate = scheduleByDays
+        ? (programItem.schedule['scheduleAsRunList']?['schedule']?['isForceToEndDate'] ?? false)
+        : scheduleAsRunList
+        ? (programItem.schedule['scheduleByDays']?['schedule']?['isForceToEndDate'] ?? false)
+        : false;
+
+    final rtcType = scheduleByDays
+        ? (programItem.schedule['scheduleAsRunList']?['rtc'] ?? programItem.schedule['scheduleByDays']?['rtc'] ?? {})
+        : scheduleAsRunList
+        ? (programItem.schedule['scheduleByDays']?['rtc'] ?? programItem.schedule['scheduleAsRunList']?['rtc'] ?? {})
+        : {};
+
+    int pageCount = (rtcType is Map) ? rtcType.length : (rtcType is List) ? rtcType.length : 0;
+    final isScheduled = (scheduleByDays || scheduleAsRunList) && pageCount > 0;
+
+    String startDateOnly = "Manual start";
+    String endDateOnly = "No end date";
+    try {
+      startDateOnly = DateFormat('MMM d').format(DateTime.parse(startDate));
+      endDateOnly = DateFormat('MMM d').format(DateTime.parse(endDate));
+    } catch (_) {}
+
+    String getWeekday(int weekday) {
+      const daysInWeek = 7;
+      List<String> weekdays = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
+      int adjustedWeekday = (weekday - 1 + daysInWeek) % daysInWeek;
+      return weekdays[adjustedWeekday];
+    }
+
+    List<String> days = List.generate(
+      scheduleByDays
+          ? int.parse(programItem.schedule['scheduleAsRunList']?['schedule']?['noOfDays']?.toString().isNotEmpty == true ? programItem.schedule['scheduleAsRunList']['schedule']['noOfDays'].toString() : "1")
+          : scheduleAsRunList
+          ? int.parse(programItem.schedule['scheduleByDays']?['schedule']?['runDays']?.toString().isNotEmpty == true ? programItem.schedule['scheduleByDays']['schedule']['runDays'].toString() : '0') + int.parse(programItem.schedule['scheduleByDays']?['schedule']?['skipDays']?.toString() ?? '0')
+          : 0,
+      (index) {
+        DateTime currentDate = DateTime.tryParse(startDate)?.add(Duration(days: index)) ?? DateTime.now();
+        return getWeekday(currentDate.weekday);
+      },
+    );
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            (scheduleByDays || scheduleAsRunList)
+                ? "$startDateOnly - ${(isForceToEndDate ?? false) ? endDateOnly : "No end date"}"
+                : "Manual start",
+            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF64748B)),
+          ),
+          const SizedBox(height: 6),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Text(
+                programItem.programName.isNotEmpty
+                    ? (programItem.schedule['selected']?.toString().isNotEmpty == true
+                        ? (programItem.schedule['selected'].toString().toLowerCase().substring(0, 1).toUpperCase() +
+                            programItem.schedule['selected'].toString().toLowerCase().substring(1))
+                        : "No schedule")
+                    : "Inactive program",
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF0F172A),
+                ),
+              ),
+              Text(
+                scheduleByDays
+                    ? "${programItem.schedule['scheduleAsRunList']?['schedule']?['noOfDays']?.toString() == "" ? '1' : (programItem.schedule['scheduleAsRunList']?['schedule']?['noOfDays']?.toString() ?? '1')} day cycle"
+                    : scheduleAsRunList
+                    ? "Run days - ${programItem.schedule['scheduleByDays']?['schedule']?['runDays']?.toString() ?? '1'} \nSkip days - ${programItem.schedule['scheduleByDays']?['schedule']?['skipDays']?.toString() ?? '0'}"
+                    : "-",
+                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF475569)),
+              )
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              if (scheduleByDays)
+                for (var index = 0; index < days.length; index++)
+                  Container(
+                    margin: const EdgeInsets.only(right: 6),
+                    padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFEDE9FE),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      days[index],
+                      style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: primaryPurple),
+                    ),
+                  )
+              else if (scheduleAsRunList)
+                for (var index = 0; index < days.length; index++)
+                  Container(
+                    margin: const EdgeInsets.only(right: 6),
+                    padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+                    decoration: BoxDecoration(
+                      color: index >= int.parse(programItem.schedule['scheduleByDays']?['schedule']?['runDays']?.toString().isNotEmpty == true
+                          ? programItem.schedule['scheduleByDays']['schedule']['runDays'].toString() : "0")
+                          ? const Color(0xFFFFEFE1)
+                          : const Color(0xFFEDE9FE),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      days[index],
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        color: index >= int.parse(programItem.schedule['scheduleByDays']?['schedule']?['runDays']?.toString().isNotEmpty == true
+                            ? programItem.schedule['scheduleByDays']['schedule']['runDays'].toString() : "0")
+                            ? const Color(0xFFC2410C)
+                            : primaryPurple,
+                      ),
+                    ),
+                  )
+              else
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF1F5F9),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: const Text(
+                    "NOT SCHEDULED",
+                    style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF64748B), letterSpacing: 0.5),
+                  ),
+                )
+            ],
+          ),
+          const SizedBox(height: 14),
+          if (isScheduled && pageCount > 0)
+            Column(
+              children: [
+                for (var index = 0; index < pageCount; index++)
+                  Container(
+                    margin: const EdgeInsets.only(bottom: 8),
+                    padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF3F4F6),
+                      borderRadius: BorderRadius.circular(10),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Colors.black12,
+                          blurRadius: 4,
+                          offset: Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        buildRtcWidget(title: "RTC No", dataString: '${index + 1}'),
+                        const SizedBox(width: 10),
+                        buildRtcWidget(
+                          title: "Start time",
+                          dataString: (rtcType is Map && rtcType['rtc${index + 1}'] != null)
+                              ? rtcType['rtc${index + 1}']['onTime']?.toString() ?? '00:00:00'
+                              : (rtcType is List && index < rtcType.length)
+                              ? rtcType[index]['onTime']?.toString() ?? '00:00:00'
+                              : '00:00:00',
+                        ),
+                        const SizedBox(width: 10),
+                        buildRtcWidget(
+                          title: "Cycle Interval",
+                          dataString: (rtcType is Map && rtcType['rtc${index + 1}'] != null)
+                              ? rtcType['rtc${index + 1}']['interval']?.toString() ?? '00:00:00'
+                              : (rtcType is List && index < rtcType.length)
+                              ? rtcType[index]['interval']?.toString() ?? '00:00:00'
+                              : '00:00:00',
+                        ),
+                        const SizedBox(width: 10),
+                        buildRtcWidget(
+                          title: "Cycles",
+                          dataString: (rtcType is Map && rtcType['rtc${index + 1}'] != null)
+                              ? rtcType['rtc${index + 1}']['noOfCycles']?.toString() ?? '1'
+                              : (rtcType is List && index < rtcType.length)
+                              ? rtcType[index]['noOfCycles']?.toString() ?? '1'
+                              : '1',
+                        ),
+                        const SizedBox(width: 10),
+                        if ((rtcType is Map && rtcType['rtc${index + 1}'] != null && rtcType['rtc${index + 1}']['stopMethod'] == irrigationProgramMainProvider.stopMethods[1]) ||
+                            (rtcType is List && index < rtcType.length && rtcType[index]['stopMethod'] == irrigationProgramMainProvider.stopMethods[1]))
+                          buildRtcWidget(
+                            title: "Off time",
+                            dataString: (rtcType is Map && rtcType['rtc${index + 1}'] != null)
+                                ? rtcType['rtc${index + 1}']['offTime']?.toString() ?? '-'
+                                : rtcType[index]['offTime']?.toString() ?? '-',
+                          )
+                        else if ((rtcType is Map && rtcType['rtc${index + 1}'] != null && rtcType['rtc${index + 1}']['stopMethod'] == irrigationProgramMainProvider.stopMethods[2]) ||
+                            (rtcType is List && index < rtcType.length && rtcType[index]['stopMethod'] == irrigationProgramMainProvider.stopMethods[2]))
+                          buildRtcWidget(
+                            title: "Max time",
+                            dataString: (rtcType is Map && rtcType['rtc${index + 1}'] != null)
+                                ? rtcType['rtc${index + 1}']['maxTime']?.toString() ?? '-'
+                                : rtcType[index]['maxTime']?.toString() ?? '-',
+                          )
+                        else
+                          buildRtcWidget(
+                            title: "Off time",
+                            dataString: (rtcType is Map && rtcType['rtc${index + 1}'] != null && rtcType['rtc${index + 1}']['offTime'] != null && rtcType['rtc${index + 1}']['offTime'].toString().isNotEmpty)
+                                ? rtcType['rtc${index + 1}']['offTime'].toString()
+                                : (rtcType is List && index < rtcType.length && rtcType[index]['offTime'] != null)
+                                ? rtcType[index]['offTime'].toString()
+                                : '-',
+                          ),
+                      ],
+                    ),
+                  ),
+              ],
+            )
+          else
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+              ),
+              child: const Text(
+                "RTC not available for this method",
+                style: TextStyle(fontSize: 13, color: Color(0xFF64748B), fontWeight: FontWeight.w500),
+                textAlign: TextAlign.center,
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildDetailPanel(Program? program) {
     if (program == null) {
       return Container(
@@ -915,74 +1193,28 @@ class _ProgramLibraryScreenNewState extends State<ProgramLibraryScreenNew> {
           const SizedBox(height: 24),
 
           // Planning Method Section
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                "PLANNING METHOD",
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF64748B),
-                  letterSpacing: 0.8,
-                ),
-              ),
-              InkWell(
-                onTap: () => navigateToIrrigationProgram(program),
-                child: const Row(
-                  children: [
-                    Text("Edit Schedule", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF5B21B6))),
-                    Icon(Icons.chevron_right, size: 16, color: Color(0xFF5B21B6)),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          InkWell(
-            onTap: () => navigateToIrrigationProgram(program),
-            borderRadius: BorderRadius.circular(12),
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF8FAFC),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFFE2E8F0)),
-              ),
-              child: Text(
-                isManual
-                    ? "Not Planning Method. This program runs only when started manually. RTC is not available for this program."
-                    : "Active Planning Method: ${program.schedule['selected']}. Execution mode set.",
-                style: const TextStyle(fontSize: 13, color: Color(0xFF334155), height: 1.4),
-              ),
+          const Text(
+            "PLANNING METHOD",
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF64748B),
+              letterSpacing: 0.8,
             ),
           ),
+          const SizedBox(height: 8),
+          _buildPlanningMethodCard(program),
           const SizedBox(height: 24),
 
           // Zones Section
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                "ZONES ($zoneCount)",
-                style: const TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF64748B),
-                  letterSpacing: 0.8,
-                ),
-              ),
-              InkWell(
-                onTap: () => navigateToIrrigationProgram(program),
-                child: const Row(
-                  children: [
-                    Text("Edit Sequences", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF5B21B6))),
-                    Icon(Icons.chevron_right, size: 16, color: Color(0xFF5B21B6)),
-                  ],
-                ),
-              ),
-            ],
+          Text(
+            "ZONES ($zoneCount)",
+            style: const TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF64748B),
+              letterSpacing: 0.8,
+            ),
           ),
           const SizedBox(height: 8),
           Wrap(
