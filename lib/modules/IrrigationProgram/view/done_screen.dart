@@ -603,11 +603,57 @@ class _AdditionalDataScreenState extends State<AdditionalDataScreen> {
             title: 'Warning',
             content: "Select valves to be sequence for Irrigation Program",
             actions: [
-              TextButton(child: const Text("OK"), onPressed: () => Navigator.of(context).pop(),),
+              TextButton(child: const Text("OK"), onPressed: () => Navigator.of(context).pop()),
             ],
           );
         },
       );
     }
   }
+}
+
+Widget buildListTile({
+  required BuildContext context,
+  required String title,
+  Color? textColor,
+  Color? color,
+  dynamic subTitle,
+  IconData? icon,
+  Widget? trailing,
+  EdgeInsets? padding,
+  void Function()? onTap,
+}) {
+  final primaryPurple = const Color(0xFF5B21B6);
+  return Container(
+    padding: padding ?? const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+    decoration: BoxDecoration(
+      borderRadius: BorderRadius.circular(14),
+      color: color ?? Colors.white,
+      border: Border.all(color: const Color(0xFFE2E8F0)),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.02),
+          blurRadius: 10,
+          offset: const Offset(0, 4),
+        ),
+      ],
+    ),
+    child: ListTile(
+      title: Text(title, style: TextStyle(color: textColor ?? const Color(0xFF0F172A), fontWeight: FontWeight.bold, fontSize: 14)),
+      subtitle: subTitle != null ? Text('$subTitle', style: const TextStyle(color: Color(0xFF64748B), fontSize: 12)) : null,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 10),
+      horizontalTitleGap: 14,
+      leading: Container(
+        width: 40,
+        height: 40,
+        decoration: BoxDecoration(
+          color: const Color(0xFFF5F3FF),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Icon(icon, color: primaryPurple, size: 20),
+      ),
+      trailing: trailing,
+      onTap: onTap,
+    ),
+  );
 }

@@ -213,7 +213,7 @@ class _SequenceScreenState extends State<SequenceScreen> {
         }
       },
       selected: index == indexToShow,
-      darkColor: Theme.of(context).primaryColorLight,
+      darkColor: const Color(0xFF5B21B6),
       textColor: index == indexToShow ? Colors.white : Colors.black,
       padding: const EdgeInsets.symmetric(vertical: 7, horizontal: 8),
       itemName: _provider.irrigationLine!.sequence[index]['name'],
@@ -247,9 +247,9 @@ class _SequenceScreenState extends State<SequenceScreen> {
     return FilledButton(
       onPressed: () => _showEditSequencesSheet(context),
       style: ElevatedButton.styleFrom(
-        backgroundColor: Theme.of(context).primaryColorLight,
+        backgroundColor: const Color(0xFF5B21B6),
         elevation: 2,
-        shadowColor: Theme.of(context).primaryColorLight.withAlpha(30),
+        shadowColor: const Color(0xFF5B21B6).withAlpha(30),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
         minimumSize: const Size(0, 40),
@@ -411,7 +411,7 @@ class _SequenceScreenState extends State<SequenceScreen> {
     return buildActionButton(
       context: context,
       key: 'addNext',
-      labelColor: Theme.of(context).primaryColor,
+      labelColor: const Color(0xFF5B21B6),
       icon: icon,
       label: label,
       onPressed: sequence[indexToShow]['valve'].isEmpty
@@ -846,38 +846,38 @@ Widget buildListOfContainer({
   required String itemName,
   EdgeInsets padding = const EdgeInsets.symmetric(vertical: 0, horizontal: 10),
 }) {
-  Color getDarkerColor(Color? color) {
-    if (color == null) return Colors.black;
-    return Color.fromRGBO(
-      (color.red * 0.8).round(),
-      (color.green * 0.8).round(),
-      (color.blue * 0.8).round(),
-      1.0,
-    );
-  }
+  final primaryPurple = const Color(0xFF5B21B6);
 
   return ChoiceChip(
     label: Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        if (selected) Icon(Icons.radio_button_checked, color: textColor ?? getDarkerColor(darkColor), size: 20),
-        const SizedBox(width: 4),
-        Text(itemName, style: TextStyle(color: textColor ?? Colors.black)),
+        if (selected) const Icon(Icons.check_circle, color: Colors.white, size: 16),
+        if (selected) const SizedBox(width: 4),
+        Text(
+          itemName,
+          style: TextStyle(
+            color: selected ? Colors.white : const Color(0xFF1E293B),
+            fontWeight: selected ? FontWeight.bold : FontWeight.w500,
+            fontSize: 13,
+          ),
+        ),
       ],
     ),
     selected: selected,
     showCheckmark: false,
     onSelected: (_) => onTap(),
-    selectedColor: darkColor,
-    backgroundColor: selected ? darkColor : darkColor!.withAlpha(20),
+    selectedColor: primaryPurple,
+    backgroundColor: selected ? primaryPurple : const Color(0xFFF1F5F9),
     shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(20),
-      side: BorderSide(color: darkColor!, width: 0.8),
+      borderRadius: BorderRadius.circular(10),
+      side: BorderSide(
+        color: selected ? primaryPurple : const Color(0xFFE2E8F0),
+        width: 1,
+      ),
     ),
-    elevation: 4,
-    shadowColor: darkColor.withAlpha(50),
-    labelPadding: EdgeInsets.zero,
-    padding: padding,
+    elevation: selected ? 2 : 0,
+    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
     materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
   );
 }
@@ -892,47 +892,49 @@ Widget buildLineAndValveContainerUpdated({
   bool isTitle = false,
 }) {
   return Container(
-    padding: const EdgeInsets.all(10),
+    padding: const EdgeInsets.all(16),
     decoration: BoxDecoration(
-      borderRadius: BorderRadius.only(
-        bottomLeft: const Radius.circular(10),
-        bottomRight: const Radius.circular(10),
-        topRight: const Radius.circular(10),
-        topLeft: isTitle ? const Radius.circular(0) : const Radius.circular(10),
-      ),
+      borderRadius: BorderRadius.circular(16),
       color: Colors.white,
-      boxShadow: AppProperties.customBoxShadowLiteTheme,
+      border: Border.all(color: const Color(0xFFE2E8F0)),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.02),
+          blurRadius: 10,
+          offset: const Offset(0, 4),
+        ),
+      ],
     ),
     child: isRowLayout && MediaQuery.of(context).size.width > 800
         ? Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      child: Row(
-        children: [
-          buildLeadingTitle(context, title, leading, 40, 22),
-          const SizedBox(width: 10),
-          const SizedBox(height: 50, child: VerticalDivider(color: Colors.grey)),
-          const SizedBox(width: 10),
-          Expanded(flex: 5, child: Wrap(spacing: 5, runSpacing: 10, children: children)),
-          if (trailing != null) Align(alignment: Alignment.centerRight, child: trailing),
-        ],
-      ),
-    )
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            child: Row(
+              children: [
+                buildLeadingTitle(context, title, leading, 36, 18),
+                const SizedBox(width: 12),
+                const SizedBox(height: 40, child: VerticalDivider(color: Color(0xFFE2E8F0))),
+                const SizedBox(width: 12),
+                Expanded(flex: 5, child: Wrap(spacing: 8, runSpacing: 10, children: children)),
+                if (trailing != null) Align(alignment: Alignment.centerRight, child: trailing),
+              ],
+            ),
+          )
         : Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              buildLeadingTitle(context, title, leading, 30, 16),
-              if (trailing != null) Expanded(child: Align(alignment: Alignment.centerRight, child: trailing)),
-            ],
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    buildLeadingTitle(context, title, leading, 32, 16),
+                    if (trailing != null) Expanded(child: Align(alignment: Alignment.centerRight, child: trailing)),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Wrap(spacing: 8, runSpacing: 10, children: children),
+              ],
+            ),
           ),
-          const SizedBox(height: 10),
-          Wrap(spacing: 5, runSpacing: 10, children: children),
-        ],
-      ),
-    ),
   );
 }
 

@@ -558,18 +558,35 @@ class Program {
       });
 
   factory Program.fromJson(Map<String, dynamic> json) {
+    final serialNum = json['serialNumber'] is int
+        ? json['serialNumber'] as int
+        : int.tryParse('${json['serialNumber']}') ?? 1;
+
+    var seqList = json['sequence'];
+    if (seqList is List) {
+      for (var i = 0; i < seqList.length; i++) {
+        if (seqList[i] is Map) {
+          final currentSeqName = seqList[i]['name']?.toString().trim() ?? '';
+          final defaultSeqPattern = RegExp(r'^Sequence\s+\d+(\.\d+)?$', caseSensitive: false);
+          if (currentSeqName.isEmpty || defaultSeqPattern.hasMatch(currentSeqName)) {
+            seqList[i]['name'] = 'Sequence $serialNum.${i + 1}';
+          }
+        }
+      }
+    }
+
     return Program(
-      programId: json['programId'],
-      serialNumber: json['serialNumber'],
-      programName: json['programName'],
-      defaultProgramName: json['defaultProgramName'],
-      programType: json['programType'],
-      priority: json['priority'],
-      sequence: json['sequence'],
-      schedule: json['schedule'],
+      programId: json['programId'] is int ? json['programId'] : int.tryParse('${json['programId']}') ?? 0,
+      serialNumber: serialNum,
+      programName: json['programName']?.toString() ?? '',
+      defaultProgramName: json['defaultProgramName']?.toString() ?? '',
+      programType: json['programType']?.toString() ?? '',
+      priority: json['priority']?.toString() ?? '',
+      sequence: seqList,
+      schedule: json['schedule'] is Map<String, dynamic> ? json['schedule'] : {},
       hardwareData: json['hardware'],
-      controllerReadStatus: json['controllerReadStatus'],
-      active: json['active'],
+      controllerReadStatus: json['controllerReadStatus']?.toString() ?? '0',
+      active: json['active']?.toString() ?? '0',
     );
   }
 }

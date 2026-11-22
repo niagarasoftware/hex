@@ -1,13 +1,12 @@
-
 import 'package:flutter/material.dart';
 
 class SlidingSendButton extends StatefulWidget {
   final Function onSend;
 
-  const SlidingSendButton({Key? key, required this.onSend}) : super(key: key);
+  const SlidingSendButton({super.key, required this.onSend});
 
   @override
-  _SlidingSendButtonState createState() => _SlidingSendButtonState();
+  State<SlidingSendButton> createState() => _SlidingSendButtonState();
 }
 
 class _SlidingSendButtonState extends State<SlidingSendButton> {
@@ -18,10 +17,11 @@ class _SlidingSendButtonState extends State<SlidingSendButton> {
 
   @override
   Widget build(BuildContext context) {
+    const primaryPurple = Color(0xFF5B21B6);
+
     return GestureDetector(
       onHorizontalDragUpdate: (details) {
         setState(() {
-          // Update the drag position within bounds
           if (!isSent) {
             _dragPosition += details.delta.dx;
             _dragPosition = _dragPosition.clamp(0.0, _maxDragDistance);
@@ -30,24 +30,11 @@ class _SlidingSendButtonState extends State<SlidingSendButton> {
       },
       onHorizontalDragEnd: (details) {
         if (_dragPosition == _maxDragDistance) {
-          widget.onSend(); // Trigger the send action
+          widget.onSend();
           setState(() {
             isSent = true;
-            icon = Icons.done; // Change icon to 'done'
+            icon = Icons.done;
           });
-          /* Future.delayed(const Duration(seconds: 1), () {
-            setState(() {
-              // Reset after a delay
-              // isSent = false;
-              // _dragPosition = 0.0;
-              // icon = Icons.send;
-            });
-          });*/
-        } else {
-          /* // Reset position if not fully dragged
-          setState(() {
-            // _dragPosition = 0.0;
-          });*/
         }
       },
       child: Stack(
@@ -58,7 +45,7 @@ class _SlidingSendButtonState extends State<SlidingSendButton> {
             width: _maxDragDistance + 50,
             height: 50,
             decoration: BoxDecoration(
-              color: Colors.grey[300],
+              color: const Color(0xFFE2E8F0),
               borderRadius: BorderRadius.circular(25),
             ),
           ),
@@ -68,33 +55,35 @@ class _SlidingSendButtonState extends State<SlidingSendButton> {
             child: Text(
               isSent ? "Sent!" : "-- Slide to Send -->",
               style: TextStyle(
-                color: Colors.grey[600],
+                color: isSent ? primaryPurple : const Color(0xFF64748B),
                 fontWeight: FontWeight.bold,
+                fontSize: 13,
               ),
             ),
           ),
           // Sliding button with animation
           AnimatedPositioned(
-            duration: const Duration(milliseconds: 300),
+            duration: const Duration(milliseconds: 150),
             left: _dragPosition,
             child: AnimatedContainer(
-              duration: const Duration(milliseconds: 300),
+              duration: const Duration(milliseconds: 150),
               width: 50,
               height: 50,
               decoration: BoxDecoration(
-                color: isSent ? Colors.green : Theme.of(context).primaryColorLight,
+                color: isSent ? const Color(0xFF059669) : primaryPurple,
                 borderRadius: BorderRadius.circular(25),
-                boxShadow: [
-                  const BoxShadow(
-                    color: Colors.black26,
-                    blurRadius: 5,
-                    offset: Offset(0, 2),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Colors.black12,
+                    blurRadius: 6,
+                    offset: Offset(0, 3),
                   ),
                 ],
               ),
               child: Icon(
                 icon,
                 color: Colors.white,
+                size: 20,
               ),
             ),
           ),

@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 
 import 'custom_paginated_data_table.dart';
- class CustomDataTable extends StatelessWidget {
+
+class CustomDataTable extends StatelessWidget {
   final String? headerText;
   final List<DataColumn> columns;
   final List<dynamic> dataList;
@@ -15,7 +16,7 @@ import 'custom_paginated_data_table.dart';
   final double columnSpacing;
 
   CustomDataTable({
-    Key? key,
+    super.key,
     this.headerText,
     required this.columns,
     required this.dataList,
@@ -27,39 +28,45 @@ import 'custom_paginated_data_table.dart';
     this.dataRowMinHeight = 30,
     this.columnSpacing = 10,
   }) : rows = dataList.asMap().entries.map((entry) {
-    int index = entry.key;
-    dynamic data = entry.value;
-    return DataRow(
-      color: const MaterialStatePropertyAll<Color>(Colors.white),
-      cells: List.generate(columns.length, (cellIndex) {
-        return cellBuilders[cellIndex](data, index);
-      }),
-    );
-  }).toList(),
-        super(key: key);
+          int index = entry.key;
+          dynamic data = entry.value;
+          return DataRow(
+            color: const WidgetStatePropertyAll<Color>(Colors.white),
+            cells: List.generate(columns.length, (cellIndex) {
+              return cellBuilders[cellIndex](data, index);
+            }),
+          );
+        }).toList();
 
   final scrollController = ScrollController();
 
   @override
   Widget build(BuildContext context) {
+    const primaryPurple = Color(0xFF5B21B6);
+
     return Scrollbar(
       controller: scrollController,
       child: CustomPaginatedDataTable(
         controller: scrollController,
         columnSpacing: columnSpacing,
-        arrowHeadColor: Theme.of(context).primaryColor,
-        headingRowColor: MaterialStatePropertyAll<Color>(Theme.of(context).primaryColor),
+        arrowHeadColor: primaryPurple,
+        headingRowColor: const WidgetStatePropertyAll<Color>(primaryPurple),
         headingRowHeight: 40,
-        showFirstLastButtons: rowsPerPage > rows.length ? true : false,
+        showFirstLastButtons: rowsPerPage > rows.length,
         dataRowMaxHeight: dataRowMaxHeight,
         dataRowMinHeight: dataRowMinHeight,
-        header: headerText != null ?Row(
-          children: [
-            Icon(icon, color: Theme.of(context).primaryColor),
-            const SizedBox(width: 20),
-            Text(headerText ?? "", style: TextStyle(color: Theme.of(context).primaryColor)),
-          ],
-        ): null,
+        header: headerText != null
+            ? Row(
+                children: [
+                  Icon(icon, color: primaryPurple),
+                  const SizedBox(width: 12),
+                  Text(
+                    headerText ?? "",
+                    style: const TextStyle(color: primaryPurple, fontWeight: FontWeight.bold),
+                  ),
+                ],
+              )
+            : null,
         rowsPerPage: rowsPerPage,
         columns: columns,
         source: CustomDataTableSource(rows),

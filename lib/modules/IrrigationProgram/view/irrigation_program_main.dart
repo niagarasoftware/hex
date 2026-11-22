@@ -11,7 +11,6 @@ import '../../../utils/constants.dart';
 import '../state_management/irrigation_program_provider.dart';
 import '../../../StateManagement/mqtt_payload_provider.dart';
 import '../widgets/custom_alert_dialog.dart';
-import '../widgets/custom_tab.dart';
 import 'alarm_screen.dart';
 import 'conditions_screen.dart';
 import 'done_screen.dart';
@@ -456,152 +455,235 @@ class _IrrigationProgramState extends State<IrrigationProgram> with SingleTicker
           ? (mainProvider.programName == '' ? "Program ${mainProvider.programCount + 1}" : mainProvider.programName)
           : mainProvider.programDetails!.defaultProgramName;
 
-      return LayoutBuilder(
-        builder: (context, constraints) {
-          return DefaultTabController(
-            length: labels.length,
-            child: Scaffold(
-              appBar: MediaQuery.of(context).size.width < 600
-                  ? AppBar(
-                title: Text(programName),
-                centerTitle: true,
-                leading: IconButton(
-                  onPressed: () {
-                    mainProvider.programLibraryData(widget.customerId, widget.controllerId);
-                    Navigator.pop(context);
-                  },
-                  icon: const Icon(Icons.arrow_back, color: Colors.white),
-                ),
-                bottom: constraints.maxWidth < 600
-                    ? PreferredSize(
-                  preferredSize: const Size.fromHeight(80.0),
-                  child: TabBar(
-                    controller: _tabController,
-                    tabAlignment: TabAlignment.start,
-                    isScrollable: true,
-                    tabs: [
-                      for (int i = 0; i < labels.length; i++)
-                        InkWell(
-                          onTap: () => _handleTabNavigation(i),
-                          child: CustomTab(
-                            height: 80,
-                            label: labels[i],
-                            content: icons[i],
-                            tabIndex: i,
-                            selectedTabIndex: mainProvider.selectedTabIndex,
-                          ),
+      final sequenceLength = mainProvider.irrigationLine?.sequence.length ?? 0;
+      final priority = mainProvider.programDetails?.priority ?? "Low";
+      final primaryPurple = const Color(0xFF5B21B6);
+
+      return DefaultTabController(
+        length: labels.length,
+        child: Scaffold(
+          backgroundColor: const Color(0xFFF8FAFC),
+          body: Column(
+            children: [
+              // Header
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                color: Colors.white,
+                child: Row(
+                  children: [
+                    InkWell(
+                      onTap: () {
+                        mainProvider.programLibraryData(widget.customerId, widget.controllerId);
+                        Navigator.pop(context);
+                      },
+                      borderRadius: BorderRadius.circular(20),
+                      child: Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF1F5F9),
+                          shape: BoxShape.circle,
                         ),
-                    ],
-                  ),
-                )
-                    : null,
-              )
-                  : const PreferredSize(preferredSize: Size(0, 0), child: SizedBox()),
-              body: Row(
-                children: [
-                  if (constraints.maxWidth > 500)
+                        child: const Icon(Icons.arrow_back, size: 18, color: Color(0xFF1E293B)),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
                     Container(
-                      width: constraints.maxWidth * 0.15,
-                      color: Theme.of(context).primaryColorDark,
-                      child: ListView(
-                        padding: const EdgeInsets.all(10),
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: primaryPurple,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(Icons.water_drop, color: Colors.white, size: 20),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Center(
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 20),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.start,
-                                children: [
-                                  const BackButton(color: Colors.white),
-                                  const SizedBox(width: 10),
-                                  Expanded(
-                                    child: Text(
-                                      programName,
-                                      style: TextStyle(
-                                        fontSize: Theme.of(context).textTheme.titleLarge!.fontSize,
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
+                          Text(
+                            programName,
+                            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
                           ),
-                          for (int i = 0; i < labels.length; i++)
-                            Material(
-                              type: MaterialType.transparency,
-                              child: ListTile(
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                title: constraints.maxWidth > 500 && constraints.maxWidth <= 600
-                                    ? null
-                                    : Text(labels[i], style: const TextStyle(color: Colors.white)),
-                                leading: Icon(icons[i], color: Colors.white),
-                                selected: _tabController.index == i,
-                                selectedTileColor: _tabController.index == i ? Theme.of(context).primaryColorLight : null,
-                                hoverColor: _tabController.index == i ? Theme.of(context).primaryColorLight : null,
-                                onTap: () => _handleTabNavigation(i),
-                              ),
-                            ),
+                          Text(
+                            '$sequenceLength Segments · Priority: $priority',
+                            style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                          ),
                         ],
                       ),
                     ),
-                  Expanded(
-                    child: TabBarView(
-                      controller: _tabController,
-                      physics: const NeverScrollableScrollPhysics(),
-                      children: [
-                        for (int i = 0; i < labels.length; i++)
-                          _buildTabContent(
-                            index: i,
-                            isIrrigationProgram: isIrrigationProgram,
-                            conditionsLibraryIsNotEmpty: (mainProvider.conditionsLibraryIsNotEmpty),
-                          ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              floatingActionButton: Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  if (mainProvider.selectedTabIndex != 0)
-                    _buildActionButton(
-                      key: "prevPage",
-                      icon: Icons.navigate_before,
-                      onPressed: _navigateToPreviousTab,
-                      context: context,
-                    ),
-                  const SizedBox(width: 10),
-                  CircleAvatar(
-                    child: Text(
-                      "${mainProvider.selectedTabIndex + 1}",
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  if (mainProvider.selectedTabIndex != labels.length - 1)
-                    _buildActionButton(
-                      key: "nextPage",
-                      icon: Icons.navigate_next,
-                      context: context,
+                    FilledButton.icon(
                       onPressed: () {
-                        final nextIndex = _tabController.index + 1;
-                        final mainProvider = Provider.of<IrrigationProgramMainProvider>(context, listen: false);
-                        if (_tabController.index == 0 &&
-                            mainProvider.irrigationLine!.sequence.any((element) => element['valve'].isEmpty)) {
-                          _showSequenceWarning(mainProvider);
-                        } else if (_validateBeforeGoingTo(nextIndex, mainProvider)) {
-                          _navigateToNextTab();
-                        }
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text("Program settings saved")),
+                        );
                       },
+                      style: FilledButton.styleFrom(
+                        backgroundColor: primaryPurple,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                      ),
+                      icon: const Icon(Icons.save_outlined, size: 16, color: Colors.white),
+                      label: const Text(
+                        "Save Program",
+                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                      ),
                     ),
-                ],
+                  ],
+                ),
               ),
-              floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-            ),
-          );
-        },
+              const Divider(height: 1, color: Color(0xFFE2E8F0)),
+
+              // Horizontal Stepper Bar
+              Container(
+                color: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: List.generate(labels.length, (i) {
+                      final isSelected = _tabController.index == i;
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 8.0),
+                        child: InkWell(
+                          onTap: () => _handleTabNavigation(i),
+                          borderRadius: BorderRadius.circular(20),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: isSelected ? primaryPurple : const Color(0xFFF1F5F9),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(
+                                  width: 22,
+                                  height: 22,
+                                  decoration: BoxDecoration(
+                                    color: isSelected ? Colors.white.withValues(alpha: 0.25) : const Color(0xFFE2E8F0),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      '${i + 1}',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.bold,
+                                        color: isSelected ? Colors.white : const Color(0xFF475569),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  labels[i],
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                                    color: isSelected ? Colors.white : const Color(0xFF475569),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      );
+                    }),
+                  ),
+                ),
+              ),
+              const Divider(height: 1, color: Color(0xFFE2E8F0)),
+
+              // Step SubHeader
+              _buildStepSubHeader(mainProvider.selectedTabIndex, labels[mainProvider.selectedTabIndex], labels.length),
+
+              // Tab View Content
+              Expanded(
+                child: TabBarView(
+                  controller: _tabController,
+                  physics: const NeverScrollableScrollPhysics(),
+                  children: [
+                    for (int i = 0; i < labels.length; i++)
+                      _buildTabContent(
+                        index: i,
+                        isIrrigationProgram: isIrrigationProgram,
+                        conditionsLibraryIsNotEmpty: (mainProvider.conditionsLibraryIsNotEmpty),
+                      ),
+                  ],
+                ),
+              ),
+
+              // Bottom Navigation Bar
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  border: Border(top: BorderSide(color: Color(0xFFE2E8F0))),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    if (mainProvider.selectedTabIndex > 0)
+                      TextButton.icon(
+                        onPressed: _navigateToPreviousTab,
+                        icon: const Icon(Icons.arrow_back, size: 16, color: Color(0xFF475569)),
+                        label: const Text(
+                          "Previous Step",
+                          style: TextStyle(color: Color(0xFF475569), fontWeight: FontWeight.w600, fontSize: 13),
+                        ),
+                      )
+                    else
+                      const SizedBox(width: 110),
+
+                    // Pagination Dots
+                    Row(
+                      children: List.generate(labels.length, (i) {
+                        return AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          margin: const EdgeInsets.symmetric(horizontal: 3),
+                          width: i == mainProvider.selectedTabIndex ? 20 : 7,
+                          height: 7,
+                          decoration: BoxDecoration(
+                            color: i == mainProvider.selectedTabIndex ? primaryPurple : const Color(0xFFCBD5E1),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                        );
+                      }),
+                    ),
+
+                    if (mainProvider.selectedTabIndex < labels.length - 1)
+                      FilledButton.icon(
+                        onPressed: () {
+                          final nextIndex = _tabController.index + 1;
+                          final mainProvider = Provider.of<IrrigationProgramMainProvider>(context, listen: false);
+                          if (_tabController.index == 0 &&
+                              mainProvider.irrigationLine!.sequence.any((element) => element['valve'].isEmpty)) {
+                            _showSequenceWarning(mainProvider);
+                          } else if (_validateBeforeGoingTo(nextIndex, mainProvider)) {
+                            _navigateToNextTab();
+                          }
+                        },
+                        style: FilledButton.styleFrom(
+                          backgroundColor: primaryPurple,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                        ),
+                        label: const Text(
+                          "Next Step",
+                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                        ),
+                        icon: const Icon(Icons.arrow_forward, size: 16, color: Colors.white),
+                      )
+                    else
+                      const SizedBox(width: 110),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
       );
     } else {
       final title = widget.serialNumber == 0 ? "New Program" : "Program ${widget.serialNumber}";
@@ -619,6 +701,77 @@ class _IrrigationProgramState extends State<IrrigationProgram> with SingleTicker
         ),
       );
     }
+  }
+
+  Widget _buildStepSubHeader(int currentIndex, String label, int totalCount) {
+    final progress = (((currentIndex + 1) / totalCount) * 100).toInt();
+    String getStepDescription(String stepName) {
+      switch (stepName) {
+        case 'Sequence':
+          return 'Configure Segments, plots, and valve distribution';
+        case 'Schedule':
+          return 'Select execution strategy: No Planning Method, By Days, By Run List, or By Program';
+        case 'Conditions':
+          return 'Set sensor triggers that allow or stop a run';
+        case 'Selection':
+          return 'Configure hardware and line selection settings';
+        case 'Water & Fert':
+          return 'Configure irrigation and fertigation parameters';
+        case 'Alarm':
+          return 'Set notification triggers and system alerts';
+        default:
+          return 'Configure program settings and parameters';
+      }
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+      color: const Color(0xFFF8FAFC),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'STEP ${currentIndex + 1} OF $totalCount · ${label.toUpperCase()}',
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF5B21B6),
+                  letterSpacing: 0.8,
+                ),
+              ),
+              Text(
+                'Progress: $progress%',
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: Color(0xFF64748B),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF0F172A),
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            getStepDescription(label),
+            style: const TextStyle(
+              fontSize: 12,
+              color: Color(0xFF64748B),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   /*Widget _buildTabContent({required int index, required bool isIrrigationProgram, required bool conditionsLibraryIsNotEmpty}) {

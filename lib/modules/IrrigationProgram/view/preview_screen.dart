@@ -656,9 +656,9 @@ class _PreviewScreenState extends State<PreviewScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8.0),
-          child: Text("Alarm details", style: TextStyle(fontWeight: FontWeight.bold, color: Theme.of(context).primaryColor),),
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+          child: Text("Alarm details", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF5B21B6))),
         ),
         Wrap(
           children: [
@@ -1051,9 +1051,9 @@ class _PreviewScreenState extends State<PreviewScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8.0),
-          child: Text("Schedule details", style: TextStyle(fontWeight: FontWeight.bold, color: Theme.of(context).primaryColor),),
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+          child: Text("Schedule details", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF5B21B6))),
         ),
         Row(
           children: [
@@ -1109,8 +1109,8 @@ class _PreviewScreenState extends State<PreviewScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8.0),
-          child: Text(categoryTitle, style: TextStyle(fontWeight: FontWeight.bold, color: Theme.of(context).primaryColor),),
+          padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+          child: Text(categoryTitle, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF5B21B6))),
         ),
         buildItemRow(title1: title1, title2: title2, itemList1: itemList1, itemList2: itemList2, showWidget: show2ndWidget),
         if(showRow)
@@ -1326,13 +1326,14 @@ Widget buildIndividualRow(item) {
 }
 
 Widget buildItemsCard({required BuildContext context, required String title, required Widget child, margin, padding}){
-
+  const primaryPurple = Color(0xFF5B21B6);
   return Container(
-    margin: margin ?? const EdgeInsets.all(10),
-    padding: padding ?? const EdgeInsets.all(10),
+    margin: margin ?? const EdgeInsets.all(8),
+    padding: padding ?? const EdgeInsets.all(12),
     decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(16),
         color: Colors.white,
+        border: Border.all(color: const Color(0xFFE2E8F0)),
         boxShadow: customBoxShadow
     ),
     child: Column(
@@ -1341,34 +1342,31 @@ Widget buildItemsCard({required BuildContext context, required String title, req
       children: [
         Row(
           children: [
-            // CircleAvatar(
-            //   radius: 15,
-            //   backgroundColor: cardColor,
-            //   child: Text(
-            //     (title.split(" ").first[0]+title.split(" ").last[0]).toUpperCase(),
-            //     style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Theme.of(context).primaryColor),
-            //   ),
-            // ),
             Container(
-              height: 30,
-              width: 30,
+              height: 32,
+              width: 32,
               decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: AppProperties.linearGradientLeading
+                shape: BoxShape.circle,
+                color: const Color(0xFFF5F3FF),
               ),
               child: Center(
                 child: Text(
                   (title.split(" ").first[0]+title.split(" ").last[0]).toUpperCase(),
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.white),
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: primaryPurple),
                 ),
               ),
             ),
-            SizedBox(width: MediaQuery.of(context).size.width > 1200 ? 20 : 10,),
-            Expanded(child: Text(title, style: const TextStyle(fontWeight: FontWeight.w300, overflow: TextOverflow.ellipsis),))
+            SizedBox(width: MediaQuery.of(context).size.width > 1200 ? 16 : 10),
+            Expanded(
+              child: Text(
+                title,
+                style: const TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF1E293B), fontSize: 13, overflow: TextOverflow.ellipsis),
+              ),
+            ),
           ],
         ),
         Padding(
-          padding: const EdgeInsets.all(8.0),
+          padding: const EdgeInsets.only(top: 8.0, left: 4.0),
           child: child,
         )
       ],
@@ -1378,24 +1376,9 @@ Widget buildItemsCard({required BuildContext context, required String title, req
 
 List<BoxShadow> customBoxShadow = [
   BoxShadow(
-      offset: const Offset(0, 45),
-      blurRadius: 112,
-      color: Colors.black.withOpacity(0.06)
-  ),
-  BoxShadow(
-      offset: const Offset(0, 22.78),
-      blurRadius: 48.83,
-      color: Colors.black.withOpacity(0.0405)
-  ),
-  BoxShadow(
-      offset: const Offset(0, 9),
-      blurRadius: 18.2,
-      color: Colors.black.withOpacity(0.03)
-  ),
-  BoxShadow(
-      offset: const Offset(0, 1.97),
-      blurRadius: 6.47,
-      color: Colors.black.withOpacity(0.0195)
+    offset: const Offset(0, 4),
+    blurRadius: 10,
+    color: Colors.black.withValues(alpha: 0.02),
   ),
 ];
 
