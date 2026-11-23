@@ -1,4 +1,4 @@
-import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 
 import '../../../../models/customer/site_model.dart';
 import 'custom_card_table.dart';
@@ -16,14 +16,17 @@ class FilterSiteCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (sites.isEmpty) return const SizedBox();
+    if (sites.isEmpty) return const SizedBox.shrink();
 
     return Column(
       children: sites.map((site) {
+        final activeCount = site.filters.where((f) => f.selected).length;
+
         return Padding(
-          padding: const EdgeInsets.only(bottom: 8),
+          padding: const EdgeInsets.only(bottom: 12),
           child: CustomCardTable(
             title: site.name,
+            activeCountText: "$activeCount/${site.filters.length} Active",
             rows: site.filters.map((filter) {
               return CustomSwitchRow(
                 iconPath: 'assets/png/filter.png',

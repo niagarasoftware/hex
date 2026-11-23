@@ -10,7 +10,7 @@ import '../../../utils/constants.dart';
 import '../../../view_models/customer/customer_screen_controller_view_model.dart';
 import '../input_output_connection_details.dart';
 import '../node_list/node_list.dart';
-import '../stand_alone/stand_alone_wide.dart';
+import '../stand_alone/manual_control_page.dart';
 import 'alarm_button.dart';
 
 class SideActionMenu extends StatelessWidget {
@@ -271,37 +271,19 @@ class SideActionMenu extends StatelessWidget {
       child: IconButton(
         tooltip: 'Manual',
         onPressed: () {
-          showGeneralDialog(
-            barrierLabel: "Side sheet",
-            barrierDismissible: true,
-            barrierColor: const Color(0xff66000000),
-            transitionDuration: const Duration(milliseconds: 300),
-            context: context,
-            pageBuilder: (context, animation1, animation2) {
-              return Align(
-                alignment: Alignment.centerRight,
-                child: Material(
-                  elevation: 15,
-                  color: Colors.transparent,
-                  borderRadius: BorderRadius.zero,
-                  child: StandAloneWide(
-                    siteId: vm.mySiteList.data[vm.sIndex].groupId,
-                    controllerId: cM.controllerId,
-                    customerId: vm.mySiteList.data[vm.sIndex].customerId,
-                    deviceId: cM.deviceId,
-                    callbackFunction: callbackFunction,
-                    userId: userId,
-                    masterData: cM,
-                  ),
-                ),
-              );
-            },
-            transitionBuilder: (context, animation1, animation2, child) {
-              return SlideTransition(
-                position: Tween(begin: const Offset(1, 0), end: const Offset(0, 0)).animate(animation1),
-                child: child,
-              );
-            },
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ManualControlPage(
+                siteId: vm.mySiteList.data[vm.sIndex].groupId,
+                controllerId: cM.controllerId,
+                customerId: vm.mySiteList.data[vm.sIndex].customerId,
+                deviceId: cM.deviceId,
+                callbackFunction: callbackFunction,
+                userId: userId,
+                masterData: cM,
+              ),
+            ),
           );
         },
         icon: const Icon(Icons.touch_app_outlined),

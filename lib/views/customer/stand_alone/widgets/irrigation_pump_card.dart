@@ -1,4 +1,4 @@
-import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 
 import '../../../../models/customer/site_model.dart';
 import 'custom_card_table.dart';
@@ -16,10 +16,13 @@ class IrrigationPumpCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (pumps.isEmpty) return const SizedBox();
+    if (pumps.isEmpty) return const SizedBox.shrink();
+
+    final activeCount = pumps.where((p) => p.selected).length;
 
     return CustomCardTable(
       title: "Irrigation Pump",
+      activeCountText: "$activeCount/${pumps.length} Active",
       rows: pumps.map((pump) {
         return CustomSwitchRow(
           iconPath: 'assets/png/dp_pump.png',
@@ -44,10 +47,13 @@ class AeratorCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (pumps.isEmpty) return const SizedBox();
+    if (pumps.isEmpty) return const SizedBox.shrink();
+
+    final activeCount = pumps.where((p) => p.selected).length;
 
     return CustomCardTable(
       title: "Aerator",
+      activeCountText: "$activeCount/${pumps.length} Active",
       rows: pumps.map((pump) {
         return CustomSwitchRow(
           iconPath: 'assets/png/aerators_grey.png',

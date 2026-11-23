@@ -413,7 +413,7 @@ class _ResetVerssionState extends State<ResetVerssion> {
                       filter: ImageFilter.blur(sigmaX: 12.0, sigmaY: 12.0),
                       child: Container(
                         decoration: BoxDecoration(
-                          color: Theme.of(context).colorScheme.surface.withOpacity(0.45),
+                          color: Colors.white,
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(color: Theme.of(context).colorScheme.outlineVariant.withOpacity(0.7), width: 1.5),
                           boxShadow: [
@@ -619,7 +619,7 @@ class _ResetVerssionState extends State<ResetVerssion> {
                               Container(
                                 padding: EdgeInsets.symmetric(horizontal: isMobile ? 12 : 16, vertical: 12),
                                 decoration: BoxDecoration(
-                                  color: Theme.of(context).colorScheme.surface.withOpacity(0.3),
+                                  color: Theme.of(context).colorScheme.surface,
                                   borderRadius: BorderRadius.circular(12),
                                   border: Border.all(color: Theme.of(context).colorScheme.outlineVariant.withOpacity(0.5)),
                                 ),

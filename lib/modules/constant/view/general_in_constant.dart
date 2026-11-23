@@ -37,6 +37,10 @@ class _GeneralInConstantState extends State<GeneralInConstant> {
     final isGem = modelId != null && AppConstants.gemModelList.contains(modelId);
 
     final visibleSettings = widget.constPvd.general.where((setting) {
+      final titleLower = setting.title.toLowerCase().trim();
+      if (titleLower == 'settings' || titleLower == 'setting') {
+        return false;
+      }
       if (modelId == null) {
         return true;
       }
@@ -44,7 +48,8 @@ class _GeneralInConstantState extends State<GeneralInConstant> {
     }).toList();
 
     if (visibleSettings.isEmpty && widget.constPvd.general.isNotEmpty) {
-      visibleSettings.addAll(widget.constPvd.general);
+      visibleSettings.addAll(widget.constPvd.general
+          .where((s) => s.title.toLowerCase().trim() != 'settings' && s.title.toLowerCase().trim() != 'setting'));
     }
 
     final dosingSettings = <ConstantSettingModel>[];
@@ -53,7 +58,10 @@ class _GeneralInConstantState extends State<GeneralInConstant> {
     final otherSettings = <ConstantSettingModel>[];
 
     for (final setting in visibleSettings) {
-      final t = setting.title.toLowerCase();
+      final t = setting.title.toLowerCase().trim();
+      if (t == 'settings' || t == 'setting') {
+        continue;
+      }
       if (t.contains('dosing') ||
           t.contains('fertilizer') ||
           t.contains('leakage') ||
