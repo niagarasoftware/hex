@@ -6,7 +6,6 @@ import 'package:provider/provider.dart';
 import 'package:responsive_grid_list/responsive_grid_list.dart';
 
 import '../../../models/customer/site_model.dart';
-import '../../IrrigationProgram/view/schedule_screen.dart';
 
 class ValveSettings extends StatefulWidget {
   final int selectedMode;
@@ -22,9 +21,11 @@ class _ValveSettingsState extends State<ValveSettings> {
   @override
   void initState() {
     super.initState();
-    if (mounted) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        final provider = Provider.of<PreferenceProvider>(context, listen: false);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final provider = Provider.of<PreferenceProvider>(context, listen: false);
+      if (provider.standaloneSettings != null &&
+          provider.standaloneSettings!.setting.length > 4) {
         setState(() {
           if (widget.selectedMode == 1) {
             provider.standaloneSettings!.setting[4].value = true;
@@ -32,15 +33,15 @@ class _ValveSettingsState extends State<ValveSettings> {
             provider.standaloneSettings!.setting[4].value = false;
           }
         });
-        provider.getMode();
-      });
-    }
+      }
+      provider.getMode();
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     final valves = widget.masterData.configObjects.where((e) => e.objectId == 13).toList();
-    final primaryColor = Theme.of(context).primaryColor;
+    final colorScheme = Theme.of(context).colorScheme;
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
@@ -48,24 +49,24 @@ class _ValveSettingsState extends State<ValveSettings> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             decoration: BoxDecoration(
-              color: Theme.of(context).primaryColorLight,
+              color: colorScheme.primaryContainer,
               borderRadius: const BorderRadius.only(
-                topRight: Radius.circular(16),
+                topRight: Radius.circular(14),
                 topLeft: Radius.circular(6),
               ),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.tune_rounded, color: Colors.white, size: 18),
+                Icon(Icons.tune_rounded, color: colorScheme.onPrimaryContainer, size: 18),
                 const SizedBox(width: 8),
                 Text(
                   widget.selectedMode == 1 ? "Standalone Settings" : "Program Settings",
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                    color: colorScheme.onPrimaryContainer,
                     fontSize: 14,
                   ),
                 ),
@@ -76,25 +77,29 @@ class _ValveSettingsState extends State<ValveSettings> {
             child: Container(
               decoration: BoxDecoration(
                 borderRadius: const BorderRadius.only(
-                  topRight: Radius.circular(12),
-                  bottomLeft: Radius.circular(12),
-                  bottomRight: Radius.circular(12),
+                  topRight: Radius.circular(14),
+                  bottomLeft: Radius.circular(14),
+                  bottomRight: Radius.circular(14),
                 ),
-                color: Colors.white,
+                color: colorScheme.surface,
                 border: Border.all(
-                  color: Theme.of(context).primaryColorLight.withOpacity(0.4),
-                  width: 0.5,
+                  color: colorScheme.outlineVariant.withOpacity(0.5),
+                  width: 1,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: primaryColor.withOpacity(0.04),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
+                    color: Colors.black.withOpacity(0.025),
+                    blurRadius: 10,
+                    offset: const Offset(0, 3),
                   ),
                 ],
               ),
               child: Consumer<PreferenceProvider>(
                 builder: (context, provider, _) {
+                  if (provider.standaloneSettings == null ||
+                      provider.standaloneSettings!.setting.length < 5) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
                   final settings = provider.standaloneSettings!.setting;
                   final firstHalf = settings.sublist(0, 5);
                   final secondHalf = settings.sublist(
@@ -116,7 +121,7 @@ class _ValveSettingsState extends State<ValveSettings> {
                           ],
                         ),
                         const SizedBox(height: 12),
-                        const Divider(height: 1),
+                        Divider(height: 1, color: colorScheme.outlineVariant.withOpacity(0.5)),
                         const SizedBox(height: 12),
                       ],
                       ResponsiveGridList(
@@ -124,7 +129,7 @@ class _ValveSettingsState extends State<ValveSettings> {
                         minItemWidth: MediaQuery.of(context).size.width <= 500 ? 150 : 200,
                         children: [
                           ...secondHalf.map(
-                            (item) => _buildSecondHalfTile(context, item, provider.mode),
+                                (item) => _buildSecondHalfTile(context, item, provider.mode),
                           ),
                         ],
                       ),
@@ -142,13 +147,14 @@ class _ValveSettingsState extends State<ValveSettings> {
 
   Widget _buildSettingTile(BuildContext context, WidgetSetting settingItem) {
     final provider = Provider.of<PreferenceProvider>(context, listen: false);
+    final colorScheme = Theme.of(context).colorScheme;
 
     return Container(
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.15),
+        color: colorScheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
-          color: Theme.of(context).primaryColorLight.withOpacity(0.3),
+          color: colorScheme.outlineVariant.withOpacity(0.4),
           width: 0.5,
         ),
       ),
@@ -157,60 +163,61 @@ class _ValveSettingsState extends State<ValveSettings> {
         contentPadding: EdgeInsets.zero,
         title: Text(
           settingItem.title,
-          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+          style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: colorScheme.onSurface),
         ),
         trailing: IntrinsicWidth(
           child: settingItem.widgetTypeId == 3
               ? CustomNativeTimePicker(
-                  initialValue: settingItem.value!,
-                  is24HourMode: true,
-                  onChanged: (newValue) {
-                    provider.updateSettingValue(settingItem.title, newValue);
-                  },
-                  modelId: widget.masterData.modelId,
-                )
+            initialValue: settingItem.value!,
+            is24HourMode: true,
+            onChanged: (newValue) {
+              provider.updateSettingValue(settingItem.title, newValue);
+            },
+            modelId: widget.masterData.modelId,
+          )
               : settingItem.widgetTypeId == 2
-                  ? Switch(
-                      value: settingItem.value,
-                      onChanged: (newValue) {
-                        provider.updateSwitchValue(settingItem.title, newValue);
-                      },
-                    )
-                  : SizedBox(
-                      width: 80,
-                      child: TextFormField(
-                        key: Key(settingItem.title),
-                        initialValue: settingItem.value,
-                        textAlign: TextAlign.center,
-                        keyboardType: TextInputType.number,
-                        onChanged: (newValue) {
-                          provider.updateSettingValue(settingItem.title, newValue);
-                        },
-                        onTapOutside: (_) {
-                          FocusScope.of(context).unfocus();
-                        },
-                        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
-                        decoration: InputDecoration(
-                          isDense: true,
-                          hintText: "000",
-                          contentPadding: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: BorderSide(color: Colors.grey.shade300),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: BorderSide(color: Colors.grey.shade300),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: BorderSide(color: Theme.of(context).primaryColor, width: 1.5),
-                          ),
-                          fillColor: cardColor,
-                          filled: true,
-                        ),
-                      ),
-                    ),
+              ? Switch(
+            value: settingItem.value,
+            activeColor: colorScheme.primary,
+            onChanged: (newValue) {
+              provider.updateSwitchValue(settingItem.title, newValue);
+            },
+          )
+              : SizedBox(
+            width: 80,
+            child: TextFormField(
+              key: Key(settingItem.title),
+              initialValue: settingItem.value,
+              textAlign: TextAlign.center,
+              keyboardType: TextInputType.number,
+              onChanged: (newValue) {
+                provider.updateSettingValue(settingItem.title, newValue);
+              },
+              onTapOutside: (_) {
+                FocusScope.of(context).unfocus();
+              },
+              style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: colorScheme.onSurface),
+              decoration: InputDecoration(
+                isDense: true,
+                hintText: "000",
+                contentPadding: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(color: colorScheme.outlineVariant.withOpacity(0.5)),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(color: colorScheme.outlineVariant.withOpacity(0.5)),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(color: colorScheme.primary, width: 1.5),
+                ),
+                fillColor: colorScheme.surfaceContainerLow,
+                filled: true,
+              ),
+            ),
+          ),
         ),
       ),
     );
@@ -218,13 +225,14 @@ class _ValveSettingsState extends State<ValveSettings> {
 
   Widget _buildSecondHalfTile(BuildContext context, WidgetSetting settingItem, String mode) {
     final provider = Provider.of<PreferenceProvider>(context, listen: false);
+    final colorScheme = Theme.of(context).colorScheme;
 
     return Container(
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.15),
+        color: colorScheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
-          color: Theme.of(context).primaryColorLight.withOpacity(0.3),
+          color: colorScheme.outlineVariant.withOpacity(0.4),
           width: 0.5,
         ),
       ),
@@ -233,34 +241,37 @@ class _ValveSettingsState extends State<ValveSettings> {
         contentPadding: EdgeInsets.zero,
         title: Text(
           settingItem.title,
-          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+          style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: colorScheme.onSurface),
         ),
         trailing: IntrinsicWidth(
           child: mode == "Manual"
               ? Switch(
-                  value: settingItem.serialNumber != 5
-                      ? provider.getSwitchState(settingItem.value)
-                      : settingItem.value,
-                  onChanged: (newValue) {
-                    if (settingItem.serialNumber != 5) {
-                      provider.updateSwitchValue(settingItem.title, newValue);
-                    } else {
-                      setState(() {
-                        provider.standaloneSettings!.setting[4].value = newValue;
-                      });
-                    }
-                  },
-                )
+            value: settingItem.serialNumber != 5
+                ? provider.getSwitchState(settingItem.value)
+                : settingItem.value,
+            activeColor: colorScheme.primary,
+            onChanged: (newValue) {
+              if (settingItem.serialNumber != 5) {
+                provider.updateSwitchValue(settingItem.title, newValue);
+              } else {
+                if (mounted) {
+                  setState(() {
+                    provider.standaloneSettings!.setting[4].value = newValue;
+                  });
+                }
+              }
+            },
+          )
               : settingItem.serialNumber != 5
-                  ? CustomNativeTimePicker(
-                      initialValue: provider.getDuration(settingItem.value),
-                      is24HourMode: true,
-                      onChanged: (newValue) {
-                        provider.updateSettingValue(settingItem.title, newValue);
-                      },
-                      modelId: widget.masterData.modelId,
-                    )
-                  : Container(),
+              ? CustomNativeTimePicker(
+            initialValue: provider.getDuration(settingItem.value),
+            is24HourMode: true,
+            onChanged: (newValue) {
+              provider.updateSettingValue(settingItem.title, newValue);
+            },
+            modelId: widget.masterData.modelId,
+          )
+              : Container(),
         ),
       ),
     );

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../models/customer/site_model.dart';
 import '../../../utils/constants.dart';
+export 'hex_sidebar.dart';
 
 class NavigationDestinationsBuilder {
 

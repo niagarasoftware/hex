@@ -67,7 +67,7 @@ class _PayloadProgressDialogState extends State<PayloadProgressDialog> {
       payloadStatuses = widget.payloads.map((payload) {
         try {
           var payloadToDecode =
-              widget.isToGem ? payload.split('+')[4] : payload;
+          widget.isToGem ? payload.split('+')[4] : payload;
           var decodedData = jsonDecode(payloadToDecode);
           var key = decodedData.keys.first;
 
@@ -75,7 +75,7 @@ class _PayloadProgressDialogState extends State<PayloadProgressDialog> {
             'payload': payload,
             'status': 'Pending',
             'reference':
-                widget.isToGem ? payload.split('+')[2] : 'Device payload',
+            widget.isToGem ? payload.split('+')[2] : 'Device payload',
             'selected': true,
             'key': key,
           };
@@ -155,13 +155,13 @@ class _PayloadProgressDialogState extends State<PayloadProgressDialog> {
         };
       }
       final result = await context.read<CommunicationService>().sendCommand(
-            serverMsg: '',
-            payload: widget.isToGem
-                ? jsonEncode(gemPayload)
-                : widget.isWlc
-                    ? Constants.sendPayloadWithCrc(jsonDecode(payload)[key])
-                    : jsonDecode(payload)[key],
-          );
+        serverMsg: '',
+        payload: widget.isToGem
+            ? jsonEncode(gemPayload)
+            : widget.isWlc
+            ? Constants.sendPayloadWithCrc(jsonDecode(payload)[key])
+            : jsonDecode(payload)[key],
+      );
       debugPrint("progress dialog result => $result");
 
       bool isAcknowledged = false;
@@ -175,7 +175,7 @@ class _PayloadProgressDialogState extends State<PayloadProgressDialog> {
             .indexWhere((element) => element.deviceId == payload.split('+')[2]);
       }
       await for (var mqttMessage
-          in widget.mqttService.preferenceAckStream.timeout(
+      in widget.mqttService.preferenceAckStream.timeout(
         Duration(seconds: maxWaitTime),
         onTimeout: (sink) {
           sink.close();
@@ -188,10 +188,10 @@ class _PayloadProgressDialogState extends State<PayloadProgressDialog> {
                 ? mqttMessage['cC'] == payload.split('+')[2]
                 : true)) {
           context.read<PreferenceProvider>().updateControllerReaStatus(
-                key: key,
-                oroPumpIndex: oroPumpIndex,
-                failed: widget.shouldSendFailedPayloads,
-              );
+            key: key,
+            oroPumpIndex: oroPumpIndex,
+            failed: widget.shouldSendFailedPayloads,
+          );
           isAcknowledged = true;
           break;
         }
@@ -269,13 +269,14 @@ class _PayloadProgressDialogState extends State<PayloadProgressDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final primaryColor = Theme.of(context).primaryColor;
+    final colorScheme = Theme.of(context).colorScheme;
+    final primaryColor = colorScheme.primary;
     final sentCount = payloadStatuses.where((s) => s['status'] == 'Sent').length;
     final totalCount = payloadStatuses.length;
 
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      backgroundColor: Theme.of(context).colorScheme.surface,
+      backgroundColor: colorScheme.surface,
       surfaceTintColor: Colors.transparent,
       elevation: 6,
       child: Padding(
@@ -304,11 +305,12 @@ class _PayloadProgressDialogState extends State<PayloadProgressDialog> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         "Processing Payloads",
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
+                          color: colorScheme.onSurface,
                         ),
                       ),
                       const SizedBox(height: 2),
@@ -316,7 +318,7 @@ class _PayloadProgressDialogState extends State<PayloadProgressDialog> {
                         "Progress: $sentCount / $totalCount sent",
                         style: TextStyle(
                           fontSize: 12,
-                          color: Colors.grey.shade600,
+                          color: colorScheme.onSurfaceVariant,
                         ),
                       ),
                     ],
@@ -341,9 +343,9 @@ class _PayloadProgressDialogState extends State<PayloadProgressDialog> {
               height: 320,
               width: MediaQuery.of(context).size.width > 400 ? 360 : 300,
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.2),
+                color: colorScheme.surfaceContainerLow,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.grey.withOpacity(0.2)),
+                border: Border.all(color: colorScheme.outlineVariant.withOpacity(0.5)),
               ),
               child: ListView.separated(
                 padding: const EdgeInsets.all(8),
@@ -355,14 +357,14 @@ class _PayloadProgressDialogState extends State<PayloadProgressDialog> {
                   String message = statusMessages[key] ?? "Unknown setting";
                   String currentStatus = status['status'];
 
-                  Color statusColor = Colors.grey;
+                  Color statusColor = colorScheme.onSurfaceVariant;
                   IconData statusIcon = Icons.hourglass_empty;
 
                   if (currentStatus == 'Sent') {
                     statusColor = Colors.green;
                     statusIcon = Icons.check_circle_rounded;
                   } else if (currentStatus == 'Failed') {
-                    statusColor = Colors.red;
+                    statusColor = colorScheme.error;
                     statusIcon = Icons.error_outline_rounded;
                   } else if (currentStatus == 'Sending' || currentStatus == 'Retrying') {
                     statusColor = primaryColor;
@@ -371,12 +373,12 @@ class _PayloadProgressDialogState extends State<PayloadProgressDialog> {
 
                   return Container(
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: colorScheme.surface,
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(
                         color: currentStatus == 'Failed'
-                            ? Colors.red.withOpacity(0.3)
-                            : Colors.grey.withOpacity(0.15),
+                            ? colorScheme.error.withOpacity(0.4)
+                            : colorScheme.outlineVariant.withOpacity(0.5),
                       ),
                     ),
                     child: CheckboxListTile(
@@ -418,16 +420,17 @@ class _PayloadProgressDialogState extends State<PayloadProgressDialog> {
                       ),
                       title: Text(
                         "${status['reference']}",
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 13,
+                          color: colorScheme.onSurface,
                         ),
                       ),
                       subtitle: Text(
                         message,
                         style: TextStyle(
                           fontSize: 12,
-                          color: Colors.grey.shade700,
+                          color: colorScheme.onSurfaceVariant,
                         ),
                       ),
                       value: payloadStatuses[index]['selected'],
@@ -446,19 +449,19 @@ class _PayloadProgressDialogState extends State<PayloadProgressDialog> {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: Colors.red.withOpacity(0.1),
+                  color: colorScheme.error.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.red.withOpacity(0.3)),
+                  border: Border.all(color: colorScheme.error.withOpacity(0.3)),
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.error, color: Colors.red, size: 20),
+                    Icon(Icons.error, color: colorScheme.error, size: 20),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         mqttError,
-                        style: const TextStyle(
-                          color: Colors.red,
+                        style: TextStyle(
+                          color: colorScheme.error,
                           fontWeight: FontWeight.bold,
                           fontSize: 12,
                         ),

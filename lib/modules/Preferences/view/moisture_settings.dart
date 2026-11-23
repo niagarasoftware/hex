@@ -10,29 +10,29 @@ class MoistureSettings extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final primaryColor = Theme.of(context).primaryColor;
+    final colorScheme = Theme.of(context).colorScheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
           decoration: BoxDecoration(
-            color: Theme.of(context).primaryColorLight,
+            color: colorScheme.primaryContainer,
             borderRadius: const BorderRadius.only(
-              topRight: Radius.circular(16),
+              topRight: Radius.circular(14),
               topLeft: Radius.circular(6),
             ),
           ),
-          child: const Row(
+          child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.water_drop_outlined, color: Colors.white, size: 18),
-              SizedBox(width: 8),
+              Icon(Icons.water_drop_outlined, color: colorScheme.onPrimaryContainer, size: 18),
+              const SizedBox(width: 8),
               Text(
                 "Moisture Settings",
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
-                  color: Colors.white,
+                  color: colorScheme.onPrimaryContainer,
                   fontSize: 14,
                 ),
               ),
@@ -43,20 +43,20 @@ class MoistureSettings extends StatelessWidget {
           child: Container(
             decoration: BoxDecoration(
               borderRadius: const BorderRadius.only(
-                topRight: Radius.circular(12),
-                bottomLeft: Radius.circular(12),
-                bottomRight: Radius.circular(12),
+                topRight: Radius.circular(14),
+                bottomLeft: Radius.circular(14),
+                bottomRight: Radius.circular(14),
               ),
-              color: Colors.white,
+              color: colorScheme.surface,
               border: Border.all(
-                color: Theme.of(context).primaryColorLight.withOpacity(0.4),
-                width: 0.5,
+                color: colorScheme.outlineVariant.withOpacity(0.5),
+                width: 1,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: primaryColor.withOpacity(0.04),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
+                  color: Colors.black.withOpacity(0.025),
+                  blurRadius: 10,
+                  offset: const Offset(0, 3),
                 ),
               ],
             ),
@@ -64,7 +64,7 @@ class MoistureSettings extends StatelessWidget {
               builder: (context, provider, _) => ListView.separated(
                 padding: const EdgeInsets.all(16),
                 itemCount: provider.moistureSettings?.setting.length ?? 0,
-                separatorBuilder: (context, index) => const Divider(height: 24, thickness: 0.5),
+                separatorBuilder: (context, index) => Divider(height: 24, thickness: 0.5, color: colorScheme.outlineVariant.withOpacity(0.5)),
                 itemBuilder: (context, index) => _buildSettingItem(
                   context,
                   provider,
@@ -79,10 +79,10 @@ class MoistureSettings extends StatelessWidget {
   }
 
   Widget _buildSettingItem(
-    BuildContext context,
-    PreferenceProvider provider,
-    WidgetSetting item,
-  ) {
+      BuildContext context,
+      PreferenceProvider provider,
+      WidgetSetting item,
+      ) {
     const settingOptions = ["Both", "Any", "Moisture 1", "Moisture 2"];
 
     switch (item.serialNumber) {
@@ -102,6 +102,7 @@ class MoistureSettings extends StatelessWidget {
         );
       default:
         final values = (item.value as String).split(',');
+        final colorScheme = Theme.of(context).colorScheme;
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -119,7 +120,7 @@ class MoistureSettings extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
-                          color: Theme.of(context).primaryColor,
+                          color: colorScheme.primary,
                         ),
                       ),
                     ),
@@ -132,7 +133,7 @@ class MoistureSettings extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
-                          color: Theme.of(context).primaryColor,
+                          color: colorScheme.primary,
                         ),
                       ),
                     ),
@@ -167,10 +168,11 @@ class _SwitchTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.2),
+        color: colorScheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(10),
       ),
       child: Row(
@@ -179,11 +181,12 @@ class _SwitchTile extends StatelessWidget {
           Expanded(
             child: Text(
               title,
-              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+              style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: colorScheme.onSurface),
             ),
           ),
           Switch(
             value: value,
+            activeColor: colorScheme.primary,
             onChanged: onChanged,
           ),
         ],
@@ -207,12 +210,13 @@ class _RadioTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           title,
-          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+          style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: colorScheme.onSurface),
         ),
         const SizedBox(height: 8),
         SingleChildScrollView(
@@ -229,11 +233,11 @@ class _RadioTile extends StatelessWidget {
                   onSelected: (selected) {
                     if (selected) onChanged(optionIndex);
                   },
-                  selectedColor: Theme.of(context).primaryColor.withOpacity(0.15),
+                  selectedColor: colorScheme.primaryContainer,
                   labelStyle: TextStyle(
                     color: isSelected
-                        ? Theme.of(context).primaryColor
-                        : Colors.black87,
+                        ? colorScheme.onPrimaryContainer
+                        : colorScheme.onSurface,
                     fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                     fontSize: 13,
                   ),
@@ -264,6 +268,7 @@ class _RangeInputTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
@@ -272,7 +277,7 @@ class _RangeInputTile extends StatelessWidget {
           Expanded(
             child: Text(
               title,
-              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: colorScheme.onSurface),
             ),
           ),
           _NumberInputField(
@@ -301,6 +306,7 @@ class _NumberInputField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return SizedBox(
       width: 80,
       child: TextFormField(
@@ -308,24 +314,24 @@ class _NumberInputField extends StatelessWidget {
         textAlign: TextAlign.center,
         keyboardType: TextInputType.number,
         onChanged: onChanged,
-        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+        style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: colorScheme.onSurface),
         decoration: InputDecoration(
           hintText: "000",
           isDense: true,
           contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(8),
-            borderSide: BorderSide(color: Colors.grey.shade300),
+            borderSide: BorderSide(color: colorScheme.outlineVariant.withOpacity(0.5)),
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(8),
-            borderSide: BorderSide(color: Colors.grey.shade300),
+            borderSide: BorderSide(color: colorScheme.outlineVariant.withOpacity(0.5)),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(8),
-            borderSide: BorderSide(color: Theme.of(context).primaryColor, width: 1.5),
+            borderSide: BorderSide(color: colorScheme.primary, width: 1.5),
           ),
-          fillColor: cardColor,
+          fillColor: colorScheme.surfaceContainerLow,
           filled: true,
         ),
       ),
