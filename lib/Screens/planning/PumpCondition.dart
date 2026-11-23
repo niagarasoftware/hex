@@ -38,9 +38,17 @@ class _PumpConditionScreenState extends State<PumpConditionScreen> {
   String selectedMode = "";
   bool isNova = false;
 
+  // Colors (matched to the reference design).
+  static const Color _accent = Color(0xFF4F2CB8); // selected / highlight
+  static const Color _accentSoft = Color(0xFFEDE9FE); // selected cell fill
+  static const Color _cardBorder = Color(0xFFE5E7EB); // card & cell border
+  static const Color _cellFill = Color(0xFFF7F8FA); // normal cell fill
+  static const Color _titleText = Color(0xFF111827); // card title
+  static const Color _cellText = Color(0xFF4B5563); // normal cell text
+
   @override
   void initState() {
-     isNova = [...AppConstants.ecoGemModelList].contains(widget.modelid);
+    isNova = [...AppConstants.ecoGemModelList].contains(widget.modelid);
 
     super.initState();
     mqttPayloadProvider =
@@ -92,127 +100,175 @@ class _PumpConditionScreenState extends State<PumpConditionScreen> {
   @override
   Widget build(BuildContext context) {
     final allPumps = pumpConditionModel.data?.pumpCondition ?? [];
-     return Scaffold(
-      backgroundColor: const Color(0xffE6EDF5),
+    return Scaffold(
+      backgroundColor: Colors.white,
       appBar: MediaQuery.of(context).size.width <= 500 ? AppBar(
         title: const Text('Pump Conditions'),
       ) : null,
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(8.0),
         child: isNova ?  Card(
-        elevation: 4.0,
-        child: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Center(
-                child: Text('Nova Pump Condition',
-                  style: TextStyle(fontWeight: FontWeight.bold),
+          elevation: 4.0,
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Center(
+                  child: Text('Nova Pump Condition',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 8.0),
-              Container(height: 0.5, color: Colors.grey),
-              const SizedBox(height: 8.0),
-              Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text(
-                    "Select Pump Mode",
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 20),
-
-                  /// --- TWO CHIPS WITH NEW NAMES ---
-                  Wrap(
-                    spacing: 10,
-                    children: [
-                      ChoiceChip(
-                        label: const Text("Alternative Pump"),
-                        selected: selectedMode == "Alternative",
-                        selectedColor: Colors.greenAccent.shade100,
-                        onSelected: (_) {
-                          setState(() {
-                            selectedMode = "Alternative";
-                          });
-                        },
-                      ),
-                      ChoiceChip(
-                        label: const Text("Combined Pumps"),
-                        selected: selectedMode == "combined",
-                        selectedColor: Colors.greenAccent.shade100,
-                        onSelected: (_) {
-                          setState(() {
-                            selectedMode = "combined";
-                          });
-                        },
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  /// Result Text
-                  Text(
-                    "Selected Mode: ${selectedMode.isEmpty ? 'None' : selectedMode}",
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ],
-              )
-
-          ],
-          ),
-        ),
-      )  : Wrap(
-          spacing: 16.0,
-          runSpacing: 16.0,
-          children: allPumps.map((pumpCondition) {
-            var selectedPumps = pumpCondition.selectedPumps ?? [];
-
-            return Card(
-              elevation: 4.0,
-              child: Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                const SizedBox(height: 8.0),
+                Container(height: 0.5, color: Colors.grey),
+                const SizedBox(height: 8.0),
+                Column(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Center(
-                      child: Text(
-                        pumpCondition.name ?? 'No Name',
-                        style: const TextStyle(fontWeight: FontWeight.bold),
-                      ),
+                    const Text(
+                      "Select Pump Mode",
+                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                     ),
-                    const SizedBox(height: 8.0),
-                    Container(height: 0.5, color: Colors.grey),
-                    const SizedBox(height: 8.0),
-                    Wrap(
-                      spacing: 6.0,
-                      runSpacing: 6.0,
-                      children: allPumps
-                          .where((pump) => pump.sNo != pumpCondition.sNo)
-                          .map((pump) {
-                        bool isSelected = selectedPumps.any(
-                                (sp) => sp.sNo == pump.sNo);
+                    const SizedBox(height: 20),
 
-                        return GestureDetector(
-                          onTap: () => togglePumpSelection(pumpCondition, pump),
-                          child: Chip(
-                            label: Text(pump.name ?? 'Unknown Pump'),
-                            backgroundColor: isSelected
-                                ? Colors.yellowAccent.shade100
-                                : Colors.grey.shade300,
-                            avatar: isSelected
-                                ? const Icon(Icons.check_circle, color: Colors.green, size: 18)
-                                : const Icon(Icons.circle_outlined, color: Colors.grey, size: 18),
-                          ),
-                        );
-                      }).toList(),
+                    /// --- TWO CHIPS WITH NEW NAMES ---
+                    Wrap(
+                      spacing: 10,
+                      children: [
+                        ChoiceChip(
+                          label: const Text("Alternative Pump"),
+                          selected: selectedMode == "Alternative",
+                          selectedColor: Colors.greenAccent.shade100,
+                          onSelected: (_) {
+                            setState(() {
+                              selectedMode = "Alternative";
+                            });
+                          },
+                        ),
+                        ChoiceChip(
+                          label: const Text("Combined Pumps"),
+                          selected: selectedMode == "combined",
+                          selectedColor: Colors.greenAccent.shade100,
+                          onSelected: (_) {
+                            setState(() {
+                              selectedMode = "combined";
+                            });
+                          },
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 20),
+
+                    /// Result Text
+                    Text(
+                      "Selected Mode: ${selectedMode.isEmpty ? 'None' : selectedMode}",
+                      style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
                   ],
-                ),
-              ),
+                )
+
+              ],
+            ),
+          ),
+        )  : LayoutBuilder(
+          builder: (context, constraints) {
+            // 2 columns: Pump 1 | Pump 2, Pump 3 | Pump 4, ...
+            const double gap = 16.0;
+            final double cardWidth = (constraints.maxWidth - gap) / 2;
+
+            return Wrap(
+              spacing: gap,
+              runSpacing: gap,
+              children: allPumps.map((pumpCondition) {
+                var selectedPumps = pumpCondition.selectedPumps ?? [];
+
+                return SizedBox(
+                  width: cardWidth,
+                  child: Container(
+                    padding: const EdgeInsets.all(16.0),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: _cardBorder, width: 1),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Card title (left aligned)
+                        Text(
+                          pumpCondition.name ?? 'No Name',
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: _titleText,
+                          ),
+                        ),
+                        const SizedBox(height: 12.0),
+
+                        // 5 cells per row inside each card.
+                        LayoutBuilder(
+                          builder: (context, innerConstraints) {
+                            const int columns = 5;
+                            const double cellGap = 8.0;
+                            final double cellWidth =
+                            ((innerConstraints.maxWidth -
+                                (columns - 1) * cellGap) /
+                                columns)
+                                .floorToDouble();
+
+                            return Wrap(
+                              spacing: cellGap,
+                              runSpacing: cellGap,
+                              children: allPumps
+                                  .where((pump) => pump.sNo != pumpCondition.sNo)
+                                  .map((pump) {
+                                bool isSelected = selectedPumps.any(
+                                        (sp) => sp.sNo == pump.sNo);
+
+                                return GestureDetector(
+                                  onTap: () =>
+                                      togglePumpSelection(pumpCondition, pump),
+                                  child: Container(
+                                    width: cellWidth,
+                                    height: 36,
+                                    alignment: Alignment.center,
+                                    padding:
+                                    const EdgeInsets.symmetric(horizontal: 4),
+                                    decoration: BoxDecoration(
+                                      color: isSelected ? _accentSoft : _cellFill,
+                                      borderRadius: BorderRadius.circular(8),
+                                      border: Border.all(
+                                        color: isSelected ? _accent : _cardBorder,
+                                        width: 1,
+                                      ),
+                                    ),
+                                    child: Text(
+                                      pump.name ?? 'Unknown Pump',
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: isSelected
+                                            ? FontWeight.w600
+                                            : FontWeight.w500,
+                                        color: isSelected ? _accent : _cellText,
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              }).toList(),
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }).toList(),
             );
-          }).toList(),
+          },
         ),
       ),
       floatingActionButton: FloatingActionButton(
@@ -241,9 +297,9 @@ class _PumpConditionScreenState extends State<PumpConditionScreen> {
         );
       }
       else
-        {
-          buffer.write(',');
-        }
+      {
+        buffer.write(',');
+      }
 
       buffer.write(';');
     }
@@ -253,7 +309,7 @@ class _PumpConditionScreenState extends State<PumpConditionScreen> {
 
 
   Future<void> _sendData() async {
-     final repository = Repository(HttpService());
+    final repository = Repository(HttpService());
 
     String mqttSendData = convertPumpDataToString(pumpConditionModel);
     AppLog.log('mqttSendData$mqttSendData');
@@ -265,11 +321,11 @@ class _PumpConditionScreenState extends State<PumpConditionScreen> {
       "controllerReadStatus": "0",
       "novaMode": selectedMode,
     };
-     var novadata = selectedMode == "Alternative" ? "1" : "0";
+    var novadata = selectedMode == "Alternative" ? "1" : "0";
     // MQTT Payload format
     Map<String, dynamic> payLoadFinal = {
       "7100":
-        {"7101": isNova ? novadata : mqttSendData},
+      {"7101": isNova ? novadata : mqttSendData},
     };
 
     AppLog.log("payLoadFinal,$payLoadFinal");
