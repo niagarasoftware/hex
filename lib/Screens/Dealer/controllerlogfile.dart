@@ -89,9 +89,10 @@ class _ControllerLogState extends State<ControllerLog> with SingleTickerProvider
   Widget build(BuildContext context) {
     mqttPayloadProvider = Provider.of<MqttPayloadProvider>(context, listen: true);
     status();
+    final primaryColor = Theme.of(context).primaryColor;
     return SafeArea(
       child: Scaffold(
-        backgroundColor: const Color(0xFFF8FAFC),
+        backgroundColor: primaryColor.withOpacity(0.01),
         appBar: PreferredSize(
           preferredSize: const Size.fromHeight(110),
           child: Container(
@@ -104,29 +105,29 @@ class _ControllerLogState extends State<ControllerLog> with SingleTickerProvider
             child: Column(
               children: [
                 AppBar(
-                  backgroundColor: Colors.white,
+                  backgroundColor: primaryColor,
                   elevation: 0,
                   scrolledUnderElevation: 0,
                   leading: IconButton(
-                    icon: const Icon(Icons.arrow_back, color: Color(0xFF334155)),
+                    icon: const Icon(Icons.arrow_back, color: Colors.white),
                     onPressed: () => Navigator.of(context).pop(),
                   ),
                   title: const Text(
                     'Controller Log',
                     style: TextStyle(
-                      color: Color(0xFF0F172A),
+                      color: Colors.white,
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                   actions: [
                     IconButton(
-                      icon: const Icon(Icons.refresh_rounded, color: Color(0xFF334155)),
+                      icon: const Icon(Icons.refresh_rounded, color: Colors.white),
                       tooltip: 'Refresh Logs',
                       onPressed: () => getlog(currentLogType.value),
                     ),
                     IconButton(
-                      icon: const Icon(Icons.clear_all_rounded, color: Color(0xFF334155)),
+                      icon: const Icon(Icons.clear_all_rounded, color: Colors.white),
                       tooltip: 'Clear All Logs',
                       onPressed: () => _clearLog(),
                     ),
@@ -144,7 +145,7 @@ class _ControllerLogState extends State<ControllerLog> with SingleTickerProvider
                     child: TabBar(
                       controller: _tabController,
                       indicator: BoxDecoration(
-                        color: Colors.lightBlue,
+                        color: primaryColor,
                         borderRadius: BorderRadius.circular(8),
                         boxShadow: [
                           BoxShadow(
@@ -155,8 +156,8 @@ class _ControllerLogState extends State<ControllerLog> with SingleTickerProvider
                         ],
                       ),
                       indicatorSize: TabBarIndicatorSize.tab,
-                      labelColor: const Color(0xFF0F172A),
-                      unselectedLabelColor: const Color(0xFFA8C4EC),
+                      labelColor: Colors.white,
+                      unselectedLabelColor: const Color(0xFF64748B),
                       labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
                       unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13),
                       dividerColor: Colors.transparent,
@@ -201,9 +202,9 @@ class _ControllerLogState extends State<ControllerLog> with SingleTickerProvider
             if (isLoading)
               Container(
                 color: Colors.white.withOpacity(0.6),
-                child: const Center(
+                child: Center(
                   child: CircularProgressIndicator(
-                    valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF0F766E)),
+                    valueColor: AlwaysStoppedAnimation<Color>(primaryColor),
                   ),
                 ),
               ),
@@ -821,6 +822,7 @@ class _ScrollableTextWithSearchState extends State<ScrollableTextWithSearch> {
   Widget build(BuildContext context) {
     _matches = _searchQuery.isEmpty ? [] : _findMatches(widget.text, _searchQuery);
     _matchCount = _matches.length;
+    final isNarrow = MediaQuery.of(context).size.width < 420;
 
     return Padding(
       padding: const EdgeInsets.all(12.0),
@@ -840,8 +842,8 @@ class _ScrollableTextWithSearchState extends State<ScrollableTextWithSearch> {
                     controller: _searchController,
                     style: const TextStyle(color: Color(0xFF0F172A), fontSize: 13),
                     decoration: InputDecoration(
-                      hintText: 'Search logs, timestamps, or payloads...',
-                      hintStyle: const TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
+                      hintText: 'Search logs, timestamps...',
+                      hintStyle: const TextStyle(color: Color(0xFF94A3B8), fontSize: 12),
                       prefixIcon: const Icon(Icons.search_rounded, color: Color(0xFF94A3B8), size: 18),
                       suffixIcon: _searchQuery.isNotEmpty
                           ? IconButton(
@@ -857,17 +859,33 @@ class _ScrollableTextWithSearchState extends State<ScrollableTextWithSearch> {
                   ),
                 ),
               ),
-              const SizedBox(width: 12),
-              Text(
+              if (!isNarrow) ...[
+                const SizedBox(width: 12),
+                Text(
+                  'Matches found: $_matchCount',
+                  style: const TextStyle(
+                    color: Color(0xFF64748B),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ],
+          ),
+          if (isNarrow) ...[
+            const SizedBox(height: 6),
+            Align(
+              alignment: Alignment.centerRight,
+              child: Text(
                 'Matches found: $_matchCount',
                 style: const TextStyle(
                   color: Color(0xFF64748B),
-                  fontSize: 12,
+                  fontSize: 11,
                   fontWeight: FontWeight.w500,
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
           const SizedBox(height: 12),
           Expanded(
             child: Container(
