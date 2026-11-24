@@ -466,7 +466,7 @@ class _PreferenceMainScreenState extends State<PreferenceMainScreen>
         color: colorScheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: colorScheme.outlineVariant.withOpacity(0.4),
+          color: colorScheme.outlineVariant.withValues(alpha: 0.4),
         ),
       ),
       child: SingleChildScrollView(
@@ -1836,7 +1836,8 @@ class _PreferenceMainScreenState extends State<PreferenceMainScreen>
                         value: settingList[categoryIndex]
                             .setting[settingIndex]
                             .value[index],
-                        activeColor: colorScheme.primary,
+                        activeThumbColor: Colors.white,
+                        activeTrackColor: colorScheme.primary,
                         onChanged: (newValue) {
                           if (!mounted) return;
                           setState(() {
@@ -3404,5 +3405,37 @@ Widget buildCustomListTileWidget(
   return Visibility(
     visible: !hidden,
     child: CustomAnimatedSwitcher(condition: conditionToShow, child: body),
+  );
+}
+
+Widget buildPopUpMenuButton({
+  required BuildContext context,
+  required List<String> dataList,
+  required void Function(String) onSelected,
+  required Widget child,
+  String? selected,
+}) {
+  return PopupMenuButton<String>(
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(10),
+    ),
+    surfaceTintColor: Colors.white,
+    itemBuilder: (context) {
+      return dataList.map((String value) {
+        return PopupMenuItem<String>(
+          value: value,
+          child: Center(
+            child: Text(
+              value,
+              style: TextStyle(
+                color: selected == value ? Theme.of(context).primaryColor : null,
+              ),
+            ),
+          ),
+        );
+      }).toList();
+    },
+    onSelected: onSelected,
+    child: child,
   );
 }
