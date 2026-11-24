@@ -154,6 +154,7 @@ class _ListOfLogConfigState extends State<ListOfLogConfig> {
   @override
   Widget build(BuildContext context) {
     return Material(
+      color: Colors.transparent,
       child: LayoutBuilder(builder: (context, constraint) {
         return Padding(
           padding: const EdgeInsets.all(8.0),
@@ -186,34 +187,61 @@ class _ListOfLogConfigState extends State<ListOfLogConfig> {
                                   !AppConstants.aquacultureModelList
                                       .contains(widget.masterData.modelId))
                                 Container(
-                                  margin: const EdgeInsets.only(bottom: 20),
-                                  padding: const EdgeInsets.all(8),
+                                  margin: const EdgeInsets.only(bottom: 16),
+                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                                   decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      boxShadow: customBoxShadow,
-                                      borderRadius: BorderRadius.circular(10)),
-                                  child: Column(
+                                    color: Colors.white,
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withValues(alpha: 0.05),
+                                        blurRadius: 10,
+                                        offset: const Offset(0, 4),
+                                      ),
+                                    ],
+                                    borderRadius: BorderRadius.circular(16),
+                                    border: Border.all(color: const Color(0xFFF1F5F9), width: 1.5),
+                                  ),
+                                  child: Row(
                                     children: [
-                                      ListTile(
-                                        leading: CircleAvatar(
-                                          backgroundColor: Color(0xff2B565B),
-                                          radius: 20,
-                                          child: Center(
-                                            child: Text(
-                                              '${i + 1}',
-                                              style: TextStyle(
-                                                  color: Colors.white),
+                                      Container(
+                                        width: 48,
+                                        height: 48,
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFFE0F2FE),
+                                          borderRadius: BorderRadius.circular(12),
+                                        ),
+                                        child: Center(
+                                          child: Text(
+                                            '${i + 1}',
+                                            style: const TextStyle(
+                                              color: Color(0xFF0284C7),
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 16,
                                             ),
                                           ),
                                         ),
-                                        title: Text(
-                                            '${serverData['staticLogConfig'][i]['logName']}'),
-                                        trailing: IconButton(
-                                            style: ButtonStyle(
-                                                backgroundColor:
-                                                    MaterialStateProperty.all(
-                                                        Color(0xffEFFFFB))),
-                                            onPressed: () {
+                                      ),
+                                      const SizedBox(width: 16),
+                                      Expanded(
+                                        child: Text(
+                                          '${serverData['staticLogConfig'][i]['logName']}',
+                                          style: const TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w600,
+                                            color: Color(0xFF1E293B),
+                                          ),
+                                        ),
+                                      ),
+                                      Container(
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          border: Border.all(
+                                            color: const Color(0xFFE2E8F0),
+                                            width: 1,
+                                          ),
+                                        ),
+                                        child: IconButton(
+                                          onPressed: () {
                                               Navigator.push(context,
                                                   MaterialPageRoute(
                                                       builder: (context) {
@@ -232,10 +260,12 @@ class _ListOfLogConfigState extends State<ListOfLogConfig> {
                                                 );
                                               }));
                                             },
-                                            icon: const Icon(
-                                              Icons.visibility,
-                                              color: Colors.green,
-                                            )),
+                                          icon: const Icon(
+                                            Icons.arrow_forward,
+                                            color: Color(0xFF64748B),
+                                            size: 20,
+                                          ),
+                                        ),
                                       ),
                                     ],
                                   ),
@@ -275,7 +305,7 @@ class _ListOfLogConfigState extends State<ListOfLogConfig> {
                           });
                           sideSheet(constraints: constraint, mode: 1);
                         },
-                        color: Colors.green,
+                        color: const Color(0xFF5B21B6),
                         child: const Text(
                           'Add',
                           style: TextStyle(color: Colors.white),
@@ -305,7 +335,7 @@ class _ListOfLogConfigState extends State<ListOfLogConfig> {
                                     children: [
                                       ListTile(
                                         leading: CircleAvatar(
-                                          backgroundColor: Color(0xff2B565B),
+                                          backgroundColor: Color(0xFF5B21B6),
                                           radius: 20,
                                           child: Center(
                                             child: Text(
@@ -520,7 +550,7 @@ class _ListOfLogConfigState extends State<ListOfLogConfig> {
                                               style: ButtonStyle(
                                                   backgroundColor:
                                                       MaterialStateProperty.all(
-                                                          Color(0xffEFFFFB))),
+                                                          Color(0xFFEDE9FE))),
                                               onPressed: () {
                                                 Navigator.push(context,
                                                     MaterialPageRoute(
@@ -545,10 +575,10 @@ class _ListOfLogConfigState extends State<ListOfLogConfig> {
                                               },
                                               icon: Icon(
                                                 Icons.visibility,
-                                                color: Colors.green,
+                                                color: const Color(0xFF5B21B6),
                                               )),
                                           // MaterialButton(
-                                          //   color: Colors.green,
+                                          //   color: const Color(0xFF5B21B6),
                                           //   onPressed: () {
                                           //     Navigator.push(context, MaterialPageRoute(builder: (context){
                                           //       return LogHome(serverData: serverData['logConfig'][i]);
@@ -567,36 +597,64 @@ class _ListOfLogConfigState extends State<ListOfLogConfig> {
                     if (serverData['logConfig'].isNotEmpty)
                       for (var i = 0; i < serverData['logConfig'].length; i++)
                         Container(
-                          margin: EdgeInsets.only(bottom: 20),
-                          padding: EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                              color: Colors.white,
-                              boxShadow: customBoxShadow,
-                              borderRadius: BorderRadius.circular(10)),
-                          child: Column(
-                            children: [
-                              ListTile(
-                                leading: CircleAvatar(
-                                  backgroundColor: Color(0xff2B565B),
-                                  radius: 20,
-                                  child: Center(
-                                    child: Text(
-                                      '${i + 1}',
-                                      style: TextStyle(color: Colors.white),
-                                    ),
+                        margin: const EdgeInsets.only(bottom: 16),
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.05),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: const Color(0xFFF1F5F9), width: 1.5),
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 48,
+                              height: 48,
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFE0F2FE),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Center(
+                                child: Text(
+                                  '${i + 1}',
+                                  style: const TextStyle(
+                                    color: Color(0xFF0284C7),
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
                                   ),
                                 ),
-                                title: Text(
-                                    '${serverData['logConfig'][i]['logName']}'),
-                                trailing: IntrinsicWidth(
-                                  child: Row(
-                                    children: [
-                                      IconButton(
-                                          style: ButtonStyle(
-                                              backgroundColor:
-                                                  MaterialStateProperty.all(
-                                                      Color(0xffFFF0E5))),
-                                          onPressed: () async {
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Text(
+                                '${serverData['logConfig'][i]['logName']}',
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFF1E293B),
+                                ),
+                              ),
+                            ),
+                            IntrinsicWidth(
+                              child: Row(
+                                children: [
+                                  Container(
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      border: Border.all(
+                                        color: const Color(0xFFE2E8F0),
+                                        width: 1,
+                                      ),
+                                    ),
+                                    child: IconButton(
+                                      onPressed: () async {
                                             setState(() {
                                               selectedIrrigationParameterArray
                                                   .editParameter(
@@ -763,30 +821,46 @@ class _ListOfLogConfigState extends State<ListOfLogConfig> {
                                                     serverData['logConfig'][i]
                                                         ['logConfigId']);
                                           },
-                                          icon: Icon(
-                                            Icons.edit_note,
-                                            color: Colors.orange,
-                                          )),
-                                      IconButton(
-                                          style: ButtonStyle(
-                                              backgroundColor:
-                                                  MaterialStateProperty.all(
-                                                      Color(0xffFFDEDC))),
-                                          onPressed: () {
-                                            deleteUserLogConfig(
-                                                id: serverData['logConfig'][i]
-                                                    ['logConfigId']);
-                                          },
-                                          icon: Icon(
-                                            Icons.delete,
-                                            color: Colors.red,
-                                          )),
-                                      IconButton(
-                                          style: ButtonStyle(
-                                              backgroundColor:
-                                                  MaterialStateProperty.all(
-                                                      Color(0xffEFFFFB))),
-                                          onPressed: () {
+                                      icon: const Icon(
+                                        Icons.edit_note,
+                                        color: Colors.orange,
+                                        size: 20,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Container(
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      border: Border.all(
+                                        color: const Color(0xFFE2E8F0),
+                                        width: 1,
+                                      ),
+                                    ),
+                                    child: IconButton(
+                                      onPressed: () {
+                                        deleteUserLogConfig(
+                                            id: serverData['logConfig'][i]
+                                                ['logConfigId']);
+                                      },
+                                      icon: const Icon(
+                                        Icons.delete_outline,
+                                        color: Colors.redAccent,
+                                        size: 20,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Container(
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      border: Border.all(
+                                        color: const Color(0xFFE2E8F0),
+                                        width: 1,
+                                      ),
+                                    ),
+                                    child: IconButton(
+                                      onPressed: () {
                                             Navigator.push(context,
                                                 MaterialPageRoute(
                                                     builder: (context) {
@@ -805,32 +879,19 @@ class _ListOfLogConfigState extends State<ListOfLogConfig> {
                                               );
                                             }));
                                           },
-                                          icon: Icon(
-                                            Icons.visibility,
-                                            color: Colors.green,
-                                          )),
-                                      // MaterialButton(
-                                      //   color: Colors.green,
-                                      //   onPressed: () {
-                                      //     Navigator.push(context, MaterialPageRoute(builder: (context){
-                                      //       return LogHome(serverData: serverData['logConfig'][i]);
-                                      //       // return HomePage();
-                                      //     }));
-                                      //   },
-                                      //   child: Text('View Report',style: TextStyle(color: Colors.white),),
-                                      // ),
+                                          icon: const Icon(
+                                            Icons.arrow_forward,
+                                            color: Color(0xFF64748B),
+                                            size: 20,
+                                          ),
+                                        ),
+                                      ),
                                     ],
                                   ),
-                                ),
-                              ),
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceAround,
-                                children: [],
-                              )
-                            ],
-                          ),
-                        )
+                                )
+                              ],
+                            ),
+                          )
                 ]
               ],
             ),

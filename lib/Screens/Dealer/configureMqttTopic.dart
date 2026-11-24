@@ -76,9 +76,9 @@ class _ConfigureMqttState extends State<ConfigureMqtt> {
       _lastPayload = payload;
 
       ScaffoldMessenger.of(context).showSnackBar(
-         SnackBar(
+        SnackBar(
           content: Text("${!payload.contains("6801") ? payload : ""}"),
-          duration: Duration(seconds: 2),
+          duration: const Duration(seconds: 2),
         ),
       );
     }
@@ -249,11 +249,11 @@ class _ConfigureMqttState extends State<ConfigureMqtt> {
     if (selecteddealer == 'ORO') {
       if (selectedPlatform == 'AWS') {
         AppLog.log('return ORO AWS');
-         if(F.appFlavor == Flavor.agritel)
-          {
-            AppLog.log("agritel");
-               return ['AgritelAppToFirmware/', '0'];
-           }
+        if(F.appFlavor == Flavor.agritel)
+        {
+          AppLog.log("agritel");
+          return ['AgritelAppToFirmware/', '0'];
+        }
 
         if (selectedVersion == 'Version 1.0')
           return ['AppToFirmware/', '1'];
@@ -278,36 +278,36 @@ class _ConfigureMqttState extends State<ConfigureMqtt> {
 
   Future<void> viewsettings() async {
     if(widget.communicationType == "MQTT")
-      {
-    List checkTopic =
-    getMqttTopic(selectedPlatform!, selectedVersion!, selectedDealer!);
-    String topic = checkTopic[0];
-    String oldnewcheck = checkTopic[1];
-    if (oldnewcheck == '1') {
-      final payload = {
-        "5700": [
-          {"5701": "22"},
-        ]
-      };
-      MqttService().topicToPublishAndItsMessage(
-        jsonEncode(payload),
-        "$topic${_macController.text}",
-      );
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("view settings sent")),
-      );
-    } else {
-      final payload = {
-        "5700": {"5701": "22"}
-      };
-      MqttService().topicToPublishAndItsMessage(
-        jsonEncode(payload),
-        "$topic${_macController.text}",
-      );
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("view settings sent")),
-      );
-    }
+    {
+      List checkTopic =
+      getMqttTopic(selectedPlatform!, selectedVersion!, selectedDealer!);
+      String topic = checkTopic[0];
+      String oldnewcheck = checkTopic[1];
+      if (oldnewcheck == '1') {
+        final payload = {
+          "5700": [
+            {"5701": "22"},
+          ]
+        };
+        MqttService().topicToPublishAndItsMessage(
+          jsonEncode(payload),
+          "$topic${_macController.text}",
+        );
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("view settings sent")),
+        );
+      } else {
+        final payload = {
+          "5700": {"5701": "22"}
+        };
+        MqttService().topicToPublishAndItsMessage(
+          jsonEncode(payload),
+          "$topic${_macController.text}",
+        );
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("view settings sent")),
+        );
+      }
     }
     else   {
       //bluetooth
@@ -486,311 +486,429 @@ class _ConfigureMqttState extends State<ConfigureMqtt> {
   }
 
 
+  Widget _sectionCard({
+    required String title,
+    required IconData icon,
+    required Widget child,
+  }) {
+    final primaryColor = Theme.of(context).primaryColor;
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.035),
+            blurRadius: 14,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(9),
+                decoration: BoxDecoration(
+                  color: primaryColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(icon, color: primaryColor, size: 20),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF1E293B),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          child,
+        ],
+      ),
+    );
+  }
+
+  InputDecoration _fieldDecoration(String hint) {
+    final primaryColor = Theme.of(context).primaryColor;
+    return InputDecoration(
+      hintText: hint,
+      hintStyle: const TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
+      filled: true,
+      fillColor: const Color(0xFFF8FAFC),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 15),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: BorderSide(color: primaryColor, width: 1.5),
+      ),
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+    );
+  }
+
+  Future<void> _confirmAction({
+    required String title,
+    required String message,
+    required Future<void> Function() action,
+    String confirmLabel = 'Yes',
+  }) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(title),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: Text(confirmLabel),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true && mounted) {
+      await action();
+    }
+  }
+
+  Widget _actionButton(String label, IconData icon, Color color,
+      VoidCallback onPressed) {
+    return FilledButton.icon(
+      onPressed: onPressed,
+      icon: Icon(icon, size: 18),
+      label: Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
+      style: FilledButton.styleFrom(
+        backgroundColor: color,
+        foregroundColor: Colors.white,
+        minimumSize: const Size(165, 48),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(11)),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    mqttPayloadProvider =
-        Provider.of<MqttPayloadProvider>(context, listen: true);
+    mqttPayloadProvider = Provider.of<MqttPayloadProvider>(context, listen: true);
+    final primaryColor = Theme.of(context).primaryColor;
     return Scaffold(
+      backgroundColor: primaryColor.withOpacity(0.01),
       appBar: AppBar(
-        title: Text('Configure Hardware'),
+        title: const Text('Configure Hardware',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+        backgroundColor: primaryColor,
+        foregroundColor: Colors.white,
+        elevation: 0,
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: isLoading
-            ? const Center(child: CircularProgressIndicator())
-            : errorMessage.isNotEmpty
-            ? Center(child: Text(errorMessage))
-            : SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // MAC Address
-              TextField(
-                decoration: const InputDecoration(
-                  labelText: 'MAC Address',
-                  border: OutlineInputBorder(),
-                ),
-                controller: _macController,
-                onChanged: (value) {
-                  macAddress = value;
-                },
-              ),
-              const SizedBox(height: 16),
-              DropdownButtonFormField<String>(
-                value: selectedDealer,
-                decoration: const InputDecoration(
-                  labelText: 'Select Current Dealer',
-                  border: OutlineInputBorder(),
-                ),
-                items: dealers.map((dealers) {
-                  return DropdownMenuItem<String>(
-                    value: dealers,
-                    child: Text(dealers),
-                  );
-                }).toList(),
-                onChanged: (value) {
-                  setState(() {
-                    // value == 'ORO' ? F.appFlavor = Flavor.oroProduction : F.appFlavor = Flavor.smartComm;
-                    selectedDealer = value;
-                  });
-                },
-              ),
-              const SizedBox(height: 16),
-              // Platform Dropdown
-              DropdownButtonFormField<String>(
-                value: selectedPlatform,
-                decoration: const InputDecoration(
-                  labelText: 'Select Current Platform',
-                  border: OutlineInputBorder(),
-                ),
-                items: platforms.map((platform) {
-                  return DropdownMenuItem<String>(
-                    value: platform,
-                    child: Text(platform),
-                  );
-                }).toList(),
-                onChanged: (value) {
-                  setState(() {
-                    // value == 'AWS'
-                    //     ? F.appFlavor = Flavor.oroProduction
-                    //     : F.appFlavor = Flavor.smartComm;
-
-                    AppLog.log('flaVOR ${F.appFlavor}');
-                    AppLog.log('${AppConstants.mqttUrl}');
-                    selectedPlatform = value;
-                  });
-                },
-              ),
-              const SizedBox(height: 16),
-
-              // Version Dropdown
-              DropdownButtonFormField<String>(
-                value: selectedVersion,
-                decoration: const InputDecoration(
-                  labelText: 'Select Current Version',
-                  border: OutlineInputBorder(),
-                ),
-                items: versions.map((version) {
-                  return DropdownMenuItem<String>(
-                    value: version,
-                    child: Text(version),
-                  );
-                }).toList(),
-                onChanged: (value) {
-                  setState(() {
-                    selectedVersion = value;
-                  });
-                },
-              ),
-              const SizedBox(height: 16),
-
-              // Project Config Selection
-              DropdownButton<int>(
-                value: selectedIndex,
-                isExpanded: true,
-                hint: const Text('Select Update Project'),
-                items: List.generate(configs.length, (index) {
-                  final config = configs[index];
-                  return DropdownMenuItem<int>(
-                    value: index,
-                    child: Text(
-                        '${config['PROJECT_NAME']} - ${config['SERVER_NAME']}'),
+      body: isLoading
+          ? Center(
+              child: CircularProgressIndicator(color: primaryColor),
+            )
+          : errorMessage.isNotEmpty
+              ? Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Text(errorMessage,
+                        style: const TextStyle(color: Colors.red)),
+                  ),
+                )
+              : LayoutBuilder(builder: (context, constraints) {
+                  final outerPadding = constraints.maxWidth < 600 ? 16.0 : 24.0;
+                  final availableWidth =
+                      (constraints.maxWidth - outerPadding * 2).clamp(0.0, 1200.0);
+                  const gap = 16.0;
+                  final columns = availableWidth >= 900 ? 3 :
+                  availableWidth >= 560 ? 2 : 1;
+                  final cardWidth = (availableWidth - gap * (columns - 1)) / columns;
+                  return SingleChildScrollView(
+                    padding: EdgeInsets.all(outerPadding),
+                    child: Center(
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 1200),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                const Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Hardware Provisioning & Configuration',
+                                        style: TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.w800,
+                                          color: Color(0xFF1E293B),
+                                        ),
+                                      ),
+                                      SizedBox(height: 4),
+                                      Text(
+                                        'Manage device connection and firmware settings',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: Color(0xFF64748B),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 12, vertical: 7),
+                                  decoration: BoxDecoration(
+                                    color: primaryColor.withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: Text(
+                                    widget.communicationType.toString(),
+                                    style: TextStyle(
+                                      color: primaryColor,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 22),
+                            Wrap(
+                              spacing: gap,
+                              runSpacing: gap,
+                              children: [
+                                SizedBox(
+                                  width: cardWidth,
+                                  child: _sectionCard(
+                                    title: 'MAC Address',
+                                    icon: Icons.fingerprint,
+                                    child: TextField(
+                                      controller: _macController,
+                                      style: const TextStyle(
+                                        fontSize: 14,
+                                        fontFamily: 'monospace',
+                                        color: Color(0xFF1E293B),
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                      onChanged: (value) => macAddress = value,
+                                      decoration: _fieldDecoration('Enter MAC Address'),
+                                    ),
+                                  ),
+                                ),
+                                SizedBox(
+                                  width: cardWidth,
+                                  child: _sectionCard(
+                                    title: 'Current Dealer',
+                                    icon: Icons.business,
+                                    child: DropdownButtonFormField<String>(
+                                      value: selectedDealer,
+                                      isExpanded: true,
+                                      style: const TextStyle(
+                                        color: Color(0xFF1E293B),
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                      decoration: _fieldDecoration('Select Dealer'),
+                                      items: dealers.map((dealer) => DropdownMenuItem<String>(
+                                        value: dealer,
+                                        child: Text(dealer),
+                                      )).toList(),
+                                      onChanged: (value) => setState(() => selectedDealer = value),
+                                    ),
+                                  ),
+                                ),
+                                SizedBox(
+                                  width: cardWidth,
+                                  child: _sectionCard(
+                                    title: 'Current Platform',
+                                    icon: Icons.cloud_outlined,
+                                    child: DropdownButtonFormField<String>(
+                                      value: selectedPlatform,
+                                      isExpanded: true,
+                                      style: const TextStyle(
+                                        color: Color(0xFF1E293B),
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                      decoration: _fieldDecoration('Select Platform'),
+                                      items: platforms.map((platform) => DropdownMenuItem<String>(
+                                        value: platform,
+                                        child: Text(platform),
+                                      )).toList(),
+                                      onChanged: (value) => setState(() {
+                                        AppLog.log('flaVOR ${F.appFlavor}');
+                                        AppLog.log('${AppConstants.mqttUrl}');
+                                        selectedPlatform = value;
+                                      }),
+                                    ),
+                                  ),
+                                ),
+                                SizedBox(
+                                  width: cardWidth,
+                                  child: _sectionCard(
+                                    title: 'Current Version',
+                                    icon: Icons.system_update_alt,
+                                    child: DropdownButtonFormField<String>(
+                                      value: selectedVersion,
+                                      isExpanded: true,
+                                      style: const TextStyle(
+                                        color: Color(0xFF1E293B),
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                      decoration: _fieldDecoration('Select Version'),
+                                      items: versions.map((version) => DropdownMenuItem<String>(
+                                        value: version,
+                                        child: Text(version),
+                                      )).toList(),
+                                      onChanged: (value) => setState(() => selectedVersion = value),
+                                    ),
+                                  ),
+                                ),
+                                SizedBox(
+                                  width: cardWidth,
+                                  child: _sectionCard(
+                                    title: 'Update Project',
+                                    icon: Icons.folder_outlined,
+                                    child: DropdownButtonFormField<int>(
+                                      value: selectedIndex,
+                                      isExpanded: true,
+                                      style: const TextStyle(
+                                        color: Color(0xFF1E293B),
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                      decoration: _fieldDecoration('Select Update Project'),
+                                      items: List.generate(configs.length, (index) {
+                                        final config = configs[index];
+                                        return DropdownMenuItem<int>(
+                                          value: index,
+                                          child: Text(
+                                            '${config['PROJECT_NAME']} - ${config['SERVER_NAME']}',
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        );
+                                      }),
+                                      onChanged: (index) => setState(() {
+                                        selectedIndex = index;
+                                        formattedConfig = index != null
+                                            ? formatConfig(configs[index])
+                                            : null;
+                                      }),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 18),
+                            _sectionCard(
+                              title: 'Hardware Actions',
+                              icon: Icons.tune,
+                              child: Wrap(
+                                spacing: 12,
+                                runSpacing: 12,
+                                children: [
+                                  _actionButton(
+                                    'Settings Update',
+                                    Icons.sync_rounded,
+                                    primaryColor,
+                                    () => _confirmAction(
+                                      title: 'Confirm Settings Update',
+                                      message: 'Are you sure you want to update settings?',
+                                      action: sendSelectedProject,
+                                    ),
+                                  ),
+                                  _actionButton(
+                                    'Update HW Code',
+                                    Icons.code_rounded,
+                                    const Color(0xFF22C55E),
+                                    () => _confirmAction(
+                                      title: 'Confirm Update',
+                                      message: 'Are you sure you want to update HW Code?',
+                                      confirmLabel: 'Yes, Update',
+                                      action: updateCode,
+                                    ),
+                                  ),
+                                  _actionButton(
+                                    'View Settings',
+                                    Icons.visibility_rounded,
+                                    const Color(0xFF475569),
+                                    () {
+                                      viewsettings();
+                                    },
+                                  ),
+                                  if (widget.communicationType != 'MQTT') ...[
+                                    _actionButton(
+                                      'Update',
+                                      Icons.upload_rounded,
+                                      const Color(0xFF0D9488),
+                                      () => _confirmAction(
+                                        title: 'Confirm Settings Update',
+                                        message: 'Are you sure you want to update settings?',
+                                        action: updateCodeonly,
+                                      ),
+                                    ),
+                                    _actionButton(
+                                      'Restart',
+                                      Icons.restart_alt_rounded,
+                                      const Color(0xFFE11D48),
+                                      () => _confirmAction(
+                                        title: 'Confirm Restart',
+                                        message: 'Are you sure you want to Restart?',
+                                        confirmLabel: 'Yes, Restart',
+                                        action: Restart,
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            ),
+                            if (widget.communicationType != 'MQTT' &&
+                                mqttPayloadProvider.receivedPayload.isNotEmpty) ...[
+                              const SizedBox(height: 18),
+                              _sectionCard(
+                                title: 'Device Response',
+                                icon: Icons.terminal,
+                                child: Container(
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.all(14),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF0F172A),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: SelectableText(
+                                    mqttPayloadProvider.receivedPayload,
+                                    style: const TextStyle(
+                                      fontFamily: 'monospace',
+                                      fontSize: 12,
+                                      color: Color(0xFF38BDF8),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                    ),
                   );
                 }),
-                onChanged: (index) {
-                  setState(() {
-                    selectedIndex = index;
-                    formattedConfig = index != null
-                        ? formatConfig(configs[index])
-                        : null;
-                  });
-                },
-              ),
-              const SizedBox(height: 20),
-
-              const SizedBox(height: 20),
-
-        Wrap(
-          alignment: WrapAlignment.spaceEvenly,
-          spacing: 10,        // horizontal space between buttons
-          runSpacing: 12,     // vertical space when wrapped
-                 children: [
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      foregroundColor: Colors.white,
-                      backgroundColor: Colors.blue,
-                    ),
-                    onPressed: () {
-                  showDialog(
-                  context: context,
-                  builder: (BuildContext context) {
-                  return AlertDialog(
-                  title: const Text("Confirm Settings Update"),
-                  content: const Text("Are you sure you want to update settings?"),
-                  actions: [
-                  TextButton(
-                  onPressed: () {
-                  Navigator.of(context).pop(); // Close the dialog
-                  },
-                  child: const Text("Cancel"),
-                  ),
-                  ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
-                  foregroundColor: Colors.white,
-                  ),
-                  onPressed: () {
-                  Navigator.of(context).pop(); // Close dialog
-                  sendSelectedProject(); // Call your function
-                  },
-                  child: const Text("Yes"),
-                  ),
-                  ],
-                  );
-                  },
-                  );
-                  },
-                    child: const Text('Settings Update'),
-                  ),
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      foregroundColor: Colors.white,
-                      backgroundColor: Colors.green,
-                    ),
-                    onPressed: ()  {
-                  showDialog(
-                  context: context,
-                  builder: (BuildContext context) {
-                  return AlertDialog(
-                  title: const Text("Confirm Update"),
-                  content: const Text("Are you sure you want to update HW Code?"),
-                  actions: [
-                  TextButton(
-                  onPressed: () {
-                  Navigator.of(context).pop(); // Close the dialog
-                  },
-                  child: const Text("Cancel"),
-                  ),
-                  ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
-                  foregroundColor: Colors.white,
-                  ),
-                  onPressed: () {
-                  Navigator.of(context).pop(); // Close dialog
-                  updateCode(); // Call your function
-                  },
-                  child: const Text("Yes, Update"),
-                  ),
-                  ],
-                  );
-                  },
-                  );
-                  },
-                    child: const Text('Update HW Code'),
-                  ),
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      foregroundColor: Colors.white,
-                      backgroundColor: Colors.brown,
-                    ),
-                    onPressed: viewsettings,
-                    child: const Text('View Settings'),
-                  ),
-                   widget.communicationType != "MQTT" ? ElevatedButton(
-                     style: ElevatedButton.styleFrom(
-                       foregroundColor: Colors.white,
-                       backgroundColor: Colors.teal,
-                     ),
-                     onPressed: () {
-                       showDialog(
-                         context: context,
-                         builder: (BuildContext context) {
-                           return AlertDialog(
-                             title: const Text("Confirm Settings Update"),
-                             content: const Text("Are you sure you want to update settings?"),
-                             actions: [
-                               TextButton(
-                                 onPressed: () {
-                                   Navigator.of(context).pop(); // Close the dialog
-                                 },
-                                 child: const Text("Cancel"),
-                               ),
-                               ElevatedButton(
-                                 style: ElevatedButton.styleFrom(
-                                   backgroundColor: Colors.green,
-                                   foregroundColor: Colors.white,
-                                 ),
-                                 onPressed: () {
-                                   Navigator.of(context).pop(); // Close dialog
-                                   updateCodeonly(); // Call your function
-                                 },
-                                 child: const Text("Yes"),
-                               ),
-                             ],
-                           );
-                         },
-                       );
-                     },
-                     child: const Text(' Update '),
-                   ) : Container(),
-                   widget.communicationType != "MQTT" ?ElevatedButton(
-                     style: ElevatedButton.styleFrom(
-                       foregroundColor: Colors.white,
-                       backgroundColor: Colors.red,
-                     ),
-                     onPressed: ()  {
-                       showDialog(
-                         context: context,
-                         builder: (BuildContext context) {
-                           return AlertDialog(
-                             title: const Text("Confirm Restart"),
-                             content: const Text("Are you sure you want to Restart?"),
-                             actions: [
-                               TextButton(
-                                 onPressed: () {
-                                   Navigator.of(context).pop(); // Close the dialog
-                                 },
-                                 child: const Text("Cancel"),
-                               ),
-                               ElevatedButton(
-                                 style: ElevatedButton.styleFrom(
-                                   backgroundColor: Colors.green,
-                                   foregroundColor: Colors.white,
-                                 ),
-                                 onPressed: () {
-                                   Navigator.of(context).pop(); // Close dialog
-                                   Restart(); // Call your function
-                                 },
-                                 child: const Text("Yes, Restart"),
-                               ),
-                             ],
-                           );
-                         },
-                       );
-                     },
-                     child: const Text(' Restart '),
-                   ) : Container(),
-                ],
-              ),
-             // widget.communicationType == "MQTT" ? Padding(
-             //    padding: const EdgeInsets.all(8.0),
-             //    child: Text(mqttPayloadProvider.receivedPayload),
-             //  ) : Container(),
-SizedBox(height: 10,),
-
-              widget.communicationType != "MQTT" ?  SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
-                child: Text(
-                  mqttPayloadProvider.receivedPayload,
-                  style: const TextStyle(fontSize: 14),
-                ),
-              ) : Container(),
-
-        ],
-          ),
-        ),
-      ),
     );
   }
 }

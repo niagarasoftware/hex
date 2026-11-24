@@ -38,574 +38,833 @@ class SystemDefinition extends StatefulWidget {
 }
 
 class _SystemDefinitionState extends State<SystemDefinition> {
-  final SystemDefinitionsRepository repository = SystemDefinitionsRepository(HttpService());
+  final SystemDefinitionsRepository repository =
+  SystemDefinitionsRepository(HttpService());
   late OverAllUse overAllPvd;
   late SystemDefinitionProvider systemDefinitionProvider;
   late MqttPayloadProvider mqttPayloadProvider;
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
-    systemDefinitionProvider = Provider.of<SystemDefinitionProvider>(context, listen: false);
-    mqttPayloadProvider = Provider.of<MqttPayloadProvider>(context, listen: false);
+    systemDefinitionProvider =
+        Provider.of<SystemDefinitionProvider>(context, listen: false);
+    mqttPayloadProvider =
+        Provider.of<MqttPayloadProvider>(context, listen: false);
     overAllPvd = Provider.of<OverAllUse>(context, listen: false);
-    if(mounted){
+    if (mounted) {
       WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-        systemDefinitionProvider.getUserPlanningSystemDefinition(widget.customerId, widget.controllerId);
+        systemDefinitionProvider.getUserPlanningSystemDefinition(
+            widget.customerId, widget.controllerId);
       });
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    systemDefinitionProvider = Provider.of<SystemDefinitionProvider>(context, listen: true);
-    mqttPayloadProvider = Provider.of<MqttPayloadProvider>(context, listen: true);
+    systemDefinitionProvider =
+        Provider.of<SystemDefinitionProvider>(context, listen: true);
+    mqttPayloadProvider =
+        Provider.of<MqttPayloadProvider>(context, listen: true);
     overAllPvd = Provider.of<OverAllUse>(context, listen: true);
     final screenSize = MediaQuery.of(context).size.width;
-    return systemDefinitionProvider.irrigationLineSystemData != null ? RefreshIndicator(
-      onRefresh: () => systemDefinitionProvider.getUserPlanningSystemDefinition(widget.customerId, widget.controllerId),
+    final colorScheme = Theme.of(context).colorScheme;
+    final primaryColor = Theme.of(context).primaryColor;
+
+    if (systemDefinitionProvider.irrigationLineSystemData == null) {
+      return Scaffold(
+        backgroundColor: colorScheme.surfaceContainerLowest,
+        body: const Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    final lineData = systemDefinitionProvider.irrigationLineSystemData!;
+
+    return RefreshIndicator(
+      onRefresh: () => systemDefinitionProvider.getUserPlanningSystemDefinition(
+          widget.customerId, widget.controllerId),
       child: Scaffold(
+        backgroundColor: colorScheme.surfaceContainerLowest,
         appBar: screenSize <= 600
             ? AppBar(
-          title: const Text("System Definition"),
+          title: const Text(
+            "System Definition",
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+          backgroundColor: colorScheme.surface,
+          foregroundColor: colorScheme.onSurface,
+          elevation: 0,
           automaticallyImplyLeading: true,
           bottom: PreferredSize(
-              preferredSize: const Size(double.maxFinite, 35),
+            preferredSize: const Size(double.maxFinite, 44),
+            child: Container(
+              color: colorScheme.surfaceContainerLow,
+              padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
               child: SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child: Row(
                   children: [
-                    for(var i = 0; i < systemDefinitionProvider.irrigationLineSystemData!.length; i++)
-                      AppProperties.buildSideBarMenuList(
-                        context: context,
-                        title: systemDefinitionProvider.irrigationLineSystemData![i].name,
-                        dataList: systemDefinitionProvider.irrigationLineSystemData!.map((e) => e.name).toList(),
-                        index: i,
-                        selected: systemDefinitionProvider.selectedIrrigationLine == i,
-                        onTap: (index) {
-                          systemDefinitionProvider.updateSelectedProgramCategory(index);
-                        },
+                    for (var i = 0; i < lineData.length; i++)
+                      Padding(
+                        padding: const EdgeInsets.only(right: 6),
+                        child: AppProperties.buildSideBarMenuList(
+                          context: context,
+                          title: lineData[i].name,
+                          dataList: lineData.map((e) => e.name).toList(),
+                          index: i,
+                          selected:
+                          systemDefinitionProvider.selectedIrrigationLine == i,
+                          onTap: (index) {
+                            systemDefinitionProvider
+                                .updateSelectedProgramCategory(index);
+                          },
+                        ),
                       ),
                   ],
                 ),
-              )
+              ),
+            ),
           ),
         )
-            : PreferredSize(preferredSize: Size.zero, child: Container()),
-        body: (systemDefinitionProvider.irrigationLineSystemData != null)
-            ? LayoutBuilder(
+            : null,
+        body: LayoutBuilder(
           builder: (BuildContext context, BoxConstraints constraints) {
+            final isCompact = constraints.maxWidth <= 600;
+
             return Column(
               children: [
-                if(screenSize >= 600)
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: LayoutBuilder(
-                      builder: (BuildContext context, BoxConstraints constraints){
-                        return Row(
-                          children: [
-                            for(var i = 0; i < systemDefinitionProvider.irrigationLineSystemData!.length; i++)
-                              SizedBox(
-                                width: 200,
-                                child: AppProperties.buildSideBarMenuList(
-                                  context: context,
-                                  title: systemDefinitionProvider.irrigationLineSystemData![i].name,
-                                  dataList: systemDefinitionProvider.irrigationLineSystemData!.map((e) => e.name).toList(),
-                                  index: i,
-                                  selected: systemDefinitionProvider.selectedIrrigationLine == i,
-                                  onTap: (index) {
-                                    systemDefinitionProvider.updateSelectedProgramCategory(index);
-                                  }, constraints: constraints,
+                if (!isCompact)
+                  Container(
+                    width: double.infinity,
+                    color: colorScheme.surface,
+                    padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+                    child: Center(
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 980),
+                        child: SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
+                            children: [
+                              for (var i = 0; i < lineData.length; i++)
+                                Container(
+                                  width: 200,
+                                  margin: const EdgeInsets.only(right: 10),
+                                  child: AppProperties.buildSideBarMenuList(
+                                    context: context,
+                                    title: lineData[i].name,
+                                    dataList: lineData.map((e) => e.name).toList(),
+                                    index: i,
+                                    selected:
+                                    systemDefinitionProvider.selectedIrrigationLine == i,
+                                    onTap: (index) {
+                                      systemDefinitionProvider
+                                          .updateSelectedProgramCategory(index);
+                                    },
+                                    constraints: constraints,
+                                  ),
                                 ),
-                              ),
-                          ],
-                        );
-                      },
+                            ],
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                 Expanded(
                   child: ListView.builder(
-                    // padding: const EdgeInsets.symmetric(horizontal: 10),
-                      itemCount: systemDefinitionProvider.irrigationLineSystemData!.length,
-                      itemBuilder: (BuildContext context, int lineIndex) {
-                        if(systemDefinitionProvider.selectedIrrigationLine == lineIndex) {
-                          return screenSize <= 600 ? Column(
-                            children: [
-                              if(systemDefinitionProvider.selectedIrrigationLine == 0)
-                                const SizedBox(height: 15,),
-                              if(systemDefinitionProvider.selectedIrrigationLine == 0)
-                                buildSwitchTile(
-                                  title: "All irrigation line should run while power off",
-                                  value: systemDefinitionProvider.enableAll,
-                                  onChanged: (newValue) {
-                                    setState(() {
-                                      systemDefinitionProvider.enableAll = newValue;
-                                      for(var i = 0; i < systemDefinitionProvider.irrigationLineSystemData!.length; i++) {
-                                        if(systemDefinitionProvider.enableAll) {
-                                          systemDefinitionProvider.irrigationLineSystemData![i].systemDefinition.irrigationLineOn = true;
-                                        } else {
-                                          systemDefinitionProvider.irrigationLineSystemData![i].systemDefinition.irrigationLineOn = false;
-                                        }
-                                      }
-                                    });
-                                  },
-                                  icon: Icons.clear_all,
-                                ),
-                              const SizedBox(height: 15,),
-                              buildSwitchTile(
-                                title: "Should run while power off",
-                                value: systemDefinitionProvider.irrigationLineSystemData![lineIndex].systemDefinition.irrigationLineOn,
-                                onChanged: (newValue) {
-                                  setState(() {
-                                    systemDefinitionProvider.irrigationLineSystemData![lineIndex].systemDefinition.irrigationLineOn = newValue;
-                                    if(systemDefinitionProvider.irrigationLineSystemData!.every((element) => element.systemDefinition.irrigationLineOn == true)){
-                                      systemDefinitionProvider.enableAll = true;
-                                    } else {
-                                      systemDefinitionProvider.enableAll = false;
-                                    }
-                                  });
-                                },
-                                icon: Icons.power_settings_new,
-                              ),
-                              const SizedBox(height: 15,),
-                              buildSwitchTile(
-                                title: "Enable energy save function",
-                                value: systemDefinitionProvider.irrigationLineSystemData![lineIndex].systemDefinition.status,
-                                onChanged: (newValue) {
-                                  setState(() {
-                                    systemDefinitionProvider.irrigationLineSystemData![lineIndex].systemDefinition.status = newValue;
-                                  });
-                                },
-                                icon: Icons.energy_savings_leaf,
-                              ),
-                              const SizedBox(height: 10,),
-                              if (systemDefinitionProvider.irrigationLineSystemData![lineIndex].systemDefinition.status)
-                                Container(
-                                  margin: const EdgeInsets.symmetric(horizontal: 15),
-                                  child: Row(
-                                    children: [
-                                      Expanded(
-                                        child: buildScheduleItem(
-                                          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
-                                          context: context,
-                                          title: 'Start day time',
-                                          iconColor: Colors.green,
-                                          backGroundColor: cardColor,
-                                          icon: Icons.start,
-                                          color: Colors.white,
-                                          child: CustomNativeTimePicker(
-                                              initialValue: systemDefinitionProvider.irrigationLineSystemData![lineIndex].systemDefinition.startDayTime,
-                                              is24HourMode: false,
-                                              onChanged: (newValue){
-                                                setState(() {
-                                                  systemDefinitionProvider.irrigationLineSystemData![lineIndex].systemDefinition.startDayTime = newValue;
-                                                });
-                                              }, modelId: 1,),
-                                        ),
-                                      ),
-                                      Expanded(
-                                        child: buildScheduleItem(
-                                          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
-                                          context: context,
-                                          title: 'Stop day time',
-                                          iconColor: Colors.red.withOpacity(0.7),
-                                          backGroundColor: cardColor,
-                                          color: Colors.white,
-                                          icon: Icons.stop,
-                                          child: CustomNativeTimePicker(
-                                              initialValue: systemDefinitionProvider.irrigationLineSystemData![lineIndex].systemDefinition.stopDayTime,
-                                              is24HourMode: false,
-                                              onChanged: (newValue){
-                                                setState(() {
-                                                  systemDefinitionProvider.irrigationLineSystemData![lineIndex].systemDefinition.stopDayTime = newValue;
-                                                });
-                                              }, modelId: 1,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              const SizedBox(height: 10,),
-                              buildSwitchTile(
-                                title: "Pause by days",
-                                value: systemDefinitionProvider.irrigationLineSystemData![lineIndex].systemDefinition.pauseMainLine,
-                                onChanged: (newValue) {
-                                  setState(() {
-                                    systemDefinitionProvider.irrigationLineSystemData![lineIndex].systemDefinition.pauseMainLine = newValue;
-                                  });
-                                },
-                                icon: Icons.pause,
-                              ),
-                              const SizedBox(height: 15,),
-                              if (systemDefinitionProvider.irrigationLineSystemData![lineIndex].systemDefinition.pauseMainLine)
-                                Container(
-                                  margin: const EdgeInsets.symmetric(horizontal: 15),
-                                  decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(8),
-                                      color: Colors.white,
-                                      boxShadow: AppProperties.customBoxShadowLiteTheme
-                                  ),
-                                  child: Column(
-                                    children: [
-                                      Container(
-                                        padding: const EdgeInsets.all(10),
-                                        decoration: BoxDecoration(
-                                            gradient: AppProperties.linearGradientLeading,
-                                            borderRadius: const BorderRadius.only(topLeft: Radius.circular(8), topRight: Radius.circular(8))
-                                        ),
-                                        child: const Row(
-                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            Expanded(child: Text("S.No", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold))),
-                                            Expanded(child: Text("Days", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),)),
-                                            Expanded(child: Text("From", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold))),
-                                            Expanded(child: Text("To", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold), textAlign: TextAlign.center,)),
-                                            Expanded(child: Text("Yes/No", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold), textAlign: TextAlign.end)),
-                                          ],
-                                        ),
-                                      ),
-                                      for(var i = 0; i < 7; i++)
-                                        buildDayTimePicker(
-                                            day: systemDefinitionProvider.days[i],
-                                            dayTimeRange: systemDefinitionProvider.daysFromAndToTimes(lineIndex: lineIndex)[i],
-                                            dayCount: systemDefinitionProvider.values[i],
-                                            checkBoxValue: systemDefinitionProvider.isSelectedList(lineIndex: lineIndex)[i],
-                                            constraints: constraints,
-                                            lineIndex: lineIndex
-                                        )
-                                    ],
-                                  ),
-                                ),
-                              const SizedBox(height: 80,),
-                            ],
-                          ) : Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Column(
-                              children: [
-                                Container(
-                                  decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      borderRadius: BorderRadius.circular(8)
-                                  ),
-                                  padding: const EdgeInsets.all(10),
-                                  child: Column(
-                                    children: [
-                                      Container(
-                                          padding: const EdgeInsets.all(8),
-                                          width: double.infinity,
-                                          decoration: BoxDecoration(
-                                              color: Theme.of(context).primaryColor.withOpacity(0.2),
-                                              borderRadius: BorderRadius.circular(8)
-                                          ),
-                                          child: Row(
-                                            children: [
-                                              Text(systemDefinitionProvider.irrigationLineSystemData![lineIndex].name, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Theme.of(context).primaryColor),),
-                                            ],
-                                          )
-                                      ),
-                                      const SizedBox(height: 20,),
-                                      if(systemDefinitionProvider.selectedIrrigationLine == 0)
-                                        Row(
-                                          children: [
-                                            SizedBox(width: constraints.maxWidth * 0.02,),
-                                            Checkbox(
-                                                value: systemDefinitionProvider.enableAll,
-                                                onChanged: (newValue) {
-                                                  setState(() {
-                                                    systemDefinitionProvider.enableAll = newValue!;
-                                                    for(var i = 0; i < systemDefinitionProvider.irrigationLineSystemData!.length; i++) {
-                                                      if(systemDefinitionProvider.enableAll) {
-                                                        systemDefinitionProvider.irrigationLineSystemData![i].systemDefinition.irrigationLineOn = true;
-                                                      } else {
-                                                        systemDefinitionProvider.irrigationLineSystemData![i].systemDefinition.irrigationLineOn = false;
-                                                      }
-                                                    }
-                                                  });
-                                                }
-                                            ),
-                                            SizedBox(width: constraints.maxWidth * 0.02,),
-                                            const Text("All irrigation line should run while power off"),
-                                          ],
-                                        ),
-                                      const SizedBox(height: 20,),
-                                      Row(
-                                        children: [
-                                          SizedBox(width: constraints.maxWidth * 0.02,),
-                                          Checkbox(
-                                              value: systemDefinitionProvider.irrigationLineSystemData![lineIndex].systemDefinition.irrigationLineOn,
-                                              onChanged: (newValue) {
-                                                setState(() {
-                                                  systemDefinitionProvider.irrigationLineSystemData![lineIndex].systemDefinition.irrigationLineOn = newValue!;
-                                                  if(systemDefinitionProvider.irrigationLineSystemData!.every((element) => element.systemDefinition.irrigationLineOn == true)){
-                                                    systemDefinitionProvider.enableAll = true;
-                                                  } else {
-                                                    systemDefinitionProvider.enableAll = false;
-                                                  }
-                                                });
-                                              }
-                                          ),
-                                          SizedBox(width: constraints.maxWidth * 0.02,),
-                                          const Text("Should run while power off"),
-                                        ],
-                                      ),
-                                      const SizedBox(height: 20,),
-                                      Row(
-                                        children: [
-                                          SizedBox(width: constraints.maxWidth * 0.02,),
-                                          Checkbox(
-                                              value: systemDefinitionProvider.irrigationLineSystemData![lineIndex].systemDefinition.status,
-                                              onChanged: (newValue) {
-                                                setState(() {
-                                                  systemDefinitionProvider.irrigationLineSystemData![lineIndex].systemDefinition.status = newValue!;
-                                                });
-                                              }
-                                          ),
-                                          SizedBox(width: constraints.maxWidth * 0.02,),
-                                          const Text("Energy save function"),
-                                        ],
-                                      ),
-                                      const SizedBox(height: 20,),
-                                      CustomAnimatedSwitcher(
-                                        condition: systemDefinitionProvider.irrigationLineSystemData![lineIndex].systemDefinition.status,
-                                        child: Row(
-                                          mainAxisAlignment: MainAxisAlignment.start,
-                                          children: [
-                                            SizedBox(width: constraints.maxWidth * 0.02,),
-                                            SizedBox(width: constraints.maxWidth * 0.02,),
-                                            SizedBox(width: constraints.maxWidth * 0.02,),
-                                            const Text("Start day time"),
-                                            SizedBox(width: constraints.maxWidth * 0.05,),
-                                            buildTimePicker(
-                                                currentValue: systemDefinitionProvider.irrigationLineSystemData![lineIndex].systemDefinition.startDayTime,
-                                                onTap: (newValue) {
-                                                  setState(() {
-                                                    systemDefinitionProvider.irrigationLineSystemData![lineIndex].systemDefinition.startDayTime = newValue;
-                                                  });
-                                                },
-                                                is24HourMode: false
-                                            ),
-                                            SizedBox(width: constraints.maxWidth * 0.05),
-                                            const Text("End day time"),
-                                            SizedBox(width: constraints.maxWidth * 0.05,),
-                                            buildTimePicker(
-                                                currentValue: systemDefinitionProvider.irrigationLineSystemData![lineIndex].systemDefinition.stopDayTime,
-                                                onTap: (newValue) {
-                                                  setState(() {
-                                                    systemDefinitionProvider.irrigationLineSystemData![lineIndex].systemDefinition.stopDayTime = newValue;
-                                                  });
-                                                },
-                                                is24HourMode: false
-                                            ),
-                                          ],
-                                        ),),
-                                      const SizedBox(height: 20,),
-                                      CustomAnimatedSwitcher(condition: true, child: Row(
-                                        children: [
-                                          SizedBox(width: constraints.maxWidth * 0.02,),
-                                          Checkbox(
-                                              value: systemDefinitionProvider.irrigationLineSystemData![lineIndex].systemDefinition.pauseMainLine,
-                                              onChanged: (newValue) {
-                                                setState(() {
-                                                  systemDefinitionProvider.irrigationLineSystemData![lineIndex].systemDefinition.pauseMainLine = newValue!;
-                                                });
-                                              }
-                                          ),
-                                          SizedBox(width: constraints.maxWidth * 0.02,),
-                                          const Text("Pause by days"),
-                                        ],
-                                      )),
-                                      const SizedBox(height: 20,),
-                                      CustomAnimatedSwitcher(
-                                          condition: systemDefinitionProvider.irrigationLineSystemData![lineIndex].systemDefinition.pauseMainLine,
-                                          child: Row(
-                                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                            children: [
-                                              Column(
-                                                children: [
-                                                  Text("Days", style: Theme.of(context).textTheme.bodyLarge,),
-                                                  const SizedBox(height: 10,),
-                                                  Text("From", style: Theme.of(context).textTheme.bodyLarge),
-                                                  const SizedBox(height: 10,),
-                                                  Text("To", style: Theme.of(context).textTheme.bodyLarge),
-                                                ],
-                                              ),
-                                              for(var i = 0; i < 7; i++)
-                                                buildDayTimePicker(
-                                                    day: systemDefinitionProvider.days[i],
-                                                    dayTimeRange: systemDefinitionProvider.daysFromAndToTimes(lineIndex: lineIndex)[i],
-                                                    dayCount: systemDefinitionProvider.values[i],
-                                                    checkBoxValue: systemDefinitionProvider.isSelectedList(lineIndex: lineIndex)[i],
-                                                    constraints: constraints,
-                                                    lineIndex: lineIndex
-                                                )
-                                            ],
-                                          ))
-                                    ],
-                                  ),
-                                ),
-                                const SizedBox(height: 10,),
-                                // Container(
-                                //   decoration: BoxDecoration(
-                                //       color: Colors.white,
-                                //       borderRadius: BorderRadius.circular(8)
-                                //   ),
-                                //   padding: const EdgeInsets.all(10),
-                                //   child: Column(
-                                //     children: [
-                                //       Container(
-                                //           padding: const EdgeInsets.all(8),
-                                //           width: double.infinity,
-                                //           decoration: BoxDecoration(
-                                //               color: Theme.of(context).primaryColor.withOpacity(0.2),
-                                //               borderRadius: BorderRadius.circular(8)
-                                //           ),
-                                //           child: Text("Power off recovery ", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Theme.of(context).primaryColor),)
-                                //       ),
-                                //       const SizedBox(height: 20,),
-                                //       Row(
-                                //         mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                //         children: [
-                                //           Row(
-                                //             children: [
-                                //               SizedBox(width: constraints.maxWidth * 0.02,),
-                                //               const Text("When the power is out for longer than"),
-                                //               SizedBox(width: constraints.maxWidth * 0.02,),
-                                //               buildTimePicker(systemDefinitionProvider.powerOffRecoveryModel!.duration, (newValue) {
-                                //                 systemDefinitionProvider.updateValues(newValue, "duration");
-                                //               }, true),
-                                //             ],
-                                //           ),
-                                //           Row(
-                                //             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                //             children: List.generate(systemDefinitionProvider.options.length, (index) {
-                                //               return Row(
-                                //                 children: [
-                                //                   Checkbox(
-                                //                     value: systemDefinitionProvider.powerOffRecoveryModel!.selectedOption.contains(systemDefinitionProvider.options[index])
-                                //                         ? true : false,
-                                //                     onChanged: (newValue) {
-                                //                       systemDefinitionProvider.updateCheckBoxesForOption(newValue, systemDefinitionProvider.options[index], index);
-                                //                     },
-                                //                   ),
-                                //                   Text(systemDefinitionProvider.options[index]),
-                                //                   const SizedBox(width: 20,)
-                                //                 ],
-                                //               );
-                                //             }).toList(),
-                                //           ),
-                                //         ],
-                                //       )
-                                //     ],
-                                //   ),
-                                // )
-                              ],
-                            ),
-                          );
-                        }
-                        return Container();
+                    itemCount: lineData.length,
+                    itemBuilder: (BuildContext context, int lineIndex) {
+                      if (systemDefinitionProvider.selectedIrrigationLine !=
+                          lineIndex) {
+                        return const SizedBox.shrink();
                       }
+                      return _buildLineContent(
+                        context: context,
+                        lineIndex: lineIndex,
+                        constraints: constraints,
+                        isCompact: isCompact,
+                      );
+                    },
                   ),
-                )
+                ),
               ],
             );
           },
-        )
-            : const Center(child: CircularProgressIndicator()),
+        ),
         floatingActionButton: MaterialButton(
-          minWidth: 100,
-          color: systemDefinitionProvider.controllerReadStatus == "1" ? Theme.of(context).primaryColor : Colors.orangeAccent,
-          shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10)
+          minWidth: 110,
+          height: 44,
+          color: systemDefinitionProvider.controllerReadStatus == "1"
+              ? primaryColor
+              : Colors.orangeAccent,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          textColor: systemDefinitionProvider.controllerReadStatus == "1"
+              ? Colors.white
+              : Colors.black,
+          onPressed: _handleSendPayload,
+          child: const Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.send_rounded, size: 18),
+              SizedBox(width: 8),
+              Text(
+                "Send",
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+              ),
+            ],
           ),
-          textColor: systemDefinitionProvider.controllerReadStatus == "1" ? Colors.white : Colors.black,
-          onPressed: () async{
-            // print(systemDefinitionProvider.irrigationLineSystemData!.map((e) => e.toMqtt()).toList().join("\n"));
-            Map<String, dynamic> dataToMqtt = {
-              "2200": {
-                "2201": systemDefinitionProvider.irrigationLineSystemData!.map((e) => e.toMqtt()).toList().join(";"),
-              }
-            };
-
-            Map<String, dynamic> userData = {
-              "userId": widget.customerId,
-              "controllerId": widget.controllerId,
-              "createUser": widget.userId ,
-              "systemDefinition" : {
-                "systemDefinition" : systemDefinitionProvider.irrigationLineSystemData!.map((e) => e.toJson()).toList(),
-                "controllerReadStatus" : "1"
-              },
-              "hardware": dataToMqtt
-            };
-            // print(dataToMqtt);
-            try {
-              await validatePayloadSent(
-                  dialogContext: context,
-                  context: context,
-                  mqttPayloadProvider: mqttPayloadProvider,
-                  acknowledgedFunction: () {
-                    setState(() {
-                      userData['systemDefinition']['controllerReadStatus'] = "1";
-                      systemDefinitionProvider.controllerReadStatus = "1";
-                      // userData['controllerReadStatus'] = "1";
-                      // if(userData['controllerReadStatus'] == "0") {
-                      //   userData['hardware'] = {};
-                      // }
-                    });
-                    // showSnackBar(message: "${mqttPayloadProvider.messageFromHw['Name']} from controller", context: context);
-                  },
-                  payload: dataToMqtt,
-                  payloadCode: "2200",
-                  deviceId: widget.deviceId
-              );
-              await Future.delayed(const Duration(seconds: 1), () async {
-                final createUserPlanningSystemDefinition = await repository.createUserPlanningSystemDefinition(userData);
-                 final response = jsonDecode(createUserPlanningSystemDefinition.body);
-                print('response:$response');
-                if(createUserPlanningSystemDefinition.statusCode == 200) {
-                  ScaffoldMessenger.of(context).showSnackBar(CustomSnackBar(message: response['message']));
-                }
-              });
-              MqttService().topicToPublishAndItsMessage(jsonEncode(dataToMqtt), '${Environment.mqttPublishTopic}/${widget.deviceId}');
-              // showNavigationDialog(context: context, menuId: widget.menuId, ack: systemDefinitionProvider.controllerReadStatus == "1");
-            } catch (error) {
-              ScaffoldMessenger.of(context).showSnackBar(CustomSnackBar(message: 'Failed to update because of $error'));
-              debugPrint("Error: $error");
-            }
-          },
-          child: const Text("Send"),
         ),
         floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       ),
-    ) : const Center(child: CircularProgressIndicator());
+    );
+  }
+
+  Widget _buildLineContent({
+    required BuildContext context,
+    required int lineIndex,
+    required BoxConstraints constraints,
+    required bool isCompact,
+  }) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final lineItem =
+    systemDefinitionProvider.irrigationLineSystemData![lineIndex];
+
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 980),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 100),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // All lines master toggle card (only shown for Line index 0)
+              if (systemDefinitionProvider.selectedIrrigationLine == 0) ...[
+                _buildSectionCard(
+                  context: context,
+                  title: "Master Control",
+                  subtitle: "Global power override for all irrigation lines",
+                  icon: Icons.clear_all,
+                  child: _buildSwitchRow(
+                    context: context,
+                    title: "All irrigation line should run while power off",
+                    subtitle:
+                    "Keep all irrigation lines running during grid power outages",
+                    value: systemDefinitionProvider.enableAll,
+                    icon: Icons.clear_all,
+                    onChanged: (newValue) {
+                      setState(() {
+                        systemDefinitionProvider.enableAll = newValue;
+                        for (var i = 0;
+                        i <
+                            systemDefinitionProvider
+                                .irrigationLineSystemData!
+                                .length;
+                        i++) {
+                          systemDefinitionProvider.irrigationLineSystemData![i]
+                              .systemDefinition.irrigationLineOn =
+                              systemDefinitionProvider.enableAll;
+                        }
+                      });
+                    },
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
+
+              // Main Line Settings Card
+              _buildSectionCard(
+                context: context,
+                title: lineItem.name,
+                subtitle: "Line power override and energy saving configuration",
+                icon: Icons.tune_rounded,
+                child: Column(
+                  children: [
+                    _buildSwitchRow(
+                      context: context,
+                      title: "Should run while power off",
+                      subtitle:
+                      "Allow this line to continue operating during power outages",
+                      value: lineItem.systemDefinition.irrigationLineOn,
+                      icon: Icons.power_settings_new,
+                      onChanged: (newValue) {
+                        setState(() {
+                          lineItem.systemDefinition.irrigationLineOn = newValue;
+                          if (systemDefinitionProvider.irrigationLineSystemData!
+                              .every((element) =>
+                          element.systemDefinition.irrigationLineOn ==
+                              true)) {
+                            systemDefinitionProvider.enableAll = true;
+                          } else {
+                            systemDefinitionProvider.enableAll = false;
+                          }
+                        });
+                      },
+                    ),
+                    Divider(
+                      height: 1,
+                      thickness: 0.5,
+                      color: colorScheme.outlineVariant.withOpacity(0.3),
+                    ),
+                    _buildSwitchRow(
+                      context: context,
+                      title: "Enable energy save function",
+                      subtitle:
+                      "Restrict line irrigation operation to daylight hours",
+                      value: lineItem.systemDefinition.status,
+                      icon: Icons.energy_savings_leaf,
+                      onChanged: (newValue) {
+                        setState(() {
+                          lineItem.systemDefinition.status = newValue;
+                        });
+                      },
+                    ),
+                    // Energy save time pickers
+                    CustomAnimatedSwitcher(
+                      condition: lineItem.systemDefinition.status,
+                      child: Container(
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: colorScheme.surfaceContainerLow,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: colorScheme.outlineVariant.withOpacity(0.3),
+                          ),
+                        ),
+                        child: LayoutBuilder(
+                          builder: (context, cardConstraints) {
+                            const spacing = 12.0;
+                            final isHalf = cardConstraints.maxWidth >= 420;
+                            final fieldWidth = isHalf
+                                ? ((cardConstraints.maxWidth - spacing) / 2)
+                                .floorToDouble() -
+                                1.0
+                                : cardConstraints.maxWidth;
+
+                            return Wrap(
+                              spacing: spacing,
+                              runSpacing: spacing,
+                              children: [
+                                SizedBox(
+                                  width: fieldWidth,
+                                  child: _buildTimeInputField(
+                                    context: context,
+                                    label: "Start day time",
+                                    icon: Icons.start,
+                                    iconColor: Colors.green,
+                                    child: CustomNativeTimePicker(
+                                      initialValue:
+                                      lineItem.systemDefinition.startDayTime,
+                                      is24HourMode: false,
+                                      onChanged: (newValue) {
+                                        setState(() {
+                                          lineItem.systemDefinition.startDayTime =
+                                              newValue;
+                                        });
+                                      },
+                                      modelId: 1,
+                                    ),
+                                  ),
+                                ),
+                                SizedBox(
+                                  width: fieldWidth,
+                                  child: _buildTimeInputField(
+                                    context: context,
+                                    label: "Stop day time",
+                                    icon: Icons.stop,
+                                    iconColor: Colors.red.shade400,
+                                    child: CustomNativeTimePicker(
+                                      initialValue:
+                                      lineItem.systemDefinition.stopDayTime,
+                                      is24HourMode: false,
+                                      onChanged: (newValue) {
+                                        setState(() {
+                                          lineItem.systemDefinition.stopDayTime =
+                                              newValue;
+                                        });
+                                      },
+                                      modelId: 1,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // Pause By Days Card
+              _buildSectionCard(
+                context: context,
+                title: "Pause By Days",
+                subtitle:
+                "Configure weekday schedule windows to pause irrigation",
+                icon: Icons.pause_circle_outline_rounded,
+                child: Column(
+                  children: [
+                    _buildSwitchRow(
+                      context: context,
+                      title: "Pause by days",
+                      subtitle:
+                      "Enable weekly day-wise operation pause intervals",
+                      value: lineItem.systemDefinition.pauseMainLine,
+                      icon: Icons.pause,
+                      onChanged: (newValue) {
+                        setState(() {
+                          lineItem.systemDefinition.pauseMainLine = newValue;
+                        });
+                      },
+                    ),
+                    CustomAnimatedSwitcher(
+                      condition: lineItem.systemDefinition.pauseMainLine,
+                      child: Container(
+                        margin: const EdgeInsets.only(top: 12),
+                        decoration: BoxDecoration(
+                          color: colorScheme.surface,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: colorScheme.outlineVariant.withOpacity(0.4),
+                          ),
+                        ),
+                        child: Column(
+                          children: [
+                            // Table Header
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 14, vertical: 10),
+                              decoration: BoxDecoration(
+                                color: colorScheme.surfaceContainerLow,
+                                borderRadius: const BorderRadius.only(
+                                  topLeft: Radius.circular(12),
+                                  topRight: Radius.circular(12),
+                                ),
+                                border: Border(
+                                  bottom: BorderSide(
+                                    color: colorScheme.outlineVariant
+                                        .withOpacity(0.3),
+                                  ),
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  SizedBox(
+                                    width: 44,
+                                    child: Text(
+                                      "S.No",
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                        color: colorScheme.onSurface,
+                                      ),
+                                    ),
+                                  ),
+                                  SizedBox(
+                                    width: 70,
+                                    child: Text(
+                                      "Days",
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                        color: colorScheme.onSurface,
+                                      ),
+                                    ),
+                                  ),
+                                  Expanded(
+                                    child: Text(
+                                      "From",
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                        color: colorScheme.onSurface,
+                                      ),
+                                    ),
+                                  ),
+                                  Expanded(
+                                    child: Text(
+                                      "To",
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                        color: colorScheme.onSurface,
+                                      ),
+                                    ),
+                                  ),
+                                  SizedBox(
+                                    width: 60,
+                                    child: Text(
+                                      "Active",
+                                      textAlign: TextAlign.end,
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                        color: colorScheme.onSurface,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            // Days Rows
+                            for (var i = 0; i < 7; i++)
+                              Column(
+                                children: [
+                                  buildDayTimePicker(
+                                    day: systemDefinitionProvider.days[i],
+                                    dayTimeRange: systemDefinitionProvider
+                                        .daysFromAndToTimes(lineIndex: lineIndex)[i],
+                                    dayCount: systemDefinitionProvider.values[i],
+                                    checkBoxValue: systemDefinitionProvider
+                                        .isSelectedList(lineIndex: lineIndex)[i],
+                                    constraints: constraints,
+                                    lineIndex: lineIndex,
+                                  ),
+                                  if (i < 6)
+                                    Divider(
+                                      height: 1,
+                                      thickness: 0.5,
+                                      color: colorScheme.outlineVariant
+                                          .withOpacity(0.3),
+                                    ),
+                                ],
+                              ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSectionCard({
+    required BuildContext context,
+    required String title,
+    required String subtitle,
+    required IconData icon,
+    required Widget child,
+  }) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final primaryColor = Theme.of(context).primaryColor;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: colorScheme.outlineVariant.withOpacity(0.4),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.025),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: colorScheme.surfaceContainerLow,
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(16),
+                topRight: Radius.circular(16),
+              ),
+              border: Border(
+                bottom: BorderSide(
+                  color: colorScheme.outlineVariant.withOpacity(0.3),
+                ),
+              ),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(2),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white, width: 2),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.06),
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: CircleAvatar(
+                    radius: 14,
+                    backgroundColor: colorScheme.primaryContainer.withOpacity(0.4),
+                    child: Icon(icon, color: primaryColor, size: 16),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                          color: colorScheme.onSurface,
+                        ),
+                      ),
+                      Text(
+                        subtitle,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: child,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSwitchRow({
+    required BuildContext context,
+    required String title,
+    required String subtitle,
+    required bool value,
+    required IconData icon,
+    required ValueChanged<bool> onChanged,
+  }) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final primaryColor = Theme.of(context).primaryColor;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(2),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.white, width: 2),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.06),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: CircleAvatar(
+              radius: 15,
+              backgroundColor: colorScheme.primaryContainer.withOpacity(0.4),
+              child: Icon(icon, color: primaryColor, size: 16),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w600,
+                    color: colorScheme.onSurface,
+                  ),
+                ),
+                if (subtitle.isNotEmpty) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      fontSize: 11.5,
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          Switch(
+            value: value,
+            activeColor: primaryColor,
+            onChanged: onChanged,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTimeInputField({
+    required BuildContext context,
+    required String label,
+    required IconData icon,
+    required Color iconColor,
+    required Widget child,
+  }) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(icon, size: 14, color: iconColor),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        Container(
+          height: 44,
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+          decoration: BoxDecoration(
+            color: colorScheme.surface,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: colorScheme.outlineVariant.withOpacity(0.5),
+            ),
+          ),
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: child,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _handleSendPayload() async {
+    Map<String, dynamic> dataToMqtt = {
+      "2200": {
+        "2201": systemDefinitionProvider.irrigationLineSystemData!
+            .map((e) => e.toMqtt())
+            .toList()
+            .join(";"),
+      }
+    };
+
+    Map<String, dynamic> userData = {
+      "userId": widget.customerId,
+      "controllerId": widget.controllerId,
+      "createUser": widget.userId,
+      "systemDefinition": {
+        "systemDefinition": systemDefinitionProvider.irrigationLineSystemData!
+            .map((e) => e.toJson())
+            .toList(),
+        "controllerReadStatus": "1"
+      },
+      "hardware": dataToMqtt
+    };
+
+    try {
+      await validatePayloadSent(
+          dialogContext: context,
+          context: context,
+          mqttPayloadProvider: mqttPayloadProvider,
+          acknowledgedFunction: () {
+            if (!mounted) return;
+            setState(() {
+              userData['systemDefinition']['controllerReadStatus'] = "1";
+              systemDefinitionProvider.controllerReadStatus = "1";
+            });
+          },
+          payload: dataToMqtt,
+          payloadCode: "2200",
+          deviceId: widget.deviceId);
+
+      await Future.delayed(const Duration(seconds: 1), () async {
+        final createUserPlanningSystemDefinition =
+        await repository.createUserPlanningSystemDefinition(userData);
+        final response =
+        jsonDecode(createUserPlanningSystemDefinition.body);
+        debugPrint('response:$response');
+        if (createUserPlanningSystemDefinition.statusCode == 200) {
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            CustomSnackBar(
+              message: response['message'] ?? "System definition sent successfully",
+              color: Colors.green.shade700,
+            ),
+          );
+        }
+      });
+
+      MqttService().topicToPublishAndItsMessage(
+          jsonEncode(dataToMqtt), '${Environment.mqttPublishTopic}/${widget.deviceId}');
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        CustomSnackBar(
+          message: 'Failed to update because of $error',
+          color: Colors.red.shade700,
+        ),
+      );
+      debugPrint("Error: $error");
+    }
   }
 
   Widget buildTimePicker(
-      {required String currentValue, required Function(String) onTap, required bool is24HourMode}) {
+      {required String currentValue,
+        required Function(String) onTap,
+        required bool is24HourMode}) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 10),
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
-        border: Border.all(width: 1, color: Colors.black54),
+        color: colorScheme.surface,
+        border: Border.all(width: 1, color: colorScheme.outlineVariant),
         borderRadius: BorderRadius.circular(8),
       ),
       child: CustomNativeTimePicker(
-          initialValue: currentValue,
-          is24HourMode: is24HourMode,
-          onChanged: (newTime ) => onTap(newTime), modelId: 1,
+        initialValue: currentValue,
+        is24HourMode: is24HourMode,
+        onChanged: (newTime) => onTap(newTime),
+        modelId: 1,
       ),
     );
   }
 
   Widget buildSwitchTile(
-      {required String title, required bool value, required Function(bool) onChanged, required IconData icon}) {
+      {required String title,
+        required bool value,
+        required Function(bool) onChanged,
+        required IconData icon}) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 15),
       decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(8),
-          color: Colors.white,
-          boxShadow: AppProperties.customBoxShadowLiteTheme
+        borderRadius: BorderRadius.circular(12),
+        color: colorScheme.surface,
+        border: Border.all(color: colorScheme.outlineVariant.withOpacity(0.4)),
       ),
       child: CustomSwitchTile(
         title: title,
@@ -623,12 +882,13 @@ class _SystemDefinitionState extends State<SystemDefinition> {
         required Function(String) onChanged,
         required IconData icon,
         required bool is24HourMode}) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 15),
       decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(15),
-          color: Colors.white,
-          boxShadow: AppProperties.customBoxShadowLiteTheme
+        borderRadius: BorderRadius.circular(12),
+        color: colorScheme.surface,
+        border: Border.all(color: colorScheme.outlineVariant.withOpacity(0.4)),
       ),
       child: CustomTimerTile(
         subtitle: subtitle,
@@ -637,7 +897,8 @@ class _SystemDefinitionState extends State<SystemDefinition> {
         isSeconds: false,
         icon: icon,
         isNative: true,
-        is24HourMode: is24HourMode, modelId: 1,
+        is24HourMode: is24HourMode,
+        modelId: 1,
       ),
     );
   }
@@ -649,43 +910,122 @@ class _SystemDefinitionState extends State<SystemDefinition> {
         required checkBoxValue,
         required int lineIndex,
         required constraints}) {
-    return Consumer<SystemDefinitionProvider>(builder: (BuildContext context, SystemDefinitionProvider systemDefinitionProvider, child) {
-      return constraints.maxWidth <= 600 ?
-      CustomTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 8),
-        title: day,
-        trailing: SizedBox(
-          width: constraints.maxWidth <= 600 ? constraints.maxWidth * 0.55 : constraints.maxWidth * 0.25,
-          child: buildTimeRow(
-              from: dayTimeRange.from,
-              to: dayTimeRange.to,
-              onChanged: (newFrom, newTo) => systemDefinitionProvider.updateDayTimeRange(dayTimeRange, newFrom, newTo),
-              checkBox: checkBoxValue,
-              onChangedBool: (newValue) => systemDefinitionProvider.updateCheckBoxes(dayCount, newValue, lineIndex),
-              constraints: constraints
-          ),
-        ),
-        content: dayCount,
-      ) :
-      Column(
-        children: [
-          Row(
+    final colorScheme = Theme.of(context).colorScheme;
+    return Consumer<SystemDefinitionProvider>(
+      builder: (BuildContext context,
+          SystemDefinitionProvider systemDefinitionProvider, child) {
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          color: checkBoxValue
+              ? colorScheme.surface
+              : colorScheme.surfaceContainerLow.withOpacity(0.5),
+          child: Row(
             children: [
-              Text(day, style: TextStyle(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold),),
-              Checkbox(value: checkBoxValue, onChanged: (newValue) => systemDefinitionProvider.updateCheckBoxes(dayCount, newValue, lineIndex))
+              SizedBox(
+                width: 44,
+                child: Text(
+                  "$dayCount",
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: checkBoxValue
+                        ? colorScheme.onSurface
+                        : colorScheme.onSurfaceVariant.withOpacity(0.5),
+                  ),
+                ),
+              ),
+              SizedBox(
+                width: 70,
+                child: Text(
+                  day,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: checkBoxValue
+                        ? Theme.of(context).primaryColor
+                        : colorScheme.onSurfaceVariant.withOpacity(0.5),
+                  ),
+                ),
+              ),
+              Expanded(
+                child: IgnorePointer(
+                  ignoring: !checkBoxValue,
+                  child: Container(
+                    padding:
+                    const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: checkBoxValue
+                          ? colorScheme.surfaceContainerLow
+                          : Colors.transparent,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: CustomNativeTimePicker(
+                      initialValue: dayTimeRange.from,
+                      style: TextStyle(
+                        color: checkBoxValue
+                            ? colorScheme.onSurface
+                            : colorScheme.onSurfaceVariant.withOpacity(0.5),
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      is24HourMode: false,
+                      onChanged: (newTime) =>
+                          systemDefinitionProvider.updateDayTimeRange(
+                              dayTimeRange, newTime, dayTimeRange.to),
+                      modelId: 1,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: IgnorePointer(
+                  ignoring: !checkBoxValue,
+                  child: Container(
+                    padding:
+                    const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: checkBoxValue
+                          ? colorScheme.surfaceContainerLow
+                          : Colors.transparent,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: CustomNativeTimePicker(
+                      initialValue: dayTimeRange.to,
+                      style: TextStyle(
+                        color: checkBoxValue
+                            ? colorScheme.onSurface
+                            : colorScheme.onSurfaceVariant.withOpacity(0.5),
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      is24HourMode: false,
+                      onChanged: (newTime) =>
+                          systemDefinitionProvider.updateDayTimeRange(
+                              dayTimeRange, dayTimeRange.from, newTime),
+                      modelId: 1,
+                    ),
+                  ),
+                ),
+              ),
+              SizedBox(
+                width: 50,
+                child: Align(
+                  alignment: Alignment.centerRight,
+                  child: Checkbox(
+                    value: checkBoxValue,
+                    activeColor: Theme.of(context).primaryColor,
+                    onChanged: (newValue) =>
+                        systemDefinitionProvider.updateCheckBoxes(
+                            dayCount, newValue, lineIndex),
+                  ),
+                ),
+              ),
             ],
           ),
-          buildTimeRow(
-              from: dayTimeRange.from,
-              to: dayTimeRange.to,
-              onChanged: (newFrom, newTo) => systemDefinitionProvider.updateDayTimeRange(dayTimeRange, newFrom, newTo),
-              checkBox: checkBoxValue,
-              onChangedBool: (newValue) => systemDefinitionProvider.updateCheckBoxes(dayCount, newValue, lineIndex),
-              constraints: constraints
-          )
-        ],
-      );
-    });
+        );
+      },
+    );
   }
 
   Widget buildTimeRow(
@@ -695,189 +1035,83 @@ class _SystemDefinitionState extends State<SystemDefinition> {
         required bool checkBox,
         required Function(bool?) onChangedBool,
         required constraints}) {
-    return constraints.maxWidth <= 600 ?
-    Row(
+    final colorScheme = Theme.of(context).colorScheme;
+    return constraints.maxWidth <= 600
+        ? Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         IgnorePointer(
           ignoring: !checkBox,
           child: CustomNativeTimePicker(
-              initialValue: from, style: TextStyle(color: checkBox ? Colors.black : Colors.grey, fontSize: 16),
-              is24HourMode: false,
-              onChanged: (newTime ) => onChanged(newTime, to), modelId: 1,
+            initialValue: from,
+            style: TextStyle(
+              color: checkBox
+                  ? colorScheme.onSurface
+                  : colorScheme.onSurfaceVariant.withOpacity(0.5),
+              fontSize: 14,
+            ),
+            is24HourMode: false,
+            onChanged: (newTime) => onChanged(newTime, to),
+            modelId: 1,
           ),
         ),
         IgnorePointer(
           ignoring: !checkBox,
           child: CustomNativeTimePicker(
-              initialValue: to, style: TextStyle(color: checkBox ? Colors.black : Colors.grey, fontSize: 16),
-              is24HourMode: false,
-              onChanged: (newTime ) => onChanged(from, newTime), modelId: 1,
+            initialValue: to,
+            style: TextStyle(
+              color: checkBox
+                  ? colorScheme.onSurface
+                  : colorScheme.onSurfaceVariant.withOpacity(0.5),
+              fontSize: 14,
+            ),
+            is24HourMode: false,
+            onChanged: (newTime) => onChanged(from, newTime),
+            modelId: 1,
           ),
         ),
-        Checkbox(value: checkBox, onChanged: onChangedBool),
+        Checkbox(
+          value: checkBox,
+          activeColor: Theme.of(context).primaryColor,
+          onChanged: onChangedBool,
+        ),
       ],
-    ) :
-    Column(
+    )
+        : Column(
       children: [
-        const SizedBox(height: 10,),
+        const SizedBox(height: 10),
         IgnorePointer(
           ignoring: !checkBox,
           child: CustomNativeTimePicker(
-              initialValue: from, style: TextStyle(color: checkBox ? Colors.black : Colors.grey, fontSize: 16),
-              is24HourMode: false,
-              onChanged: (newTime ) => onChanged(newTime, to), modelId: 1,
+            initialValue: from,
+            style: TextStyle(
+              color: checkBox
+                  ? colorScheme.onSurface
+                  : colorScheme.onSurfaceVariant.withOpacity(0.5),
+              fontSize: 14,
+            ),
+            is24HourMode: false,
+            onChanged: (newTime) => onChanged(newTime, to),
+            modelId: 1,
           ),
         ),
-        const SizedBox(height: 10,),
+        const SizedBox(height: 10),
         IgnorePointer(
           ignoring: !checkBox,
           child: CustomNativeTimePicker(
-              initialValue: to, style: TextStyle(color: checkBox ? Colors.black : Colors.grey, fontSize: 16),
-              is24HourMode: false,
-              onChanged: (newTime ) => onChanged(from, newTime), modelId: 1,
+            initialValue: to,
+            style: TextStyle(
+              color: checkBox
+                  ? colorScheme.onSurface
+                  : colorScheme.onSurfaceVariant.withOpacity(0.5),
+              fontSize: 14,
+            ),
+            is24HourMode: false,
+            onChanged: (newTime) => onChanged(from, newTime),
+            modelId: 1,
           ),
-        )
+        ),
       ],
     );
   }
 }
-
-// if (systemDefinitionProvider.selectedSegment == 0) {
-//   return Column(
-//     children: [
-//       const SizedBox(height: 15,),
-//       buildSwitchTile(
-//         title: "Enable energy save function",
-//         value: systemDefinitionProvider.irrigationLineSystemData![lineIndex].systemDefinition.status,
-//         onChanged: (newValue) {
-//           setState(() {
-//             systemDefinitionProvider.irrigationLineSystemData![lineIndex].systemDefinition.status = newValue;
-//           });
-//           print(newValue);
-//           print(systemDefinitionProvider.selectedSegment);
-//         },
-//         icon: Icons.energy_savings_leaf,
-//       ),
-//       const SizedBox(height: 10,),
-//       if (systemDefinitionProvider.irrigationLineSystemData![lineIndex].systemDefinition.status)
-//         Container(
-//           margin: const EdgeInsets.symmetric(horizontal: 15),
-//           child: Row(
-//             children: [
-//               Expanded(
-//                 child: buildScheduleItem(
-//                   padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
-//                   context: context,
-//                   title: 'Start day time',
-//                   iconColor: Colors.green,
-//                   backGroundColor: cardColor,
-//                   icon: Icons.start,
-//                   color: Colors.white,
-//                   child: CustomNativeTimePicker(
-//                       initialValue: systemDefinitionProvider.irrigationLineSystemData![lineIndex].systemDefinition.startDayTime,
-//                       is24HourMode: false,
-//                       onChanged: (newValue){
-//                         setState(() {
-//                           systemDefinitionProvider.irrigationLineSystemData![lineIndex].systemDefinition.startDayTime = newValue;
-//                         });
-//                       }),
-//                 ),
-//               ),
-//               Expanded(
-//                 child: buildScheduleItem(
-//                   padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
-//                   context: context,
-//                   title: 'Stop day time',
-//                   iconColor: Colors.red.withOpacity(0.7),
-//                   backGroundColor: cardColor,
-//                   color: Colors.white,
-//                   icon: Icons.stop,
-//                   child: CustomNativeTimePicker(
-//                       initialValue: systemDefinitionProvider.irrigationLineSystemData![lineIndex].systemDefinition.stopDayTime,
-//                       is24HourMode: false,
-//                       onChanged: (newValue){
-//                         setState(() {
-//                           systemDefinitionProvider.irrigationLineSystemData![lineIndex].systemDefinition.stopDayTime = newValue;
-//                         });
-//                       }
-//                   ),
-//                 ),
-//               ),
-//             ],
-//           ),
-//         ),
-//       const SizedBox(height: 10,),
-//       buildSwitchTile(
-//         title: "Pause by days",
-//         value: systemDefinitionProvider.irrigationLineSystemData![lineIndex].systemDefinition.pauseMainLine,
-//         onChanged: (newValue) {
-//           setState(() {
-//             systemDefinitionProvider.irrigationLineSystemData![lineIndex].systemDefinition.pauseMainLine = newValue;
-//           });
-//         },
-//         icon: Icons.pause,
-//       ),
-//       const SizedBox(height: 15,),
-//       if (systemDefinitionProvider.irrigationLineSystemData![lineIndex].systemDefinition.pauseMainLine)
-//         Container(
-//           margin: const EdgeInsets.symmetric(horizontal: 15),
-//           decoration: BoxDecoration(
-//             borderRadius: BorderRadius.circular(15),
-//             color: Colors.white,
-//             boxShadow: customBoxShadow
-//           ),
-//           child: Column(
-//             children: [
-//               for(var i = 0; i < 7; i++)
-//                 buildDayTimePicker(
-//                     day: systemDefinitionProvider.days[i],
-//                     dayTimeRange: systemDefinitionProvider.daysFromAndToTimes(lineIndex: lineIndex)[i],
-//                     dayCount: systemDefinitionProvider.values[i],
-//                     checkBoxValue: systemDefinitionProvider.isSelectedList(lineIndex: lineIndex)[i],
-//                     constraints: constraints,
-//                     lineIndex: lineIndex
-//                 )
-//             ],
-//           ),
-//         ),
-//     const SizedBox(height: 80,),
-//     ],
-//   );
-// } else {
-//   return ListView(
-//     shrinkWrap: true,
-//     padding: const EdgeInsets.symmetric(horizontal: 10),
-//     children: [
-//       buildTimerTile(
-//           subtitle: "When the power is out for longer than",
-//           initialValue: systemDefinitionProvider.irrigationLineSystemData![lineIndex].powerOffRecovery.duration,
-//           onChanged: (newValue) {
-//             setState(() {
-//               systemDefinitionProvider.irrigationLineSystemData![lineIndex].powerOffRecovery.duration = newValue;
-//             });
-//           },
-//           icon: Icons.timer,
-//           is24HourMode: true
-//       ),
-//       Row(
-//         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-//         children: List.generate(systemDefinitionProvider.options.length, (index) {
-//           return Row(
-//             children: [
-//               Checkbox(
-//                 value: systemDefinitionProvider.irrigationLineSystemData![lineIndex].powerOffRecovery.selectedOption.contains(systemDefinitionProvider.options[index]),
-//                 onChanged: (newValue) {
-//                   systemDefinitionProvider.updateCheckBoxesForOption(newValue, systemDefinitionProvider.options[index], index, lineIndex);
-//                 },
-//               ),
-//               Text(systemDefinitionProvider.options[index]),
-//               const SizedBox(width: 20,)
-//             ],
-//           );
-//         }).toList(),
-//       ),
-//       const SizedBox(height: 80,),
-//     ],
-//   );
-// }

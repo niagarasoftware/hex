@@ -868,7 +868,7 @@ class _LogHomeState extends State<LogHome> {
   //         height: 50,
   //         decoration: BoxDecoration(
   //           borderRadius: BorderRadius.circular(8),
-  //           color: _selectedIndex == index ? Theme.of(context).primaryColorDark : null,
+  //           color: _selectedIndex == index ? const Color(0xFF5B21B6) : null,
   //         ),
   //         child: ListTile(
   //           leading: icon,
@@ -910,35 +910,78 @@ class _LogHomeState extends State<LogHome> {
   Widget build(BuildContext context) {
     return LayoutBuilder(builder: (context,constraint) {
       return Scaffold(
+          backgroundColor: const Color(0xFFF8FAFC),
           appBar: AppBar(
-            title: Column(
+            backgroundColor: const Color(0xFFF8FAFC),
+            elevation: 0,
+            scrolledUnderElevation: 0,
+            centerTitle: false,
+            automaticallyImplyLeading: false,
+            titleSpacing: 16,
+            title: Row(
               children: [
-                Row(
+                InkWell(
+                  onTap: () {
+                    Navigator.pop(context);
+                  },
+                  borderRadius: BorderRadius.circular(20),
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: const Color(0xFFE2E8F0)),
+                    ),
+                    child: const Icon(Icons.arrow_back, size: 20, color: Color(0xFF1E293B)),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Text('Irrigation Log'),
-                    if (isLiveLoaded) ...[
-                      const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: Colors.green.withOpacity(0.15),
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: Colors.green, width: 0.8),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Text(
+                          'Irrigation Log',
+                          style: TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF1E1B4B),
+                          ),
                         ),
-                        child: const Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.fiber_manual_record, color: Colors.green, size: 8),
-                            SizedBox(width: 4),
-                            Text('LIVE', style: TextStyle(color: Colors.green, fontSize: 10, fontWeight: FontWeight.bold)),
-                          ],
-                        ),
+                        if (isLiveLoaded) ...[
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: Colors.green.withOpacity(0.15),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(color: Colors.green, width: 0.8),
+                            ),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.fiber_manual_record, color: Colors.green, size: 8),
+                                SizedBox(width: 4),
+                                Text('LIVE', style: TextStyle(color: Colors.green, fontSize: 10, fontWeight: FontWeight.bold)),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                    Text(
+                      _selectedDate,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey[600],
+                        fontWeight: FontWeight.w400,
                       ),
-                    ],
+                    ),
                   ],
                 ),
-                Text(_selectedDate,style: const TextStyle(fontSize: 12),),
               ],
             ),
             actions: [
@@ -1260,7 +1303,7 @@ class _LogHomeState extends State<LogHome> {
                       ),
                     ),
                 Container(
-                  color: Theme.of(context).primaryColorDark,
+                  color: const Color(0xFF5B21B6),
                   width: MediaQuery.of(context).size.width,
                   height: 35,
                   child: Row(
@@ -1419,7 +1462,7 @@ class _LogHomeState extends State<LogHome> {
                                     ),
                                     ElevatedButton(
                                         style: ElevatedButton.styleFrom(
-                                          backgroundColor: const Color(0xFF006573),
+                                          backgroundColor: const Color(0xFF5B21B6),
                                           foregroundColor: Colors.white,
                                         ),
                                         onPressed: () async {
@@ -1557,7 +1600,7 @@ class _LogHomeState extends State<LogHome> {
         padding: EdgeInsets.symmetric(vertical: verticalPadding ?? 10,horizontal: 10),
         decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(radius ?? 5),
-            color: index != null ? (index == _irrigationOptionWise.indexWhere((element) => element[1] == true) ? Theme.of(context).primaryColor : null) : Theme.of(context).primaryColor
+            color: index != null ? (index == _irrigationOptionWise.indexWhere((element) => element[1] == true) ? const Color(0xFF5B21B6) : null) : const Color(0xFF5B21B6)
         ),
         child: Text(name,style: TextStyle(color: index != null ? (index == _irrigationOptionWise.indexWhere((element) => element[1] == true) ? Colors.white : Colors.black87) : Colors.white,fontSize: 13,fontWeight: FontWeight.w200),),
       ),
@@ -1573,7 +1616,7 @@ class _LogHomeState extends State<LogHome> {
           children: [
             SvgPicture.asset(
               'assets/images/tableOptionSelected.svg',
-              color: Theme.of(context).primaryColor,
+              color: const Color(0xFF5B21B6),
             ),
             Positioned(
               top: 15,
@@ -1709,7 +1752,7 @@ class _LogHomeState extends State<LogHome> {
                               Navigator.pop(context);
                             },
                             child: const Text("OK",style: TextStyle(color: Colors.white)),
-                            color: Theme.of(context).primaryColor,
+                            color: const Color(0xFF5B21B6),
                           )
                         ],
                       ),
@@ -2015,10 +2058,10 @@ void getDialog(context){
 }
 
 const CalendarTheme kTheme1 = CalendarTheme(
-  selectedColor: Color(0xff10E196),
+  selectedColor: Color(0xFF5B21B6),
   dayNameTextStyle: TextStyle(color: Colors.black45, fontSize: 10),
-  inRangeColor: Color(0xFFDFFEF3),
-  inRangeTextStyle: TextStyle(color: Color(0xff006943)),
+  inRangeColor: Color(0xFFEDE9FE),
+  inRangeTextStyle: TextStyle(color: Color(0xFF5B21B6)),
   selectedTextStyle: TextStyle(color: Colors.white),
   todayTextStyle: TextStyle(fontWeight: FontWeight.bold),
   defaultTextStyle: TextStyle(color: Colors.black, fontSize: 12),
@@ -2075,7 +2118,7 @@ Widget getTableRowLinearIndicater(seting,flex){
       title: Text('${seting['output']}',style: const TextStyle(fontSize: 12,fontWeight: FontWeight.w500),),
       subtitle:  LinearProgressIndicator(
         backgroundColor: Colors.grey.shade300,
-        color: const Color(0xff10E196),
+        color: const Color(0xFF5B21B6),
         minHeight: 7,
         borderRadius: const BorderRadius.all(Radius.circular(10)),
         // value: timeToSeconds(name) as double, // Update this value to reflect loading progress

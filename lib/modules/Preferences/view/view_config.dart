@@ -18,9 +18,9 @@ class ViewConfig extends StatefulWidget {
   final bool isLora;
   const ViewConfig(
       {super.key,
-      required this.userId,
-      required this.isLora,
-      required this.modelId});
+        required this.userId,
+        required this.isLora,
+        required this.modelId});
 
   @override
   State<ViewConfig> createState() => _ViewConfigState();
@@ -94,6 +94,7 @@ class _ViewConfigState extends State<ViewConfig> {
 
     _timeoutTimer?.cancel();
 
+    if (!mounted) return;
     setState(() {
       if (newSelectedPayload != null) selectedPayload = newSelectedPayload;
       _hasTimedOut = false;
@@ -131,7 +132,7 @@ class _ViewConfigState extends State<ViewConfig> {
       final viewConfig = {
         "5900": {
           "5901":
-              "${pump.serialNumber}+${pump.referenceNumber}+${pump.deviceId}+${pump.interfaceTypeId}+$payload2+${4}"
+          "${pump.serialNumber}+${pump.referenceNumber}+${pump.deviceId}+${pump.interfaceTypeId}+$payload2+${4}"
         }
       };
       mqttService.topicToPublishAndItsMessage(
@@ -141,19 +142,26 @@ class _ViewConfigState extends State<ViewConfig> {
     } else {
       var payload = jsonEncode({"sentSms": "viewconfig"});
       final result = await context.read<CommunicationService>().sendCommand(
-            serverMsg: '',
-            payload: AppConstants.wlcModelList.contains(widget.modelId)
-                ? Constants.sendPayloadWithCrc(payload)
-                : payload,
-          );
+        serverMsg: '',
+        payload: AppConstants.wlcModelList.contains(widget.modelId)
+            ? Constants.sendPayloadWithCrc(payload)
+            : payload,
+      );
       debugPrint('view config result => $result');
     }
   }
 
   void updateViewPayloads(String pumpConfigValue) {
     int numberOfPumps = int.tryParse(pumpConfigValue) ?? 1;
-    configs = generateDynamicConfigs(numberOfPumps);
-    setState(() {});
+    final newConfigs = generateDynamicConfigs(numberOfPumps);
+    if (configs.length != newConfigs.length) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        setState(() {
+          configs = newConfigs;
+        });
+      });
+    }
   }
 
   @override
@@ -182,21 +190,31 @@ class _ViewConfigState extends State<ViewConfig> {
   Widget build(BuildContext context) {
     final preferenceProvider = context.read<PreferenceProvider>();
     final mqttProvider = context.watch<MqttPayloadProvider>();
+    final colorScheme = Theme.of(context).colorScheme;
+
+    if (preferenceProvider.commonPumpSettings == null ||
+        preferenceProvider.commonPumpSettings!.isEmpty ||
+        preferenceProvider.selectedTabIndex >= preferenceProvider.commonPumpSettings!.length) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
     final deviceId = preferenceProvider
         .commonPumpSettings![preferenceProvider.selectedTabIndex].deviceId;
 
-    if (widget.isLora) {
-      if (_hasPayload(selectedPayload, mqttProvider, deviceId)) {
-        debugPrint('Received LORA response for $deviceId - cancelling timer');
+    final hasReceivedResponse = widget.isLora
+        ? _hasPayload(selectedPayload, mqttProvider, deviceId)
+        : (mqttProvider.viewSettingsList.isNotEmpty && mqttProvider.cCList.contains(deviceId));
+
+    if (hasReceivedResponse && (_timeoutTimer?.isActive ?? false || _hasTimedOut)) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
         _timeoutTimer?.cancel();
-        _hasTimedOut = false;
-      }
-    } else {
-      if (mqttProvider.viewSettingsList.isNotEmpty &&
-          mqttProvider.cCList.contains(deviceId)) {
-        _timeoutTimer?.cancel();
-        _hasTimedOut = false;
-      }
+        if (_hasTimedOut) {
+          setState(() {
+            _hasTimedOut = false;
+          });
+        }
+      });
     }
 
     if (_hasTimedOut) {
@@ -205,12 +223,12 @@ class _ViewConfigState extends State<ViewConfig> {
           padding: const EdgeInsets.all(24),
           margin: const EdgeInsets.symmetric(horizontal: 20),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: colorScheme.surface,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.red.shade200),
+            border: Border.all(color: colorScheme.error.withOpacity(0.4)),
             boxShadow: [
               BoxShadow(
-                color: Colors.red.withOpacity(0.05),
+                color: colorScheme.error.withOpacity(0.05),
                 blurRadius: 10,
                 offset: const Offset(0, 4),
               )
@@ -221,16 +239,16 @@ class _ViewConfigState extends State<ViewConfig> {
             children: [
               _buildDropdown(),
               const SizedBox(height: 20),
-              Icon(Icons.wifi_off_rounded, size: 48, color: Colors.red.shade400),
+              Icon(Icons.wifi_off_rounded, size: 48, color: colorScheme.error),
               const SizedBox(height: 12),
-              const Text(
+              Text(
                 "Device is not responding",
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colorScheme.onSurface),
               ),
               const SizedBox(height: 4),
               Text(
                 "Please check device connectivity and try again.",
-                style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+                style: TextStyle(fontSize: 13, color: colorScheme.onSurfaceVariant),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 16),
@@ -250,12 +268,12 @@ class _ViewConfigState extends State<ViewConfig> {
 
     if (widget.isLora
         ? (mqttProvider.viewSetting.isEmpty ||
-            (mqttProvider.viewSetting['cC'] != null &&
-                !mqttProvider.viewSetting['cC'].contains(deviceId)) ||
-            !_hasPayload(
-                selectedPayload, context.read<MqttPayloadProvider>(), deviceId))
+        (mqttProvider.viewSetting['cC'] != null &&
+            !mqttProvider.viewSetting['cC'].contains(deviceId)) ||
+        !_hasPayload(
+            selectedPayload, context.read<MqttPayloadProvider>(), deviceId))
         : (!mqttProvider.cCList.contains(deviceId))) {
-      final primaryColor = Theme.of(context).primaryColor;
+      final primaryColor = colorScheme.primary;
       return Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -263,7 +281,7 @@ class _ViewConfigState extends State<ViewConfig> {
             padding: const EdgeInsets.all(24),
             margin: const EdgeInsets.symmetric(horizontal: 40),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: colorScheme.surface,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(color: primaryColor.withOpacity(0.2)),
               boxShadow: [
@@ -283,15 +301,15 @@ class _ViewConfigState extends State<ViewConfig> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                const Text(
+                Text(
                   "Fetching configuration...",
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colorScheme.onSurface),
                 ),
                 const SizedBox(height: 6),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                   decoration: BoxDecoration(
-                    color: primaryColor.withOpacity(0.1),
+                    color: colorScheme.primaryContainer,
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
@@ -299,7 +317,7 @@ class _ViewConfigState extends State<ViewConfig> {
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.bold,
-                      color: primaryColor,
+                      color: colorScheme.onPrimaryContainer,
                     ),
                   ),
                 ),
@@ -331,12 +349,12 @@ class _ViewConfigState extends State<ViewConfig> {
               preferenceProvider,
             )
           else if (_hasPayload("ctconfig", mqttProvider, deviceId) ||
-              _hasPayload("voltageconfig", mqttProvider, deviceId) ||
-              _hasPayload("calibration", mqttProvider, deviceId))
-            Expanded(child: _buildCommonSettingCategory(mqttProvider, deviceId))
-          else
-            Expanded(
-                child: _buildIndividualSettingCategory(mqttProvider, deviceId)),
+                _hasPayload("voltageconfig", mqttProvider, deviceId) ||
+                _hasPayload("calibration", mqttProvider, deviceId))
+              Expanded(child: _buildCommonSettingCategory(mqttProvider, deviceId))
+            else
+              Expanded(
+                  child: _buildIndividualSettingCategory(mqttProvider, deviceId)),
         ],
       ),
     );
@@ -356,18 +374,19 @@ class _ViewConfigState extends State<ViewConfig> {
   }
 
   Widget _buildDropdown() {
-    final primaryColor = Theme.of(context).primaryColor;
+    final colorScheme = Theme.of(context).colorScheme;
+    final primaryColor = colorScheme.primary;
     return Align(
       alignment: AlignmentDirectional.centerEnd,
       child: Container(
         height: 42,
         decoration: BoxDecoration(
-          border: Border.all(color: primaryColor.withOpacity(0.3)),
+          border: Border.all(color: colorScheme.outlineVariant.withOpacity(0.5)),
           borderRadius: BorderRadius.circular(25),
-          color: Colors.white,
+          color: colorScheme.surface,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.03),
+              color: colorScheme.onSurface.withOpacity(0.03),
               blurRadius: 4,
               offset: const Offset(0, 2),
             )
@@ -387,9 +406,9 @@ class _ViewConfigState extends State<ViewConfig> {
             ),
             items: configs.entries
                 .map((entry) => DropdownMenuItem<String>(
-                      value: entry.value,
-                      child: Text(entry.value),
-                    ))
+              value: entry.value,
+              child: Text(entry.value),
+            ))
                 .toList(),
             onChanged: (String? value) {
               if (value == null) return;
@@ -415,37 +434,37 @@ class _ViewConfigState extends State<ViewConfig> {
     if (widget.isLora) {
       final pumpNames = prefProvider.individualPumpSetting!
           .where((e) =>
-              e.deviceId ==
-              prefProvider
-                  .commonPumpSettings![prefProvider.selectedTabIndex].deviceId)
+      e.deviceId ==
+          prefProvider
+              .commonPumpSettings![prefProvider.selectedTabIndex].deviceId)
           .map((e) => e.name)
           .toList();
       titles.add('Serial id');
       titles.addAll(pumpNames);
     }
 
-    final primaryColorLight = Theme.of(context).primaryColorLight;
+    final colorScheme = Theme.of(context).colorScheme;
 
     return Card(
       shape: RoundedRectangleBorder(
         side: BorderSide(
-          color: primaryColorLight.withOpacity(0.5),
+          color: colorScheme.outlineVariant.withOpacity(0.5),
           width: 0.5,
         ),
         borderRadius: const BorderRadius.only(
-            bottomRight: Radius.circular(12),
-            bottomLeft: Radius.circular(12),
-            topRight: Radius.circular(12)),
+            bottomRight: Radius.circular(14),
+            bottomLeft: Radius.circular(14),
+            topRight: Radius.circular(14)),
       ),
       margin: const EdgeInsets.only(left: 0, right: 0, bottom: 15),
       elevation: 2,
-      color: Colors.white,
-      surfaceTintColor: Colors.white,
+      color: colorScheme.surface,
+      surfaceTintColor: colorScheme.surface,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: List.generate(
           titles.length,
-          (i) => _buildListTile(titles[i].toUpperCase(), values[i]),
+              (i) => _buildListTile(titles[i].toUpperCase(), values[i]),
         ),
       ),
     );
@@ -520,7 +539,7 @@ class _ViewConfigState extends State<ViewConfig> {
     final values = payload.split(',');
     final groups = List.generate(
       (values.length / 9).ceil(),
-      (i) => values.skip(i * 9).take(9).toList(),
+          (i) => values.skip(i * 9).take(9).toList(),
     );
 
     final titles = [
@@ -537,15 +556,17 @@ class _ViewConfigState extends State<ViewConfig> {
 
     final pumpNames = prefProvider.commonPumpSettings!.length > 1
         ? prefProvider.individualPumpSetting!
-            .where((e) =>
-                e.deviceId ==
-                prefProvider
-                    .commonPumpSettings![
-                        context.read<PreferenceProvider>().selectedTabIndex]
-                    .deviceId)
-            .map((e) => e.name)
-            .toList()
+        .where((e) =>
+    e.deviceId ==
+        prefProvider
+            .commonPumpSettings![
+        context.read<PreferenceProvider>().selectedTabIndex]
+            .deviceId)
+        .map((e) => e.name)
+        .toList()
         : prefProvider.individualPumpSetting!.map((e) => e.name).toList();
+
+    final colorScheme = Theme.of(context).colorScheme;
 
     return Expanded(
       child: SingleChildScrollView(
@@ -570,16 +591,16 @@ class _ViewConfigState extends State<ViewConfig> {
                                 horizontal: 12, vertical: 4),
                             height: 28,
                             decoration: BoxDecoration(
-                                color: Theme.of(context).primaryColorLight,
+                                color: colorScheme.primaryContainer,
                                 borderRadius: const BorderRadius.only(
                                     topRight: Radius.circular(16),
                                     topLeft: Radius.circular(4))),
                             child: Center(
                               child: Text(
                                 pumpNames[i],
-                                style: const TextStyle(
+                                style: TextStyle(
                                     fontWeight: FontWeight.bold,
-                                    color: Colors.white,
+                                    color: colorScheme.onPrimaryContainer,
                                     fontSize: 13),
                               ),
                             ),
@@ -588,26 +609,26 @@ class _ViewConfigState extends State<ViewConfig> {
                         Card(
                           shape: RoundedRectangleBorder(
                             side: BorderSide(
-                              color: Theme.of(context).primaryColorLight.withOpacity(0.5),
+                              color: colorScheme.outlineVariant.withOpacity(0.5),
                               width: 0.5,
                             ),
                             borderRadius: const BorderRadius.only(
-                                bottomRight: Radius.circular(12),
-                                bottomLeft: Radius.circular(12),
-                                topRight: Radius.circular(12)),
+                                bottomRight: Radius.circular(14),
+                                bottomLeft: Radius.circular(14),
+                                topRight: Radius.circular(14)),
                           ),
                           margin: const EdgeInsets.only(
                               left: 0, right: 0, bottom: 15),
                           elevation: 2,
-                          color: Colors.white,
-                          surfaceTintColor: Colors.white,
+                          color: colorScheme.surface,
+                          surfaceTintColor: colorScheme.surface,
                           child: Column(
                             children: [
                               ...groups[i].asMap().entries.map(
                                     (entry) => _buildListTile(
-                                        titles[entry.key].toUpperCase(),
-                                        entry.value),
-                                  )
+                                    titles[entry.key].toUpperCase(),
+                                    entry.value),
+                              )
                             ],
                           ),
                         ),
@@ -623,6 +644,7 @@ class _ViewConfigState extends State<ViewConfig> {
   }
 
   Widget _buildListTile(String title, String value) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       child: Row(
@@ -634,7 +656,7 @@ class _ViewConfigState extends State<ViewConfig> {
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w500,
-                color: Colors.grey.shade800,
+                color: colorScheme.onSurfaceVariant,
               ),
             ),
           ),
@@ -642,7 +664,7 @@ class _ViewConfigState extends State<ViewConfig> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3),
+                color: colorScheme.surfaceContainerLow,
                 borderRadius: BorderRadius.circular(6),
               ),
               child: Text(
@@ -650,7 +672,7 @@ class _ViewConfigState extends State<ViewConfig> {
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.bold,
-                  color: Theme.of(context).primaryColor,
+                  color: colorScheme.primary,
                 ),
               ),
             ),
@@ -666,7 +688,7 @@ class _ViewConfigState extends State<ViewConfig> {
         .commonPumpSettings![prefProvider.selectedTabIndex].settingList;
     final calibrationSettings = prefProvider.calibrationSetting!.isNotEmpty
         ? prefProvider
-            .calibrationSetting![prefProvider.selectedTabIndex].settingList
+        .calibrationSetting![prefProvider.selectedTabIndex].settingList
         : null;
 
     return SingleChildScrollView(
@@ -679,58 +701,58 @@ class _ViewConfigState extends State<ViewConfig> {
             children: [
               ...(!_hasPayload('calibration', provider, deviceId)
                   ? settings.map((setting) {
-                      if (AppConstants.otherSetting.contains(setting.type) &&
-                          _hasPayload('ctconfig', provider, deviceId)) {
-                        final values = widget.isLora
-                            ? provider.viewSetting['cM'].first['ctconfig']
-                                .split(',')
-                            : '${jsonDecode(provider.viewSettingsList[0])[1]['ctconfig']}'
-                                .split(',');
-                        return Column(
-                          children: [
-                            _buildSettingCard(setting, values),
-                            _buildSettingCard(setting, values, titles: titles),
-                          ],
-                        );
-                      } else if (AppConstants.voltageSetting
-                              .contains(setting.type) &&
-                          _hasPayload('voltageconfig', provider, deviceId)) {
-                        final values = widget.isLora
-                            ? provider.viewSetting['cM'].first['voltageconfig']
-                                .split(',')
-                            : '${jsonDecode(provider.viewSettingsList[0])[2]['voltageconfig']}'
-                                .split(',');
-                        return _buildSettingCard(setting, values);
-                      }
-                      return Container();
-                    }).toList()
+                if (AppConstants.otherSetting.contains(setting.type) &&
+                    _hasPayload('ctconfig', provider, deviceId)) {
+                  final values = widget.isLora
+                      ? provider.viewSetting['cM'].first['ctconfig']
+                      .split(',')
+                      : '${jsonDecode(provider.viewSettingsList[0])[1]['ctconfig']}'
+                      .split(',');
+                  return Column(
+                    children: [
+                      _buildSettingCard(setting, values),
+                      _buildSettingCard(setting, values, titles: titles),
+                    ],
+                  );
+                } else if (AppConstants.voltageSetting
+                    .contains(setting.type) &&
+                    _hasPayload('voltageconfig', provider, deviceId)) {
+                  final values = widget.isLora
+                      ? provider.viewSetting['cM'].first['voltageconfig']
+                      .split(',')
+                      : '${jsonDecode(provider.viewSettingsList[0])[2]['voltageconfig']}'
+                      .split(',');
+                  return _buildSettingCard(setting, values);
+                }
+                return Container();
+              }).toList()
                   : calibrationSettings != null
-                      ? calibrationSettings.map((setting) {
-                          if ([
-                            ...AppConstants.voltageCalibration,
-                            ...AppConstants.currentCalibration,
-                            ...AppConstants.otherCalibration
-                          ].contains(setting.type)) {
-                            final List<String> values = widget.isLora
-                                ? provider
-                                    .viewSetting['cM'].first['calibration']
-                                    .split(',')
-                                : '${jsonDecode(provider.viewSettingsList[0])[3]['calibration']}'
-                                    .split(',');
-                            return _buildSettingCard(
-                              setting,
-                              AppConstants.voltageCalibration
-                                      .contains(setting.type)
-                                  ? values
-                                  : AppConstants.currentCalibration
-                                          .contains(setting.type)
-                                      ? values.skip(3).toList()
-                                      : values.skip(6).toList(),
-                            );
-                          }
-                          return Container();
-                        }).toList()
-                      : <Widget>[]),
+                  ? calibrationSettings.map((setting) {
+                if ([
+                  ...AppConstants.voltageCalibration,
+                  ...AppConstants.currentCalibration,
+                  ...AppConstants.otherCalibration
+                ].contains(setting.type)) {
+                  final List<String> values = widget.isLora
+                      ? provider
+                      .viewSetting['cM'].first['calibration']
+                      .split(',')
+                      : '${jsonDecode(provider.viewSettingsList[0])[3]['calibration']}'
+                      .split(',');
+                  return _buildSettingCard(
+                    setting,
+                    AppConstants.voltageCalibration
+                        .contains(setting.type)
+                        ? values
+                        : AppConstants.currentCalibration
+                        .contains(setting.type)
+                        ? values.skip(3).toList()
+                        : values.skip(6).toList(),
+                  );
+                }
+                return Container();
+              }).toList()
+                  : <Widget>[]),
             ],
           ),
         ],
@@ -743,6 +765,7 @@ class _ViewConfigState extends State<ViewConfig> {
     int range = setting.setting.length < values.length
         ? setting.setting.length
         : values.length;
+    final colorScheme = Theme.of(context).colorScheme;
     return SizedBox(
       width: MediaQuery.of(context).size.width <= 500
           ? MediaQuery.of(context).size.width
@@ -755,15 +778,15 @@ class _ViewConfigState extends State<ViewConfig> {
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
               height: 28,
               decoration: BoxDecoration(
-                  color: Theme.of(context).primaryColorLight,
+                  color: colorScheme.primaryContainer,
                   borderRadius: const BorderRadius.only(
                       topRight: Radius.circular(16),
                       topLeft: Radius.circular(4))),
               child: Center(
                 child: Text(
                   titles.isEmpty ? setting.name : "2 PH ON/OFF Reference",
-                  style: const TextStyle(
-                      fontWeight: FontWeight.bold, color: Colors.white, fontSize: 13),
+                  style: TextStyle(
+                      fontWeight: FontWeight.bold, color: colorScheme.onPrimaryContainer, fontSize: 13),
                 ),
               ),
             ),
@@ -771,23 +794,23 @@ class _ViewConfigState extends State<ViewConfig> {
           Card(
             shape: RoundedRectangleBorder(
               side: BorderSide(
-                color: Theme.of(context).primaryColorLight.withOpacity(0.5),
+                color: colorScheme.outlineVariant.withOpacity(0.5),
                 width: 0.5,
               ),
               borderRadius: const BorderRadius.only(
-                  bottomRight: Radius.circular(12),
-                  bottomLeft: Radius.circular(12),
-                  topRight: Radius.circular(12)),
+                  bottomRight: Radius.circular(14),
+                  bottomLeft: Radius.circular(14),
+                  topRight: Radius.circular(14)),
             ),
             margin: const EdgeInsets.only(left: 0, right: 0, bottom: 15),
             elevation: 2,
-            color: Colors.white,
-            surfaceTintColor: Colors.white,
+            color: colorScheme.surface,
+            surfaceTintColor: colorScheme.surface,
             child: Column(children: [
               if (titles.isEmpty)
                 ...List.generate(
                   range,
-                  (i) {
+                      (i) {
                     if (i < values.length && i < setting.setting.length) {
                       return _buildListTile(
                           setting.setting[i].title, values[i]);
@@ -799,7 +822,7 @@ class _ViewConfigState extends State<ViewConfig> {
               else
                 ...List.generate(
                   titles.length,
-                  (i) => _buildListTile(titles[i], "$i"),
+                      (i) => _buildListTile(titles[i], "$i"),
                 )
             ]),
           ),
@@ -813,11 +836,11 @@ class _ViewConfigState extends State<ViewConfig> {
     final prefProvider = context.read<PreferenceProvider>();
     final pumps = prefProvider.commonPumpSettings!.length > 1
         ? prefProvider.individualPumpSetting!
-            .where((e) =>
-                e.deviceId ==
-                prefProvider.commonPumpSettings![prefProvider.selectedTabIndex]
-                    .deviceId)
-            .toList()
+        .where((e) =>
+    e.deviceId ==
+        prefProvider.commonPumpSettings![prefProvider.selectedTabIndex]
+            .deviceId)
+        .toList()
         : prefProvider.individualPumpSetting!;
 
     return SingleChildScrollView(
@@ -829,28 +852,28 @@ class _ViewConfigState extends State<ViewConfig> {
             runSpacing: 20,
             children: pumps.isNotEmpty
                 ? pumps[0].settingList.map((setting) {
-                    if ([23, ...AppConstants.currentSetting]
-                            .contains(setting.type) &&
-                        _hasPayload('currentconfig', provider, deviceId)) {
-                      return _buildConfigCard(
-                          provider, setting, pumps, 'currentconfig');
-                    }
-                    if ([22, ...AppConstants.timerSetting]
-                            .contains(setting.type) &&
-                        (_hasPayload('rtcconfig', provider, deviceId) ||
-                            _hasPayload('delayconfig', provider, deviceId))) {
-                      return _hasPayload('rtcconfig', provider, deviceId)
-                          ? _buildRTCConfigCard(provider, setting, pumps)
-                          : _buildDelayConfigCard(provider, setting, pumps);
-                    }
-                    if ([25, ...AppConstants.additionalSetting]
-                            .contains(setting.type) &&
-                        _hasPayload('scheduleconfig', provider, deviceId)) {
-                      return _buildConfigCard(
-                          provider, setting, pumps, 'scheduleconfig');
-                    }
-                    return Container();
-                  }).toList()
+              if ([23, ...AppConstants.currentSetting]
+                  .contains(setting.type) &&
+                  _hasPayload('currentconfig', provider, deviceId)) {
+                return _buildConfigCard(
+                    provider, setting, pumps, 'currentconfig');
+              }
+              if ([22, ...AppConstants.timerSetting]
+                  .contains(setting.type) &&
+                  (_hasPayload('rtcconfig', provider, deviceId) ||
+                      _hasPayload('delayconfig', provider, deviceId))) {
+                return _hasPayload('rtcconfig', provider, deviceId)
+                    ? _buildRTCConfigCard(provider, setting, pumps)
+                    : _buildDelayConfigCard(provider, setting, pumps);
+              }
+              if ([25, ...AppConstants.additionalSetting]
+                  .contains(setting.type) &&
+                  _hasPayload('scheduleconfig', provider, deviceId)) {
+                return _buildConfigCard(
+                    provider, setting, pumps, 'scheduleconfig');
+              }
+              return Container();
+            }).toList()
                 : [],
           ),
         ],
@@ -870,6 +893,7 @@ class _ViewConfigState extends State<ViewConfig> {
       MqttPayloadProvider provider, dynamic setting, List pumps) {
     final rtcValues = _getConfigValues(provider, 'rtcconfig');
     final pumpName = _getPumpName(pumps, 'rtcconfig');
+    final colorScheme = Theme.of(context).colorScheme;
 
     return SizedBox(
       width: MediaQuery.of(context).size.width <= 500
@@ -883,15 +907,15 @@ class _ViewConfigState extends State<ViewConfig> {
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
               height: 28,
               decoration: BoxDecoration(
-                  color: Theme.of(context).primaryColorLight,
+                  color: colorScheme.primaryContainer,
                   borderRadius: const BorderRadius.only(
                       topRight: Radius.circular(16),
                       topLeft: Radius.circular(4))),
               child: Center(
                 child: Text(
                   pumpName,
-                  style: const TextStyle(
-                      fontWeight: FontWeight.bold, color: Colors.white, fontSize: 13),
+                  style: TextStyle(
+                      fontWeight: FontWeight.bold, color: colorScheme.onPrimaryContainer, fontSize: 13),
                 ),
               ),
             ),
@@ -899,23 +923,23 @@ class _ViewConfigState extends State<ViewConfig> {
           Card(
             shape: RoundedRectangleBorder(
               side: BorderSide(
-                color: Theme.of(context).primaryColorLight.withOpacity(0.5),
+                color: colorScheme.outlineVariant.withOpacity(0.5),
                 width: 0.5,
               ),
               borderRadius: const BorderRadius.only(
-                  bottomRight: Radius.circular(12),
-                  bottomLeft: Radius.circular(12),
-                  topRight: Radius.circular(12)),
+                  bottomRight: Radius.circular(14),
+                  bottomLeft: Radius.circular(14),
+                  topRight: Radius.circular(14)),
             ),
             margin: const EdgeInsets.only(left: 0, right: 0, bottom: 15),
             elevation: 2,
-            color: Colors.white,
-            surfaceTintColor: Colors.white,
+            color: colorScheme.surface,
+            surfaceTintColor: colorScheme.surface,
             child: Column(
               children: [
                 _buildListTile(setting.setting[11].title,
                     widget.isLora ? rtcValues[1] : rtcValues[0]),
-                const Divider(height: 1),
+                Divider(height: 1, color: colorScheme.outlineVariant.withOpacity(0.5)),
                 Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: _buildRTCTable(setting, rtcValues),
@@ -932,6 +956,7 @@ class _ViewConfigState extends State<ViewConfig> {
       MqttPayloadProvider provider, dynamic setting, List pumps) {
     final delayValues = _getConfigValues(provider, 'delayconfig');
     final pumpName = _getPumpName(pumps, 'delayconfig');
+    final colorScheme = Theme.of(context).colorScheme;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -941,15 +966,15 @@ class _ViewConfigState extends State<ViewConfig> {
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
             height: 28,
             decoration: BoxDecoration(
-                color: Theme.of(context).primaryColorLight,
+                color: colorScheme.primaryContainer,
                 borderRadius: const BorderRadius.only(
                     topRight: Radius.circular(16),
                     topLeft: Radius.circular(4))),
             child: Center(
               child: Text(
                 pumpName,
-                style: const TextStyle(
-                    fontWeight: FontWeight.bold, color: Colors.white, fontSize: 13),
+                style: TextStyle(
+                    fontWeight: FontWeight.bold, color: colorScheme.onPrimaryContainer, fontSize: 13),
               ),
             ),
           ),
@@ -957,18 +982,18 @@ class _ViewConfigState extends State<ViewConfig> {
         Card(
           shape: RoundedRectangleBorder(
             side: BorderSide(
-              color: Theme.of(context).primaryColorLight.withOpacity(0.5),
+              color: colorScheme.outlineVariant.withOpacity(0.5),
               width: 0.5,
             ),
             borderRadius: const BorderRadius.only(
-                bottomRight: Radius.circular(12),
-                bottomLeft: Radius.circular(12),
-                topRight: Radius.circular(12)),
+                bottomRight: Radius.circular(14),
+                bottomLeft: Radius.circular(14),
+                topRight: Radius.circular(14)),
           ),
           margin: const EdgeInsets.only(left: 0, right: 0, bottom: 15),
           elevation: 2,
-          color: Colors.white,
-          surfaceTintColor: Colors.white,
+          color: colorScheme.surface,
+          surfaceTintColor: colorScheme.surface,
           child: Column(
             children: [
               ...List.generate(setting.setting.length, (i) {
@@ -990,8 +1015,8 @@ class _ViewConfigState extends State<ViewConfig> {
     return widget.isLora
         ? provider.viewSetting['cM'].first[configType].split(',')
         : jsonDecode(provider.viewSettingsList[_getPayloadIndex(configType)])[
-                _getConfigTypeIndex(configType)][configType]
-            .split(',');
+    _getConfigTypeIndex(configType)][configType]
+        .split(',');
   }
 
   int _getConfigTypeIndex(String configType) {
@@ -1013,10 +1038,10 @@ class _ViewConfigState extends State<ViewConfig> {
     return selectedPayload.contains('${configType}2')
         ? 2
         : selectedPayload.contains('${configType}3')
-            ? 3
-            : selectedPayload.contains('${configType}4')
-                ? 4
-                : 1;
+        ? 3
+        : selectedPayload.contains('${configType}4')
+        ? 4
+        : 1;
   }
 
   String _getPumpName(List pumps, String configType) {
@@ -1025,6 +1050,7 @@ class _ViewConfigState extends State<ViewConfig> {
   }
 
   Widget _buildRTCTable(dynamic setting, List<String> rtcValues) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Table(
       columnWidths: const {
         0: FlexColumnWidth(1),
@@ -1032,14 +1058,14 @@ class _ViewConfigState extends State<ViewConfig> {
         2: FlexColumnWidth(2),
       },
       border: TableBorder.all(
-        color: Colors.grey.shade200,
+        color: colorScheme.outlineVariant.withOpacity(0.4),
         width: 1,
         borderRadius: BorderRadius.circular(8),
       ),
       children: [
         TableRow(
           decoration: BoxDecoration(
-            color: Theme.of(context).primaryColor.withOpacity(0.08),
+            color: colorScheme.primaryContainer.withOpacity(0.3),
             borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
           ),
           children: [
@@ -1050,7 +1076,7 @@ class _ViewConfigState extends State<ViewConfig> {
                       style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 12,
-                          color: Theme.of(context).primaryColor))),
+                          color: colorScheme.primary))),
             ),
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 8),
@@ -1059,7 +1085,7 @@ class _ViewConfigState extends State<ViewConfig> {
                       style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 12,
-                          color: Theme.of(context).primaryColor))),
+                          color: colorScheme.primary))),
             ),
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 8),
@@ -1068,7 +1094,7 @@ class _ViewConfigState extends State<ViewConfig> {
                       style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 12,
-                          color: Theme.of(context).primaryColor))),
+                          color: colorScheme.primary))),
             ),
           ],
         ),
@@ -1083,19 +1109,19 @@ class _ViewConfigState extends State<ViewConfig> {
                   padding: const EdgeInsets.symmetric(vertical: 8),
                   child: Center(
                       child: Text('${idx + 1}',
-                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold))),
+                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: colorScheme.onSurface))),
                 ),
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 8),
                   child: Center(
                       child: Text(timeValues[0],
-                          style: const TextStyle(fontSize: 12))),
+                          style: TextStyle(fontSize: 12, color: colorScheme.onSurface))),
                 ),
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 8),
                   child: Center(
                       child: Text(timeValues[1],
-                          style: const TextStyle(fontSize: 12))),
+                          style: TextStyle(fontSize: 12, color: colorScheme.onSurface))),
                 ),
               ],
             );
@@ -1106,6 +1132,7 @@ class _ViewConfigState extends State<ViewConfig> {
 
   Widget _buildSettingCardWithTitle(String title, setting, List<String> values,
       {int offset = 0}) {
+    final colorScheme = Theme.of(context).colorScheme;
     return SizedBox(
       width: MediaQuery.of(context).size.width <= 500
           ? MediaQuery.of(context).size.width
@@ -1118,15 +1145,15 @@ class _ViewConfigState extends State<ViewConfig> {
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
               height: 28,
               decoration: BoxDecoration(
-                  color: Theme.of(context).primaryColorLight,
+                  color: colorScheme.primaryContainer,
                   borderRadius: const BorderRadius.only(
                       topRight: Radius.circular(16),
                       topLeft: Radius.circular(4))),
               child: Center(
                 child: Text(
                   title,
-                  style: const TextStyle(
-                      fontWeight: FontWeight.bold, color: Colors.white, fontSize: 13),
+                  style: TextStyle(
+                      fontWeight: FontWeight.bold, color: colorScheme.onPrimaryContainer, fontSize: 13),
                 ),
               ),
             ),
@@ -1134,23 +1161,23 @@ class _ViewConfigState extends State<ViewConfig> {
           Card(
             shape: RoundedRectangleBorder(
               side: BorderSide(
-                color: Theme.of(context).primaryColorLight.withOpacity(0.5),
+                color: colorScheme.outlineVariant.withOpacity(0.5),
                 width: 0.5,
               ),
               borderRadius: const BorderRadius.only(
-                  bottomRight: Radius.circular(12),
-                  bottomLeft: Radius.circular(12),
-                  topRight: Radius.circular(12)),
+                  bottomRight: Radius.circular(14),
+                  bottomLeft: Radius.circular(14),
+                  topRight: Radius.circular(14)),
             ),
             margin: const EdgeInsets.only(left: 0, right: 0, bottom: 15),
             elevation: 2,
-            color: Colors.white,
-            surfaceTintColor: Colors.white,
+            color: colorScheme.surface,
+            surfaceTintColor: colorScheme.surface,
             child: Column(
               children: [
                 ...List.generate(
                   setting.setting.length,
-                  (i) {
+                      (i) {
                     if (values.length > i) {
                       return _buildListTile(
                           setting.setting[i].title, values[i + offset]);

@@ -131,11 +131,11 @@ class ScrollingTable extends StatefulWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 // Design tokens (taken from the reference screenshot)
 // ─────────────────────────────────────────────────────────────────────────────
-const Color _kPageBg = Color(0xffEEF4F4);
-const Color _kBannerBg = Color(0xffE2EFF0);
-const Color _kGroupBg = Color(0xffD9ECEF);
-const Color _kHeaderBg = Color(0xffF4F8F9);
-const Color _kTeal = Color(0xff0B5D6B);
+const Color _kPageBg = Color(0xFFF8FAFC);
+const Color _kBannerBg = Color(0xFFF1F5F9);
+const Color _kGroupBg = Color(0xFFE2E8F0);
+const Color _kHeaderBg = Color(0xFFFFFFFF);
+const Color _kPurple = Color(0xFF5B21B6);
 const Color _kHeaderText = Color(0xff5F6F76);
 const Color _kBodyText = Color(0xff1F2D33);
 const Color _kMutedText = Color(0xff9AA8AE);
@@ -345,7 +345,7 @@ class _ScrollingTableState extends State<ScrollingTable> {
   Widget _buildTab(String option) {
     final selected = option.toLowerCase() == widget.fixedColumn.toLowerCase();
     return Material(
-      color: selected ? _kTeal : Colors.transparent,
+      color: selected ? _kPurple : Colors.transparent,
       shape: const StadiumBorder(),
       child: InkWell(
         customBorder: const StadiumBorder(),
@@ -527,7 +527,7 @@ class _ScrollingTableState extends State<ScrollingTable> {
                     style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
-                      color: _kTeal,
+                      color: _kPurple,
                     ),
                   ),
                   // if (g.summary.isNotEmpty) ...[
@@ -564,7 +564,7 @@ class _ScrollingTableState extends State<ScrollingTable> {
               style: const TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w700,
-                color: _kTeal,
+                color: _kPurple,
               ),
             ),
     );
@@ -592,7 +592,7 @@ class _ScrollingTableState extends State<ScrollingTable> {
                 style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w700,
-                  color: _kTeal,
+                  color: _kPurple,
                 ),
               ),
             ),
@@ -793,7 +793,7 @@ class _ScrollingTableState extends State<ScrollingTable> {
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
-                  color: _kTeal,
+                  color: _kPurple,
                 ),
               ),
             ),
@@ -962,7 +962,7 @@ class _ScrollingTableState extends State<ScrollingTable> {
               child: ElevatedButton(
                 onPressed: () => _openSensors(i),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: _kTeal,
+                  backgroundColor: _kPurple,
                   foregroundColor: Colors.white,
                   elevation: 0,
                   shape: const CircleBorder(),
@@ -976,7 +976,7 @@ class _ScrollingTableState extends State<ScrollingTable> {
               icon: const Icon(Icons.bar_chart_rounded, size: 18),
               label: const Text('Sensors'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: _kTeal,
+                backgroundColor: _kPurple,
                 foregroundColor: Colors.white,
                 elevation: 0,
                 shape: const StadiumBorder(),

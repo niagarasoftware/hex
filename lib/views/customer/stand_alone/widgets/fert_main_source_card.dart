@@ -3,52 +3,7 @@ import 'package:flutter_svg/svg.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:hex/models/customer/site_model.dart';
 
-/// Stand-alone cards for the NEW fertilizer tank concept.
-///  - FertMainSourceCard : fertilizer main source (type 6) -> its pumps
-///  - FertTankValveCard  : fertilizer tanks (type 7) -> inlet / outlet valves
-
-Widget _cardShell(String title, List<Widget> children) {
-  return Card(
-    margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-    elevation: 0,
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(8),
-      side: BorderSide(color: Colors.blueGrey.shade100),
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(12, 10, 12, 4),
-          child: Text(
-            title,
-            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-          ),
-        ),
-        const Divider(height: 0),
-        ...children,
-      ],
-    ),
-  );
-}
-
-Widget _subHeader(String text) => Padding(
-  padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
-  child: Text(
-    text,
-    style: TextStyle(
-      fontSize: 11,
-      letterSpacing: 0.4,
-      fontWeight: FontWeight.w600,
-      color: Colors.blueGrey.shade400,
-    ),
-  ),
-);
-
-// ------------------------------------------------------------
-// Fertilizer main source -> pumps
-// ------------------------------------------------------------
-class FertMainSourceCard extends StatelessWidget {
+class FertMainSourceCard extends StatefulWidget {
   final List<FertMainSource> sources;
   final void Function(PumpModel pump, bool value) onChanged;
 
@@ -59,49 +14,249 @@ class FertMainSourceCard extends StatelessWidget {
   });
 
   @override
+  State<FertMainSourceCard> createState() => _FertMainSourceCardState();
+}
+
+class _FertMainSourceCardState extends State<FertMainSourceCard> {
+  bool isExpanded = true;
+
+  @override
   Widget build(BuildContext context) {
-    final withPumps = sources.where((s) => s.pumps.isNotEmpty).toList();
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
+    final withPumps = widget.sources.where((s) => s.pumps.isNotEmpty).toList();
     if (withPumps.isEmpty) return const SizedBox.shrink();
 
-    return _cardShell('Fertilizer main source pump', [
-      for (final s in withPumps) ...[
-        _subHeader(s.source.name),
-        for (final pump in s.pumps)
-          ListTile(
-            dense: true,
-            leading: SizedBox(
-              width: 40,
-              height: 40,
-              child: Center(
-                child: SvgPicture.asset(
-                  'assets/svg_images/pump.svg',
-                  width: 28,
-                  height: 28,
-                  colorFilter: ColorFilter.mode(
-                    pump.status == 1 ? Colors.green : Colors.black54,
-                    BlendMode.srcIn,
-                  ),
-                  placeholderBuilder: (_) =>
-                  const Icon(Icons.error, size: 20, color: Colors.red),
+    int activeCount = 0;
+    int totalPumps = 0;
+    for (final s in withPumps) {
+      for (final p in s.pumps) {
+        totalPumps++;
+        if (p.selected) activeCount++;
+      }
+    }
+
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 6),
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: colorScheme.outlineVariant,
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.02),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Header Bar
+          InkWell(
+            onTap: () {
+              setState(() {
+                isExpanded = !isExpanded;
+              });
+            },
+            borderRadius: BorderRadius.vertical(
+              top: const Radius.circular(12),
+              bottom: isExpanded ? Radius.zero : const Radius.circular(12),
+            ),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: colorScheme.surfaceContainerLow,
+                borderRadius: BorderRadius.vertical(
+                  top: const Radius.circular(12),
+                  bottom: isExpanded ? Radius.zero : const Radius.circular(12),
                 ),
+                border: isExpanded
+                    ? Border(
+                        bottom: BorderSide(
+                          color: colorScheme.outlineVariant,
+                          width: 0.5,
+                        ),
+                      )
+                    : null,
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'Fertilizer Main Source Pump',
+                      style: textTheme.titleMedium?.copyWith(
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.bold,
+                        color: colorScheme.onSurface,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 7, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: colorScheme.primaryContainer,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(
+                      "$activeCount/$totalPumps Active",
+                      style: textTheme.labelSmall?.copyWith(
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.bold,
+                        color: colorScheme.onPrimaryContainer,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Icon(
+                    isExpanded
+                        ? Icons.keyboard_arrow_up_rounded
+                        : Icons.keyboard_arrow_down_rounded,
+                    size: 18,
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                ],
               ),
             ),
-            title: Text(pump.name, style: const TextStyle(fontSize: 14)),
-            trailing: Switch(
-              value: pump.selected,
-              onChanged: (v) => onChanged(pump, v),
-            ),
           ),
-      ],
-      const SizedBox(height: 4),
-    ]);
+
+          // Content Grid
+          if (isExpanded)
+            Padding(
+              padding: const EdgeInsets.all(10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  for (final s in withPumps) ...[
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 6, top: 2),
+                      child: Text(
+                        s.source.name,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ),
+                    LayoutBuilder(
+                      builder: (context, constraints) {
+                        final width = constraints.maxWidth;
+                        const spacing = 8.0;
+                        int columns = 1;
+                        if (width >= 600) {
+                          columns = 3;
+                        } else if (width >= 320) {
+                          columns = 2;
+                        }
+
+                        final itemWidth =
+                            (width - (spacing * (columns - 1))) / columns;
+
+                        return Wrap(
+                          spacing: spacing,
+                          runSpacing: spacing,
+                          children: s.pumps.map((pump) {
+                            final isSelected = pump.selected;
+
+                            return SizedBox(
+                              width: itemWidth,
+                              child: InkWell(
+                                onTap: () => widget.onChanged(pump, !pump.selected),
+                                borderRadius: BorderRadius.circular(8),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 8, vertical: 5),
+                                  decoration: BoxDecoration(
+                                    color: isSelected
+                                        ? colorScheme.primaryContainer
+                                            .withOpacity(0.45)
+                                        : colorScheme.surfaceContainerLow,
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(
+                                      color: isSelected
+                                          ? colorScheme.primary
+                                          : colorScheme.outlineVariant,
+                                      width: isSelected ? 1.2 : 1.0,
+                                    ),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      SizedBox(
+                                        width: 22,
+                                        height: 22,
+                                        child: Center(
+                                          child: SvgPicture.asset(
+                                            'assets/svg_images/pump.svg',
+                                            width: 18,
+                                            height: 18,
+                                            colorFilter: ColorFilter.mode(
+                                              isSelected
+                                                  ? colorScheme.primary
+                                                  : colorScheme
+                                                      .onSurfaceVariant,
+                                              BlendMode.srcIn,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 6),
+                                      Expanded(
+                                        child: Text(
+                                          pump.name,
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: isSelected
+                                                ? FontWeight.bold
+                                                : FontWeight.w600,
+                                            color: isSelected
+                                                ? colorScheme.primary
+                                                : colorScheme.onSurface,
+                                          ),
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                      Transform.scale(
+                                        scale: 0.6,
+                                        child: Switch(
+                                          value: pump.selected,
+                                          activeColor: colorScheme.onPrimary,
+                                          activeTrackColor: colorScheme.primary,
+                                          inactiveTrackColor: colorScheme
+                                              .surfaceContainerHighest,
+                                          onChanged: (v) =>
+                                              widget.onChanged(pump, v),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            );
+                          }).toList(),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 8),
+                  ],
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
   }
 }
 
-// ------------------------------------------------------------
-// Fertilizer tank -> inlet valves / outlet valves
-// ------------------------------------------------------------
-class FertTankValveCard extends StatelessWidget {
+class FertTankValveCard extends StatefulWidget {
   final List<FertTank> tanks;
   final void Function(TankValveModel valve, bool value) onChanged;
 
@@ -112,48 +267,272 @@ class FertTankValveCard extends StatelessWidget {
   });
 
   @override
+  State<FertTankValveCard> createState() => _FertTankValveCardState();
+}
+
+class _FertTankValveCardState extends State<FertTankValveCard> {
+  bool isExpanded = true;
+
+  @override
   Widget build(BuildContext context) {
-    final visible = tanks
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
+    final visible = widget.tanks
         .where((t) => t.inletValves.isNotEmpty || t.outletValves.isNotEmpty)
         .toList();
     if (visible.isEmpty) return const SizedBox.shrink();
 
-    return _cardShell('Fertilizer tank valves', [
-      for (final t in visible) ...[
-        _subHeader(t.name),
-        for (final v in t.inletValves) _valveTile(v, 'Inlet'),
-        for (final v in t.outletValves) _valveTile(v, 'Outlet'),
-      ],
-      const SizedBox(height: 4),
-    ]);
-  }
+    int activeCount = 0;
+    int totalValves = 0;
+    for (final t in visible) {
+      for (final v in t.inletValves) {
+        totalValves++;
+        if (v.selected) activeCount++;
+      }
+      for (final v in t.outletValves) {
+        totalValves++;
+        if (v.selected) activeCount++;
+      }
+    }
 
-  Widget _valveTile(TankValveModel v, String kind) {
-    final injectors =
-    v.channelNames.isEmpty ? '' : ' • ${v.channelNames.join(', ')}';
-    return ListTile(
-      dense: true,
-      leading: SizedBox(
-        width: 40,
-        height: 40,
-        child: Center(
-          child: FaIcon(
-            FontAwesomeIcons.faucetDrip,
-            size: 20,
-            color: v.status == 1 ? Colors.green : Colors.black54,
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 6),
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: colorScheme.outlineVariant,
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.02),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
           ),
-        ),
+        ],
       ),
-      title: Text(v.name, style: const TextStyle(fontSize: 14)),
-      subtitle: Text('$kind$injectors', style: const TextStyle(fontSize: 11)),
-      trailing : Transform.scale(
-        scale: 0.7,
-        child: Switch(
-          activeThumbColor: Colors.teal,
-          hoverColor: Colors.pink.shade100,
-          value: v.selected,
-          onChanged: (val) => onChanged(v, val),
-        ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Header Bar
+          InkWell(
+            onTap: () {
+              setState(() {
+                isExpanded = !isExpanded;
+              });
+            },
+            borderRadius: BorderRadius.vertical(
+              top: const Radius.circular(12),
+              bottom: isExpanded ? Radius.zero : const Radius.circular(12),
+            ),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: colorScheme.surfaceContainerLow,
+                borderRadius: BorderRadius.vertical(
+                  top: const Radius.circular(12),
+                  bottom: isExpanded ? Radius.zero : const Radius.circular(12),
+                ),
+                border: isExpanded
+                    ? Border(
+                        bottom: BorderSide(
+                          color: colorScheme.outlineVariant,
+                          width: 0.5,
+                        ),
+                      )
+                    : null,
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'Fertilizer Tank Valves',
+                      style: textTheme.titleMedium?.copyWith(
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.bold,
+                        color: colorScheme.onSurface,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 7, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: colorScheme.primaryContainer,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(
+                      "$activeCount/$totalValves Active",
+                      style: textTheme.labelSmall?.copyWith(
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.bold,
+                        color: colorScheme.onPrimaryContainer,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Icon(
+                    isExpanded
+                        ? Icons.keyboard_arrow_up_rounded
+                        : Icons.keyboard_arrow_down_rounded,
+                    size: 18,
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          // Content Grid
+          if (isExpanded)
+            Padding(
+              padding: const EdgeInsets.all(10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  for (final t in visible) ...[
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 6, top: 2),
+                      child: Text(
+                        t.name,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ),
+                    LayoutBuilder(
+                      builder: (context, constraints) {
+                        final width = constraints.maxWidth;
+                        const spacing = 8.0;
+                        int columns = 1;
+                        if (width >= 600) {
+                          columns = 3;
+                        } else if (width >= 320) {
+                          columns = 2;
+                        }
+
+                        final itemWidth =
+                            (width - (spacing * (columns - 1))) / columns;
+
+                        final tankValves = <Map<String, dynamic>>[];
+                        for (final v in t.inletValves) {
+                          tankValves.add({'valve': v, 'kind': 'Inlet'});
+                        }
+                        for (final v in t.outletValves) {
+                          tankValves.add({'valve': v, 'kind': 'Outlet'});
+                        }
+
+                        return Wrap(
+                          spacing: spacing,
+                          runSpacing: spacing,
+                          children: tankValves.map((map) {
+                            final TankValveModel v = map['valve'];
+                            final String kind = map['kind'];
+                            final isSelected = v.selected;
+                            final injectors = v.channelNames.isEmpty
+                                ? ''
+                                : ' • ${v.channelNames.join(', ')}';
+
+                            return SizedBox(
+                              width: itemWidth,
+                              child: InkWell(
+                                onTap: () => widget.onChanged(v, !v.selected),
+                                borderRadius: BorderRadius.circular(8),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 8, vertical: 5),
+                                  decoration: BoxDecoration(
+                                    color: isSelected
+                                        ? colorScheme.primaryContainer
+                                            .withOpacity(0.45)
+                                        : colorScheme.surfaceContainerLow,
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(
+                                      color: isSelected
+                                          ? colorScheme.primary
+                                          : colorScheme.outlineVariant,
+                                      width: isSelected ? 1.2 : 1.0,
+                                    ),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      SizedBox(
+                                        width: 22,
+                                        height: 22,
+                                        child: Center(
+                                          child: FaIcon(
+                                            FontAwesomeIcons.faucetDrip,
+                                            size: 14,
+                                            color: isSelected
+                                                ? colorScheme.primary
+                                                : colorScheme.onSurfaceVariant,
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 6),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Text(
+                                              v.name,
+                                              style: TextStyle(
+                                                fontSize: 12,
+                                                fontWeight: isSelected
+                                                    ? FontWeight.bold
+                                                    : FontWeight.w600,
+                                                color: isSelected
+                                                    ? colorScheme.primary
+                                                    : colorScheme.onSurface,
+                                              ),
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                            Text(
+                                              '$kind$injectors',
+                                              style: TextStyle(
+                                                fontSize: 10,
+                                                color: colorScheme.onSurfaceVariant,
+                                              ),
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      Transform.scale(
+                                        scale: 0.6,
+                                        child: Switch(
+                                          value: v.selected,
+                                          activeColor: colorScheme.onPrimary,
+                                          activeTrackColor: colorScheme.primary,
+                                          inactiveTrackColor: colorScheme
+                                              .surfaceContainerHighest,
+                                          onChanged: (val) =>
+                                              widget.onChanged(v, val),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            );
+                          }).toList(),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 8),
+                  ],
+                ],
+              ),
+            ),
+        ],
       ),
     );
   }

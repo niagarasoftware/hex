@@ -131,6 +131,7 @@ class _MotorCyclicLogState extends State<MotorCyclicLog> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFF8FAFC),
       floatingActionButton: FloatingActionButton(
         onPressed: (){
           showDialog(context: context, builder: (context){
@@ -216,7 +217,7 @@ class _MotorCyclicLogState extends State<MotorCyclicLog> {
     return Container(
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
-          color: Theme.of(context).primaryColorLight,
+          color: const Color(0xFFEDE9FE),
           borderRadius: BorderRadius.circular(8)
       ),
       child: Column(
@@ -273,7 +274,7 @@ class _MotorCyclicLogState extends State<MotorCyclicLog> {
         Container(
           padding: EdgeInsets.all(8),
           height: 30,
-          color: Theme.of(context).primaryColorDark,
+          color: const Color(0xFF5B21B6),
           child: Row(
             children: [
               Expanded(child: getTitleValue(title: 'Zone', value: (zoneData["zone"] ?? "").toString(), titleColor: Colors.white, valueColor: Colors.white)),
