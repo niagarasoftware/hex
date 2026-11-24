@@ -179,14 +179,14 @@ class SettingsScreenFactory {
           );
         }
 
-      case 'Geography':
-        return ctx.modelId == 72 ? MapScreenValve(
-          userId: ctx.userId,
-          customerId: ctx.customerId,
-          controllerId: ctx.controllerId,
-          imeiNo: ctx.imeiNo,
-          modelId: ctx.modelId,
-        ) :  MapScreenOro(userId: ctx.userId, customerId: ctx.customerId, controllerId: ctx.controllerId, imeiNo: ctx.imeiNo, modelId: ctx.modelId,);
+      // case 'Geography':
+      //   return ctx.modelId == 72 ? MapScreenValve(
+      //     userId: ctx.userId,
+      //     customerId: ctx.customerId,
+      //     controllerId: ctx.controllerId,
+      //     imeiNo: ctx.imeiNo,
+      //     modelId: ctx.modelId,
+      //   ) :  MapScreenOro(userId: ctx.userId, customerId: ctx.customerId, controllerId: ctx.controllerId, imeiNo: ctx.imeiNo, modelId: ctx.modelId,);
 
 
 

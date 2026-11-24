@@ -112,7 +112,7 @@ Widget buildCustomerMainScreen({required int index, required UserRole role, requ
         controllerId: cMaster.controllerId,
       );
     case 7:
-      return isAquaculture ? MapScreenValve(customerId: cSite.customerId,
+      return isAquaculture ? MapScreenValveAreator(customerId: cSite.customerId,
         controllerId: cMaster.controllerId,
         userId: cSite.customerId,
         imeiNo: cMaster.deviceId, modelId: cMaster.modelId,) :

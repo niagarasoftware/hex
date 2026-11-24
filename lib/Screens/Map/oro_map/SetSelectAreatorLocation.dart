@@ -11,16 +11,16 @@ import '../../../StateManagement/mqtt_payload_provider.dart';
 import '../googlemap_model.dart';
 import 'getlatlong.dart';
 
-class MapScreen extends StatefulWidget {
-  const MapScreen({Key? key, required this.index}) : super(key: key);
+class MapScreenSetAreatorLocation extends StatefulWidget {
+  const MapScreenSetAreatorLocation({Key? key, required this.index}) : super(key: key);
   final int index;
 
   @override
-  _MapScreenState createState() => _MapScreenState();
+  _MapScreenSetAreatorLocationState createState() => _MapScreenSetAreatorLocationState();
 }
 
 
-class _MapScreenState extends State<MapScreen> {
+class _MapScreenSetAreatorLocationState extends State<MapScreenSetAreatorLocation> {
   GoogleMapController? _mapController;
   final TextEditingController _searchController = TextEditingController();
   Set<Marker> _markers = {};

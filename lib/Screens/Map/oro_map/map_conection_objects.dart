@@ -94,9 +94,9 @@ class _MapConnectionObjectState extends State<MapConnectionObject> {
   Future<void> _openEditor([int? index]) async {
     await Navigator.push(context, MaterialPageRoute(builder: (_) {
       if (index == null) {
-        return widget.modelId == 72 ? MapScreendevice() : SetSelectOroDeviceLocation();
+        return widget.modelId == 72 ? SetAreatorLocationDraw() : SetSelectOroDeviceLocation();
       }
-      return widget.modelId == 72 ? MapScreen(index: index) : SetSelectOroLocation(index: index);
+      return widget.modelId == 72 ? MapScreenSetAreatorLocation(index: index) : SetSelectOroLocation(index: index);
     }));
     // Keep local provider edits until Save changes is pressed.
     if (mounted) setState(() {});

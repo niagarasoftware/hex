@@ -12,8 +12,8 @@ import '../../../services/http_service.dart';
 import 'map_conection_objects.dart';
 
 
-class MapScreenValve extends StatefulWidget {
-  const MapScreenValve({
+class MapScreenValveAreator extends StatefulWidget {
+  const MapScreenValveAreator({
     Key? key,
     required this.userId,
     required this.customerId,
@@ -26,10 +26,10 @@ class MapScreenValve extends StatefulWidget {
   final String imeiNo;
 
   @override
-  State<MapScreenValve> createState() => _MapScreenValveState();
+  State<MapScreenValveAreator> createState() => _MapScreenValveAreatorState();
 }
 
-class _MapScreenValveState extends State<MapScreenValve> {
+class _MapScreenValveAreatorState extends State<MapScreenValveAreator> {
   GoogleMapController? mapController;
   LatLng center = const LatLng(11.7749, 78.4194);
 
