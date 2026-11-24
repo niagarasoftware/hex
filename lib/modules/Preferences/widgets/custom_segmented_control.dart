@@ -15,23 +15,23 @@ class CustomSegmentedControl extends StatelessWidget {
     required this.groupValue,
     required this.onChanged,
     this.selectedColor = Colors.black,
-    this.unselectedColor = Colors.white,
-    this.padding = const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+    this.unselectedColor = const Color(0xFFFFFFFF),
+    this.padding = const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
   });
 
   @override
   Widget build(BuildContext context) {
-    final primaryColor = Theme.of(context).primaryColor;
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3),
+        color: colorScheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: primaryColor.withOpacity(0.15),
+          color: colorScheme.outlineVariant.withOpacity(0.5),
           width: 1,
         ),
       ),
-      padding: const EdgeInsets.all(4),
+      padding: const EdgeInsets.all(3),
       child: CupertinoSlidingSegmentedControl<int>(
         padding: const EdgeInsets.all(2),
         children: segmentTitles.map((key, title) {
@@ -44,7 +44,9 @@ class CustomSegmentedControl extends StatelessWidget {
                 title,
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  color: isSelected ? Colors.black87 : primaryColor,
+                  color: isSelected
+                      ? colorScheme.primary
+                      : colorScheme.onSurfaceVariant,
                   fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
                   fontSize: 13,
                 ),
@@ -54,8 +56,8 @@ class CustomSegmentedControl extends StatelessWidget {
         }),
         groupValue: groupValue,
         onValueChanged: onChanged,
-        thumbColor: Colors.white,
-        backgroundColor: Colors.transparent,
+        thumbColor: colorScheme.surface,
+        backgroundColor: colorScheme.surface.withOpacity(0),
       ),
     );
   }

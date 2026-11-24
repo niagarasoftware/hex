@@ -268,23 +268,21 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                               },
                             );
                           },
-                          child: Card(
-                            color: Colors.white,
-                            surfaceTintColor: Colors.white,
-                            child: Container(
-                              padding: const EdgeInsets.all(8.0),
-                              decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(10),
-                                  color: Theme.of(context).primaryColor
-                                // border: Border.all(color: Colors.grey)
-                              ),
-                              child: const Row(
-                                children: [
-                                  Text("Change schedule type", style: TextStyle(color: Colors.white),),
-                                  SizedBox(width: 5,),
-                                  Icon(Icons.edit, color: Colors.white,)
-                                ],
-                              ),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF5B21B6),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: const Row(
+                              children: [
+                                Text(
+                                  "Change Planning Method",
+                                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                                ),
+                                SizedBox(width: 6),
+                                Icon(Icons.keyboard_arrow_down, color: Colors.white, size: 18)
+                              ],
                             ),
                           ),
                         ),
@@ -1502,7 +1500,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(15),
-              border: Border.all(color: Theme.of(context).primaryColorLight),
+              border: Border.all(color: const Color(0xFF5B21B6)),
             ),
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),

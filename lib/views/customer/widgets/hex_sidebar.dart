@@ -137,15 +137,6 @@ class HexSidebar extends StatefulWidget {
 class _HexSidebarState extends State<HexSidebar> {
   late bool _isExpanded;
 
-  // Visual Theme Palette
-  static const Color primaryPurple = Color(0xFF673AB7);
-  static const Color activeBgLavender = Color(0xFFEDE7F6);
-  static const Color brandIconBg = Color(0xFF5B22B6);
-  static const Color textDark = Color(0xFF1E293B);
-  static const Color textMuted = Color(0xFF475569);
-  static const Color iconMuted = Color(0xFF64748B);
-  static const Color avatarGreen = Color(0xFF1B873F);
-
   @override
   void initState() {
     super.initState();
@@ -185,9 +176,9 @@ class _HexSidebarState extends State<HexSidebar> {
         heightFactor: 0.84,
         widthFactor: 0.75,
         child: Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(8)),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surface,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
           ),
           child: const UserProfile(isNarrow: false),
         ),
@@ -197,9 +188,17 @@ class _HexSidebarState extends State<HexSidebar> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     final items = HexSidebar.buildItems(widget.master);
 
-    // Dynamic resolution of username and mobile number (avoid static text)
+    final primaryPurple = colorScheme.primary;
+    final activeBgLavender = colorScheme.primaryContainer;
+    final brandIconBg = colorScheme.secondary;
+    final textDark = colorScheme.onSurface;
+    final textMuted = colorScheme.onSurfaceVariant;
+    final iconMuted = colorScheme.outline;
+    final avatarGreen = colorScheme.tertiary;
+
     final String displayName = (widget.userName != null && widget.userName!.trim().isNotEmpty)
         ? widget.userName!.trim()
         : (widget.viewedCustomer?.name != null && widget.viewedCustomer!.name.trim().isNotEmpty)
@@ -226,10 +225,10 @@ class _HexSidebarState extends State<HexSidebar> {
       width: sidebarWidth,
       height: double.infinity,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colorScheme.surface,
         border: Border(
           right: BorderSide(
-            color: Colors.grey.shade200,
+            color: colorScheme.outlineVariant,
             width: 1.2,
           ),
         ),
@@ -245,7 +244,7 @@ class _HexSidebarState extends State<HexSidebar> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // -------------------------------------------------------------------
-          // Header: Brand Logo & Title (Arrow removed as requested)
+          // Header: Brand Logo & Title
           // -------------------------------------------------------------------
           Padding(
             padding: EdgeInsets.symmetric(
@@ -254,7 +253,6 @@ class _HexSidebarState extends State<HexSidebar> {
             ),
             child: Row(
               children: [
-                // Purple squircle logo
                 Container(
                   width: 36,
                   height: 36,
@@ -279,7 +277,7 @@ class _HexSidebarState extends State<HexSidebar> {
                 ),
                 if (_isExpanded) ...[
                   const SizedBox(width: 12),
-                  const Text(
+                  Text(
                     'HEX',
                     style: TextStyle(
                       fontSize: 19,
@@ -316,7 +314,7 @@ class _HexSidebarState extends State<HexSidebar> {
                     onTap: () => widget.onDestinationSelected(item.index),
                     hoverColor: isSelected
                         ? activeBgLavender
-                        : const Color(0xFFF8FAFC),
+                        : colorScheme.surfaceContainerLow,
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 150),
                       padding: EdgeInsets.symmetric(
@@ -391,7 +389,7 @@ class _HexSidebarState extends State<HexSidebar> {
                   child: InkWell(
                     borderRadius: BorderRadius.circular(10),
                     onTap: _defaultHelpAction,
-                    hoverColor: const Color(0xFFF8FAFC),
+                    hoverColor: colorScheme.surfaceContainerLow,
                     child: Padding(
                       padding: EdgeInsets.symmetric(
                         horizontal: _isExpanded ? 14.0 : 0.0,
@@ -402,14 +400,14 @@ class _HexSidebarState extends State<HexSidebar> {
                             ? MainAxisAlignment.start
                             : MainAxisAlignment.center,
                         children: [
-                          const Icon(
+                          Icon(
                             Icons.help_outline_rounded,
                             size: 20,
                             color: iconMuted,
                           ),
                           if (_isExpanded) ...[
                             const SizedBox(width: 14),
-                            const Expanded(
+                            Expanded(
                               child: Text(
                                 'Help',
                                 style: TextStyle(
@@ -432,7 +430,7 @@ class _HexSidebarState extends State<HexSidebar> {
                   child: Divider(
                     height: 1,
                     thickness: 1,
-                    color: Colors.grey.shade200,
+                    color: colorScheme.outlineVariant,
                   ),
                 ),
 
@@ -443,7 +441,7 @@ class _HexSidebarState extends State<HexSidebar> {
                   child: InkWell(
                     borderRadius: BorderRadius.circular(10),
                     onTap: _defaultProfileAction,
-                    hoverColor: const Color(0xFFF8FAFC),
+                    hoverColor: colorScheme.surfaceContainerLow,
                     child: Padding(
                       padding: EdgeInsets.symmetric(
                         horizontal: _isExpanded ? 8.0 : 0.0,
@@ -475,7 +473,7 @@ class _HexSidebarState extends State<HexSidebar> {
                                 children: [
                                   Text(
                                     displayName,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 13,
                                       fontWeight: FontWeight.w600,
                                       color: textDark,
@@ -487,7 +485,7 @@ class _HexSidebarState extends State<HexSidebar> {
                                     const SizedBox(height: 1.5),
                                     Text(
                                       displayMobile,
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontSize: 11,
                                         color: iconMuted,
                                       ),

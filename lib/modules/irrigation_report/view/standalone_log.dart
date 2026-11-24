@@ -17,11 +17,11 @@ import 'standalone_exporter_stub.dart' if (dart.library.html) 'standalone_export
 // ─────────────────────────────────────────────────────────────────────────────
 // Design tokens (same palette as the new ScrollingTable)
 // ─────────────────────────────────────────────────────────────────────────────
-const Color _kPageBg = Color(0xffEEF4F4);
-const Color _kBannerBg = Color(0xffE2EFF0);
-const Color _kGroupBg = Color(0xffD9ECEF);
-const Color _kHeaderBg = Color(0xffF4F8F9);
-const Color _kTeal = Color(0xff0B5D6B);
+const Color _kPageBg = Color(0xFFF8FAFC);
+const Color _kBannerBg = Color(0xFFF1F5F9);
+const Color _kGroupBg = Color(0xFFE2E8F0);
+const Color _kHeaderBg = Color(0xFFFFFFFF);
+const Color _kPurple = Color(0xFF5B21B6);
 const Color _kHeaderText = Color(0xff5F6F76);
 const Color _kBodyText = Color(0xff1F2D33);
 const Color _kMutedText = Color(0xff9AA8AE);
@@ -465,7 +465,7 @@ class _StandaloneLogState extends State<StandaloneLog> {
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w700,
-                        color: _kTeal,
+                        color: _kPurple,
                       ),
                     ),
                   ),
@@ -525,7 +525,7 @@ class _StandaloneLogState extends State<StandaloneLog> {
                     style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
-                      color: _kTeal,
+                      color: _kPurple,
                     ),
                   ),
                   const SizedBox(width: 18),
@@ -659,7 +659,7 @@ class _StandaloneLogState extends State<StandaloneLog> {
         onTap: onTap,
         child: Padding(
           padding: const EdgeInsets.all(7),
-          child: Icon(icon, size: 20, color: _kTeal),
+          child: Icon(icon, size: 20, color: _kPurple),
         ),
       ),
     );
@@ -722,7 +722,7 @@ class _StandaloneLogState extends State<StandaloneLog> {
             children: [
               OutlinedButton.icon(
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: _kTeal,
+                  foregroundColor: _kPurple,
                   side: const BorderSide(color: _kSectionLine),
                   shape: const StadiumBorder(),
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -774,7 +774,7 @@ class _StandaloneLogState extends State<StandaloneLog> {
               const SizedBox(width: 10),
               ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: _kTeal,
+                  backgroundColor: _kPurple,
                   foregroundColor: Colors.white,
                   elevation: 0,
                   shape: const StadiumBorder(),
@@ -843,7 +843,7 @@ class _StandaloneLogState extends State<StandaloneLog> {
                           ),
                           ElevatedButton(
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF006573),
+                              backgroundColor: const Color(0xFF5B21B6),
                               foregroundColor: Colors.white,
                             ),
                             onPressed: () async {

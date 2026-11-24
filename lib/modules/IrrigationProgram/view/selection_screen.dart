@@ -9,7 +9,6 @@ import '../state_management/irrigation_program_provider.dart';
 import '../widgets/custom_animated_switcher.dart';
 import '../widgets/custom_lShape_divider.dart';
 import '../widgets/custom_section_title.dart';
-import 'conditions_screen.dart';
 
 final purpleLight = const Color(0xff8833FF).withValues(alpha: 0.05);
 final purpleDark = const Color(0xff8833FF).withValues(alpha: 0.35);
@@ -19,7 +18,7 @@ final greenLight = const Color(0xffECF5EF).withValues(alpha: 0.5);
 final greenDark = const Color(0xff10E196).withValues(alpha: 0.35);
 const yellowLight = Color(0xffFFF7E5);
 const yellowDark = Color(0xfffdce7f);
-final primaryColorLight = const Color(0xffE3FFF5).withOpacity(0.5);
+final primaryColorLight = const Color(0xFFF5F3FF);
 
 class SelectionScreen extends StatefulWidget{
   final List<NodeListModel> nodeList;
@@ -789,6 +788,64 @@ class _SelectionScreenState extends State<SelectionScreen> with SingleTickerProv
             ),
           )
         ],
+      ),
+    );
+  }
+
+  Widget buildListTile({
+    required BuildContext context,
+    required String title,
+    Color? textColor,
+    Color? color,
+    dynamic subTitle,
+    IconData? icon,
+    Widget? trailing,
+    EdgeInsets? padding,
+    void Function()? onTap,
+  }) {
+    final primaryPurple = const Color(0xFF5B21B6);
+    return Container(
+      padding: padding ?? const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        color: color ?? Colors.white,
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.02),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: ListTile(
+        title: Text(
+          title,
+          style: TextStyle(
+            color: textColor ?? const Color(0xFF0F172A),
+            fontWeight: FontWeight.bold,
+            fontSize: 14,
+          ),
+        ),
+        subtitle: subTitle != null
+            ? Text(
+                '$subTitle',
+                style: const TextStyle(color: Color(0xFF64748B), fontSize: 12),
+              )
+            : null,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+        horizontalTitleGap: 14,
+        leading: Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: const Color(0xFFF5F3FF),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(icon, color: primaryPurple, size: 20),
+        ),
+        trailing: trailing,
+        onTap: onTap,
       ),
     );
   }

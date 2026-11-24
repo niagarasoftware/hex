@@ -55,6 +55,9 @@ class _LogHomeState extends State<LogHome> {
   int totalPages = 0;
   int selectedPages = 1;
   final ScrollController _scrollController = ScrollController();
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+  Set<String> _hiddenPrograms = {};
   dynamic dataSource = [];
   List<dynamic> _localNameData = [];
   List<dynamic> _filterSiteData = [];
@@ -169,6 +172,7 @@ class _LogHomeState extends State<LogHome> {
     _rawScheduleSubscription?.cancel();
     _scrollController.dispose();
     _graphController.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -520,8 +524,8 @@ class _LogHomeState extends State<LogHome> {
                 if (_isValidIndex(data['irrigation']['HeadUnit'], howManyLine)) {
                   for (var splitLine in data['irrigation']['ProgramCategory'][howManyLine].toString().split('_')) {
                     var lineName = (data['irrigation']['HeadUnit'] != null &&
-                            data['irrigation']['HeadUnit'] is List &&
-                            howManyLine < data['irrigation']['HeadUnit'].length)
+                        data['irrigation']['HeadUnit'] is List &&
+                        howManyLine < data['irrigation']['HeadUnit'].length)
                         ? data['irrigation']['HeadUnit'][howManyLine].toString().split('_')
                         : [splitLine];
                     setState(() {
@@ -909,617 +913,302 @@ class _LogHomeState extends State<LogHome> {
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(builder: (context,constraint) {
+      final Map<String, dynamic> view = _applySearch(dataToShow);
+      final int viewRows = (view['fixedColumnData'] is List)
+          ? (view['fixedColumnData'] as List).length
+          : 0;
+      final int viewTotalPages = (viewRows / noOfRowsPerPage).ceil();
       return Scaffold(
+          backgroundColor: const Color(0xffF8FAFB),
           appBar: AppBar(
-            title: Column(
+            backgroundColor: Colors.white,
+            foregroundColor: Colors.black87,
+            elevation: 0,
+            scrolledUnderElevation: 0,
+            surfaceTintColor: Colors.transparent,
+            toolbarHeight: 64,
+            shape: const Border(bottom: BorderSide(color: Color(0xffE6ECEE))),
+            title: Row(
               children: [
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Text('Irrigation Log'),
-                    if (isLiveLoaded) ...[
-                      const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: Colors.green.withOpacity(0.15),
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: Colors.green, width: 0.8),
-                        ),
-                        child: const Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.fiber_manual_record, color: Colors.green, size: 8),
-                            SizedBox(width: 4),
-                            Text('LIVE', style: TextStyle(color: Colors.green, fontSize: 10, fontWeight: FontWeight.bold)),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-                Text(_selectedDate,style: const TextStyle(fontSize: 12),),
+                _buildTitleBlock(constraint.maxWidth >= 900),
+                if (constraint.maxWidth >= 900)
+                  Expanded(child: Center(child: _buildTabPill())),
               ],
             ),
+            bottom: constraint.maxWidth >= 900
+                ? null
+                : PreferredSize(
+              preferredSize: const Size.fromHeight(52),
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: 8, left: 12, right: 12),
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: _buildTabPill(),
+                ),
+              ),
+            ),
             actions: [
-              IconButton(
-                tooltip: 'Live Refresh from Controller',
-                onPressed: isLiveSyncing ? null : () async {
-                  await getData();
-                  _requestLiveSync(silent: false);
-                },
-                icon: isLiveSyncing
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                      )
-                    : Icon(
-                        Icons.refresh_outlined,
-                        color: isLiveLoaded ? Colors.green : Colors.white,
-                      ),
+              Padding(
+                padding: const EdgeInsets.only(right: 12, left: 4),
+                child: ElevatedButton.icon(
+                  onPressed: _showDownloadDialog,
+                  icon: const Icon(Icons.download_rounded, size: 18),
+                  label: constraint.maxWidth >= 600
+                      ? const Text('Export')
+                      : const SizedBox.shrink(),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Theme.of(context).primaryColor,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    padding: EdgeInsets.symmetric(
+                        horizontal: constraint.maxWidth >= 600 ? 16 : 10, vertical: 12),
+                  ),
+                ),
               ),
-              IconButton(
-                onPressed: (){
-                  sideSheet(constraint);
-                },
-                icon: const Icon(Icons.filter_list_alt, color: Colors.white),
-              ),
-              const SizedBox(width: 10),
             ],
           ),
           body: SafeArea(
             child: httpError == 0
-                ? Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if((dataSource != null || dataToShow.isNotEmpty))
-                  Container(
-                    margin: const EdgeInsets.all(8),
-                    width: double.infinity,
-                    height: 40,
-                    decoration: BoxDecoration(
-                        color: const Color(0xffE6EDF5),
-                        borderRadius: BorderRadius.circular(20)
-                    ),
-                    child: SingleChildScrollView(
-                      controller: _scrollController,
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
-                        children: [
-                          for(var i = 0;i < _irrigationOptionWise.length;i++)
-                            Row(
-                              children: [
-                                myButtons(
-                                  index: i,
-                                  verticalPadding: 8,
-                                  radius: 15,
-                                  name: '${_irrigationOptionWise[i][0]}',
-                                  onTap: (){
-                                    getDialog(context);
-                                    Future.delayed(const Duration(seconds: 1),(){
-                                      setState(() {
-                                        _scrollController.animateTo(
-                                          (i * (_selectedIndex > i ? 100 : 100)).toDouble(),
-                                          duration: const Duration(milliseconds: 500),
-                                          curve: Curves.easeInOut,
-                                        );
-                                        _irrigationOptionWise[i][1] = true;
-                                        _selectedIndex = i;
-                                        for(var j = 0;j < _irrigationOptionWise.length;j++){
-                                          if(j != i){
-                                            _irrigationOptionWise[j][1] = false;
-                                          }
-                                        }
-                                        if(_irrigationOptionWise[0][1] == true){
-                                          dataToShow = irrigationParameterArray.editDateWise(dataSource, date);
-                                        }else if(_irrigationOptionWise[1][1] == true){
-                                          dataToShow = irrigationParameterArray.editProgramWise(dataSource, program);
-                                        }else if(_irrigationOptionWise[2][1] == true){
-                                          dataToShow = irrigationParameterArray.editLineWise(dataSource, line);
-                                        }else if(_irrigationOptionWise[3][1] == true){
-                                          dataToShow = irrigationParameterArray.editValveWise(dataSource, valve);
-                                        }else if(_irrigationOptionWise[4][1] == true){
-                                          dataToShow = irrigationParameterArray.editStatusWise(dataSource, status);
-                                        }
-
-                                      });
-                                      Navigator.pop(context);
-                                    });
-
-
-                                  },
-                                ),
-                                const SizedBox(width: 20,)
-                              ],
-                            )
-                        ],
-                      ),
-                    ),
-                  ),
-                if((dataSource == null || dataToShow.isEmpty))
-                  Expanded(child: Center(child: Text('There is no data in ${_selectedDate}'))),
-                if((dataSource != null || dataToShow.isNotEmpty))
-                  if(graphMode == false)
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          if(dataToShow.isNotEmpty)
-                            ScrollingTable(
-                              fixedColumn: dataToShow['fixedColumn'],
-                              fixedColumnData: filterDataByPages(data: dataToShow['fixedColumnData']),
-                              generalColumn: dataToShow['generalColumn'],
-                              generalColumnData: filterDataByPages(data: dataToShow['generalColumnData']),
-                              waterColumn: dataToShow['waterColumn'],
-                              waterColumnData: filterDataByPages(data: dataToShow['waterColumnData']),
-                              centralFilterColumn: dataToShow['centralFilterColumn'] ?? [],
-                              centralFilterColumnData: filterDataByPages(data: dataToShow['centralFilterColumnData'] ?? []),
-                              localFilterColumn: dataToShow['localFilterColumn'] ?? [],
-                              localFilterColumnData: filterDataByPages(data: dataToShow['localFilterColumnData'] ?? []),
-                              filterColumn: dataToShow['filterColumn'],
-                              filterColumnData: filterDataByPages(data: dataToShow['filterColumnData']),
-                              prePostColumn: dataToShow['prePostColumn'],
-                              prePostColumnData: filterDataByPages(data: dataToShow['prePostColumnData']),
-                              centralEcPhColumn: dataToShow['centralEcPhColumn'],
-                              centralEcPhColumnData: filterDataByPages(data: dataToShow['centralEcPhColumnData']),
-                              centralChannel1Column: dataToShow['centralChannel1Column'],
-                              centralChannel1ColumnData: filterDataByPages(data: dataToShow['centralChannel1ColumnData']),
-                              centralChannel2Column: dataToShow['centralChannel2Column'],
-                              centralChannel2ColumnData: filterDataByPages(data: dataToShow['centralChannel2ColumnData']),
-                              centralChannel3Column: dataToShow['centralChannel3Column'],
-                              centralChannel3ColumnData: filterDataByPages(data: dataToShow['centralChannel3ColumnData']),
-                              centralChannel4Column: dataToShow['centralChannel4Column'],
-                              centralChannel4ColumnData: filterDataByPages(data: dataToShow['centralChannel4ColumnData']),
-                              centralChannel5Column: dataToShow['centralChannel5Column'],
-                              centralChannel5ColumnData: filterDataByPages(data: dataToShow['centralChannel5ColumnData']),
-                              centralChannel6Column: dataToShow['centralChannel6Column'],
-                              centralChannel6ColumnData: filterDataByPages(data: dataToShow['centralChannel6ColumnData']),
-                              centralChannel7Column: dataToShow['centralChannel7Column'],
-                              centralChannel7ColumnData: filterDataByPages(data: dataToShow['centralChannel7ColumnData']),
-                              centralChannel8Column: dataToShow['centralChannel8Column'],
-                              centralChannel8ColumnData: filterDataByPages(data: dataToShow['centralChannel8ColumnData']),
-                              localEcPhColumn: dataToShow['localEcPhColumn'],
-                              localEcPhColumnData: filterDataByPages(data: dataToShow['localEcPhColumnData']),
-                              localChannel1Column: dataToShow['localChannel1Column'],
-                              localChannel1ColumnData: filterDataByPages(data: dataToShow['localChannel1ColumnData']),
-                              localChannel2Column: dataToShow['localChannel2Column'],
-                              localChannel2ColumnData: filterDataByPages(data: dataToShow['localChannel2ColumnData']),
-                              localChannel3Column: dataToShow['localChannel3Column'],
-                              localChannel3ColumnData: filterDataByPages(data: dataToShow['localChannel3ColumnData']),
-                              localChannel4Column: dataToShow['localChannel4Column'],
-                              localChannel4ColumnData: filterDataByPages(data: dataToShow['localChannel4ColumnData']),
-                              localChannel5Column: dataToShow['localChannel5Column'],
-                              localChannel5ColumnData: filterDataByPages(data: dataToShow['localChannel5ColumnData']),
-                              localChannel6Column: dataToShow['localChannel6Column'],
-                              localChannel6ColumnData: filterDataByPages(data: dataToShow['localChannel6ColumnData']),
-                              localChannel7Column: dataToShow['localChannel7Column'],
-                              localChannel7ColumnData: filterDataByPages(data: dataToShow['localChannel7ColumnData']),
-                              localChannel8Column: dataToShow['localChannel8Column'],
-                              localChannel8ColumnData: filterDataByPages(data: dataToShow['localChannel8ColumnData']),
-                              graphData: dataToShow['graphData'],
-                              showSensorReport: hasConfiguredSensors,
-                              onSequenceClicked: hasConfiguredSensors
-                                  ? (sequenceName) {
-                                      DateTime date1 = DateTime.now();
-                                      DateTime date2 = DateTime.now();
-                                      try {
-                                        String dateString1 = _selectedDate.split(' - ')[0];
-                                        String dateString2 = _selectedDate.split(' - ')[1];
-                                        List<String> parts1 = dateString1.split('/');
-                                        List<String> parts2 = dateString2.split('/');
-                                        date1 = DateTime(int.parse(parts1[2]), int.parse(parts1[1]), int.parse(parts1[0]));
-                                        date2 = DateTime(int.parse(parts2[2]), int.parse(parts2[1]), int.parse(parts2[0]));
-                                      } catch (e) {
-                                        // Fallback to now if parse fails
-                                      }
-
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) => SensorGraphLog(
-                                            userId: widget.userData['customerId'],
-                                            controllerId: widget.userData['controllerId'],
-                                            fromDate: date1,
-                                            toDate: date2,
-                                          ),
-                                        ),
-                                      );
-                                    }
-                                  : null,
-                            ),
-                        ],
-                      ),
-                    )
-                  else
-                    Expanded(
-                      child: Scrollbar(
-                        controller: _graphController,
-                        thickness: 20,
-                        interactive: true,
-                        radius: const Radius.circular(50),
-                        child: SingleChildScrollView(
-                          controller: _graphController,
+                ? Padding(
+              padding: EdgeInsets.all(constraint.maxWidth < 600 ? 8 : 16),
+              child: Container(
+                clipBehavior: Clip.antiAlias,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xffE3E9EC)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildToolbar(constraint, viewRows),
+                    if((dataSource == null || view.isEmpty))
+                      Expanded(child: Center(child: Text('There is no data in ${_selectedDate}'))),
+                    if((dataSource != null || view.isNotEmpty))
+                      if(graphMode == false)
+                        Expanded(
                           child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Wrap(
-                                runSpacing: 10,
-                                children: [
-                                  if(graphMode == true)
-                                    if(dataToShow.isNotEmpty)
-                                      for(var i in dataToShow['graphData'])
-                                        Container(
-                                          padding: const EdgeInsets.all(8),
-                                          margin: const EdgeInsets.all(8),
-                                          decoration: BoxDecoration(
-                                              boxShadow: AppProperties.customBoxShadowLiteTheme,
-                                              color: Colors.white,
-                                              borderRadius: BorderRadius.circular(20)
-                                          ),
-                                          width: MediaQuery.of(context).size.width > 500 ? 500 : MediaQuery.of(context).size.width,
-                                          height: 250,
-                                          child: Column(
-                                            children: [
-                                              Text('${i['name']}'),
-                                              Expanded(
-                                                  child: SfCartesianChart(
-                                                    enableAxisAnimation: false,
-                                                    plotAreaBackgroundColor: Colors.transparent,
-                                                    borderColor: Colors.transparent,
-                                                    borderWidth: 0,
-                                                    plotAreaBorderWidth: 0,
-                                                    enableSideBySideSeriesPlacement: false,
-                                                    tooltipBehavior: TooltipBehavior(
-                                                      enable: true,
-                                                      animationDuration: 0,
-                                                      canShowMarker: true,
-                                                      // format: 'point.x',
-                                                      textStyle: const TextStyle(color: Colors.white),
-                                                      tooltipPosition: TooltipPosition.pointer,
-                                                      // borderColor: Colors.red,
-                                                      borderWidth: 2,
-                                                      color: Colors.black,
-                                                      // You can customize more tooltip settings here
-                                                    ),
-                                                    primaryXAxis: CategoryAxis(
-                                                      isVisible: true,
-                                                      rangePadding: ChartRangePadding.round,
-                                                      labelPlacement: LabelPlacement.onTicks,
-                                                      maximumLabels: i['data'].length,
-                                                      minimum: -0.5,
-                                                      maximum: (i['data']).length.toDouble(),
-                                                      initialVisibleMinimum: -0.5,
-                                                      initialVisibleMaximum: (i['data'])!.length <= 3 ? (i['data'])!.length.toDouble() - 0.5 : 3,
-                                                    ),
-                                                    primaryYAxis: const NumericAxis(
-                                                      isVisible: true,
-                                                      // title: AxisTitle(text: "Dur/Qty"),
-                                                      minimum: 0,
-                                                    ),
-                                                    legend: Legend(
-                                                      isVisible: true,
-                                                      position: LegendPosition.bottom,
-                                                      overflowMode: LegendItemOverflowMode.wrap,
-                                                    ),
-                                                    zoomPanBehavior: ZoomPanBehavior(
-                                                      enablePanning: true,
-                                                    ),
-                                                    series: <CartesianSeries>[
-                                                      RangeColumnSeries<dynamic, String>(
-                                                          name: 'Pre',
-                                                          borderRadius: BorderRadius.zero,
-                                                          dataSource: (i['data']) ?? [],
-                                                          width: 0.4,
-                                                          color: Colors.blue.shade200,
-                                                          xValueMapper: (dynamic data, _) => "${data.seqName}",
-                                                          lowValueMapper: (dynamic data, _) => data.preFrom,
-                                                          highValueMapper: (dynamic data, _) => data.preTo
-                                                      ),
-                                                      RangeColumnSeries<dynamic, String>(
-                                                          name: 'Actual',
-                                                          borderRadius: BorderRadius.circular(0),
-                                                          dataSource: (i['data']) ?? [],
-                                                          width: 0.4,
-                                                          color: Colors.green,
-                                                          xValueMapper: (dynamic data, _) => "${data.seqName}",
-                                                          lowValueMapper: (dynamic data, _) => data.actualFrom,
-                                                          highValueMapper: (dynamic data, _) => data.actualTo
-                                                      ),
-                                                      RangeColumnSeries<dynamic, String>(
-                                                          name: 'Post',
-                                                          borderRadius: BorderRadius.circular(0),
-                                                          dataSource: (i['data']) ?? [],
-                                                          width: 0.4,
-                                                          color: Colors.blue.shade400,
-                                                          xValueMapper: (dynamic data, _) => "${data.seqName}",
-                                                          lowValueMapper: (dynamic data, _) => data.postFrom,
-                                                          highValueMapper: (dynamic data, _) => data.postTo
-                                                      ),
-                                                      RangeColumnSeries<dynamic, String>(
-                                                          name: 'Planned',
-                                                          borderRadius: BorderRadius.circular(0),
-                                                          dataSource: (i['data']) ?? [],
-                                                          width: 0.4,
-                                                          color: Colors.amber.shade700,
-                                                          xValueMapper: (dynamic data, _) => "${data.seqName}",
-                                                          lowValueMapper: (dynamic data, _) => data.plannedFrom,
-                                                          highValueMapper: (dynamic data, _) => data.plannedTo
-                                                      ),
-                                                    ],
-                                                  )
-                                              )
-                                            ],
-                                          ),
-                                        )
-                                ],
-                              )
+                              if(view.isNotEmpty)
+                                ScrollingTable(
+                                  fixedColumn: view['fixedColumn'],
+                                  fixedColumnData: filterDataByPages(data: view['fixedColumnData']),
+                                  generalColumn: view['generalColumn'],
+                                  generalColumnData: filterDataByPages(data: view['generalColumnData']),
+                                  waterColumn: view['waterColumn'],
+                                  waterColumnData: filterDataByPages(data: view['waterColumnData']),
+                                  centralFilterColumn: view['centralFilterColumn'] ?? [],
+                                  centralFilterColumnData: filterDataByPages(data: view['centralFilterColumnData'] ?? []),
+                                  localFilterColumn: view['localFilterColumn'] ?? [],
+                                  localFilterColumnData: filterDataByPages(data: view['localFilterColumnData'] ?? []),
+                                  filterColumn: view['filterColumn'],
+                                  filterColumnData: filterDataByPages(data: view['filterColumnData']),
+                                  prePostColumn: view['prePostColumn'],
+                                  prePostColumnData: filterDataByPages(data: view['prePostColumnData']),
+                                  centralEcPhColumn: view['centralEcPhColumn'],
+                                  centralEcPhColumnData: filterDataByPages(data: view['centralEcPhColumnData']),
+                                  centralChannel1Column: view['centralChannel1Column'],
+                                  centralChannel1ColumnData: filterDataByPages(data: view['centralChannel1ColumnData']),
+                                  centralChannel2Column: view['centralChannel2Column'],
+                                  centralChannel2ColumnData: filterDataByPages(data: view['centralChannel2ColumnData']),
+                                  centralChannel3Column: view['centralChannel3Column'],
+                                  centralChannel3ColumnData: filterDataByPages(data: view['centralChannel3ColumnData']),
+                                  centralChannel4Column: view['centralChannel4Column'],
+                                  centralChannel4ColumnData: filterDataByPages(data: view['centralChannel4ColumnData']),
+                                  centralChannel5Column: view['centralChannel5Column'],
+                                  centralChannel5ColumnData: filterDataByPages(data: view['centralChannel5ColumnData']),
+                                  centralChannel6Column: view['centralChannel6Column'],
+                                  centralChannel6ColumnData: filterDataByPages(data: view['centralChannel6ColumnData']),
+                                  centralChannel7Column: view['centralChannel7Column'],
+                                  centralChannel7ColumnData: filterDataByPages(data: view['centralChannel7ColumnData']),
+                                  centralChannel8Column: view['centralChannel8Column'],
+                                  centralChannel8ColumnData: filterDataByPages(data: view['centralChannel8ColumnData']),
+                                  localEcPhColumn: view['localEcPhColumn'],
+                                  localEcPhColumnData: filterDataByPages(data: view['localEcPhColumnData']),
+                                  localChannel1Column: view['localChannel1Column'],
+                                  localChannel1ColumnData: filterDataByPages(data: view['localChannel1ColumnData']),
+                                  localChannel2Column: view['localChannel2Column'],
+                                  localChannel2ColumnData: filterDataByPages(data: view['localChannel2ColumnData']),
+                                  localChannel3Column: view['localChannel3Column'],
+                                  localChannel3ColumnData: filterDataByPages(data: view['localChannel3ColumnData']),
+                                  localChannel4Column: view['localChannel4Column'],
+                                  localChannel4ColumnData: filterDataByPages(data: view['localChannel4ColumnData']),
+                                  localChannel5Column: view['localChannel5Column'],
+                                  localChannel5ColumnData: filterDataByPages(data: view['localChannel5ColumnData']),
+                                  localChannel6Column: view['localChannel6Column'],
+                                  localChannel6ColumnData: filterDataByPages(data: view['localChannel6ColumnData']),
+                                  localChannel7Column: view['localChannel7Column'],
+                                  localChannel7ColumnData: filterDataByPages(data: view['localChannel7ColumnData']),
+                                  localChannel8Column: view['localChannel8Column'],
+                                  localChannel8ColumnData: filterDataByPages(data: view['localChannel8ColumnData']),
+                                  graphData: view['graphData'],
+                                  showSensorReport: hasConfiguredSensors,
+                                  onSequenceClicked: hasConfiguredSensors
+                                      ? (sequenceName) {
+                                    DateTime date1 = DateTime.now();
+                                    DateTime date2 = DateTime.now();
+                                    try {
+                                      String dateString1 = _selectedDate.split(' - ')[0];
+                                      String dateString2 = _selectedDate.split(' - ')[1];
+                                      List<String> parts1 = dateString1.split('/');
+                                      List<String> parts2 = dateString2.split('/');
+                                      date1 = DateTime(int.parse(parts1[2]), int.parse(parts1[1]), int.parse(parts1[0]));
+                                      date2 = DateTime(int.parse(parts2[2]), int.parse(parts2[1]), int.parse(parts2[0]));
+                                    } catch (e) {
+                                      // Fallback to now if parse fails
+                                    }
 
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                Container(
-                  color: Theme.of(context).primaryColorDark,
-                  width: MediaQuery.of(context).size.width,
-                  height: 35,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      SizedBox(
-                        width: 180,
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            InkWell(
-                              onTap: (){
-                                setState(() {
-                                  if(selectedPages != 1){
-                                    selectedPages -= 1  ;
-                                  }
-                                });
-                              },
-                              child: Container(
-                                color: Colors.white,
-                                padding: const EdgeInsets.all(5),
-                                child: const Icon(Icons.keyboard_double_arrow_left),
-                              ),
-                            ),
-                            if(dataToShow['fixedColumnData'] != null)
-                              Text(
-                                '${
-                                    (selectedPages * noOfRowsPerPage) - 20} - ${((selectedPages * noOfRowsPerPage) < dataToShow['fixedColumnData'].length
-                                    ?  (selectedPages * noOfRowsPerPage)
-                                    : dataToShow['fixedColumnData'].length)} / ${dataToShow['fixedColumnData'].length}',style: const TextStyle(color: Colors.white),
-                              ),
-                            InkWell(
-                              onTap: (){
-                                setState(() {
-                                  if(selectedPages != totalPages){
-                                    selectedPages += 1;
-                                  }
-                                });
-                              },
-                              child: Container(
-                                color: Colors.white,
-                                padding: const EdgeInsets.all(5),
-                                child: const Icon(Icons.keyboard_double_arrow_right),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      MaterialButton(
-                          color: Colors.white,
-                          child: const Text('Select Date'),
-                          onPressed: (){
-                            showDialog(context: context, builder: (context){
-                              return AlertDialog(
-                                title: const Text('Date Picker'),
-                                content: StatefulBuilder(
-                                  builder: (BuildContext context, StateSetter stateSetter) {
-                                    return SizedBox(
-                                      width: 200,
-                                      height: 250,
-                                      child:SfDateRangePicker(
-                                        onSelectionChanged:  _onSelectionChanged,
-                                        selectionMode: DateRangePickerSelectionMode.range,
-                                        initialSelectedRange: PickerDateRange(
-                                          // DateTime.now().subtract(const Duration(days: 4)),
-                                          // DateTime.now().add(const Duration(days: 3))
-                                            DateTime.now(),
-                                            DateTime.now()
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => SensorGraphLog(
+                                          userId: widget.userData['customerId'],
+                                          controllerId: widget.userData['controllerId'],
+                                          fromDate: date1,
+                                          toDate: date2,
                                         ),
                                       ),
                                     );
-                                  },
+                                  }
+                                      : null,
                                 ),
-                                actions: [
-                                  CustomMaterialButton(
-                                    title: 'Cancel',
-                                    outlined: true,
-                                  ),
-                                  CustomMaterialButton(
-                                    onPressed: ()async{
-                                      Navigator.pop(context);
-                                      getDialog(context);
-                                      getData();
-                                      setState(() {
-                                        for(var sortItem = 0;sortItem < _irrigationOptionWise.length;sortItem++){
-                                          if(_selectedIndex == sortItem){
-                                            _irrigationOptionWise[sortItem][1] = true;
-                                          }else{
-                                            _irrigationOptionWise[sortItem][1] = false;
-                                          }
-                                        }
-                                      });
-                                      if(mounted){
-                                        Navigator.pop(context);
-                                      }
-                                    },
-                                  ),
-                                ],
-                              );
-
-                            });
-                          }
-                      ),
-                      InkWell(
-                        onTap: (){
-                          showDialog(
-                              context: context,
-                              builder: (context){
-                                var fileName = 'file';
-                                return AlertDialog(
-                                  title: const Text('Give Name For Your File'),
-                                  content: Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      TextFormField(
-                                        initialValue: fileName,
-                                        onChanged: (value){
-                                          fileName = value;
-                                        },
-                                        decoration: const InputDecoration(
-                                            border: OutlineInputBorder()
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  actions: [
-                                    TextButton(
-                                        onPressed: () async {
-                                          Navigator.pop(context); // Close the name dialog
-
-                                          showDialog(
-                                            context: context,
-                                            barrierDismissible: false,
-                                            builder: (context) {
-                                              return const AlertDialog(
-                                                title: Text('Saving Excel...'),
-                                                content: SizedBox(
-                                                  height: 50,
-                                                  child: Center(child: CircularProgressIndicator()),
-                                                ),
-                                              );
-                                            },
-                                          );
-
-                                          bool result = await generateExcel(dataToShow, fileName);
-
-                                          if (context.mounted) Navigator.pop(context);
-
-                                          if (context.mounted) {
-                                            ScaffoldMessenger.of(context).showSnackBar(
-                                              SnackBar(content: Text(result ? '$fileName.xlsx downloaded successfully' : 'Failed to save $fileName.xlsx')),
-                                            );
-                                          }
-                                        },
-                                        child: const Text('Download Excel')
-                                    ),
-                                    ElevatedButton(
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor: const Color(0xFF006573),
-                                          foregroundColor: Colors.white,
-                                        ),
-                                        onPressed: () async {
-                                          Navigator.pop(context);
-
-                                          showDialog(
-                                            context: context,
-                                            barrierDismissible: false,
-                                            builder: (context) {
-                                              return const AlertDialog(
-                                                title: Text('Generating PDF...'),
-                                                content: SizedBox(
-                                                  height: 50,
-                                                  child: Center(child: CircularProgressIndicator()),
-                                                ),
-                                              );
-                                            },
-                                          );
-
-                                          bool result = await generatePdf(dataToShow, fileName);
-
-                                          if (context.mounted) Navigator.pop(context);
-
-                                          if (context.mounted) {
-                                            ScaffoldMessenger.of(context).showSnackBar(
-                                              SnackBar(content: Text(result ? '$fileName.pdf downloaded successfully' : 'Failed to generate PDF')),
-                                            );
-                                          }
-                                        },
-                                        child: const Text('Download PDF')
-                                    )
-                                  ],
-                                );
-                              }
-                          );
-
-
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 5,horizontal: 10),
-                          decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(5),
-                              color: Colors.white
+                            ],
                           ),
-                          child: const Icon(Icons.download),
+                        )
+                      else
+                        Expanded(
+                          child: Scrollbar(
+                            controller: _graphController,
+                            thickness: 20,
+                            interactive: true,
+                            radius: const Radius.circular(50),
+                            child: SingleChildScrollView(
+                              controller: _graphController,
+                              child: Column(
+                                children: [
+                                  Wrap(
+                                    runSpacing: 10,
+                                    children: [
+                                      if(graphMode == true)
+                                        if(view.isNotEmpty)
+                                          for(var i in view['graphData'])
+                                            Container(
+                                              padding: const EdgeInsets.all(8),
+                                              margin: const EdgeInsets.all(8),
+                                              decoration: BoxDecoration(
+                                                  boxShadow: AppProperties.customBoxShadowLiteTheme,
+                                                  color: Colors.white,
+                                                  borderRadius: BorderRadius.circular(20)
+                                              ),
+                                              width: MediaQuery.of(context).size.width > 500 ? 500 : MediaQuery.of(context).size.width,
+                                              height: 250,
+                                              child: Column(
+                                                children: [
+                                                  Text('${i['name']}'),
+                                                  Expanded(
+                                                      child: SfCartesianChart(
+                                                        enableAxisAnimation: false,
+                                                        plotAreaBackgroundColor: Colors.transparent,
+                                                        borderColor: Colors.transparent,
+                                                        borderWidth: 0,
+                                                        plotAreaBorderWidth: 0,
+                                                        enableSideBySideSeriesPlacement: false,
+                                                        tooltipBehavior: TooltipBehavior(
+                                                          enable: true,
+                                                          animationDuration: 0,
+                                                          canShowMarker: true,
+                                                          // format: 'point.x',
+                                                          textStyle: const TextStyle(color: Colors.white),
+                                                          tooltipPosition: TooltipPosition.pointer,
+                                                          // borderColor: Colors.red,
+                                                          borderWidth: 2,
+                                                          color: Colors.black,
+                                                          // You can customize more tooltip settings here
+                                                        ),
+                                                        primaryXAxis: CategoryAxis(
+                                                          isVisible: true,
+                                                          rangePadding: ChartRangePadding.round,
+                                                          labelPlacement: LabelPlacement.onTicks,
+                                                          maximumLabels: i['data'].length,
+                                                          minimum: -0.5,
+                                                          maximum: (i['data']).length.toDouble(),
+                                                          initialVisibleMinimum: -0.5,
+                                                          initialVisibleMaximum: (i['data'])!.length <= 3 ? (i['data'])!.length.toDouble() - 0.5 : 3,
+                                                        ),
+                                                        primaryYAxis: const NumericAxis(
+                                                          isVisible: true,
+                                                          // title: AxisTitle(text: "Dur/Qty"),
+                                                          minimum: 0,
+                                                        ),
+                                                        legend: Legend(
+                                                          isVisible: true,
+                                                          position: LegendPosition.bottom,
+                                                          overflowMode: LegendItemOverflowMode.wrap,
+                                                        ),
+                                                        zoomPanBehavior: ZoomPanBehavior(
+                                                          enablePanning: true,
+                                                        ),
+                                                        series: <CartesianSeries>[
+                                                          RangeColumnSeries<dynamic, String>(
+                                                              name: 'Pre',
+                                                              borderRadius: BorderRadius.zero,
+                                                              dataSource: (i['data']) ?? [],
+                                                              width: 0.4,
+                                                              color: Colors.blue.shade200,
+                                                              xValueMapper: (dynamic data, _) => "${data.seqName}",
+                                                              lowValueMapper: (dynamic data, _) => data.preFrom,
+                                                              highValueMapper: (dynamic data, _) => data.preTo
+                                                          ),
+                                                          RangeColumnSeries<dynamic, String>(
+                                                              name: 'Actual',
+                                                              borderRadius: BorderRadius.circular(0),
+                                                              dataSource: (i['data']) ?? [],
+                                                              width: 0.4,
+                                                              color: Colors.green,
+                                                              xValueMapper: (dynamic data, _) => "${data.seqName}",
+                                                              lowValueMapper: (dynamic data, _) => data.actualFrom,
+                                                              highValueMapper: (dynamic data, _) => data.actualTo
+                                                          ),
+                                                          RangeColumnSeries<dynamic, String>(
+                                                              name: 'Post',
+                                                              borderRadius: BorderRadius.circular(0),
+                                                              dataSource: (i['data']) ?? [],
+                                                              width: 0.4,
+                                                              color: Colors.blue.shade400,
+                                                              xValueMapper: (dynamic data, _) => "${data.seqName}",
+                                                              lowValueMapper: (dynamic data, _) => data.postFrom,
+                                                              highValueMapper: (dynamic data, _) => data.postTo
+                                                          ),
+                                                          RangeColumnSeries<dynamic, String>(
+                                                              name: 'Planned',
+                                                              borderRadius: BorderRadius.circular(0),
+                                                              dataSource: (i['data']) ?? [],
+                                                              width: 0.4,
+                                                              color: Colors.amber.shade700,
+                                                              xValueMapper: (dynamic data, _) => "${data.seqName}",
+                                                              lowValueMapper: (dynamic data, _) => data.plannedFrom,
+                                                              highValueMapper: (dynamic data, _) => data.plannedTo
+                                                          ),
+                                                        ],
+                                                      )
+                                                  )
+                                                ],
+                                              ),
+                                            )
+                                    ],
+                                  )
+
+                                ],
+                              ),
+                            ),
+                          ),
                         ),
-                      )
-                    ],
-                  ),
-                  // child: FloatingActionButton(
-                  //   backgroundColor: Colors.white,
-                  //   onPressed: () {
-                  //     showDialog(context: context, builder: (context){
-                  //       return AlertDialog(
-                  //         title: Text('Date Picker'),
-                  //         content: StatefulBuilder(
-                  //           builder: (BuildContext context, StateSetter stateSetter) {
-                  //             return SizedBox(
-                  //               width: 200,
-                  //               height: 250,
-                  //               child:SfDateRangePicker(
-                  //                 onSelectionChanged:  _onSelectionChanged,
-                  //                 selectionMode: DateRangePickerSelectionMode.range,
-                  //                 initialSelectedRange: PickerDateRange(
-                  //                     DateTime.now().subtract(const Duration(days: 4)),
-                  //                     DateTime.now().add(const Duration(days: 3))),
-                  //               ),
-                  //             );
-                  //           },
-                  //         ),
-                  //         actions: [
-                  //           ElevatedButton(
-                  //               onPressed: (){
-                  //                 Navigator.pop(context);
-                  //               },
-                  //               child: Text('Cancel')
-                  //           ),
-                  //           ElevatedButton(
-                  //               onPressed: ()async{
-                  //                 Navigator.pop(context);
-                  //                 getDialog(context);
-                  //                 getData();
-                  //                 setState(() {
-                  //                   _irrigationOptionWise = [['Date',true],['Program',false],['Line',false],['Valve',false],['Status',false]];
-                  //                 });
-                  //                 if(mounted){
-                  //                   Navigator.pop(context);
-                  //                 }
-                  //               },
-                  //               child: Text('Ok')
-                  //           )
-                  //         ],
-                  //       );
-                  //
-                  //     });
-                  //   },
-                  //   child: Text('Select Date'),
-                  // ),
-                )
-              ],
+                    _buildFooter(viewRows, viewTotalPages),
+                  ],
+                ),
+              ),
             )
                 : SizedBox(
               width: MediaQuery.of(context).size.width,
@@ -1547,6 +1236,659 @@ class _LogHomeState extends State<LogHome> {
           )
       );
     }
+    );
+  }
+
+  // ───────────────────────── toolbar (search / date / filter / refresh) ─────────────────────────
+
+  Map<String, dynamic> _applySearch(Map<String, dynamic> source) {
+    if ((_searchQuery.isEmpty && _hiddenPrograms.isEmpty) || source.isEmpty) return source;
+    final fixed = source['fixedColumnData'];
+    if (fixed is! List) return source;
+    final generalCols = source['generalColumn'];
+
+    final knownLower = _programNames().map((e) => e.toLowerCase()).toSet();
+    final hiddenLower = _hiddenPrograms.map((e) => e.toLowerCase()).toSet();
+
+    final keep = <int>[];
+    for (var i = 0; i < fixed.length; i++) {
+      // program filter: hide the row only when it clearly belongs to an unchecked program
+      if (hiddenLower.isNotEmpty) {
+        final cells = <String>{};
+        void addCell(dynamic c) {
+          for (final part in '$c'.split('\n')) {
+            cells.add(part.trim().toLowerCase());
+          }
+        }
+        addCell(fixed[i]);
+        final g = source['generalColumnData'];
+        if (g is List && i < g.length && g[i] is List) {
+          for (final c in g[i] as List) {
+            addCell(c);
+          }
+        }
+        final matched = knownLower.where(cells.contains).toList();
+        if (matched.isNotEmpty && matched.every(hiddenLower.contains)) continue;
+      }
+      final buf = StringBuffer();
+      for (final entry in source.entries) {
+        final v = entry.value;
+        if (entry.key.endsWith('ColumnData') && v is List && i < v.length) {
+          final row = v[i];
+          if (entry.key == 'generalColumnData' && row is List && generalCols is List) {
+            for (var j = 0; j < row.length; j++) {
+              if (j < generalCols.length && generalCols[j] == 'Status') {
+                buf.write('${getStatus(row[j])['status']} ');
+              } else {
+                buf.write('${row[j]} ');
+              }
+            }
+          } else {
+            buf.write('$row ');
+          }
+        }
+      }
+      if (_searchQuery.isEmpty || buf.toString().toLowerCase().contains(_searchQuery)) keep.add(i);
+    }
+
+    final result = Map<String, dynamic>.from(source);
+    for (final entry in source.entries) {
+      if (entry.key.endsWith('ColumnData') && entry.value is List) {
+        final list = entry.value as List;
+        result[entry.key] = [
+          for (final i in keep)
+            if (i < list.length) list[i]
+        ];
+      }
+    }
+    return result;
+  }
+
+  List<String> _programNames() {
+    final seen = <String>{};
+    final out = <String>[];
+    for (final p in program) {
+      final n = '${p['programName'] ?? ''}'.trim();
+      if (n.isNotEmpty && n != 'null' && seen.add(n)) out.add(n);
+    }
+    return out;
+  }
+
+  String _filterLabel() {
+    final names = _programNames();
+    final hidden = names.where(_hiddenPrograms.contains).length;
+    if (names.isEmpty || hidden == 0) return 'All status';
+    return '${names.length - hidden} of ${names.length} selected';
+  }
+
+  void _showProgramFilterDialog() {
+    final names = _programNames();
+    final temp = Set<String>.from(_hiddenPrograms);
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (ctx, setD) {
+            final allSelected = names.every((n) => !temp.contains(n));
+            return AlertDialog(
+              title: const Text('Filter'),
+              content: SizedBox(
+                width: 320,
+                child: names.isEmpty
+                    ? const Text('No options available for this date range')
+                    : Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    CheckboxListTile(
+                      dense: true,
+                      controlAffinity: ListTileControlAffinity.leading,
+                      value: allSelected,
+                      title: const Text('Select all',
+                          style: TextStyle(fontWeight: FontWeight.w600)),
+                      onChanged: (v) => setD(() {
+                        if (v == true) {
+                          temp.clear();
+                        } else {
+                          temp.addAll(names);
+                        }
+                      }),
+                    ),
+                    const Divider(height: 1),
+                    Flexible(
+                      child: ListView(
+                        shrinkWrap: true,
+                        children: [
+                          for (final n in names)
+                            CheckboxListTile(
+                              dense: true,
+                              controlAffinity: ListTileControlAffinity.leading,
+                              value: !temp.contains(n),
+                              title: Text(n),
+                              onChanged: (v) => setD(() {
+                                if (v == true) {
+                                  temp.remove(n);
+                                } else {
+                                  temp.add(n);
+                                }
+                              }),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogContext),
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    setState(() {
+                      _hiddenPrograms = temp;
+                      selectedPages = 1;
+                    });
+                    Navigator.pop(dialogContext);
+                  },
+                  child: const Text('Apply'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _toolbarChip({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(8),
+      onTap: onTap,
+      child: Container(
+        height: 40,
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: const Color(0xffDCE5E7)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 16, color: Colors.black54),
+            const SizedBox(width: 8),
+            Text(label,
+                style: const TextStyle(fontSize: 13, color: Colors.black87)),
+            const SizedBox(width: 6),
+            const Icon(Icons.keyboard_arrow_down, size: 18, color: Colors.black45),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildToolbar(BoxConstraints constraint, int recordCount) {
+    final bool wide = constraint.maxWidth >= 1100;
+    final primary = Theme.of(context).primaryColor;
+    const borderColor = Color(0xffDCE5E7);
+
+    OutlineInputBorder inputBorder(Color c) => OutlineInputBorder(
+      borderRadius: BorderRadius.circular(8),
+      borderSide: BorderSide(color: c),
+    );
+
+    final searchField = SizedBox(
+      height: 40,
+      child: TextField(
+        controller: _searchController,
+        onChanged: (v) => setState(() {
+          _searchQuery = v.trim().toLowerCase();
+          selectedPages = 1;
+        }),
+        style: const TextStyle(fontSize: 13),
+        decoration: InputDecoration(
+          hintText: 'Search program, sequence, valve, reason…',
+          hintStyle: const TextStyle(fontSize: 13, color: Color(0xff9AA8AE)),
+          prefixIcon: const Icon(Icons.search, size: 18, color: Color(0xff9AA8AE)),
+          suffixIcon: _searchQuery.isEmpty
+              ? null
+              : IconButton(
+            icon: const Icon(Icons.close, size: 16),
+            onPressed: () {
+              _searchController.clear();
+              setState(() {
+                _searchQuery = '';
+                selectedPages = 1;
+              });
+            },
+          ),
+          filled: true,
+          fillColor: const Color(0xffF6F9FA),
+          contentPadding: EdgeInsets.zero,
+          border: inputBorder(borderColor),
+          enabledBorder: inputBorder(borderColor),
+          focusedBorder: inputBorder(primary),
+        ),
+      ),
+    );
+
+    final dateChip = _toolbarChip(
+      icon: Icons.calendar_today_outlined,
+      label: _selectedDate.isEmpty
+          ? 'Select date'
+          : _selectedDate.replaceAll(' - ', '  –  '),
+      onTap: _showDatePickerDialog,
+    );
+
+    final filterChip = _toolbarChip(
+      icon: Icons.tune,
+      label: _filterLabel(),
+      onTap: _showProgramFilterDialog,
+    );
+
+    final refreshButton = InkWell(
+      borderRadius: BorderRadius.circular(8),
+      onTap: isLiveSyncing
+          ? null
+          : () async {
+        await getData();
+        _requestLiveSync(silent: false);
+      },
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            isLiveSyncing
+                ? const SizedBox(
+              width: 16,
+              height: 16,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
+                : Icon(Icons.refresh_outlined,
+                size: 18, color: isLiveLoaded ? Colors.green : Colors.black87),
+            const SizedBox(width: 6),
+            Text('Refresh',
+                style: TextStyle(
+                    fontSize: 13,
+                    color: isLiveLoaded ? Colors.green : Colors.black87)),
+          ],
+        ),
+      ),
+    );
+
+    Widget content;
+    if (wide) {
+      content = Row(
+        children: [
+          SizedBox(width: 380, child: searchField),
+          const SizedBox(width: 10),
+          dateChip,
+          const SizedBox(width: 8),
+          filterChip,
+          const Spacer(),
+          refreshButton,
+        ],
+      );
+    } else {
+      content = Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          searchField,
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              dateChip,
+              filterChip,
+              refreshButton,
+            ],
+          ),
+        ],
+      );
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        border: Border(bottom: BorderSide(color: Color(0xffE3E9EC))),
+      ),
+      child: content,
+    );
+  }
+
+  // ───────────────────────── footer (Showing x–y of z  |  Prev 1 / n Next) ─────────────────────────
+
+  Widget _buildFooter(int total, int totalPages) {
+    final int pages = totalPages < 1 ? 1 : totalPages;
+    final int page = selectedPages > pages ? pages : (selectedPages < 1 ? 1 : selectedPages);
+    final int from = total == 0 ? 0 : (page - 1) * noOfRowsPerPage + 1;
+    final int to = (page * noOfRowsPerPage) < total ? page * noOfRowsPerPage : total;
+    const mono = TextStyle(
+      fontFamily: 'monospace',
+      fontFamilyFallback: ['Courier New', 'Courier'],
+      fontSize: 12.5,
+      color: Color(0xff5F6F76),
+    );
+
+    Widget navButton(String label, IconData icon, bool leading, bool enabled, VoidCallback onTap) {
+      final Color c = enabled ? const Color(0xff1F2D33) : const Color(0xffB5C0C5);
+      final children = <Widget>[
+        if (leading) Icon(icon, size: 16, color: c),
+        Text(label, style: TextStyle(fontSize: 13, color: c)),
+        if (!leading) Icon(icon, size: 16, color: c),
+      ];
+      return InkWell(
+        borderRadius: BorderRadius.circular(8),
+        onTap: enabled ? onTap : null,
+        child: Container(
+          height: 34,
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: const Color(0xffE3E9EC)),
+          ),
+          child: Row(mainAxisSize: MainAxisSize.min, children: children),
+        ),
+      );
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        border: Border(top: BorderSide(color: Color(0xffE3E9EC))),
+      ),
+      child: Row(
+        children: [
+          Text('Showing $from–$to of $total', style: mono),
+          const Spacer(),
+          navButton('Prev', Icons.chevron_left, true, page > 1, () {
+            setState(() => selectedPages = page - 1);
+          }),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14),
+            child: Text('$page / $pages',
+                style: mono.copyWith(color: const Color(0xff1F2D33))),
+          ),
+          navButton('Next', Icons.chevron_right, false, page < pages, () {
+            setState(() => selectedPages = page + 1);
+          }),
+        ],
+      ),
+    );
+  }
+
+  void _showDatePickerDialog() {
+    showDialog(context: context, builder: (context){
+      return AlertDialog(
+        title: const Text('Date Picker'),
+        content: StatefulBuilder(
+          builder: (BuildContext context, StateSetter stateSetter) {
+            return SizedBox(
+              width: 200,
+              height: 250,
+              child: SfDateRangePicker(
+                onSelectionChanged: _onSelectionChanged,
+                selectionMode: DateRangePickerSelectionMode.range,
+                initialSelectedRange: PickerDateRange(
+                    DateTime.now(),
+                    DateTime.now()
+                ),
+              ),
+            );
+          },
+        ),
+        actions: [
+          CustomMaterialButton(
+            title: 'Cancel',
+            outlined: true,
+          ),
+          CustomMaterialButton(
+            onPressed: ()async{
+              Navigator.pop(context);
+              getDialog(context);
+              getData();
+              setState(() {
+                for(var sortItem = 0;sortItem < _irrigationOptionWise.length;sortItem++){
+                  if(_selectedIndex == sortItem){
+                    _irrigationOptionWise[sortItem][1] = true;
+                  }else{
+                    _irrigationOptionWise[sortItem][1] = false;
+                  }
+                }
+              });
+              if(mounted){
+                Navigator.pop(context);
+              }
+            },
+          ),
+        ],
+      );
+    });
+  }
+
+  Widget _buildTitleBlock(bool wide) {
+    final primary = Theme.of(context).primaryColor;
+    final iconBox = Container(
+      width: 34,
+      height: 34,
+      decoration: BoxDecoration(
+        color: primary,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: const Icon(Icons.water_drop_outlined, color: Colors.white, size: 20),
+    );
+    final liveBadge = isLiveLoaded
+        ? Container(
+      margin: const EdgeInsets.only(left: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: Colors.green.withOpacity(0.15),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: Colors.green, width: 0.8),
+      ),
+      child: const Text('LIVE',
+          style: TextStyle(
+              color: Colors.green,
+              fontSize: 10,
+              fontWeight: FontWeight.bold)),
+    )
+        : const SizedBox.shrink();
+
+    final dateText = Text(
+      _selectedDate.replaceAll(' - ', '  –  '),
+      style: const TextStyle(fontSize: 12, color: Colors.black45),
+    );
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        iconBox,
+        const SizedBox(width: 10),
+        wide
+            ? Row(
+          children: [
+            const Text('Irrigation Log',
+                style: TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.black87)),
+            const SizedBox(width: 10),
+            dateText,
+            liveBadge,
+          ],
+        )
+            : Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(children: [
+              const Text('Irrigation Log',
+                  style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.black87)),
+              liveBadge,
+            ]),
+            dateText,
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTabPill() {
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: const Color(0xffF1F4F6),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0xffE3E9EC)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (var i = 0; i < _irrigationOptionWise.length; i++)
+            InkWell(
+              borderRadius: BorderRadius.circular(8),
+              onTap: () => _onTabSelected(i),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+                decoration: BoxDecoration(
+                  color: _irrigationOptionWise[i][1] == true
+                      ? Colors.white
+                      : Colors.transparent,
+                  borderRadius: BorderRadius.circular(8),
+                  boxShadow: _irrigationOptionWise[i][1] == true
+                      ? const [
+                    BoxShadow(
+                        color: Color(0x14000000),
+                        blurRadius: 4,
+                        offset: Offset(0, 1))
+                  ]
+                      : null,
+                ),
+                child: Text(
+                  '${_irrigationOptionWise[i][0]}',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: _irrigationOptionWise[i][1] == true
+                        ? FontWeight.w600
+                        : FontWeight.w400,
+                    color: _irrigationOptionWise[i][1] == true
+                        ? Colors.black87
+                        : Colors.black54,
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  void _onTabSelected(int i) {
+    getDialog(context);
+    Future.delayed(const Duration(seconds: 1), () {
+      if (!mounted) return;
+      setState(() {
+        _selectedIndex = i;
+        for (var j = 0; j < _irrigationOptionWise.length; j++) {
+          _irrigationOptionWise[j][1] = (j == i);
+        }
+        if (_irrigationOptionWise[0][1] == true) {
+          dataToShow = irrigationParameterArray.editDateWise(dataSource, date);
+        } else if (_irrigationOptionWise[1][1] == true) {
+          dataToShow = irrigationParameterArray.editProgramWise(dataSource, program);
+        } else if (_irrigationOptionWise[2][1] == true) {
+          dataToShow = irrigationParameterArray.editLineWise(dataSource, line);
+        } else if (_irrigationOptionWise[3][1] == true) {
+          dataToShow = irrigationParameterArray.editValveWise(dataSource, valve);
+        } else if (_irrigationOptionWise[4][1] == true) {
+          dataToShow = irrigationParameterArray.editStatusWise(dataSource, status);
+        }
+      });
+      Navigator.pop(context);
+    });
+  }
+
+  void _showDownloadDialog() {
+    var fileName = 'file';
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Give Name For Your File'),
+          content: TextFormField(
+            initialValue: fileName,
+            onChanged: (value) => fileName = value,
+            decoration: const InputDecoration(border: OutlineInputBorder()),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () async {
+                Navigator.pop(dialogContext);
+                showDialog(
+                  context: context,
+                  barrierDismissible: false,
+                  builder: (_) => const AlertDialog(
+                    title: Text('Saving Excel...'),
+                    content: SizedBox(
+                        height: 50,
+                        child: Center(child: CircularProgressIndicator())),
+                  ),
+                );
+                bool result = await generateExcel(_applySearch(dataToShow), fileName);
+                if (mounted) Navigator.pop(context);
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                      content: Text(result
+                          ? '$fileName.xlsx downloaded successfully'
+                          : 'Failed to save $fileName.xlsx')));
+                }
+              },
+              child: const Text('Download Excel'),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF006573),
+                foregroundColor: Colors.white,
+              ),
+              onPressed: () async {
+                Navigator.pop(dialogContext);
+                showDialog(
+                  context: context,
+                  barrierDismissible: false,
+                  builder: (_) => const AlertDialog(
+                    title: Text('Generating PDF...'),
+                    content: SizedBox(
+                        height: 50,
+                        child: Center(child: CircularProgressIndicator())),
+                  ),
+                );
+                bool result = await generatePdf(_applySearch(dataToShow), fileName);
+                if (mounted) Navigator.pop(context);
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                      content: Text(result
+                          ? '$fileName.pdf downloaded successfully'
+                          : 'Failed to generate PDF')));
+                }
+              },
+              child: const Text('Download PDF'),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -2033,15 +2375,6 @@ class _ChartData {
   final double y;
   final String z;
 }
-
-
-
-
-
-
-
-
-
 
 Widget getTableHeader(name,flex){
   return Expanded(

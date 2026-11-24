@@ -273,6 +273,7 @@ class _EcoGemProgressDialogState extends State<EcoGemProgressDialog> {
       actions: [
         if (isAllProcessed && isAllSent)
           FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: const Color(0xFF5B21B6)),
             onPressed: () {
               Navigator.of(context).pop(controllerReadStatus);
             },
@@ -280,6 +281,7 @@ class _EcoGemProgressDialogState extends State<EcoGemProgressDialog> {
           )
         else
           FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: const Color(0xFF5B21B6)),
             onPressed: () {
               breakLoop = true;
               Navigator.of(context).pop(controllerReadStatus);
@@ -288,11 +290,13 @@ class _EcoGemProgressDialogState extends State<EcoGemProgressDialog> {
           ),
         if (isAllProcessed && !isAllSent)
           FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: const Color(0xFF5B21B6)),
             onPressed: handleRetry,
             child: const Text("Retry"),
           ),
         if (!isSending && !isAllProcessed)
           FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: const Color(0xFF5B21B6)),
             onPressed: _processPayloads,
             child: const Text("Send"),
           ),

@@ -465,7 +465,7 @@ class _FertigationCardListPageState
           content: Text(
             result ? 'Excel report downloaded successfully' : 'Failed to download Excel report',
           ),
-          backgroundColor: result ? const Color(0xFF006573) : Colors.red,
+          backgroundColor: result ? const Color(0xFF5B21B6) : Colors.red,
         ),
       );
     }
@@ -485,7 +485,7 @@ class _FertigationCardListPageState
           content: Text(
             result ? 'PDF report downloaded successfully' : 'Failed to download PDF report',
           ),
-          backgroundColor: result ? const Color(0xFF006573) : Colors.red,
+          backgroundColor: result ? const Color(0xFF5B21B6) : Colors.red,
         ),
       );
     }
@@ -606,7 +606,7 @@ class _FertigationCardListPageState
           title: const Text(
             'Select Date Range',
             style: TextStyle(
-              color: Color(0xFF006573),
+              color: Color(0xFF5B21B6),
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -649,7 +649,7 @@ class _FertigationCardListPageState
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor:
-                const Color(0xFF006573),
+                const Color(0xFF5B21B6),
               ),
               onPressed: () {
                 setState(() {
@@ -720,7 +720,7 @@ class _FertigationCardListPageState
     if (_isLoading) {
       return const Center(
         child: CircularProgressIndicator(
-          color: Color(0xFF006573),
+          color: Color(0xFF5B21B6),
         ),
       );
     }
@@ -789,7 +789,7 @@ class _FertigationCardListPageState
               style: ButtonStyle(
                 backgroundColor: WidgetStateProperty.resolveWith<Color>((states) {
                   if (states.contains(WidgetState.selected)) {
-                    return const Color(0xFF006573);
+                    return const Color(0xFF5B21B6);
                   }
                   return Colors.white;
                 }),
@@ -797,7 +797,7 @@ class _FertigationCardListPageState
                   if (states.contains(WidgetState.selected)) {
                     return Colors.white;
                   }
-                  return const Color(0xFF006573);
+                  return const Color(0xFF5B21B6);
                 }),
               ),
             ),
@@ -808,7 +808,7 @@ class _FertigationCardListPageState
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: const Color(0xFF006573).withValues(alpha: 0.2), width: 1),
+              border: Border.all(color: const Color(0xFF5B21B6).withValues(alpha: 0.2), width: 1),
               boxShadow: [
                 BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8, offset: const Offset(0, 2)),
               ],
@@ -818,13 +818,13 @@ class _FertigationCardListPageState
               children: [
                 const Text(
                   ' Fertigation Status Summary',
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF006573)),
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF5B21B6)),
                 ),
                 const SizedBox(height: 5),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 5),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFEDF4F4),
+                    color: const Color(0xFFEDE9FE),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Row(
@@ -865,38 +865,61 @@ class _FertigationCardListPageState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7F8),
+      backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF006573),
-        title: const Text(
-          'Fertilizer Log',
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        iconTheme: const IconThemeData(
-          color: Colors.white,
-        ),
-        actions: [
-          Center(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 8,
-              ),
-              child: Text(
-                _selectedDateStr,
-                style: const TextStyle(
-                  color: Colors.white70,
-                  fontSize: 12,
+        backgroundColor: const Color(0xFFF8FAFC),
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        centerTitle: false,
+        automaticallyImplyLeading: false,
+        titleSpacing: 16,
+        title: Row(
+          children: [
+            InkWell(
+              onTap: () {
+                Navigator.pop(context);
+              },
+              borderRadius: BorderRadius.circular(20),
+              child: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
                 ),
+                child: const Icon(Icons.arrow_back, size: 20, color: Color(0xFF1E293B)),
               ),
             ),
-          ),
+            const SizedBox(width: 16),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'Fertilizer Log',
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF1E1B4B),
+                  ),
+                ),
+                Text(
+                  _selectedDateStr,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey[600],
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+        actions: [
           IconButton(
             icon: const Icon(
               Icons.date_range,
-              color: Colors.white,
+              color: Color(0xFF5B21B6),
             ),
             tooltip: 'Select Date Range',
             onPressed: _showDatePickerDialog,
@@ -904,7 +927,7 @@ class _FertigationCardListPageState
           PopupMenuButton<String>(
             icon: const Icon(
               Icons.download,
-              color: Colors.white,
+              color: Color(0xFF5B21B6),
             ),
             tooltip: 'Download Report',
             enabled: !_isLoading && allCards.isNotEmpty,
@@ -917,7 +940,7 @@ class _FertigationCardListPageState
                 value: 'excel',
                 child: Row(
                   children: [
-                    Icon(Icons.table_chart, color: Color(0xFF006573)),
+                    Icon(Icons.table_chart, color: Color(0xFF5B21B6)),
                     SizedBox(width: 8),
                     Text('Download Excel'),
                   ],
@@ -927,7 +950,7 @@ class _FertigationCardListPageState
                 value: 'pdf',
                 child: Row(
                   children: [
-                    Icon(Icons.picture_as_pdf, color: Colors.red),
+                    Icon(Icons.picture_as_pdf, color: Color(0xFFE53935)),
                     SizedBox(width: 8),
                     Text('Download PDF'),
                   ],

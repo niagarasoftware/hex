@@ -1507,7 +1507,7 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    final primaryDark = Theme.of(context).primaryColorDark;
+    final primaryDark = const Color(0xFF5B21B6);
 
     return Scaffold(
       key: _scaffoldKey,
@@ -2408,7 +2408,7 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
     return Container(
       constraints: const BoxConstraints(minHeight: 44),
       decoration: const BoxDecoration(
-        color: Color(0xFF00695C),
+        color: Color(0xFF5B21B6),
         borderRadius: BorderRadius.only(
           topLeft: Radius.circular(6),
           topRight: Radius.circular(6),
@@ -2484,7 +2484,7 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
                     //           Icons.table_rows_outlined,
                     //           size: 14,
                     //           color: _selectedViewTab == 0
-                    //               ? const Color(0xFF00695C)
+                    //               ? const Color(0xFF5B21B6)
                     //               : Colors.white,
                     //         ),
                     //         const SizedBox(width: 5),
@@ -2496,7 +2496,7 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
                     //                 ? FontWeight.bold
                     //                 : FontWeight.w500,
                     //             color: _selectedViewTab == 0
-                    //                 ? const Color(0xFF00695C)
+                    //                 ? const Color(0xFF5B21B6)
                     //                 : Colors.white,
                     //           ),
                     //         ),
@@ -2539,7 +2539,7 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
                     //           Icons.bar_chart_rounded,
                     //           size: 14,
                     //           color: _selectedViewTab == 1
-                    //               ? const Color(0xFF00695C)
+                    //               ? const Color(0xFF5B21B6)
                     //               : Colors.white,
                     //         ),
                     //         const SizedBox(width: 5),
@@ -2551,7 +2551,7 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
                     //                 ? FontWeight.bold
                     //                 : FontWeight.w500,
                     //             color: _selectedViewTab == 1
-                    //                 ? const Color(0xFF00695C)
+                    //                 ? const Color(0xFF5B21B6)
                     //                 : Colors.white,
                     //           ),
                     //         ),
@@ -2614,7 +2614,7 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
                                 ? FontWeight.bold
                                 : FontWeight.w500,
                             color: _selectedLogTypeTab == 0
-                                ? const Color(0xFF00695C)
+                                ? const Color(0xFF5B21B6)
                                 : Colors.white,
                           ),
                         ),
@@ -2663,7 +2663,7 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
                                 ? FontWeight.bold
                                 : FontWeight.w500,
                             color: _selectedLogTypeTab == 1
-                                ? const Color(0xFF00695C)
+                                ? const Color(0xFF5B21B6)
                                 : Colors.white,
                           ),
                         ),
@@ -2713,7 +2713,7 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
                                 ? FontWeight.bold
                                 : FontWeight.w500,
                             color: _selectedLogTypeTab == 2
-                                ? const Color(0xFF00695C)
+                                ? const Color(0xFF5B21B6)
                                 : Colors.white,
                           ),
                         ),
@@ -2856,7 +2856,7 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
                       height: 38,
                       alignment: Alignment.center,
                       decoration: const BoxDecoration(
-                        color: Color(0xFF00695C),
+                        color: Color(0xFF5B21B6),
                         border: Border(
                           bottom:
                               BorderSide(color: Color(0xFFCBD5E1), width: 1),
@@ -2910,7 +2910,7 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
                       height: 46,
                       alignment: Alignment.center,
                       decoration: const BoxDecoration(
-                        color: Color(0xFFF0FDF4),
+                        color: Color(0xFFF8FAFC),
                         border: Border(
                           top: BorderSide(color: Color(0xFFE2E8F0), width: 1),
                           bottom:
@@ -2922,7 +2922,7 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF166534),
+                          color: Color(0xFF5B21B6),
                         ),
                       ),
                     ),
@@ -3104,7 +3104,7 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
                       height: 38,
                       alignment: Alignment.center,
                       decoration: const BoxDecoration(
-                        color: Color(0xFF00695C),
+                        color: Color(0xFF5B21B6),
                         border: Border(
                           bottom:
                               BorderSide(color: Color(0xFFCBD5E1), width: 1),
@@ -3161,7 +3161,7 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
                       alignment: Alignment.center,
                       padding: const EdgeInsets.symmetric(horizontal: 4),
                       decoration: const BoxDecoration(
-                        color: Color(0xFFDCFCE7),
+                        color: Color(0xFFEDE9FE),
                         border: Border(
                           top: BorderSide(color: Color(0xFFE2E8F0), width: 1),
                           bottom:
@@ -3178,7 +3178,7 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
                               ? 12.5
                               : 13.0,
                           fontWeight: FontWeight.bold,
-                          color: const Color(0xFF15803D),
+                          color: const Color(0xFF5B21B6),
                         ),
                       ),
                     ),
@@ -3242,7 +3242,7 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
                         height: 38,
                         alignment: Alignment.center,
                         decoration: const BoxDecoration(
-                          color: Color(0xFF00695C),
+                          color: Color(0xFF5B21B6),
                           border: Border(
                             bottom:
                                 BorderSide(color: Color(0xFFE2E8F0), width: 1),
@@ -3286,7 +3286,7 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
                         height: 38,
                         alignment: Alignment.center,
                         decoration: const BoxDecoration(
-                          color: Color(0xFF00695C),
+                          color: Color(0xFF5B21B6),
                           border: Border(
                             bottom:
                                 BorderSide(color: Color(0xFFE2E8F0), width: 1),
@@ -3396,7 +3396,7 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
     return Container(
       height: 46,
       decoration: const BoxDecoration(
-        color: Color(0xFFF0FDF4),
+        color: Color(0xFFF8FAFC),
         border: Border(
           top: BorderSide(color: Color(0xFFE2E8F0), width: 1),
           bottom: BorderSide(color: Color(0xFFE2E8F0), width: 1),
@@ -3419,7 +3419,7 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF166534),
+                color: Color(0xFF5B21B6),
               ),
             ),
           ),
@@ -3453,7 +3453,7 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
                   style: const TextStyle(
                     fontSize: 12.0,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF166534),
+                    color: Color(0xFF5B21B6),
                   ),
                 ),
               );
@@ -3464,7 +3464,7 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
             alignment: Alignment.center,
             padding: const EdgeInsets.symmetric(horizontal: 4),
             decoration: const BoxDecoration(
-              color: Color(0xFFDCFCE7),
+              color: Color(0xFFEDE9FE),
             ),
             child: Text(
               "${_formatDuration(grandTotalSeconds)} /\n${grandTotalQuantity > 0 ? (grandTotalQuantity % 1 == 0 ? '${grandTotalQuantity.toInt()} L' : '$grandTotalQuantity L') : '-'}",
@@ -3474,7 +3474,7 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
               style: const TextStyle(
                 fontSize: 12.5,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF15803D),
+                color: Color(0xFF5B21B6),
               ),
             ),
           ),
@@ -3557,15 +3557,15 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
                   padding: const EdgeInsets.all(4),
                   margin: const EdgeInsets.only(right: 2),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFE0F2F1),
+                    color: const Color(0xFFEDE9FE),
                     borderRadius: BorderRadius.circular(4),
                     border:
-                        Border.all(color: const Color(0xFFB2DFDB), width: 1),
+                        Border.all(color: const Color(0xFFE2E8F0), width: 1),
                   ),
                   child: const Icon(
                     Icons.bar_chart_rounded,
                     size: 15,
-                    color: Color(0xFF00695C),
+                    color: Color(0xFF5B21B6),
                   ),
                 ),
               ),
@@ -3651,7 +3651,7 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
                           ? 12.5
                           : 13.0),
                   fontWeight: FontWeight.bold,
-                  color: const Color(0xFF15803D),
+                  color: const Color(0xFF5B21B6),
                 ),
               ),
             ),
@@ -3669,7 +3669,7 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
     return Container(
       height: 46,
       decoration: const BoxDecoration(
-        color: Color(0xFFF0FDF4),
+        color: Color(0xFFF8FAFC),
         border: Border(
           top: BorderSide(color: Color(0xFFE2E8F0), width: 1),
           bottom: BorderSide(color: Color(0xFFE2E8F0), width: 1),
@@ -3711,7 +3711,7 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
                   style: TextStyle(
                     fontSize: fontSize,
                     fontWeight: FontWeight.bold,
-                    color: const Color(0xFF166534),
+                    color: const Color(0xFF5B21B6),
                   ),
                 ),
               );
@@ -3818,7 +3818,7 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
                               _buildMetricTab(
                                 label: "Duration (mins)",
                                 icon: Icons.timer_outlined,
-                                activeColor: const Color(0xFF0D9488),
+                                activeColor: const Color(0xFF5B21B6),
                                 isSelected: _selectedGraphMetric == 'Duration',
                                 onTap: () => setState(
                                     () => _selectedGraphMetric = 'Duration'),
@@ -3826,7 +3826,7 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
                               _buildMetricTab(
                                 label: "Quantity",
                                 icon: Icons.water_drop_outlined,
-                                activeColor: const Color(0xFF16A34A),
+                                activeColor: const Color(0xFF5B21B6),
                                 isSelected: _selectedGraphMetric == 'Quantity',
                                 onTap: () => setState(
                                     () => _selectedGraphMetric = 'Quantity'),
@@ -3934,14 +3934,14 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
       child: Container(
         padding: const EdgeInsets.all(2),
         decoration: BoxDecoration(
-          color: const Color(0xFFE0F2F1),
+          color: const Color(0xFFEDE9FE),
           borderRadius: BorderRadius.circular(4),
           border: Border.all(color: const Color(0xFFC8E6C9), width: 1),
         ),
         child: Icon(
           isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
           size: 16,
-          color: const Color(0xFF0F766E),
+          color: const Color(0xFF5B21B6),
         ),
       ),
     );
@@ -3949,20 +3949,20 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
     Widget durationBadge = Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
-        color: const Color(0xFFE0F2F1),
+        color: const Color(0xFFEDE9FE),
         borderRadius: BorderRadius.circular(4),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.timer_outlined, size: 11, color: Color(0xFF0F766E)),
+          const Icon(Icons.timer_outlined, size: 11, color: Color(0xFF5B21B6)),
           const SizedBox(width: 3),
           Text(
             _formatDuration(row.totalDurationSeconds),
             style: const TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.bold,
-              color: Color(0xFF0F766E),
+              color: Color(0xFF5B21B6),
             ),
           ),
         ],
@@ -3978,21 +3978,21 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
     Widget quantityBadge = Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
-        color: const Color(0xFFF0FDF4),
+        color: const Color(0xFFF8FAFC),
         borderRadius: BorderRadius.circular(4),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           const Icon(Icons.water_drop_outlined,
-              size: 11, color: Color(0xFF166534)),
+              size: 11, color: Color(0xFF5B21B6)),
           const SizedBox(width: 3),
           Text(
             qtyStr,
             style: const TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.bold,
-              color: Color(0xFF166534),
+              color: Color(0xFF5B21B6),
             ),
           ),
         ],
@@ -4170,7 +4170,7 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
                                 style: TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.bold,
-                                  color: Color(0xFF0F766E),
+                                  color: Color(0xFF5B21B6),
                                 ),
                               ),
                             ),
@@ -4182,7 +4182,7 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
                                 style: TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.bold,
-                                  color: Color(0xFF166534),
+                                  color: Color(0xFF5B21B6),
                                 ),
                               ),
                             ),
@@ -4245,7 +4245,7 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
                                           ? FontWeight.bold
                                           : FontWeight.normal,
                                       color: durStr != '-'
-                                          ? const Color(0xFF0F766E)
+                                          ? const Color(0xFF5B21B6)
                                           : const Color(0xFF94A3B8),
                                     ),
                                   ),
@@ -4261,7 +4261,7 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
                                           ? FontWeight.bold
                                           : FontWeight.normal,
                                       color: dayQtyStr != '-'
-                                          ? const Color(0xFF166534)
+                                          ? const Color(0xFF5B21B6)
                                           : const Color(0xFF94A3B8),
                                     ),
                                   ),
@@ -4275,12 +4275,12 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 10, vertical: 7),
                         decoration: const BoxDecoration(
-                          color: Color(0xFFF0FDF4),
+                          color: Color(0xFFF8FAFC),
                           borderRadius:
                               BorderRadius.vertical(bottom: Radius.circular(5)),
                           border: Border(
                             top: BorderSide(
-                                color: Color(0xFFBBF7D0), width: 1.5),
+                                color: Color(0xFFE2E8F0), width: 1.5),
                           ),
                         ),
                         child: Row(
@@ -4292,7 +4292,7 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
                                 style: TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.bold,
-                                  color: Color(0xFF166534),
+                                  color: Color(0xFF5B21B6),
                                 ),
                               ),
                             ),
@@ -4304,7 +4304,7 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
                                 style: const TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.bold,
-                                  color: Color(0xFF0F766E),
+                                  color: Color(0xFF5B21B6),
                                 ),
                               ),
                             ),
@@ -4316,7 +4316,7 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
                                 style: const TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.bold,
-                                  color: Color(0xFF166534),
+                                  color: Color(0xFF5B21B6),
                                 ),
                               ),
                             ),
@@ -4461,7 +4461,7 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
                       height: 38,
                       alignment: Alignment.center,
                       decoration: const BoxDecoration(
-                        color: Color(0xFF00695C),
+                        color: Color(0xFF5B21B6),
                         border: Border(
                           bottom:
                               BorderSide(color: Color(0xFFCBD5E1), width: 1),
@@ -4519,7 +4519,7 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
                       height: 46,
                       alignment: Alignment.center,
                       decoration: const BoxDecoration(
-                        color: Color(0xFFF0FDF4),
+                        color: Color(0xFFF8FAFC),
                         border: Border(
                           top: BorderSide(color: Color(0xFFE2E8F0), width: 1),
                           bottom:
@@ -4531,7 +4531,7 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF166534),
+                          color: Color(0xFF5B21B6),
                         ),
                       ),
                     ),
@@ -4694,7 +4694,7 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
                       height: 38,
                       alignment: Alignment.center,
                       decoration: const BoxDecoration(
-                        color: Color(0xFF00695C),
+                        color: Color(0xFF5B21B6),
                         border: Border(
                           bottom:
                               BorderSide(color: Color(0xFFCBD5E1), width: 1),
@@ -4753,7 +4753,7 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
                       alignment: Alignment.center,
                       padding: const EdgeInsets.symmetric(horizontal: 4),
                       decoration: const BoxDecoration(
-                        color: Color(0xFFDCFCE7),
+                        color: Color(0xFFEDE9FE),
                         border: Border(
                           top: BorderSide(color: Color(0xFFE2E8F0), width: 1),
                           bottom:
@@ -4770,7 +4770,7 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
                               ? 12.5
                               : 13.0,
                           fontWeight: FontWeight.bold,
-                          color: const Color(0xFF15803D),
+                          color: const Color(0xFF5B21B6),
                         ),
                       ),
                     ),
@@ -4840,7 +4840,7 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
                         height: 38,
                         alignment: Alignment.center,
                         decoration: const BoxDecoration(
-                          color: Color(0xFF00695C),
+                          color: Color(0xFF5B21B6),
                           border: Border(
                             right:
                                 BorderSide(color: Color(0xFFE2E8F0), width: 1),
@@ -4886,7 +4886,7 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
                         height: 38,
                         alignment: Alignment.center,
                         decoration: const BoxDecoration(
-                          color: Color(0xFF00695C),
+                          color: Color(0xFF5B21B6),
                           border: Border(
                             bottom:
                                 BorderSide(color: Color(0xFFE2E8F0), width: 1),
@@ -4999,7 +4999,7 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
     return Container(
       height: 46,
       decoration: const BoxDecoration(
-        color: Color(0xFFF0FDF4),
+        color: Color(0xFFF8FAFC),
         border: Border(
           top: BorderSide(color: Color(0xFFE2E8F0), width: 1),
           bottom: BorderSide(color: Color(0xFFE2E8F0), width: 1),
@@ -5022,7 +5022,7 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF166534),
+                color: Color(0xFF5B21B6),
               ),
             ),
           ),
@@ -5056,7 +5056,7 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
                   style: const TextStyle(
                     fontSize: 12.0,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF166534),
+                    color: Color(0xFF5B21B6),
                   ),
                 ),
               );
@@ -5067,7 +5067,7 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
             alignment: Alignment.center,
             padding: const EdgeInsets.symmetric(horizontal: 4),
             decoration: const BoxDecoration(
-              color: Color(0xFFDCFCE7),
+              color: Color(0xFFEDE9FE),
             ),
             child: Text(
               "${_formatDuration(grandTotalSeconds)} /\n${grandTotalQuantity > 0 ? (grandTotalQuantity % 1 == 0 ? '${grandTotalQuantity.toInt()} L' : '$grandTotalQuantity L') : '-'}",
@@ -5077,7 +5077,7 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
               style: const TextStyle(
                 fontSize: 12.5,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF15803D),
+                color: Color(0xFF5B21B6),
               ),
             ),
           ),
@@ -5094,7 +5094,7 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
       alignment: Alignment.center,
       padding: const EdgeInsets.symmetric(horizontal: 4),
       decoration: const BoxDecoration(
-        color: Color(0xFFE0F2F1),
+        color: Color(0xFFEDE9FE),
         border: Border(
           right: BorderSide(color: Color(0xFFCBD5E1), width: 1),
           bottom: BorderSide(color: Color(0xFFCBD5E1), width: 1),
@@ -5108,7 +5108,7 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
         style: TextStyle(
           fontSize: MediaQuery.of(context).size.width < 650 ? 10.0 : 10.5,
           fontWeight: FontWeight.bold,
-          color: const Color(0xFF0F766E),
+          color: const Color(0xFF5B21B6),
         ),
       ),
     );
@@ -5214,15 +5214,15 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
                   padding: const EdgeInsets.all(4),
                   margin: const EdgeInsets.only(right: 2),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFE0F2F1),
+                    color: const Color(0xFFEDE9FE),
                     borderRadius: BorderRadius.circular(4),
                     border:
-                        Border.all(color: const Color(0xFFB2DFDB), width: 1),
+                        Border.all(color: const Color(0xFFE2E8F0), width: 1),
                   ),
                   child: const Icon(
                     Icons.bar_chart_rounded,
                     size: 15,
-                    color: Color(0xFF00695C),
+                    color: Color(0xFF5B21B6),
                   ),
                 ),
               ),
@@ -5321,7 +5321,7 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
                             ? 12.5
                             : 13.0),
                     fontWeight: FontWeight.bold,
-                    color: const Color(0xFF15803D),
+                    color: const Color(0xFF5B21B6),
                   ),
                 ),
               ),
@@ -5352,7 +5352,7 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
               ? 12.0
               : (MediaQuery.of(context).size.width < 1100 ? 12.5 : 13.0),
           fontWeight: FontWeight.bold,
-          color: const Color(0xFF15803D),
+          color: const Color(0xFF5B21B6),
         ),
       ),
     );
@@ -5438,7 +5438,7 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
     return Container(
       height: 46,
       decoration: const BoxDecoration(
-        color: Color(0xFFF0FDF4),
+        color: Color(0xFFF8FAFC),
         border: Border(
           top: BorderSide(color: Color(0xFFE2E8F0), width: 1),
           bottom: BorderSide(color: Color(0xFFE2E8F0), width: 1),
@@ -5480,7 +5480,7 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
                   style: TextStyle(
                     fontSize: fontSize,
                     fontWeight: FontWeight.bold,
-                    color: const Color(0xFF166534),
+                    color: const Color(0xFF5B21B6),
                   ),
                 ),
               );
@@ -5588,7 +5588,7 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
                               _buildMetricTab(
                                 label: "Duration (mins)",
                                 icon: Icons.timer_outlined,
-                                activeColor: const Color(0xFF0D9488),
+                                activeColor: const Color(0xFF5B21B6),
                                 isSelected: _selectedGraphMetric == 'Duration',
                                 onTap: () => setState(
                                     () => _selectedGraphMetric = 'Duration'),
@@ -5596,7 +5596,7 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
                               _buildMetricTab(
                                 label: "Quantity",
                                 icon: Icons.water_drop_outlined,
-                                activeColor: const Color(0xFF16A34A),
+                                activeColor: const Color(0xFF5B21B6),
                                 isSelected: _selectedGraphMetric == 'Quantity',
                                 onTap: () => setState(
                                     () => _selectedGraphMetric = 'Quantity'),
@@ -5664,7 +5664,7 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
                         value: _formatDuration(grandTotalSeconds),
                         icon: Icons.timer_outlined,
                         color: const Color(0xFF00897B),
-                        bgColor: const Color(0xFFE0F2F1),
+                        bgColor: const Color(0xFFEDE9FE),
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -5677,8 +5677,8 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
                                 : "$grandTotalQuantity L")
                             : "-",
                         icon: Icons.water_drop_outlined,
-                        color: const Color(0xFF16A34A),
-                        bgColor: const Color(0xFFF0FDF4),
+                        color: const Color(0xFF5B21B6),
+                        bgColor: const Color(0xFFF8FAFC),
                       ),
                     ),
                   ],
@@ -5717,7 +5717,7 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
                     value: _formatDuration(grandTotalSeconds),
                     icon: Icons.timer_outlined,
                     color: const Color(0xFF00897B),
-                    bgColor: const Color(0xFFE0F2F1),
+                    bgColor: const Color(0xFFEDE9FE),
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -5730,8 +5730,8 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
                             : "$grandTotalQuantity L")
                         : "-",
                     icon: Icons.water_drop_outlined,
-                    color: const Color(0xFF16A34A),
-                    bgColor: const Color(0xFFF0FDF4),
+                    color: const Color(0xFF5B21B6),
+                    bgColor: const Color(0xFFF8FAFC),
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -5957,13 +5957,13 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
                           Container(
                             padding: const EdgeInsets.all(6),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFE0F2F1),
+                              color: const Color(0xFFEDE9FE),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: const Icon(
                               Icons.bar_chart_rounded,
                               size: 20,
-                              color: Color(0xFF00695C),
+                              color: Color(0xFF5B21B6),
                             ),
                           ),
                           const SizedBox(width: 10),
@@ -6019,7 +6019,7 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
                             label: "Total Duration",
                             value: _formatDuration(row.totalDurationSeconds),
                             color: const Color(0xFF00897B),
-                            bgColor: const Color(0xFFE0F2F1),
+                            bgColor: const Color(0xFFEDE9FE),
                           ),
                           _buildSummaryBadge(
                             icon: Icons.water_drop_outlined,
@@ -6029,8 +6029,8 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
                                     ? "${row.totalQuantity.toInt()} L"
                                     : "${row.totalQuantity} L")
                                 : "-",
-                            color: const Color(0xFF166534),
-                            bgColor: const Color(0xFFF0FDF4),
+                            color: const Color(0xFF5B21B6),
+                            bgColor: const Color(0xFFF8FAFC),
                           ),
                           _buildSummaryBadge(
                             icon: Icons.calendar_today_outlined,
@@ -6062,7 +6062,7 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
                                 _buildMetricTab(
                                   label: "Duration (mins)",
                                   icon: Icons.timer_outlined,
-                                  activeColor: const Color(0xFF0D9488),
+                                  activeColor: const Color(0xFF5B21B6),
                                   isSelected: localMetric == 'Duration',
                                   onTap: () {
                                     setDialogState(
@@ -6072,7 +6072,7 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
                                 _buildMetricTab(
                                   label: "Quantity",
                                   icon: Icons.water_drop_outlined,
-                                  activeColor: const Color(0xFF16A34A),
+                                  activeColor: const Color(0xFF5B21B6),
                                   isSelected: localMetric == 'Quantity',
                                   onTap: () {
                                     setDialogState(
@@ -6153,13 +6153,13 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
                           Container(
                             padding: const EdgeInsets.all(6),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFE0F2F1),
+                              color: const Color(0xFFEDE9FE),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: const Icon(
                               Icons.bar_chart_rounded,
                               size: 20,
-                              color: Color(0xFF00695C),
+                              color: Color(0xFF5B21B6),
                             ),
                           ),
                           const SizedBox(width: 10),
@@ -6212,7 +6212,7 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
                             label: "Total Duration",
                             value: _formatDuration(row.totalDurationSeconds),
                             color: const Color(0xFF00897B),
-                            bgColor: const Color(0xFFE0F2F1),
+                            bgColor: const Color(0xFFEDE9FE),
                           ),
                           _buildSummaryBadge(
                             icon: Icons.water_drop_outlined,
@@ -6222,8 +6222,8 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
                                     ? "${row.totalQuantity.toInt()} L"
                                     : "${row.totalQuantity} L")
                                 : "-",
-                            color: const Color(0xFF166534),
-                            bgColor: const Color(0xFFF0FDF4),
+                            color: const Color(0xFF5B21B6),
+                            bgColor: const Color(0xFFF8FAFC),
                           ),
                           _buildSummaryBadge(
                             icon: Icons.calendar_today_outlined,
@@ -6255,7 +6255,7 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
                                 _buildMetricTab(
                                   label: "Duration (mins)",
                                   icon: Icons.timer_outlined,
-                                  activeColor: const Color(0xFF0D9488),
+                                  activeColor: const Color(0xFF5B21B6),
                                   isSelected: localMetric == 'Duration',
                                   onTap: () {
                                     setDialogState(
@@ -6265,7 +6265,7 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
                                 _buildMetricTab(
                                   label: "Quantity",
                                   icon: Icons.water_drop_outlined,
-                                  activeColor: const Color(0xFF16A34A),
+                                  activeColor: const Color(0xFF5B21B6),
                                   isSelected: localMetric == 'Quantity',
                                   onTap: () {
                                     setDialogState(
@@ -6345,13 +6345,13 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
                           Container(
                             padding: const EdgeInsets.all(6),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFE0F2F1),
+                              color: const Color(0xFFEDE9FE),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: const Icon(
                               Icons.bar_chart_rounded,
                               size: 20,
-                              color: Color(0xFF00695C),
+                              color: Color(0xFF5B21B6),
                             ),
                           ),
                           const SizedBox(width: 10),
@@ -6404,7 +6404,7 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
                             label: "Total Runtime",
                             value: _formatDuration(row.totalDurationSeconds),
                             color: const Color(0xFF00897B),
-                            bgColor: const Color(0xFFE0F2F1),
+                            bgColor: const Color(0xFFEDE9FE),
                           ),
                           _buildSummaryBadge(
                             icon: Icons.bolt_outlined,
@@ -6448,7 +6448,7 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
                               _buildMetricTab(
                                 label: "Runtime (mins)",
                                 icon: Icons.timer_outlined,
-                                activeColor: const Color(0xFF0D9488),
+                                activeColor: const Color(0xFF5B21B6),
                                 isSelected: localMetric == 'Runtime',
                                 onTap: () {
                                   setDialogState(() => localMetric = 'Runtime');
@@ -6585,8 +6585,8 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
               height: 12,
               decoration: BoxDecoration(
                 color: isDuration
-                    ? const Color(0xFF0D9488)
-                    : const Color(0xFF16A34A),
+                    ? const Color(0xFF5B21B6)
+                    : const Color(0xFF5B21B6),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -6635,8 +6635,8 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
                             fontSize: 11,
                             fontWeight: FontWeight.bold,
                             color: isDuration
-                                ? const Color(0xFF0F766E)
-                                : const Color(0xFF166534),
+                                ? const Color(0xFF5B21B6)
+                                : const Color(0xFF5B21B6),
                           ),
                         ),
                         axisLine: const AxisLine(color: Color(0xFFCBD5E1)),
@@ -6685,7 +6685,7 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
                         trackVisibility: true,
                         thickness: 6.0,
                         radius: const Radius.circular(3),
-                        thumbColor: const Color(0xFF00695C),
+                        thumbColor: const Color(0xFF5B21B6),
                         trackColor: const Color(0xFFE2E8F0),
                         padding: const EdgeInsets.only(bottom: 2),
                         child: SingleChildScrollView(
@@ -6818,7 +6818,7 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
           dataSource: data,
           xValueMapper: (_ZoneChartPoint p, _) => p.xLabel,
           yValueMapper: (_ZoneChartPoint p, _) => p.durationMinutes,
-          color: const Color(0xFF0D9488),
+          color: const Color(0xFF5B21B6),
           borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
           width: 0.4,
         ),
@@ -6831,7 +6831,7 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
           dataSource: data,
           xValueMapper: (_ZoneChartPoint p, _) => p.xLabel,
           yValueMapper: (_ZoneChartPoint p, _) => p.quantity,
-          color: const Color(0xFF16A34A),
+          color: const Color(0xFF5B21B6),
           borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
           width: 0.4,
         ),
@@ -6857,14 +6857,14 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
       child: Container(
         padding: const EdgeInsets.all(2),
         decoration: BoxDecoration(
-          color: const Color(0xFFE0F2F1),
+          color: const Color(0xFFEDE9FE),
           borderRadius: BorderRadius.circular(4),
           border: Border.all(color: const Color(0xFFC8E6C9), width: 1),
         ),
         child: Icon(
           isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
           size: 16,
-          color: const Color(0xFF0F766E),
+          color: const Color(0xFF5B21B6),
         ),
       ),
     );
@@ -6872,20 +6872,20 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
     Widget durationBadge = Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
-        color: const Color(0xFFE0F2F1),
+        color: const Color(0xFFEDE9FE),
         borderRadius: BorderRadius.circular(4),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.timer_outlined, size: 11, color: Color(0xFF0F766E)),
+          const Icon(Icons.timer_outlined, size: 11, color: Color(0xFF5B21B6)),
           const SizedBox(width: 3),
           Text(
             _formatDuration(row.totalDurationSeconds),
             style: const TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.bold,
-              color: Color(0xFF0F766E),
+              color: Color(0xFF5B21B6),
             ),
           ),
         ],
@@ -6895,14 +6895,14 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
     Widget quantityBadge = Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
-        color: const Color(0xFFF0FDF4),
+        color: const Color(0xFFF8FAFC),
         borderRadius: BorderRadius.circular(4),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           const Icon(Icons.water_drop_outlined,
-              size: 11, color: Color(0xFF166534)),
+              size: 11, color: Color(0xFF5B21B6)),
           const SizedBox(width: 3),
           Text(
             row.totalQuantity > 0
@@ -6913,7 +6913,7 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
             style: const TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.bold,
-              color: Color(0xFF166534),
+              color: Color(0xFF5B21B6),
             ),
           ),
         ],
@@ -7093,7 +7093,7 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
                                 style: TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.bold,
-                                  color: Color(0xFF0F766E),
+                                  color: Color(0xFF5B21B6),
                                 ),
                               ),
                             ),
@@ -7105,7 +7105,7 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
                                 style: TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.bold,
-                                  color: Color(0xFF166534),
+                                  color: Color(0xFF5B21B6),
                                 ),
                               ),
                             ),
@@ -7168,7 +7168,7 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
                                           ? FontWeight.bold
                                           : FontWeight.normal,
                                       color: durStr != '-'
-                                          ? const Color(0xFF0F766E)
+                                          ? const Color(0xFF5B21B6)
                                           : const Color(0xFF94A3B8),
                                     ),
                                   ),
@@ -7184,7 +7184,7 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
                                           ? FontWeight.bold
                                           : FontWeight.normal,
                                       color: qtyStr != '-'
-                                          ? const Color(0xFF166534)
+                                          ? const Color(0xFF5B21B6)
                                           : const Color(0xFF94A3B8),
                                     ),
                                   ),
@@ -7198,12 +7198,12 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 10, vertical: 7),
                         decoration: const BoxDecoration(
-                          color: Color(0xFFF0FDF4),
+                          color: Color(0xFFF8FAFC),
                           borderRadius:
                               BorderRadius.vertical(bottom: Radius.circular(5)),
                           border: Border(
                             top: BorderSide(
-                                color: Color(0xFFBBF7D0), width: 1.5),
+                                color: Color(0xFFE2E8F0), width: 1.5),
                           ),
                         ),
                         child: Row(
@@ -7215,7 +7215,7 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
                                 style: TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.bold,
-                                  color: Color(0xFF166534),
+                                  color: Color(0xFF5B21B6),
                                 ),
                               ),
                             ),
@@ -7227,7 +7227,7 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
                                 style: const TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.bold,
-                                  color: Color(0xFF0F766E),
+                                  color: Color(0xFF5B21B6),
                                 ),
                               ),
                             ),
@@ -7241,7 +7241,7 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
                                 style: const TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.bold,
-                                  color: Color(0xFF166534),
+                                  color: Color(0xFF5B21B6),
                                 ),
                               ),
                             ),
@@ -7793,7 +7793,7 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
                             _buildMetricTab(
                               label: "Runtime (mins)",
                               icon: Icons.timer_outlined,
-                              activeColor: const Color(0xFF0D9488),
+                              activeColor: const Color(0xFF5B21B6),
                               isSelected: _selectedPumpGraphMetric == 'Runtime',
                               onTap: () => setState(
                                   () => _selectedPumpGraphMetric = 'Runtime'),
@@ -7933,8 +7933,8 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
               "Total Runtime",
               _formatDuration(grandTotalRunSeconds),
               Icons.timer_outlined,
-              const Color(0xFF0F766E),
-              const Color(0xFFE0F2F1),
+              const Color(0xFF5B21B6),
+              const Color(0xFFEDE9FE),
             ),
             card(
               "Total Power On",
@@ -7982,14 +7982,14 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
       child: Container(
         padding: const EdgeInsets.all(2),
         decoration: BoxDecoration(
-          color: const Color(0xFFE0F2F1),
+          color: const Color(0xFFEDE9FE),
           borderRadius: BorderRadius.circular(4),
           border: Border.all(color: const Color(0xFFC8E6C9), width: 1),
         ),
         child: Icon(
           isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
           size: 16,
-          color: const Color(0xFF0F766E),
+          color: const Color(0xFF5B21B6),
         ),
       ),
     );
@@ -7997,20 +7997,20 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
     Widget runBadge = Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
-        color: const Color(0xFFE0F2F1),
+        color: const Color(0xFFEDE9FE),
         borderRadius: BorderRadius.circular(4),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.timer_outlined, size: 11, color: Color(0xFF0F766E)),
+          const Icon(Icons.timer_outlined, size: 11, color: Color(0xFF5B21B6)),
           const SizedBox(width: 3),
           Text(
             _formatDuration(row.totalDurationSeconds),
             style: const TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.bold,
-              color: Color(0xFF0F766E),
+              color: Color(0xFF5B21B6),
             ),
           ),
         ],
@@ -8236,7 +8236,7 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
                                 style: TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.bold,
-                                  color: Color(0xFF0F766E),
+                                  color: Color(0xFF5B21B6),
                                 ),
                               ),
                             ),
@@ -8334,7 +8334,7 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
                                           ? FontWeight.bold
                                           : FontWeight.normal,
                                       color: runSec > 0
-                                          ? const Color(0xFF0F766E)
+                                          ? const Color(0xFF5B21B6)
                                           : const Color(0xFF94A3B8),
                                     ),
                                   ),
@@ -8474,10 +8474,10 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
     double intervalY = niceStep;
 
     String yAxisTitle = "Time (mins)";
-    Color yAxisColor = const Color(0xFF00695C);
+    Color yAxisColor = const Color(0xFF5B21B6);
     if (metric == 'Runtime') {
       yAxisTitle = "Runtime (mins)";
-      yAxisColor = const Color(0xFF0D9488);
+      yAxisColor = const Color(0xFF5B21B6);
     } else if (metric == 'Total Power On') {
       yAxisTitle = "Total Power On (mins)";
       yAxisColor = const Color(0xFF1D4ED8);
@@ -8498,7 +8498,7 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
                 width: 12,
                 height: 12,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF0D9488),
+                  color: const Color(0xFF5B21B6),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -8636,7 +8636,7 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
                         trackVisibility: true,
                         thickness: 6.0,
                         radius: const Radius.circular(3),
-                        thumbColor: const Color(0xFF00695C),
+                        thumbColor: const Color(0xFF5B21B6),
                         trackColor: const Color(0xFFE2E8F0),
                         padding: const EdgeInsets.only(bottom: 2),
                         child: SingleChildScrollView(
@@ -8808,7 +8808,7 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
           dataSource: dataPoints,
           xValueMapper: (_PumpChartPoint p, _) => p.xLabel,
           yValueMapper: (_PumpChartPoint p, _) => p.runTimeMinutes,
-          color: const Color(0xFF0D9488),
+          color: const Color(0xFF5B21B6),
           borderRadius: const BorderRadius.vertical(top: Radius.circular(2)),
           spacing: 0.1,
         ),
@@ -8924,7 +8924,7 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
                   padding: const EdgeInsets.all(4),
                   margin: const EdgeInsets.only(right: 2),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFE0F2F1),
+                    color: const Color(0xFFEDE9FE),
                     borderRadius: BorderRadius.circular(4),
                     border: Border.all(
                       color: const Color(0xFF80CBC4),
@@ -8934,7 +8934,7 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
                   child: const Icon(
                     Icons.bar_chart_rounded,
                     size: 16,
-                    color: Color(0xFF00695C),
+                    color: Color(0xFF5B21B6),
                   ),
                 ),
               ),
@@ -9151,7 +9151,7 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
     return Container(
       height: 72,
       decoration: const BoxDecoration(
-        color: Color(0xFFF0FDF4),
+        color: Color(0xFFF8FAFC),
         border: Border(
           top: BorderSide(color: Color(0xFFE2E8F0), width: 1),
           bottom: BorderSide(color: Color(0xFFE2E8F0), width: 1),
@@ -9305,7 +9305,7 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
     return Container(
       height: 72,
       decoration: const BoxDecoration(
-        color: Color(0xFFF0FDF4),
+        color: Color(0xFFF8FAFC),
         border: Border(
           top: BorderSide(color: Color(0xFFE2E8F0), width: 1),
           bottom: BorderSide(color: Color(0xFFE2E8F0), width: 1),
@@ -9328,7 +9328,7 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF166534),
+                color: Color(0xFF5B21B6),
               ),
             ),
           ),
@@ -9426,7 +9426,7 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
             alignment: Alignment.center,
             padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
             decoration: const BoxDecoration(
-              color: Color(0xFFDCFCE7),
+              color: Color(0xFFEDE9FE),
             ),
             child: Builder(builder: (context) {
               bool hasGrandActivity = grandTotalRunSec > 0 ||
@@ -9556,7 +9556,7 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
                         height: 38,
                         alignment: Alignment.center,
                         decoration: const BoxDecoration(
-                          color: Color(0xFF00695C),
+                          color: Color(0xFF5B21B6),
                           border: Border(
                             bottom:
                                 BorderSide(color: Color(0xFFE2E8F0), width: 1),
@@ -9600,7 +9600,7 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
                         height: 38,
                         alignment: Alignment.center,
                         decoration: const BoxDecoration(
-                          color: Color(0xFF00695C),
+                          color: Color(0xFF5B21B6),
                           border: Border(
                             bottom:
                                 BorderSide(color: Color(0xFFCBD5E1), width: 1),
@@ -9808,7 +9808,7 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
                       height: 38,
                       alignment: Alignment.center,
                       decoration: const BoxDecoration(
-                        color: Color(0xFF00695C),
+                        color: Color(0xFF5B21B6),
                         border: Border(
                           bottom:
                               BorderSide(color: Color(0xFFCBD5E1), width: 1),
@@ -9856,7 +9856,7 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
                       height: 72,
                       alignment: Alignment.center,
                       decoration: const BoxDecoration(
-                        color: Color(0xFFF0FDF4),
+                        color: Color(0xFFF8FAFC),
                         border: Border(
                           top: BorderSide(color: Color(0xFFE2E8F0), width: 1),
                           bottom:
@@ -9868,7 +9868,7 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF166534),
+                          color: Color(0xFF5B21B6),
                         ),
                       ),
                     ),
@@ -10045,7 +10045,7 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
                       height: 38,
                       alignment: Alignment.center,
                       decoration: const BoxDecoration(
-                        color: Color(0xFF00695C),
+                        color: Color(0xFF5B21B6),
                         border: Border(
                           bottom:
                               BorderSide(color: Color(0xFFCBD5E1), width: 1),
@@ -10100,7 +10100,7 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 4, vertical: 2),
                       decoration: const BoxDecoration(
-                        color: Color(0xFFDCFCE7),
+                        color: Color(0xFFEDE9FE),
                         border: Border(
                           top: BorderSide(color: Color(0xFFE2E8F0), width: 1),
                           bottom:

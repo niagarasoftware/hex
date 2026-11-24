@@ -1,11 +1,6 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/svg.dart';
-import 'package:hex/Constants/properties.dart';
-import 'package:hex/Widgets/custom_buttons.dart';
-import 'package:hex/modules/constant/model/constant_menu_model.dart';
-import 'package:hex/modules/constant/model/constant_setting_type_Model.dart';
 import 'package:hex/modules/constant/repository/constant_repository.dart';
 import 'package:hex/modules/constant/state_management/constant_provider.dart';
 import 'package:hex/modules/constant/view/ec_ph_in_constant.dart';
@@ -18,14 +13,11 @@ import 'package:hex/modules/constant/view/pump_in_constant.dart';
 import 'package:hex/modules/constant/view/valve_in_constant.dart';
 import 'package:hex/modules/constant/view/water_meter_in_constant.dart';
 import 'package:hex/modules/constant/widget/arrow_tab.dart';
-import 'package:hex/modules/constant/widget/custom_check_box.dart';
-import 'package:hex/modules/constant/widget/custom_pop_up_button.dart';
-import 'package:hex/modules/constant/widget/custom_switch.dart';
-import 'package:hex/modules/constant/widget/custom_text_form_field.dart';
 import 'package:hex/utils/constants.dart';
 import 'package:provider/provider.dart';
 
 import '../../../StateManagement/overall_use.dart';
+import '../../SystemDefinitions/widgets/custom_snack_bar.dart';
 import 'channel_in_constant.dart';
 import 'filter_in_constant.dart';
 import 'filter_site_in_constant.dart';
@@ -41,213 +33,543 @@ class ConstantBasePage extends StatefulWidget {
   State<ConstantBasePage> createState() => _ConstantBasePageState();
 }
 
-class _ConstantBasePageState extends State<ConstantBasePage> with SingleTickerProviderStateMixin{
+class _ConstantBasePageState extends State<ConstantBasePage>
+    with SingleTickerProviderStateMixin {
   late TabController tabController;
   late Future<int> constantResponse;
   late ConstantProvider constPvd;
   late OverAllUse overAllPvd;
 
-
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
-    print("userData : ${widget.userData}");
+    debugPrint("userData : ${widget.userData}");
     constPvd = Provider.of<ConstantProvider>(context, listen: false);
     overAllPvd = Provider.of<OverAllUse>(context, listen: false);
     constantResponse = getData(widget.userData);
   }
 
-  Future<int> getData(userData)async{
-    try{
+  Future<int> getData(userData) async {
+    try {
       await Future.delayed(const Duration(seconds: 1));
       var body = {
         "userId": userData['customerId'],
         "controllerId": userData['controllerId'],
       };
       var constantResponse = await ConstantRepository().getUserConstant(body);
-      Map<String, dynamic> constantJsonData = jsonDecode(constantResponse.body);
-      var configMakerResponse = await ConstantRepository().getUserDefaultConfigMaker(body);
-      Map<String, dynamic> configMakerJsonData = jsonDecode(configMakerResponse.body);
-      constPvd.updateConstant(constantData: constantJsonData,configMakerData: configMakerJsonData, userDataAndMasterData: userData);
+      Map<String, dynamic> constantJsonData =
+      jsonDecode(constantResponse.body);
+      var configMakerResponse =
+      await ConstantRepository().getUserDefaultConfigMaker(body);
+      Map<String, dynamic> configMakerJsonData =
+      jsonDecode(configMakerResponse.body);
+      constPvd.updateConstant(
+          constantData: constantJsonData,
+          configMakerData: configMakerJsonData,
+          userDataAndMasterData: userData);
       setState(() {
-        tabController = TabController(length: constPvd.listOfConstantMenuModel.length, vsync: this);
+        tabController = TabController(
+            length: constPvd.listOfConstantMenuModel.length, vsync: this);
+        tabController.addListener(() {
+          if (!tabController.indexIsChanging) {
+            setState(() {});
+          }
+        });
       });
       return constantJsonData['code'];
-    }catch(e,stacktrace){
-      print('Error on getting constant data :: $e');
-      print('Stacktrace on getting constant data :: $stacktrace');
+    } catch (e, stacktrace) {
+      debugPrint('Error on getting constant data :: $e');
+      debugPrint('Stacktrace on getting constant data :: $stacktrace');
       rethrow;
     }
+  }
+
+  @override
+  void dispose() {
+    tabController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     constPvd = Provider.of<ConstantProvider>(context, listen: true);
     overAllPvd = Provider.of<OverAllUse>(context, listen: true);
+    final colorScheme = Theme.of(context).colorScheme;
+
     return FutureBuilder<int>(
         future: constantResponse,
-        builder: (context, snapshot){
+        builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator()); // Loading state
+            return Scaffold(
+              backgroundColor: colorScheme.surfaceContainerLowest,
+              body: const Center(child: CircularProgressIndicator()),
+            );
           } else if (snapshot.hasError) {
-            return Text('Error: ${snapshot.error}'); // Error state
+            return Scaffold(
+              backgroundColor: colorScheme.surfaceContainerLowest,
+              body: Center(
+                child: Text(
+                  'Error: ${snapshot.error}',
+                  style: TextStyle(color: colorScheme.error),
+                ),
+              ),
+            );
           } else if (snapshot.hasData) {
             return Scaffold(
-              appBar: MediaQuery.of(context).size.width < 500 ? AppBar(
-                title: Text('Constant'),
-              ): null,
-              floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-              floatingActionButton: Row(
-                spacing: 20,
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  IconButton(
-                      style: ButtonStyle(
-                          backgroundColor: WidgetStateProperty.all(tabController.index == 0 ? Colors.grey.shade500 : Theme.of(context).primaryColor)
-                      ),
-                      onPressed: (){
-                        if(tabController.index != 0){
-                          setState(() {
-                            updateTabs(tabController.index - 1);
-                          });
-                        }
-                      },
-                      icon: const Icon(Icons.arrow_back_ios_new_outlined, color: Colors.white)
-                  ),
-                  IconButton(
-                    alignment: Alignment.center,
-                      style: ButtonStyle(
-                          backgroundColor: WidgetStateProperty.all(tabController.index == (constPvd.listOfConstantMenuModel.length - 1) ? Colors.grey.shade500 : Theme.of(context).primaryColor)
-                      ),
-                      onPressed: (){
-                        if(tabController.index != constPvd.listOfConstantMenuModel.length - 1){
-                          setState(() {
-                            updateTabs(tabController.index + 1);
-                          });
-                        }
-                      },
-                      icon: const Icon(Icons.arrow_forward_ios, color: Colors.white,)
-                  ),
-                ],
-              ),
+              backgroundColor: colorScheme.surfaceContainerLowest,
+              appBar: MediaQuery.of(context).size.width < 500
+                  ? AppBar(
+                title: const Text(
+                  'Constant Settings',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                backgroundColor: colorScheme.surface,
+                foregroundColor: colorScheme.onSurface,
+                elevation: 0,
+              )
+                  : null,
               body: SafeArea(
                 child: Padding(
-                  padding: const EdgeInsets.all(8.0),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 16.0, vertical: 12.0),
                   child: Column(
-                    spacing: 20,
                     children: [
-                      getTabs(),
+                      _buildStepNavigationBar(context),
+                      const SizedBox(height: 12),
                       Expanded(
-                        child: TabBarView(
-                          controller: tabController,
-                            children: getTabBarView()
+                        child: _buildMainContentPanel(context),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              bottomNavigationBar: _buildBottomNavigationBar(context),
+            );
+          } else {
+            return Scaffold(
+              backgroundColor: colorScheme.surfaceContainerLowest,
+              body: const Center(child: Text('No data')),
+            );
+          }
+        });
+  }
+
+  void updateTabs(int index) {
+    constPvd.listOfConstantMenuModel[index].arrowTabState.value =
+        ArrowTabState.onProgress;
+    for (var i = 0; i < index; i++) {
+      constPvd.listOfConstantMenuModel[i].arrowTabState.value =
+          ArrowTabState.complete;
+    }
+    for (var i = constPvd.listOfConstantMenuModel.length - 1;
+    i > index;
+    i--) {
+      constPvd.listOfConstantMenuModel[i].arrowTabState.value =
+          ArrowTabState.inComplete;
+    }
+    setState(() {
+      tabController.animateTo(index);
+    });
+  }
+
+  Widget _buildStepNavigationBar(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final menuList = constPvd.listOfConstantMenuModel;
+
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: colorScheme.outlineVariant.withOpacity(0.4),
+        ),
+      ),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: List.generate(menuList.length, (index) {
+            final isSelected = tabController.index == index;
+            final stepNumber = "${index + 1}";
+            final title = menuList[index].parameter;
+
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 2),
+              child: InkWell(
+                onTap: () {
+                  updateTabs(index);
+                },
+                borderRadius: BorderRadius.circular(10),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  padding:
+                  const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  decoration: BoxDecoration(
+                    color:
+                    isSelected ? colorScheme.primary : Colors.transparent,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 22,
+                        height: 22,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: isSelected
+                              ? colorScheme.onPrimary
+                              : colorScheme.primaryContainer,
                         ),
-                      )
+                        child: Center(
+                          child: Text(
+                            stepNumber,
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: isSelected
+                                  ? colorScheme.primary
+                                  : colorScheme.onPrimaryContainer,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        title,
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight:
+                          isSelected ? FontWeight.bold : FontWeight.w500,
+                          color: isSelected
+                              ? colorScheme.onPrimary
+                              : colorScheme.onSurfaceVariant,
+                        ),
+                      ),
                     ],
                   ),
                 ),
               ),
             );
-          } else {
-            return const Text('No data'); // Shouldn't reach here normally
-          }
-        }
+          }),
+        ),
+      ),
     );
   }
 
-  void updateTabs(index){
-    constPvd.listOfConstantMenuModel[index].arrowTabState.value = ArrowTabState.onProgress;
-    for(var i = 0; i< index;i++){
-      constPvd.listOfConstantMenuModel[i].arrowTabState.value = ArrowTabState.complete;
+  String? _getCategoryDescription(String title) {
+    final t = title.toLowerCase();
+    if (t.contains('general')) {
+      return 'Configure global controller properties, unit modes, and default system timeouts.';
     }
-    for(var i = constPvd.listOfConstantMenuModel.length - 1; i > index;i--){
-      constPvd.listOfConstantMenuModel[i].arrowTabState.value = ArrowTabState.inComplete;
+    if (t.contains('pump')) {
+      return 'Configure pump connections, location assignments, flow rates, and operating limits.';
     }
-    tabController.animateTo(index);
+    if (t.contains('filter site') || t.contains('filter')) {
+      return 'Set up backwash durations, flushing intervals, and pressure differential thresholds.';
+    }
+    if (t.contains('main valve') || t.contains('valve')) {
+      return 'Configure valve output assignments, response times, and maximum open limits.';
+    }
+    if (t.contains('fertilizer') ||
+        t.contains('channel') ||
+        t.contains('ec') ||
+        t.contains('ph')) {
+      return 'Set up dosing channels, injection ratios, EC/pH target ranges, and safety cutoffs.';
+    }
+    if (t.contains('moisture') ||
+        t.contains('level') ||
+        t.contains('water meter')) {
+      return 'Configure sensor telemetry, pulse multipliers, and cutoff thresholds.';
+    }
+    if (t.contains('alarm')) {
+      return 'Set up normal and critical alarm triggers, scan times, and reset behaviors.';
+    }
+    return 'Configure operational parameters and system constants.';
   }
 
-  List<Widget> getTabBarView(){
-    return List.generate(tabController.length, (index){
-      if(constPvd.listOfConstantMenuModel[index].dealerDefinitionId == AppConstants.generalInConstant){
-        return GeneralInConstant(constPvd: constPvd, overAllPvd: overAllPvd,);
-      }else if(constPvd.listOfConstantMenuModel[index].dealerDefinitionId == AppConstants.pumpInConstant){
-        return PumpInConstant(constPvd: constPvd, overAllPvd: overAllPvd,);
-      }else if(constPvd.listOfConstantMenuModel[index].dealerDefinitionId == AppConstants.filterSiteInConstant){
-        return FilterSiteInConstant(constPvd: constPvd, overAllPvd: overAllPvd,);
-      }else if(constPvd.listOfConstantMenuModel[index].dealerDefinitionId == AppConstants.filterInConstant){
-        return FilterInConstant(constPvd: constPvd, overAllPvd: overAllPvd,);
-      }else if(constPvd.listOfConstantMenuModel[index].dealerDefinitionId == AppConstants.mainValveInConstant){
-        return MainValveInConstant(constPvd: constPvd, overAllPvd: overAllPvd,);
-      }else if(constPvd.listOfConstantMenuModel[index].dealerDefinitionId == AppConstants.valveInConstant){
-        return ValveInConstant(constPvd: constPvd, overAllPvd: overAllPvd,);
-      }else if(constPvd.listOfConstantMenuModel[index].dealerDefinitionId == AppConstants.waterMeterInConstant){
-        return WaterMeterInConstant(constPvd: constPvd, overAllPvd: overAllPvd,);
-      }else if(constPvd.listOfConstantMenuModel[index].dealerDefinitionId == AppConstants.fertilizerSiteInConstant){
-        return FertilizerSiteInConstant(constPvd: constPvd, overAllPvd: overAllPvd,);
-      }else if(constPvd.listOfConstantMenuModel[index].dealerDefinitionId == AppConstants.fertilizerChannelInConstant){
-        return ChannelInConstant(constPvd: constPvd, overAllPvd: overAllPvd,);
-      }else if(constPvd.listOfConstantMenuModel[index].dealerDefinitionId == AppConstants.ecPhInConstant){
-        return EcPhInConstant(constPvd: constPvd, overAllPvd: overAllPvd,);
-      }else if(constPvd.listOfConstantMenuModel[index].dealerDefinitionId == AppConstants.moistureSensorInConstant){
-        return MoistureInConstant(constPvd: constPvd, overAllPvd: overAllPvd,);
-      }else if(constPvd.listOfConstantMenuModel[index].dealerDefinitionId == AppConstants.levelSensorInConstant){
-        return LevelInConstant(constPvd: constPvd, overAllPvd: overAllPvd,);
-      }else if(constPvd.listOfConstantMenuModel[index].dealerDefinitionId == AppConstants.normalCriticalInConstant){
-        return NormalCriticalInConstant(constPvd: constPvd, overAllPvd: overAllPvd,);
-      }else if(constPvd.listOfConstantMenuModel[index].dealerDefinitionId == AppConstants.commonAlarmInConstant){
-        return CommonAlarmInConstant(constPvd: constPvd, overAllPvd: overAllPvd,);
-      }else if(constPvd.listOfConstantMenuModel[index].dealerDefinitionId == AppConstants.globalAlarmInConstant){
-        return GlobalAlarmInConstant(constPvd: constPvd, overAllPvd: overAllPvd, userData: widget.userData,);
-      }else{
-        return Text(constPvd.listOfConstantMenuModel[index].parameter);
+  Widget _buildMainContentPanel(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final currentMenuIndex =
+    tabController.index.clamp(0, constPvd.listOfConstantMenuModel.length - 1);
+    final currentTitle =
+        constPvd.listOfConstantMenuModel[currentMenuIndex].parameter;
+    final currentDesc = _getCategoryDescription(currentTitle);
+
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: colorScheme.outlineVariant.withOpacity(0.4),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.025),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            currentTitle,
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: colorScheme.onSurface,
+            ),
+          ),
+          if (currentDesc != null) ...[
+            const SizedBox(height: 4),
+            Text(
+              currentDesc,
+              style: TextStyle(
+                fontSize: 13,
+                color: colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
+          const SizedBox(height: 16),
+          Divider(
+            height: 1,
+            thickness: 0.5,
+            color: colorScheme.outlineVariant.withOpacity(0.3),
+          ),
+          const SizedBox(height: 16),
+          Expanded(
+            child: TabBarView(
+              controller: tabController,
+              children: getTabBarView(),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBottomNavigationBar(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isFirstTab = tabController.index == 0;
+    final isLastTab =
+        tabController.index == constPvd.listOfConstantMenuModel.length - 1;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        border: Border(
+          top: BorderSide(
+            color: colorScheme.outlineVariant.withOpacity(0.4),
+          ),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 8,
+            offset: const Offset(0, -2),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            children: [
+              if (!isFirstTab)
+                OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      updateTabs(tabController.index - 1);
+                    });
+                  },
+                  icon: const Icon(Icons.arrow_back_rounded, size: 18),
+                  label: const Text("Back"),
+                )
+              else
+                const SizedBox.shrink(),
+            ],
+          ),
+          Row(
+            children: [
+              if (!isLastTab) ...[
+                FilledButton.tonalIcon(
+                  style: FilledButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      updateTabs(tabController.index + 1);
+                    });
+                  },
+                  icon: const Icon(Icons.arrow_forward_rounded, size: 18),
+                  label: const Text("Next"),
+                ),
+                const SizedBox(width: 12),
+              ],
+              FilledButton.icon(
+                style: FilledButton.styleFrom(
+                  backgroundColor: colorScheme.primary,
+                  foregroundColor: colorScheme.onPrimary,
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 24, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                onPressed: () => _handleSaveConstant(context),
+                icon: const Icon(Icons.save_rounded, size: 18),
+                label: const Text(
+                  "Save Constant",
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _handleSaveConstant(BuildContext context) async {
+    try {
+      var body = {
+        "userId": widget.userData['customerId'],
+        "controllerId": widget.userData['controllerId'],
+        "general":
+        constPvd.general.map((setting) => setting.toJson()).toList(),
+        "waterSource": [],
+        "levelSensor":
+        constPvd.level.map((setting) => setting.toJson()).toList(),
+        "pump": constPvd.pump.map((setting) => setting.toJson()).toList(),
+        "filterSite":
+        constPvd.filterSite.map((setting) => setting.toJson()).toList(),
+        "filter": constPvd.filter.map((setting) => setting.toJson()).toList(),
+        "fertilizerSite":
+        constPvd.fertilizerSite.map((setting) => setting.toJson()).toList(),
+        "fertilizerChannel":
+        constPvd.channel.map((setting) => setting.toJson()).toList(),
+        "ecPhSensor":
+        constPvd.ecPhSensor.map((setting) => setting.toJson()).toList(),
+        "waterMeter":
+        constPvd.waterMeter.map((setting) => setting.toJson()).toList(),
+        "pressureSensor": [],
+        "mainValve":
+        constPvd.mainValve.map((setting) => setting.toJson()).toList(),
+        "valve": constPvd.valve.map((setting) => setting.toJson()).toList(),
+        "moistureSensor":
+        constPvd.moisture.map((setting) => setting.toJson()).toList(),
+        "analogSensor": [],
+        "normalCriticalAlarm": constPvd.normalCriticalAlarm
+            .map((setting) => setting.toJson())
+            .toList(),
+        "commonAlarm":
+        constPvd.commonAlarm.map((setting) => setting.toJson()).toList(),
+        "globalAlarm":
+        constPvd.globalAlarm.map((setting) => setting.toJson()).toList(),
+        "hardware": {},
+        "controllerReadStatus": "0",
+        "createUser": widget.userData['userId']
+      };
+
+      var response = await ConstantRepository().createUserConstant(body);
+      if (!mounted) return;
+      if (response.statusCode == 200) {
+        final jsonData = jsonDecode(response.body);
+        ScaffoldMessenger.of(context).showSnackBar(
+          CustomSnackBar(
+            message:
+            jsonData['message'] ?? "Constant settings saved successfully!",
+            color: Colors.green.shade700,
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          CustomSnackBar(
+            message: "Failed to save constant settings. Please try again.",
+            color: Colors.red.shade700,
+          ),
+        );
+      }
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        CustomSnackBar(
+          message: "Failed to save settings due to: $error",
+          color: Colors.red.shade700,
+        ),
+      );
+    }
+  }
+
+  List<Widget> getTabBarView() {
+    return List.generate(tabController.length, (index) {
+      final menuId = constPvd.listOfConstantMenuModel[index].dealerDefinitionId;
+
+      if (menuId == AppConstants.generalInConstant) {
+        return GeneralInConstant(constPvd: constPvd, overAllPvd: overAllPvd);
+      } else if (menuId == AppConstants.pumpInConstant) {
+        return PumpInConstant(constPvd: constPvd, overAllPvd: overAllPvd);
+      } else if (menuId == AppConstants.filterSiteInConstant) {
+        return FilterSiteInConstant(constPvd: constPvd, overAllPvd: overAllPvd);
+      } else if (menuId == AppConstants.filterInConstant) {
+        return FilterInConstant(constPvd: constPvd, overAllPvd: overAllPvd);
+      } else if (menuId == AppConstants.mainValveInConstant) {
+        return MainValveInConstant(constPvd: constPvd, overAllPvd: overAllPvd);
+      } else if (menuId == AppConstants.valveInConstant) {
+        return ValveInConstant(constPvd: constPvd, overAllPvd: overAllPvd);
+      } else if (menuId == AppConstants.waterMeterInConstant) {
+        return WaterMeterInConstant(
+            constPvd: constPvd, overAllPvd: overAllPvd);
+      } else if (menuId == AppConstants.fertilizerSiteInConstant) {
+        return FertilizerSiteInConstant(
+            constPvd: constPvd, overAllPvd: overAllPvd);
+      } else if (menuId == AppConstants.fertilizerChannelInConstant) {
+        return ChannelInConstant(constPvd: constPvd, overAllPvd: overAllPvd);
+      } else if (menuId == AppConstants.ecPhInConstant) {
+        return EcPhInConstant(constPvd: constPvd, overAllPvd: overAllPvd);
+      } else if (menuId == AppConstants.moistureSensorInConstant) {
+        return MoistureInConstant(constPvd: constPvd, overAllPvd: overAllPvd);
+      } else if (menuId == AppConstants.levelSensorInConstant) {
+        return LevelInConstant(constPvd: constPvd, overAllPvd: overAllPvd);
+      } else if (menuId == AppConstants.normalCriticalInConstant) {
+        return NormalCriticalInConstant(
+            constPvd: constPvd, overAllPvd: overAllPvd);
+      } else if (menuId == AppConstants.commonAlarmInConstant) {
+        return CommonAlarmInConstant(
+            constPvd: constPvd, overAllPvd: overAllPvd);
+      } else if (menuId == AppConstants.globalAlarmInConstant) {
+        return GlobalAlarmInConstant(
+          constPvd: constPvd,
+          overAllPvd: overAllPvd,
+          userData: widget.userData,
+        );
+      } else {
+        return Center(
+          child: Text(constPvd.listOfConstantMenuModel[index].parameter),
+        );
       }
     });
   }
 
-  Widget getTabs(){
-    return TabBar(
-      overlayColor: WidgetStateProperty.resolveWith<Color?>((Set<WidgetState> states) {
-        if (states.contains(WidgetState.hovered)) {
-          return Colors.transparent;
-        }
-        return null;
-      }),
-      tabAlignment: TabAlignment.start,
-      dividerHeight: 0,
-      labelPadding: const EdgeInsets.all(0),
-      isScrollable: true,
-      indicator: const BoxDecoration(),
-      controller: tabController,
-      tabs: List.generate(constPvd.listOfConstantMenuModel.length, (index){
-        return Tab(
-            child: AnimatedBuilder(
-                animation: constPvd.listOfConstantMenuModel[index].arrowTabState,
-                builder: (context, child){
-                  return ArrowTab(
-                      index: index,
-                      title: constPvd.listOfConstantMenuModel[index].parameter,
-                      arrowTabState: constPvd.listOfConstantMenuModel[index].arrowTabState.value
-                  );
-                }
-            ),
-        );
-      }),
-      onTap: (value){
-        constPvd.listOfConstantMenuModel[value].arrowTabState.value = ArrowTabState.onProgress;
-        for(var i = 0; i< value;i++){
-          constPvd.listOfConstantMenuModel[i].arrowTabState.value = ArrowTabState.complete;
-        }
-        for(var i = constPvd.listOfConstantMenuModel.length - 1; i > value;i--){
-          constPvd.listOfConstantMenuModel[i].arrowTabState.value = ArrowTabState.inComplete;
-        }
-        setState(() {
-          tabController.animateTo(value);
-        });
-        print("value ==> ${value}");
-        print("constant tab length ==> ${tabController.length}");
-        print("constant tab index ==> ${tabController.index}");
-      },
-    );
+  Widget getTabs() {
+    return _buildStepNavigationBar(context);
   }
 }

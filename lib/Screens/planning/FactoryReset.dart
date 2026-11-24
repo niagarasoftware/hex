@@ -1,8 +1,6 @@
+
 import 'dart:convert';
-
-import 'package:data_table_2/data_table_2.dart';
 import 'package:flutter/material.dart';
-
 import '../../models/reset_AccumalationModel.dart';
 import '../../repository/repository.dart';
 import '../../services/http_service.dart';
@@ -45,8 +43,8 @@ class _ResetAccumalationScreenState extends State<ResetAccumalationScreen>
         "controllerId": widget.controllerId
       });
 
-       if (getUserDetails.statusCode == 200) {
-         print("body getUserDetails.body:${getUserDetails.body}");
+      if (getUserDetails.statusCode == 200) {
+        print("body getUserDetails.body:${getUserDetails.body}");
         setState(() {
           var jsonData = jsonDecode(getUserDetails.body);
           _resetModel = ResetModel.fromJson(jsonData);
@@ -59,8 +57,6 @@ class _ResetAccumalationScreenState extends State<ResetAccumalationScreen>
       print(' Error overAll getData => ${e.toString()}');
       print(' trace overAll getData  => ${stackTrace}');
     }
-
-
   }
   createUserSentAndReceivedMessageManually(String hw) async {
     try{
@@ -68,13 +64,11 @@ class _ResetAccumalationScreenState extends State<ResetAccumalationScreen>
       var getUserDetails = await repository.sendManualOperationToServer(
           {"userId": widget.userId, "controllerId": widget.controllerId, "messageStatus": "Factory Reset", "hardware": hw, "createUser": widget.createUser,}
       );
-     }
+    }
     catch (e, stackTrace) {
       print(' Error overAll getData => ${e.toString()}');
       print(' trace overAll getData  => ${stackTrace}');
     }
-
-
   }
 
 
@@ -82,34 +76,37 @@ class _ResetAccumalationScreenState extends State<ResetAccumalationScreen>
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final groups = _resetModel.data?.accumulation;
+    final hasData = _resetModel.code == 200 && groups != null && groups.isNotEmpty;
 
-
-     return Scaffold(
-      appBar: AppBar(title: const Text('Factory Reset'),),
-      body: Column(
-        children: [
-          _resetModel.code == 200 ? _resetModel.data!.accumulation!.isNotEmpty ? DefaultTabController(
-            length: _resetModel.data!.accumulation!.length,
-            child: Padding(
-              padding: const EdgeInsets.only(left: 8, bottom: 80, right: 8, top: 8),
-              child: Form(
-                key: _formKey,
+    return Scaffold(
+       appBar: AppBar(
+         title: const Text('Factory Reset'),
+      ),
+      body: SafeArea(
+        child: Column(
+          children: [
+            Expanded(
+              child: hasData
+                  ? DefaultTabController(
+                length: groups.length,
                 child: Column(
                   children: [
                     Container(
-                      height: 50,
+                      width: double.infinity,
+                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
                       child: TabBar(
-                        // controller: _tabController,
-                        indicatorColor: const Color.fromARGB(255, 175, 73, 73),
                         isScrollable: true,
-                        unselectedLabelColor: Colors.grey,
-                        labelColor: Theme.of(context).primaryColor,
-                        labelStyle: const TextStyle(fontWeight: FontWeight.bold),
+                        tabAlignment: TabAlignment.start,
+                        indicatorColor: colors.primary,
+                        labelColor: colors.primary,
+                        unselectedLabelColor: colors.onSurfaceVariant,
+                        labelStyle: const TextStyle(fontWeight: FontWeight.w700),
                         tabs: [
-                          for (var i = 0; i < _resetModel.data!.accumulation!.length; i++)
-                            Tab(
-                              text: '${_resetModel.data!.accumulation![i].name}',
-                            ),
+                          for (final group in groups)
+                            Tab(text: '${group.name}'),
                         ],
                         onTap: (value) {
                           setState(() {
@@ -119,49 +116,45 @@ class _ResetAccumalationScreenState extends State<ResetAccumalationScreen>
                         },
                       ),
                     ),
-                    SizedBox(
-                     height: 300,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          border: Border.all(
-                            color: Colors.grey, // Border color
-                           ),
+                    Expanded(
+                      child: Form(
+                        key: _formKey,
+                        child: TabBarView(
+                          children: [
+                            for (final group in groups)
+                              buildTab(group.list),
+                          ],
                         ),
-                         child: TabBarView(children: [
-                          for (var i = 0; i < _resetModel.data!.accumulation!.length; i++)
-                            buildTab(_resetModel.data!.accumulation![i].list)
-                        ]),
                       ),
                     ),
-                    // ElevatedButton(
-                    //   child: const Text("RESET ALL"),
-                    //   onPressed: () async {
-                    //     setState(() {
-                    //       ResetAll(_resetModel.data!.accumulation!);
-                    //     });
-                    //   },
-                    // ),
-                    const SizedBox(height: 10,),
-
                   ],
+                ),
+              )
+                  : const Center(child: Text('Currently No data Available')),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
+              child: SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: colors.error,
+                    foregroundColor: colors.onError,
+                    padding: const EdgeInsets.symmetric(vertical: 15),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  onPressed: () => _showMyDialog(context),
+                  icon: const Icon(Icons.restart_alt),
+                  label: const Text('Factory Reset'),
                 ),
               ),
             ),
-
-          ) :   const Center(child: Text('Currently No data Available')): const Center(child: Text('Currently No data Available')),
-          ElevatedButton(
-            style: ButtonStyle(  backgroundColor: WidgetStateProperty.all(Colors.redAccent),),
-            child: const Text("Factory Reset",style: TextStyle(color: Colors.white),),
-            onPressed: () async {
-              setState(() {
-                _showMyDialog(context);
-              });
-            },
-          ),
-        ],
+          ],
+        ),
       ),
     );
-
   }
 
   Future<void> _showMyDialog(BuildContext context) async {
@@ -203,129 +196,138 @@ class _ResetAccumalationScreenState extends State<ResetAccumalationScreen>
     return size;
   }
   changeval(int Selectindexrow) {}
-  Widget buildTab(List<ListElement>? Listofvalue,){
-    return Container(
-      child: DataTable2(
-          headingRowColor: WidgetStateProperty.all<Color>(
-              Theme.of(context).primaryColorDark.withOpacity(0.2)),
-          // fixedCornerColor: myTheme.primaryColor,
-          columnSpacing: 12,
-          horizontalMargin: 12,
-          minWidth: 600,
-          // border: TableBorder.all(width: 0.5),
-          // fixedColumnsColor: Colors.amber,
-          headingRowHeight: 50,
-          columns: const [
-            DataColumn2(
-              fixedWidth: 70,
-              label: Center(
-                  child: Text(
-                    'Sno',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize:  16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    softWrap: true,
-                  )),
-            ),
-            DataColumn2(
-              label: Center(
-                  child: Text(
-                    'Name',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize:  16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    softWrap: true,
-                  )),
-            ),
-            DataColumn2(
-              fixedWidth: 150,
-              label: Center(
-                  child: Text(
-                    'Daily Accumalation',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    softWrap: true,
-                  )),
-            ),
-            DataColumn2(
-              fixedWidth: 150,
-              label: Center(
-                  child: Text(
-                    'Total Accumalation',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    softWrap: true,
-                  )),
-            ),
-            DataColumn2(
-              fixedWidth: 150,
-              label: Center(
-                  child: Text(
-                    'Reset',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    softWrap: true,
-                  )),
-            ),
-          ],
-          rows: List<DataRow>.generate(Listofvalue!.length, (index) => DataRow(cells: [
-            DataCell(Center(child: Text('${Listofvalue[index].sNo}'))),
-            DataCell(Center(
-              child: Text(
-                '${Listofvalue[index].name}',
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            )),
-            DataCell(Center(
-              child: Text(
-                '${Listofvalue[index].todayCumulativeFlow}',
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            )),
-            DataCell(Center(
-              child: Text(
-                '${Listofvalue[index].totalCumulativeFlow}',
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            )),
-            DataCell(
-              Center(
-                child: ElevatedButton(
-                  style:  ElevatedButton.styleFrom(textStyle: const TextStyle(fontSize: 18),foregroundColor: Colors.white,),
-                  onPressed: () { reset(Listofvalue[index].sNo!);},
-                  child: const Text('Reset'),
+  Widget buildTab(List<ListElement>? listOfValue) {
+    final colors = Theme.of(context).colorScheme;
+    final items = listOfValue ?? [];
+    if (items.isEmpty) {
+      return const Center(child: Text('Currently No data Available'));
+    }
 
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        const gap = 14.0;
+        const horizontalPadding = 16.0;
+        final available = constraints.maxWidth - horizontalPadding * 2;
+        final columns = available >= 1000 ? 3 : available >= 620 ? 2 : 1;
+        final cardWidth = (available - gap * (columns - 1)) / columns;
+
+        return SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+          child: Wrap(
+            spacing: gap,
+            runSpacing: gap,
+            children: [
+              for (final item in items)
+                SizedBox(
+                  width: cardWidth,
+                  child: Container(
+                    padding: const EdgeInsets.all(18),
+                    decoration: BoxDecoration(
+                      color: colors.surface,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: colors.outlineVariant),
+                      boxShadow: [
+                        BoxShadow(
+                          color: colors.shadow.withOpacity(0.06),
+                          blurRadius: 16,
+                          offset: const Offset(0, 5),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: colors.primaryContainer,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Icon(Icons.water_drop_outlined,
+                                  color: colors.onPrimaryContainer),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text('${item.name}',
+                                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                        fontWeight: FontWeight.w700,
+                                        color: colors.onSurface,
+                                      )),
+                                  const SizedBox(height: 3),
+                                  Text('Sno: ${item.sNo}',
+                                      style: TextStyle(color: colors.onSurfaceVariant,
+                                          fontSize: 12)),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 18),
+                        Row(
+                          children: [
+                            Expanded(child: _accumulationMetric(
+                              'Daily Accumalation',
+                              '${item.todayCumulativeFlow}',
+                            )),
+                            const SizedBox(width: 12),
+                            Expanded(child: _accumulationMetric(
+                              'Total Accumalation',
+                              '${item.totalCumulativeFlow}',
+                            )),
+                          ],
+                        ),
+                        const SizedBox(height: 18),
+                        SizedBox(
+                          width: double.infinity,
+                          child: OutlinedButton.icon(
+                            onPressed: () => reset(item.sNo!),
+                            icon: const Icon(Icons.refresh, size: 18),
+                            label: const Text('Reset'),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: colors.primary,
+                              side: BorderSide(color: colors.primary),
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-              ),
-            ),]),
-          )),
+            ],
+          ),
+        );
+      },
     );
-    // }
+  }
+
+  Widget _accumulationMetric(String label, String value) {
+    final colors = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: colors.surfaceContainerHighest.withOpacity(0.45),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: TextStyle(fontSize: 11,
+              color: colors.onSurfaceVariant)),
+          const SizedBox(height: 6),
+          Text(value, style: TextStyle(fontSize: 17,
+              fontWeight: FontWeight.w700, color: colors.onSurface)),
+        ],
+      ),
+    );
   }
 
   updateradiationset() async {

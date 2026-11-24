@@ -1,4 +1,4 @@
-import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 
 import '../../../../models/customer/site_model.dart';
 import 'custom_card_table.dart';
@@ -16,10 +16,13 @@ class MainValveCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (mainValve.isEmpty) return const SizedBox();
+    if (mainValve.isEmpty) return const SizedBox.shrink();
+
+    final activeCount = mainValve.where((v) => v.selected).length;
 
     return CustomCardTable(
       title: "Main Valve",
+      activeCountText: "$activeCount/${mainValve.length} Active",
       rows: mainValve.map((mValve) {
         return CustomSwitchRow(
           iconPath: 'assets/png/m_main_valve_gray.png',
@@ -31,4 +34,3 @@ class MainValveCard extends StatelessWidget {
     );
   }
 }
-

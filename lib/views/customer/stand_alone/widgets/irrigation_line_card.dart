@@ -20,48 +20,37 @@ class IrrigationLineCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-
     if (line.name == 'All irrigation line' ||
         line.name == 'All Aquaculture line') {
-      return const SizedBox();
+      return const SizedBox.shrink();
     }
 
-    final rows = [
-      ...line.valveObjects.map((valve) => DataRow(cells: [
-        DataCell(Image.asset('assets/png/m_valve_grey.png', width: 40, height: 40)),
-        DataCell(Text(valve.name)),
-        DataCell(Transform.scale(
-          scale: 0.7,
-          child: Switch(
-            activeThumbColor: Colors.teal,
-            hoverColor: Colors.pink.shade100,
-            value: valve.isOn,
-            onChanged: (val) => onToggleValve(valve, val),
-          ),
-        )),
-      ])),
+    final valveItems = <ValveTileItem>[];
 
-      ...line.foggerObjects.map((fogger) => DataRow(cells: [
-        DataCell(Image.asset('assets/png/mobile/m_fogger_grey.png', width: 40, height: 40)),
-        DataCell(Text(fogger.name)),
-        DataCell(Transform.scale(
-          scale: 0.7,
-          child: Switch(
-            activeThumbColor: Colors.teal,
-            hoverColor: Colors.pink.shade100,
-            value: fogger.isOn,
-            onChanged: (val) => onToggleFogger(fogger, val),
-          ),
-        )),
-      ])),
-    ];
+    for (final valve in line.valveObjects) {
+      valveItems.add(ValveTileItem(
+        iconPath: 'assets/png/m_valve_grey.png',
+        name: valve.name,
+        isOn: valve.isOn,
+        onToggle: (val) => onToggleValve(valve, val),
+      ));
+    }
+
+    for (final fogger in line.foggerObjects) {
+      valveItems.add(ValveTileItem(
+        iconPath: 'assets/png/mobile/m_fogger_grey.png',
+        name: fogger.name,
+        isOn: fogger.isOn,
+        onToggle: (val) => onToggleFogger(fogger, val),
+      ));
+    }
 
     return ValveCardTable(
       title: line.name,
       showSwitch: showSwitch,
       switchValue: true,
       onSwitchChanged: (_) {},
-      rows: rows,
+      valveItems: valveItems,
     );
   }
 }
