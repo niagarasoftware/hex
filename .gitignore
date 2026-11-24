@@ -95,7 +95,7 @@ ServiceDefinitions.json
 # TODO: confirm these are meant to be ignored (index.html is usually
 # hand-edited, not generated) before keeping them long-term.
 web/splash/img/
-web/index.html
+# web/index.html
 # Flutter / Dart
  .packages
 
@@ -123,3 +123,5 @@ GoogleService-Info.plist
 .DS_Store.idea/workspace.xml
 # Flutter generated files
 linux/flutter/ephemeral/
+# Widget Preview related
+.widget_preview/

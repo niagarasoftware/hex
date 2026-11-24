@@ -38,6 +38,8 @@ class _MapScreenValveState extends State<MapScreenValve> {
   Set<Polygon> polygons = {};
 
   String _sentTime = "";
+  final List<({String name, LatLng position, bool running})> _equipment = [];
+  bool _loading = false;
   Map<String, LatLng> _gifObjects = {};
   Map<String, Offset> _gifOffsets = {};
   late BitmapDescriptor _redAeratorIcon;
@@ -57,8 +59,14 @@ class _MapScreenValveState extends State<MapScreenValve> {
   }
 
   Future<void> _init() async {
-    await _loadIcons();
-    await _fetchData();
+    if (_loading) return;
+    setState(() => _loading = true);
+    try {
+      await _loadIcons();
+      await _fetchData();
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
   }
 
   // ---------------- ICON LOAD ----------------
@@ -103,6 +111,8 @@ class _MapScreenValveState extends State<MapScreenValve> {
       final data = jsonDecode(response.body);
       final deviceList = data["data"]["deviceList"] ?? [];
       _sentTime = data["data"]?["liveMessage"]?["cM"]?["SentTime"] ?? "";
+      _gifObjects.clear();
+      final equipment = <({String name, LatLng position, bool running})>[];
       Set<Marker> newMarkers = {};
       Set<Polygon> newPolygons = {};
 
@@ -112,7 +122,7 @@ class _MapScreenValveState extends State<MapScreenValve> {
         if (geo != null) {
           if (geo["lat"] != null && geo["long"] != null) {
 
-             final marker = _createMarker(
+            final marker = _createMarker(
               id: "device-${device["deviceId"]}",
               lat: geo["lat"],
               lng: geo["long"],
@@ -153,7 +163,12 @@ class _MapScreenValveState extends State<MapScreenValve> {
         // --- Process Connected Objects ---
         for (var obj in device["connectedObject"] ?? []) {
           if (obj["lat"] != null && obj["long"] != null) {
-            var resultstaus = getStatusPercentage(obj["sNo"], data["data"]["liveMessage"]);
+            var resultstaus = getStatusPercentage(double.tryParse(obj["sNo"].toString()) ?? -1, data["data"]["liveMessage"]);
+            equipment.add((
+            name: (obj["name"] ?? obj["objectName"] ?? "Object").toString(),
+            position: LatLng((obj["lat"] as num).toDouble(), (obj["long"] as num).toDouble()),
+            running: resultstaus["status"] == 1,
+            ));
             final marker = _createMarker(
               id: "obj-${obj["sNo"]}",
               lat: obj["lat"],
@@ -177,10 +192,15 @@ class _MapScreenValveState extends State<MapScreenValve> {
 
       if (!mounted) return;
       setState(() {
+        _equipment..clear()..addAll(equipment);
         markers = newMarkers;
         polygons = newPolygons;
         if (initialCenter != null) center = initialCenter;
       });
+      if (initialCenter != null) {
+        await mapController?.animateCamera(CameraUpdate.newLatLngZoom(center, 17));
+      }
+      await _updateGifPositions();
     } catch (e) {
       debugPrint("Error: $e");
     }
@@ -201,6 +221,7 @@ class _MapScreenValveState extends State<MapScreenValve> {
       );
     }
 
+    if (!mounted) return;
     setState(() {
       _gifOffsets = temp;
     });
@@ -230,10 +251,10 @@ class _MapScreenValveState extends State<MapScreenValve> {
       double serialNumber, Map<String, dynamic>? liveMessage)
   {
 
-     try {
+    try {
       // 1. Safe extraction of the nested map and string
       if (liveMessage == null || liveMessage["cM"] == null) {
-         return {"status": 0, "percentage": 0};
+        return {"status": 0, "percentage": 0};
       }
 
       // Cast cM safely
@@ -252,12 +273,12 @@ class _MapScreenValveState extends State<MapScreenValve> {
       for (var value in values) {
 
         final List<String> parts = value.split(",");
-         if (parts.length >= 3) {
+        if (parts.length >= 3) {
           // 2. Convert string ID to double to ensure 13.010 == 13.01
           double? partId = double.tryParse(parts[0]);
 
           if (partId != null && partId == serialNumber) {
-             return {
+            return {
               "status": int.tryParse(parts[1]) ?? 0,
               "percentage": int.tryParse(parts[2]) ?? 0,
             };
@@ -285,7 +306,7 @@ class _MapScreenValveState extends State<MapScreenValve> {
             obj["lat"] != null &&
             obj["long"] != null) {
 
-          return LatLng(obj["lat"], obj["long"]);
+          return LatLng((obj["lat"] as num).toDouble(), (obj["long"] as num).toDouble());
         }
       }
     }
@@ -296,7 +317,7 @@ class _MapScreenValveState extends State<MapScreenValve> {
         if (obj["lat"] != null && obj["long"] != null) {
 
           // AppLog.log("object:%:${LatLng(obj["lat"], obj["long"])}");
-          return LatLng(obj["lat"], obj["long"]);
+          return LatLng((obj["lat"] as num).toDouble(), (obj["long"] as num).toDouble());
         }
       }
     }
@@ -309,7 +330,7 @@ class _MapScreenValveState extends State<MapScreenValve> {
           geo["long"] != null) {
         // AppLog.log("geography:%:${LatLng(geo["lat"], geo["long"])}");
 
-        return LatLng(geo["lat"], geo["long"]);
+        return LatLng((geo["lat"] as num).toDouble(), (geo["long"] as num).toDouble());
       }
     }
 
@@ -321,14 +342,14 @@ class _MapScreenValveState extends State<MapScreenValve> {
 
   Marker? _createMarker({
     required String id,
-    required double lat,
-    required double lng,
+    required num lat,
+    required num lng,
     required String title,
     required String type,
     int? status,
     int? percentage,
   }) {
-    final position = LatLng(lat, lng);
+    final position = LatLng(lat.toDouble(), lng.toDouble());
 
     // ✅ STATUS 1 → use GIF overlay
     if (status == 1) {
@@ -361,13 +382,13 @@ class _MapScreenValveState extends State<MapScreenValve> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-             Image.asset(
+            Image.asset(
               "assets/gif/aerators_g.gif",
               height: 50,
               fit: BoxFit.contain,
             ),
-             const SizedBox(height: 5),
-           ],
+            const SizedBox(height: 5),
+          ],
         ),
       ),
     );
@@ -473,82 +494,153 @@ class _MapScreenValveState extends State<MapScreenValve> {
     });
   }
 
-  // ---------------- UI ----------------
 
+  Widget _metric(String label, int value, IconData icon, Color color) {
+    final theme = Theme.of(context);
+    return Expanded(child: Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(color: theme.colorScheme.surface,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: theme.dividerColor.withOpacity(.25))),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Icon(icon, color: color, size: 20),
+        const SizedBox(height: 6),
+        Text('$value', style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold, color: color)),
+        Text(label, style: theme.textTheme.bodySmall, maxLines: 1, overflow: TextOverflow.ellipsis),
+      ]),
+    ));
+  }
+
+  Widget _inventory() {
+    final theme = Theme.of(context);
+    return Container(
+      decoration: BoxDecoration(color: theme.colorScheme.surface,
+          borderRadius: BorderRadius.circular(16)),
+      padding: const EdgeInsets.all(12),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text('Equipment status', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+        Text('Connected objects with locations', style: theme.textTheme.bodySmall),
+        const SizedBox(height: 12),
+        Expanded(child: _equipment.isEmpty
+            ? const Center(child: Text('No mapped objects'))
+            : ListView.separated(
+          itemCount: _equipment.length,
+          separatorBuilder: (_, __) => const SizedBox(height: 6),
+          itemBuilder: (context, index) {
+            final item = _equipment[index];
+            final color = item.running ? Colors.green : Colors.red;
+            return Material(
+              color: theme.colorScheme.surfaceContainerHighest.withOpacity(.45),
+              borderRadius: BorderRadius.circular(10),
+              child: ListTile(
+                leading: CircleAvatar(backgroundColor: color.withOpacity(.12),
+                    child: Icon(Icons.waves, color: color)),
+                title: Text(item.name, maxLines: 1, overflow: TextOverflow.ellipsis),
+                subtitle: Text(item.running ? 'Running' : 'Stopped', style: TextStyle(color: color)),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => mapController?.animateCamera(CameraUpdate.newLatLngZoom(item.position, 18)),
+              ),
+            );
+          },
+        )),
+      ]),
+    );
+  }
+
+  Widget _mapPanel() {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(16),
+      child: Stack(children: [
+        GoogleMap(
+          mapType: MapType.hybrid,
+          initialCameraPosition: CameraPosition(target: center, zoom: 17),
+          markers: markers,
+          polygons: polygons,
+          onMapCreated: (controller) {
+            _onMapCreated(controller);
+            _updateGifPositions();
+          },
+          onCameraMove: (_) => _updateGifPositions(),
+          onCameraIdle: _updateGifPositions,
+        ),
+        ..._gifOffsets.entries.map((entry) => Positioned(
+          left: entry.value.dx - 25,
+          top: entry.value.dy - 50,
+          child: IgnorePointer(child: Image.asset('assets/gif/aerators_g.gif', height: 50, width: 50)),
+        )),
+        Positioned(left: 12, bottom: 12, child: IgnorePointer(child: Material(
+          color: Theme.of(context).colorScheme.surface,
+          borderRadius: BorderRadius.circular(8),
+          child: Padding(padding: const EdgeInsets.all(10), child: Row(mainAxisSize: MainAxisSize.min, children: [
+            const Icon(Icons.circle, color: Colors.green, size: 10),
+            const SizedBox(width: 5), const Text('Running'),
+            const SizedBox(width: 14),
+            const Icon(Icons.circle, color: Colors.red, size: 10),
+            const SizedBox(width: 5), const Text('Stopped'),
+          ])),
+        ))),
+      ]),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
-    // AppLog.log("build center:$center");
-
+    final theme = Theme.of(context);
+    final running = _equipment.where((e) => e.running).length;
     return Scaffold(
-      appBar: AppBar(title: const Text("Geography"),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.refresh),
+      appBar: AppBar(
+        title: const Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text('Geography'),
+          Text('Aerator monitoring', style: TextStyle(fontSize: 12)),
+        ]),
+        actions: [
+          IconButton(tooltip: 'Refresh', onPressed: _loading ? null : _init, icon: const Icon(Icons.refresh)),
+          IconButton(tooltip: 'Edit map', icon: const Icon(Icons.edit_location_alt_outlined),
               onPressed: () async {
-                await _init(); // 🔥 reuse same method
-              },
-            ),
-          IconButton(
-          icon: Icon(Icons.map_outlined),
-      onPressed: () {
-        Navigator.of(context).push(MaterialPageRoute(
-          builder: (context) => MapConnectionObject(userId: widget.userId, customerId: widget.customerId, controllerId: widget.controllerId, imeiNo: widget.imeiNo,modelId: widget.modelId,),
-        ));
-      },
-      tooltip: 'Edit',
-    ),
-    ],
-      ),
-
-      body: Stack(
-        children: [
-          GoogleMap(
-            mapType: MapType.hybrid,
-            initialCameraPosition: CameraPosition(
-              target: center,
-              zoom: 8,
-            ),
-            markers: markers,
-            polygons: polygons,
-            onMapCreated: (controller) {
-              mapController = controller;
-              _onMapCreated(controller);
-              _updateGifPositions();
-            },
-            onCameraMove: (_) => _updateGifPositions(),
-          ),
-          Positioned(
-            top: 0,
-            left: 20,
-            right: 20,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-               child: Text(
-                "Live sync: $_sentTime",
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ),
-
-          // ✅ GIF overlay markers
-          ..._gifOffsets.entries.map((entry) {
-            return Positioned(
-              left: entry.value.dx - 25,
-              top: entry.value.dy - 50,
-              child: Image.asset(
-                "assets/gif/aerators_g.gif",
-                height: 50,
-              ),
-            );
-          }).toList(),
+                await Navigator.of(context).push(MaterialPageRoute(builder: (_) => MapConnectionObject(
+                  userId: widget.userId, customerId: widget.customerId, controllerId: widget.controllerId,
+                  imeiNo: widget.imeiNo, modelId: widget.modelId,
+                )));
+                if (mounted) await _init();
+              }),
         ],
       ),
+      body: SafeArea(child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(children: [
+          Row(children: [
+            _metric('Mapped objects', _equipment.length, Icons.waves, theme.colorScheme.primary),
+            const SizedBox(width: 8),
+            _metric('Running', running, Icons.play_circle_outline, Colors.green),
+            const SizedBox(width: 8),
+            _metric('Stopped', _equipment.length-running, Icons.stop_circle_outlined, Colors.red),
+          ]),
+          if (_loading) const LinearProgressIndicator(),
+          const SizedBox(height: 10),
+          Expanded(child: LayoutBuilder(builder: (context, constraints) {
+            if (constraints.maxWidth >= 800) {
+              return Row(children: [
+                Expanded(child: _mapPanel()),
+                const SizedBox(width: 12),
+                SizedBox(width: 300, child: _inventory()),
+              ]);
+            }
+            return Column(children: [
+              Expanded(flex: 3, child: _mapPanel()),
+              const SizedBox(height: 8),
+              Expanded(flex: 2, child: _inventory()),
+            ]);
+          })),
+          const SizedBox(height: 8),
+          Row(children: [
+            const Icon(Icons.schedule, size: 15),
+            const SizedBox(width: 6),
+            Expanded(child: Text('Live sync: ${_sentTime.isEmpty ? "Not available" : _sentTime}',
+                style: theme.textTheme.bodySmall, overflow: TextOverflow.ellipsis)),
+            const Text('Hybrid map', style: TextStyle(fontSize: 11)),
+          ]),
+        ]),
+      )),
     );
   }
 }

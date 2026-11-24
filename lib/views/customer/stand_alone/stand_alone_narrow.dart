@@ -69,6 +69,10 @@ class _StandAloneNarrowState extends State<StandAloneNarrow>
             backgroundColor: colorScheme.surfaceContainerLowest,
             resizeToAvoidBottomInset: true,
             appBar: AppBar(
+              leading: IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: () => Navigator.of(context).pop(),
+              ),
               title: const Text(
                 'Manual Control',
                 style: TextStyle(fontWeight: FontWeight.bold),

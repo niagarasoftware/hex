@@ -65,7 +65,18 @@ class _StandAloneWideState extends State<StandAloneWide>
       child: Consumer<StandAloneViewModel>(
         builder: (context, viewModel, _) {
           return Scaffold(
-            backgroundColor: colorScheme.surfaceContainerLowest,
+             appBar: AppBar(
+              leading: IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: () => Navigator.of(context).pop(),
+              ),
+              title: const Text(
+                'Manual Control',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+
+              elevation: 0,
+            ),
             body: SafeArea(
               child: Column(
                 children: [
@@ -527,24 +538,123 @@ class _StandAloneWideState extends State<StandAloneWide>
             builder: (context, constraints) {
               final width = constraints.maxWidth;
               const spacing = 12.0;
-              int columns = 1;
-              if (width >= 900) {
-                columns = 3;
-              } else if (width >= 600) {
-                columns = 2;
+
+              if (width < 600) {
+                return Column(
+                  children: [
+                    for (int i = 0; i < equipmentCards.length; i++) ...[
+                      equipmentCards[i],
+                      if (i < equipmentCards.length - 1)
+                        const SizedBox(height: spacing),
+                    ],
+                  ],
+                );
               }
 
-              final colWidth = (width - (spacing * (columns - 1))) / columns;
+              if (width < 1050) {
+                final col1 = <Widget>[];
+                final col2 = <Widget>[];
 
-              return Wrap(
-                spacing: spacing,
-                runSpacing: spacing,
-                children: equipmentCards.map((card) {
-                  return SizedBox(
+                for (int i = 0; i < equipmentCards.length; i++) {
+                  if (i % 2 == 0) {
+                    col1.add(equipmentCards[i]);
+                  } else {
+                    col2.add(equipmentCards[i]);
+                  }
+                }
+
+                final colWidth = (width - spacing) / 2;
+
+                return Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SizedBox(
+                      width: colWidth,
+                      child: Column(
+                        children: [
+                          for (int i = 0; i < col1.length; i++) ...[
+                            col1[i],
+                            if (i < col1.length - 1)
+                              const SizedBox(height: spacing),
+                          ],
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: spacing),
+                    SizedBox(
+                      width: colWidth,
+                      child: Column(
+                        children: [
+                          for (int i = 0; i < col2.length; i++) ...[
+                            col2[i],
+                            if (i < col2.length - 1)
+                              const SizedBox(height: spacing),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ],
+                );
+              }
+
+              final col1 = <Widget>[];
+              final col2 = <Widget>[];
+              final col3 = <Widget>[];
+
+              for (int i = 0; i < equipmentCards.length; i++) {
+                if (i % 3 == 0) {
+                  col1.add(equipmentCards[i]);
+                } else if (i % 3 == 1) {
+                  col2.add(equipmentCards[i]);
+                } else {
+                  col3.add(equipmentCards[i]);
+                }
+              }
+
+              final colWidth = (width - (spacing * 2)) / 3;
+
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(
                     width: colWidth,
-                    child: card,
-                  );
-                }).toList(),
+                    child: Column(
+                      children: [
+                        for (int i = 0; i < col1.length; i++) ...[
+                          col1[i],
+                          if (i < col1.length - 1)
+                            const SizedBox(height: spacing),
+                        ],
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: spacing),
+                  SizedBox(
+                    width: colWidth,
+                    child: Column(
+                      children: [
+                        for (int i = 0; i < col2.length; i++) ...[
+                          col2[i],
+                          if (i < col2.length - 1)
+                            const SizedBox(height: spacing),
+                        ],
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: spacing),
+                  SizedBox(
+                    width: colWidth,
+                    child: Column(
+                      children: [
+                        for (int i = 0; i < col3.length; i++) ...[
+                          col3[i],
+                          if (i < col3.length - 1)
+                            const SizedBox(height: spacing),
+                        ],
+                      ],
+                    ),
+                  ),
+                ],
               );
             },
           ),

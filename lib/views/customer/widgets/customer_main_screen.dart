@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:hex/Screens/Map/testmap.dart';
 import 'package:hex/modules/irrigation_report/view/oms_log.dart';
 import '../../../Screens/Dealer/sevicecustomer.dart';
 import '../../../Screens/Logs/irrigation_and_pump_log.dart';
@@ -123,12 +122,12 @@ Widget buildCustomerMainScreen({required int index, required UserRole role, requ
           isNarrow: false);
 
      case 8:
-       return MapTestPage();
-       // return  MapScreenOro(customerId: cSite.customerId,
-       //   controllerId: cMaster.controllerId,
-       //   userId: cSite.customerId,
-       //   imeiNo: cMaster.deviceId, modelId: cMaster.modelId,
-       // isCheckDashboard: true,);
+       // return MapTestPage();
+       return  MapScreenOro(customerId: cSite.customerId,
+         controllerId: cMaster.controllerId,
+         userId: cSite.customerId,
+         imeiNo: cMaster.deviceId, modelId: cMaster.modelId,
+       isCheckDashboard: true,);
 
     default:
       return const Scaffold(
