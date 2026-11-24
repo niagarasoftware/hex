@@ -1,4 +1,3 @@
-
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
@@ -45,10 +44,14 @@ class _NamesState extends State<Names> {
   dynamic liveData;
   int selectedCategory = 0;
 
+  // Layout values - change these to adjust spacing quickly.
+  static const double _sNoWidth = 64; // S.NO column width (fits "1.001")
+  static const double _outerGap = 16; // left/right gap from screen edge
+  static const double _innerGap = 8; // padding inside header & row cards
+
   // Pump models -> Location hidden.
   // Other models -> Location visible.
-  bool get showLocation =>
-      !AppConstants.pumpList.contains(widget.modelId);
+  bool get showLocation => !AppConstants.pumpList.contains(widget.modelId);
 
   @override
   void initState() {
@@ -84,11 +87,7 @@ class _NamesState extends State<Names> {
             .toList();
 
         final newControllers = (newModel.configObject ?? [])
-            .map(
-              (obj) => TextEditingController(
-            text: obj.name ?? '',
-          ),
-        )
+            .map((obj) => TextEditingController(text: obj.name ?? ''))
             .toList();
 
         if (!mounted) {
@@ -118,227 +117,284 @@ class _NamesState extends State<Names> {
     }
   }
 
+  IconData _iconForCategory(String name) {
+    final n = name.toLowerCase();
+    if (n.contains('water source')) return Icons.water_drop_outlined;
+    if (n.contains('irrigation')) return Icons.linear_scale_rounded;
+    if (n.contains('pump')) return Icons.settings_input_component_outlined;
+    if (n.contains('valve')) return Icons.compare_arrows_rounded;
+    if (n.contains('moisture')) return Icons.opacity_outlined;
+    if (n.contains('level')) return Icons.straighten_outlined;
+    if (n.contains('float')) return Icons.pin_drop_outlined;
+    if (n.contains('filter')) return Icons.filter_alt_outlined;
+    if (n.contains('fertilizer')) return Icons.science_outlined;
+    return Icons.category_outlined;
+  }
+
   Widget getTabBarViewWidget() {
     final List<String> listOfCategory = uniqueObjectNames;
+    final primary = Theme.of(context).primaryColor;
 
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
-            spacing: 5,
-            mainAxisAlignment: MainAxisAlignment.start,
-            children: [
-              for (int i = 0; i < listOfCategory.length; i++)
-                InkWell(
-                  onTap: () {
-                    setState(() {
-                      selectedCategory = i;
-                    });
-                  },
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 500),
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 15,
-                      vertical: selectedCategory == i ? 12 : 10,
-                    ),
-                    decoration: BoxDecoration(
-                      border: const Border(
-                        top: BorderSide(width: 0.5),
-                        left: BorderSide(width: 0.5),
-                        right: BorderSide(width: 0.5),
-                      ),
-                      borderRadius: const BorderRadius.only(
-                        topLeft: Radius.circular(5),
-                        topRight: Radius.circular(5),
-                      ),
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      padding: const EdgeInsets.fromLTRB(_outerGap, 12, _outerGap, 4),
+      child: Row(
+        children: [
+          for (int i = 0; i < listOfCategory.length; i++)
+            Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(12),
+                onTap: () {
+                  setState(() {
+                    selectedCategory = i;
+                  });
+                },
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 250),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 10,
+                  ),
+                  decoration: BoxDecoration(
+                    color: selectedCategory == i ? primary : Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
                       color: selectedCategory == i
-                          ? Theme.of(context).primaryColor
+                          ? primary
                           : Colors.grey.shade300,
+                      width: 0.8,
                     ),
-                    child: Text(
-                      listOfCategory[i],
-                      style: TextStyle(
+                    boxShadow: selectedCategory == i
+                        ? [
+                      BoxShadow(
+                        color: primary.withValues(alpha: 0.35),
+                        blurRadius: 8,
+                        offset: const Offset(0, 3),
+                      ),
+                    ]
+                        : [],
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        _iconForCategory(listOfCategory[i]),
+                        size: 16,
                         color: selectedCategory == i
                             ? Colors.white
-                            : Colors.black,
-                        fontSize: 13,
+                            : Colors.grey.shade600,
                       ),
-                    ),
+                      const SizedBox(width: 8),
+                      Text(
+                        listOfCategory[i],
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: selectedCategory == i
+                              ? Colors.white
+                              : Colors.grey.shade700,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget buildTab(int selectedTabIndex) {
+    if (selectedTabIndex < 0 || selectedTabIndex >= uniqueObjectNames.length) {
+      return const Center(child: Text('No category selected'));
+    }
+
+    final filteredData = (configModel.configObject ?? [])
+        .where((obj) => obj.objectName == uniqueObjectNames[selectedTabIndex])
+        .toList();
+
+    final primary = Theme.of(context).primaryColor;
+
+    return Column(
+      children: [
+        // Header (white background)
+        Container(
+          margin: const EdgeInsets.fromLTRB(_outerGap, 12, _outerGap, 8),
+          padding: const EdgeInsets.symmetric(
+              horizontal: _innerGap, vertical: 12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.grey.shade300, width: 0.8),
+          ),
+          child: Row(
+            children: [
+              SizedBox(width: _sNoWidth, child: _buildHeaderCell('S.NO')),
+              if (showLocation)
+                Expanded(flex: 3, child: _buildHeaderCell('LOCATION')),
+              Expanded(flex: 4, child: _buildHeaderCell('NAME')),
             ],
           ),
         ),
-        Container(
-          width: double.infinity,
-          height: 3,
-          color: Theme.of(context).primaryColor,
+
+        // Rows
+        Expanded(
+          child: ListView.separated(
+            padding: const EdgeInsets.fromLTRB(_outerGap, 0, _outerGap, 80),
+            itemCount: filteredData.length,
+            separatorBuilder: (_, __) => const SizedBox(height: 8),
+            itemBuilder: (context, index) {
+              final data = filteredData[index];
+              final int originalIndex =
+              (configModel.configObject ?? []).indexOf(data);
+
+              return Container(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: _innerGap, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: Colors.grey.shade300, width: 0.8),
+                ),
+                child: Row(
+                  children: [
+                    // S.No pill
+                    SizedBox(
+                      width: _sNoWidth,
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: primary.withValues(alpha: 0.10),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            data.sNo.toString(),
+                            style: TextStyle(
+                              fontFamily: 'monospace',
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: primary,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    // Location: hide for pump models.
+                    if (showLocation)
+                      Expanded(
+                        flex: 3,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                          child: Text(
+                            configModel.getNameBySNo(data.location ?? 0.0),
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ),
+
+                    // Name box
+                    Expanded(
+                      flex: 4,
+                      child: Container(
+                        height: 44,
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade100,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: TextFormField(
+                          controller: _controllers[originalIndex],
+                          inputFormatters: [
+                            LengthLimitingTextInputFormatter(15),
+                            FilteringTextInputFormatter.allow(
+                              RegExp(
+                                r'[a-zA-Z0-9\s.!@#$%^&*()_+\-=\[\]{}|;:"<>,.?/`~]',
+                              ),
+                            ),
+                          ],
+                          onChanged: (val) {
+                            setState(() {
+                              final bool nameExists =
+                              (configModel.configObject ?? []).any(
+                                    (element) =>
+                                element != data &&
+                                    element.name?.trim().toLowerCase() ==
+                                        val.trim().toLowerCase() &&
+                                    element.objectName == "Valve" &&
+                                    element.location == data.location,
+                              );
+
+                              if (nameExists) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Name Already Exists'),
+                                  ),
+                                );
+                              } else if (val.length > 15) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content:
+                                    Text('Name length Maximum reached'),
+                                  ),
+                                );
+                              } else if (val.isNotEmpty) {
+                                AppLog.log("val->$val");
+                                data.name = val;
+                              }
+                            });
+                          },
+                          decoration: InputDecoration(
+                            border: InputBorder.none,
+                            isCollapsed: true,
+                            contentPadding:
+                            const EdgeInsets.symmetric(vertical: 14),
+                            suffixIcon: Icon(
+                              Icons.edit_outlined,
+                              size: 16,
+                              color: Colors.grey.shade500,
+                            ),
+                            suffixIconConstraints: const BoxConstraints(
+                              minWidth: 24,
+                              minHeight: 24,
+                            ),
+                          ),
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.black87,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
         ),
       ],
     );
   }
 
-  Widget buildTab(int selectedTabIndex) {
-    if (selectedTabIndex < 0 ||
-        selectedTabIndex >= uniqueObjectNames.length) {
-      return const Center(
-        child: Text('No category selected'),
-      );
-    }
-
-    final filteredData = (configModel.configObject ?? [])
-        .where(
-          (obj) =>
-      obj.objectName == uniqueObjectNames[selectedTabIndex],
-    )
-        .toList();
-
-    return SingleChildScrollView(
-      child: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Table(
-          // Dynamic column widths.
-          // Pump: S.No | Name
-          // Others: S.No | Location | Name
-          columnWidths: {
-            0: const FixedColumnWidth(80),
-            if (showLocation) 1: const FixedColumnWidth(120),
-            if (showLocation) 2: const FlexColumnWidth(),
-            if (!showLocation) 1: const FlexColumnWidth(),
-          },
-          children: [
-            // Header
-            TableRow(
-              decoration: const BoxDecoration(
-                color: Colors.white,
-              ),
-              children: [
-                _buildHeaderCell('S.No'),
-
-                // Show Location only for non-pump models.
-                if (showLocation)
-                  _buildHeaderCell('Location'),
-
-                _buildHeaderCell('Name'),
-              ],
-            ),
-
-            // Data rows
-            ...filteredData.asMap().entries.map((entry) {
-              final int index = entry.key;
-              final data = entry.value;
-
-              final Color rowColor = index.isEven
-                  ? Colors.grey.shade100
-                  : Colors.white;
-
-              final int originalIndex =
-              (configModel.configObject ?? []).indexOf(data);
-
-              return TableRow(
-                decoration: BoxDecoration(
-                  color: rowColor,
-                ),
-                children: [
-                  // S.No
-                  Container(
-                    height: 50,
-                    alignment: Alignment.center,
-                    child: Text(
-                      data.sNo.toString(),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-
-                  // Location: hide for pump models.
-                  if (showLocation)
-                    Container(
-                      height: 50,
-                      alignment: Alignment.center,
-                      child: Text(
-                        configModel.getNameBySNo(
-                          data.location ?? 0.0,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-
-                  // Name
-                  Container(
-                    height: 50,
-                    alignment: Alignment.center,
-                    child: TextFormField(
-                      controller: _controllers[originalIndex],
-                      inputFormatters: [
-                        LengthLimitingTextInputFormatter(15),
-                        FilteringTextInputFormatter.allow(
-                          RegExp(
-                            r'[a-zA-Z0-9\s.!@#$%^&*()_+\-=\[\]{}|;:"<>,.?/`~]',
-                          ),
-                        ),
-                      ],
-                      onChanged: (val) {
-                        setState(() {
-                          final bool nameExists =
-                          (configModel.configObject ?? []).any(
-                                (element) =>
-                            element != data &&
-                                element.name?.trim().toLowerCase() ==
-                                    val.trim().toLowerCase() &&
-                                element.objectName == "Valve" &&
-                                element.location == data.location,
-                          );
-
-                          if (nameExists) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Name Already Exists'),
-                              ),
-                            );
-                          } else if (val.length > 15) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content:
-                                Text('Name length Maximum reached'),
-                              ),
-                            );
-                          } else if (val.isNotEmpty) {
-                            AppLog.log("val->$val");
-                            data.name = val;
-                          }
-                        });
-                      },
-                      decoration: const InputDecoration(
-                        border: InputBorder.none,
-                      ),
-                      style: const TextStyle(
-                        color: Colors.blue,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                ],
-              );
-            }),
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _buildHeaderCell(String title) {
     return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: Center(
-        child: Text(
-          title,
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: Theme.of(context).primaryColorDark,
-          ),
-          textAlign: TextAlign.center,
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: Text(
+        title,
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          letterSpacing: 0.8,
+          color: Colors.grey.shade600,
         ),
       ),
     );
@@ -348,6 +404,7 @@ class _NamesState extends State<Names> {
   Widget build(BuildContext context) {
     if (configModel.configObject == null) {
       return const Scaffold(
+        backgroundColor: Colors.white,
         body: Center(
           child: CircularProgressIndicator(),
         ),
@@ -355,6 +412,7 @@ class _NamesState extends State<Names> {
     }
 
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: kIsWeb
           ? null
           : AppBar(
@@ -427,15 +485,13 @@ class _NamesState extends State<Names> {
 
     for (final src in configModel.waterSource ?? []) {
       if (configNames.containsKey(src.commonDetails?.sNo)) {
-        src.commonDetails?.name =
-        configNames[src.commonDetails!.sNo];
+        src.commonDetails?.name = configNames[src.commonDetails!.sNo];
       }
     }
 
     for (final pump in configModel.pump ?? []) {
       if (configNames.containsKey(pump.commonDetails?.sNo)) {
-        pump.commonDetails?.name =
-        configNames[pump.commonDetails!.sNo];
+        pump.commonDetails?.name = configNames[pump.commonDetails!.sNo];
       }
     }
 
@@ -462,8 +518,7 @@ class _NamesState extends State<Names> {
 
     for (final line in configModel.irrigationLine ?? []) {
       if (configNames.containsKey(line.commonDetails?.sNo)) {
-        line.commonDetails?.name =
-        configNames[line.commonDetails!.sNo];
+        line.commonDetails?.name = configNames[line.commonDetails!.sNo];
       }
     }
 
