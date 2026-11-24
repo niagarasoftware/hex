@@ -1120,3 +1120,26 @@ class _FilterBackwashUIState extends State<FilterBackwashUI>
     return mqttData;
   }
 }
+
+Widget customizeGridView({
+  required double maxWith,
+  double maxHeight = 0,
+  required double screenWidth,
+  required List<Widget> listOfWidget,
+}) {
+  final calculatedWidth = maxWith > 0 ? maxWith : 250.0;
+  final crossAxisCount = (screenWidth / calculatedWidth).floor().clamp(1, 12);
+  final itemWidth = (screenWidth - ((crossAxisCount - 1) * 12)) / crossAxisCount;
+
+  return Wrap(
+    spacing: 12,
+    runSpacing: 12,
+    children: listOfWidget.map((widget) {
+      return SizedBox(
+        width: itemWidth > 0 ? itemWidth : calculatedWidth,
+        height: maxHeight > 0 ? maxHeight : null,
+        child: widget,
+      );
+    }).toList(),
+  );
+}

@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:developer';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:hex/Constants/properties.dart';
 import 'package:hex/modules/irrigation_report/repository/irrigation_repository.dart';
 import 'package:hex/utils/constants.dart';
 import '../../../models/customer/site_model.dart';
@@ -279,7 +280,7 @@ class _ListOfLogConfigState extends State<ListOfLogConfig> {
                         padding: EdgeInsets.all(8),
                         decoration: BoxDecoration(
                             color: Colors.white,
-                            boxShadow: customBoxShadow,
+                            boxShadow: AppProperties.customBoxShadowLiteTheme,
                             borderRadius: BorderRadius.circular(10)),
                         child: Container(),
                       ),
@@ -329,7 +330,7 @@ class _ListOfLogConfigState extends State<ListOfLogConfig> {
                                   padding: EdgeInsets.all(8),
                                   decoration: BoxDecoration(
                                       color: Colors.white,
-                                      boxShadow: customBoxShadow,
+                                      boxShadow: AppProperties.customBoxShadowLiteTheme,
                                       borderRadius: BorderRadius.circular(10)),
                                   child: Column(
                                     children: [
@@ -1125,7 +1126,7 @@ class _ListOfLogConfigState extends State<ListOfLogConfig> {
                   child: Scaffold(
                     floatingActionButton: Container(
                       decoration: BoxDecoration(
-                          color: Colors.white, boxShadow: customBoxShadow),
+                          color: Colors.white, boxShadow: AppProperties.customBoxShadowLiteTheme),
                       height: 60,
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -1854,4 +1855,27 @@ class _ListOfLogConfigState extends State<ListOfLogConfig> {
       },
     );
   }
+}
+
+Widget customizeGridView({
+  required double maxWith,
+  double maxHeight = 0,
+  required double screenWidth,
+  required List<Widget> listOfWidget,
+}) {
+  final calculatedWidth = maxWith > 0 ? maxWith : 250.0;
+  final crossAxisCount = (screenWidth / calculatedWidth).floor().clamp(1, 12);
+  final itemWidth = (screenWidth - ((crossAxisCount - 1) * 12)) / crossAxisCount;
+
+  return Wrap(
+    spacing: 12,
+    runSpacing: 12,
+    children: listOfWidget.map((widget) {
+      return SizedBox(
+        width: itemWidth > 0 ? itemWidth : calculatedWidth,
+        height: maxHeight > 0 ? maxHeight : null,
+        child: widget,
+      );
+    }).toList(),
+  );
 }

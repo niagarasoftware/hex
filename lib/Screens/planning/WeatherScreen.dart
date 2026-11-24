@@ -465,7 +465,7 @@ class _WeatherScreenState extends State<WeatherScreen> {
       child: Container(
         padding: const EdgeInsets.all(16.0),
         decoration: BoxDecoration(
-          color: Theme.of(context).primaryColor.withOpacity(0.6), // Adjust opacity and color
+          color: Theme.of(context).primaryColor.withValues(alpha: 0.6), // Adjust opacity and color
           borderRadius: BorderRadius.circular(16), // Rounded corners
           border: Border.all(
             color: Colors.teal, // Subtle border
@@ -1284,4 +1284,27 @@ print("value$value");
       print(' trace overAll getData  => ${stackTrace}');
     }
   }
+}
+
+Widget customizeGridView({
+  required double maxWith,
+  double maxHeight = 0,
+  required double screenWidth,
+  required List<Widget> listOfWidget,
+}) {
+  final calculatedWidth = maxWith > 0 ? maxWith : 200.0;
+  final crossAxisCount = (screenWidth / calculatedWidth).floor().clamp(1, 12);
+  final itemWidth = (screenWidth - ((crossAxisCount - 1) * 12)) / crossAxisCount;
+
+  return Wrap(
+    spacing: 12,
+    runSpacing: 12,
+    children: listOfWidget.map((widget) {
+      return SizedBox(
+        width: itemWidth > 0 ? itemWidth : calculatedWidth,
+        height: maxHeight > 0 ? maxHeight : null,
+        child: widget,
+      );
+    }).toList(),
+  );
 }
