@@ -418,7 +418,7 @@ class _ZoneCyclicLogState extends State<ZoneCyclicLog> {
               child: const Text(
                 'Download Excel',
                 style: TextStyle(
-                  color: Color(0xFF006D78),
+                  color: Color(0xFF5B21B6),
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                 ),
@@ -426,7 +426,7 @@ class _ZoneCyclicLogState extends State<ZoneCyclicLog> {
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF006D78),
+                backgroundColor: const Color(0xFF5B21B6),
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(
                   horizontal: 14,
@@ -724,7 +724,7 @@ class _ZoneCyclicLogState extends State<ZoneCyclicLog> {
     total == 0 ? [] : rows.sublist(start, end);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF1F4F6),
+      backgroundColor: const Color(0xFFF8FAFC),
       body: SafeArea(
         child: Column(
           children: [
@@ -778,7 +778,7 @@ class _ZoneCyclicLogState extends State<ZoneCyclicLog> {
           Icon(
             Icons.date_range,
             size: 18,
-            color: Theme.of(context).primaryColorDark,
+            color: const Color(0xFF5B21B6),
           ),
           const SizedBox(width: 6),
           Text(
@@ -786,7 +786,7 @@ class _ZoneCyclicLogState extends State<ZoneCyclicLog> {
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w600,
-              color: Theme.of(context).primaryColorDark,
+              color: const Color(0xFF5B21B6),
             ),
           ),
           const Spacer(),
@@ -794,7 +794,7 @@ class _ZoneCyclicLogState extends State<ZoneCyclicLog> {
             tooltip: 'Refresh',
             icon: Icon(
               Icons.refresh,
-              color: Theme.of(context).primaryColorDark,
+              color: const Color(0xFF5B21B6),
             ),
             onPressed: getData,
           ),
@@ -809,7 +809,7 @@ class _ZoneCyclicLogState extends State<ZoneCyclicLog> {
 
   Widget _buildTable(List<Map<String, dynamic>> pageRows) {
     final Color headBg =
-    Theme.of(context).primaryColorLight.withOpacity(0.25);
+    const Color(0xFFEDE9FE);
 
     return Container(
       margin: const EdgeInsets.all(8),
@@ -858,7 +858,7 @@ class _ZoneCyclicLogState extends State<ZoneCyclicLog> {
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
-                        color: Theme.of(context).primaryColorDark,
+                        color: const Color(0xFF5B21B6),
                       ),
                     ),
                   ),
@@ -947,7 +947,7 @@ class _ZoneCyclicLogState extends State<ZoneCyclicLog> {
         horizontal: 16,
         vertical: 12,
       ),
-      color: const Color(0xFFDCEDF1),
+      color: const Color(0xFFEDE9FE),
       child: Wrap(
         spacing: 12,
         runSpacing: 8,
@@ -958,7 +958,7 @@ class _ZoneCyclicLogState extends State<ZoneCyclicLog> {
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.bold,
-              color: Theme.of(context).primaryColorDark,
+              color: const Color(0xFF5B21B6),
             ),
           ),
           _summaryChip(
@@ -1084,7 +1084,7 @@ class _ZoneCyclicLogState extends State<ZoneCyclicLog> {
       int totalPages,
       ) {
     final Color barColor =
-        Theme.of(context).primaryColorDark;
+        const Color(0xFF5B21B6);
 
     Widget pageBtn(IconData icon, VoidCallback? onTap) {
       return InkWell(

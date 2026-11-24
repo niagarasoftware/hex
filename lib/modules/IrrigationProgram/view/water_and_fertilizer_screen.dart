@@ -115,8 +115,7 @@ class _WaterAndFertilizerScreenState extends State<WaterAndFertilizerScreen> {
       double screenSizeForGraph = constraint.maxWidth - 16;
 
       return Container(
-        // padding: const EdgeInsets.all(10.0),
-        color: const Color(0xffF6FEFF),
+        color: const Color(0xFFF8FAFC),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -124,12 +123,13 @@ class _WaterAndFertilizerScreenState extends State<WaterAndFertilizerScreen> {
               height: 20,
             ),
             Container(
-              margin: const EdgeInsets.only(bottom: 10,left: 8,right: 8),
+              margin: const EdgeInsets.only(bottom: 10, left: 8, right: 8),
               width: double.infinity,
-              height: 40,
+              height: 42,
               decoration: BoxDecoration(
-                  color: const Color(0xffE6EDF5),
-                  borderRadius: BorderRadius.circular(20)
+                color: const Color(0xFFF1F5F9),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
               ),
               child: SingleChildScrollView(
                 controller: _scrollController,
@@ -188,14 +188,14 @@ class _WaterAndFertilizerScreenState extends State<WaterAndFertilizerScreen> {
                       Container(
                         margin: const EdgeInsets.only(left: 8,right: 8),
                         width: screenSizeForGraph,
-                        color: const Color(0xffD8E6FD),
+                        color: const Color(0xFFF1F5F9),
                         child: Row(
                           children: [
                             if(programPvd.sequenceData[programPvd.selectedGroup]['centralDosing'].isNotEmpty || programPvd.sequenceData[programPvd.selectedGroup]['localDosing'].isNotEmpty)
                               AnimatedContainer(
                                   width: returnWidth(programPvd,'pre',screenSizeForGraph),
                                   decoration: BoxDecoration(
-                                      color: Theme.of(context).primaryColorDark,
+                                      color: const Color(0xFF5B21B6),
                                       borderRadius: BorderRadius.circular(10)
                                   ),
                                   height: 40,
@@ -215,21 +215,16 @@ class _WaterAndFertilizerScreenState extends State<WaterAndFertilizerScreen> {
                                           height: 30/programPvd.sequenceData[programPvd.selectedGroup][programPvd.segmentedControlCentralLocal == 0 ? 'centralDosing' : 'localDosing'][0]['fertilizer'].length,
                                           decoration: BoxDecoration(
                                               borderRadius: BorderRadius.circular(10),
-                                              gradient: LinearGradient(
+                                              gradient: const LinearGradient(
                                                   colors: [
-                                                    const Color(0xffFF857D),
-                                                    Theme.of(context).primaryColorDark,
-                                                    const Color(0xffFF857D),
-                                                    Theme.of(context).primaryColorDark,
-                                                    const Color(0xffFF857D),
-                                                    Theme.of(context).primaryColorDark,
-                                                    const Color(0xffFF857D),
-                                                    Theme.of(context).primaryColorDark,
-                                                    const Color(0xffFF857D),
-                                                    Theme.of(context).primaryColorDark,
-                                                    const Color(0xffFF857D),
-                                                    Theme.of(context).primaryColorDark,
-
+                                                    Color(0xffFF857D),
+                                                    Color(0xFF5B21B6),
+                                                    Color(0xffFF857D),
+                                                    Color(0xFF5B21B6),
+                                                    Color(0xffFF857D),
+                                                    Color(0xFF5B21B6),
+                                                    Color(0xffFF857D),
+                                                    Color(0xFF5B21B6),
                                                   ],
                                                   begin: Alignment.centerLeft,
                                                   end: Alignment.centerRight
@@ -254,15 +249,12 @@ class _WaterAndFertilizerScreenState extends State<WaterAndFertilizerScreen> {
                                               if(returnWidthForFertilizer(programPvd,programPvd.sequenceData[programPvd.selectedGroup][programPvd.segmentedControlCentralLocal == 0 ? 'centralDosing' : 'localDosing'][0]['fertilizer'][inj],screenSizeForGraph) > 0)
                                                 Expanded(
                                                   child: Container(
-                                                    // width: constraint.maxWidth - (returnWidth(programPvd,'pre',constraint.maxWidth) + returnWidth(programPvd,'post',constraint.maxWidth) + returnWidthForFertilizer(programPvd,programPvd.sequenceData[programPvd.selectedGroup][programPvd.segmentedControlCentralLocal == 0 ? 'centralDosing' : 'localDosing'][0]['fertilizer'][inj],constraint.maxWidth)) -1,
                                                     width: double.infinity,
                                                     decoration: const BoxDecoration(
                                                       borderRadius: BorderRadius.only(topRight: Radius.circular(10),bottomRight: Radius.circular(10)),
-                                                      color: AppProperties.primaryColorMedium,
-                                                      // color:Colors.blueGrey
+                                                      color: Color(0xFF5B21B6),
                                                     ),
                                                     height: 30/programPvd.sequenceData[programPvd.selectedGroup][programPvd.segmentedControlCentralLocal == 0 ? 'centralDosing' : 'localDosing'][0]['fertilizer'].length,
-                                                    // duration: const Duration(milliseconds: 500),
                                                   ),
                                                 ),
                                             ],
@@ -835,10 +827,9 @@ class _WaterAndFertilizerScreenState extends State<WaterAndFertilizerScreen> {
                                   shape: const RoundedRectangleBorder(
                                       borderRadius: BorderRadius.only(topLeft: Radius.circular(10), bottomLeft: Radius.circular(10))
                                   ),
-                                  color: programPvd.segmentedControlCentralLocal == 0 ? themeData.primaryColor : Colors.white,
+                                  color: programPvd.segmentedControlCentralLocal == 0 ? const Color(0xFF5B21B6) : Colors.white,
                                   onPressed: (){
                                     programPvd.editSegmentedCentralLocal(0);
-                                    // programPvd.selectingTheSite();
                                   },
                                   child: Text("Central", style: TextStyle(color: programPvd.segmentedControlCentralLocal == 0 ? Colors.white : Colors.black),),
                                 ),
@@ -847,13 +838,12 @@ class _WaterAndFertilizerScreenState extends State<WaterAndFertilizerScreen> {
                                 width: 150,
                                 child: MaterialButton(
                                   elevation: 1,
-                                  color: programPvd.segmentedControlCentralLocal == 1 ? themeData.primaryColor : Colors.white,
+                                  color: programPvd.segmentedControlCentralLocal == 1 ? const Color(0xFF5B21B6) : Colors.white,
                                   shape: const RoundedRectangleBorder(
                                       borderRadius: BorderRadius.only(topRight: Radius.circular(10), bottomRight: Radius.circular(10))
                                   ),
                                   onPressed: (){
                                     programPvd.editSegmentedCentralLocal(1);
-                                    // programPvd.selectingTheSite();
                                   },
                                   child: Text("Local",style: TextStyle(color: programPvd.segmentedControlCentralLocal == 1 ? Colors.white : Colors.black)),
                                 ),
@@ -865,13 +855,14 @@ class _WaterAndFertilizerScreenState extends State<WaterAndFertilizerScreen> {
                         if(programPvd.sequenceData[programPvd.selectedGroup][programPvd.segmentedControlCentralLocal == 0 ? 'centralDosing' : 'localDosing'].length != 0)
                           SliverToBoxAdapter(
                               child: Container(
-                                decoration: const BoxDecoration(
-                                    color: Colors.blueGrey
+                                decoration: BoxDecoration(
+                                    color: const Color(0xFF5B21B6),
+                                    borderRadius: BorderRadius.circular(12)
                                 ),
                                 child: CheckboxListTile(
-                                    title: Text('${programPvd.sequenceData[programPvd.selectedGroup][programPvd.segmentedControlCentralLocal == 0 ? 'centralDosing' : 'localDosing'][0]['name']}',style: const TextStyle(color: Colors.white),),
-                                    checkColor: Colors.white,
-                                    fillColor: MaterialStateProperty.all(Colors.green),
+                                    title: Text('${programPvd.sequenceData[programPvd.selectedGroup][programPvd.segmentedControlCentralLocal == 0 ? 'centralDosing' : 'localDosing'][0]['name']}',style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),),
+                                    checkColor: const Color(0xFF5B21B6),
+                                    fillColor: WidgetStateProperty.all(Colors.white),
                                     value: programPvd.sequenceData[programPvd.selectedGroup][programPvd.segmentedControlCentralLocal == 0 ? 'applyFertilizerForCentral' : 'applyFertilizerForLocal'],
                                     onChanged: (value){
                                       programPvd.editGroupSiteInjector(programPvd.segmentedControlCentralLocal == 0 ? 'applyFertilizer' : 'applyFertilizer', value);
@@ -1133,9 +1124,9 @@ class _WaterAndFertilizerScreenState extends State<WaterAndFertilizerScreen> {
                                 child: Column(
                                   children: [
                                     Container(
-                                      decoration: BoxDecoration(
-                                        borderRadius: const BorderRadius.only(topLeft: Radius.circular(10),topRight: Radius.circular(10)),
-                                        color: Theme.of(context).primaryColorDark
+                                      decoration: const BoxDecoration(
+                                        borderRadius: BorderRadius.only(topLeft: Radius.circular(10),topRight: Radius.circular(10)),
+                                        color: Color(0xFF5B21B6)
 
                                       ),
                                       child: const Row(
@@ -1145,29 +1136,28 @@ class _WaterAndFertilizerScreenState extends State<WaterAndFertilizerScreen> {
                                             width: 100,
                                             height: 40,
                                             child: Center(
-                                              child: Text('Fertilizer',style: TextStyle(fontSize: 16,color: Colors.white),),
+                                              child: Text('Fertilizer',style: TextStyle(fontSize: 16,color: Colors.white, fontWeight: FontWeight.bold),),
                                             ),
                                           ),
                                           SizedBox(
                                             width: 100,
                                             height: 40,
                                             child: Center(
-                                              child: Text('Method',style: TextStyle(fontSize: 16,color: Colors.white),),
-                                            ),
-                                          ),
-                                          // fertilizerColumn(name: 'Method'),
-                                          SizedBox(
-                                            width: 100,
-                                            height: 40,
-                                            child: Center(
-                                              child: Text('Value',style: TextStyle(fontSize: 16,color: Colors.white),),
+                                              child: Text('Method',style: TextStyle(fontSize: 16,color: Colors.white, fontWeight: FontWeight.bold),),
                                             ),
                                           ),
                                           SizedBox(
                                             width: 100,
                                             height: 40,
                                             child: Center(
-                                              child: Text('Tank Valve',style: TextStyle(fontSize: 16,color: Colors.white),),
+                                              child: Text('Value',style: TextStyle(fontSize: 16,color: Colors.white, fontWeight: FontWeight.bold),),
+                                            ),
+                                          ),
+                                          SizedBox(
+                                            width: 100,
+                                            height: 40,
+                                            child: Center(
+                                              child: Text('Tank Valve',style: TextStyle(fontSize: 16,color: Colors.white, fontWeight: FontWeight.bold),),
                                             ),
                                           ),
                                         ],
@@ -1194,7 +1184,7 @@ class _WaterAndFertilizerScreenState extends State<WaterAndFertilizerScreen> {
                                                 SizedBox(
                                                   width: 30,
                                                   child: Checkbox(
-                                                      activeColor: themeData.primaryColorDark,
+                                                      activeColor: const Color(0xFF5B21B6),
                                                       value: programPvd.sequenceData[programPvd.selectedGroup][programPvd.segmentedControlCentralLocal == 0 ? 'centralDosing' : 'localDosing'][0]['fertilizer'][index]['onOff'],
                                                       onChanged: (value){
                                                         programPvd.editOnOffInInjector(programPvd.segmentedControlCentralLocal == 0 ? 'centralDosing' : 'localDosing',index,value!);
@@ -2347,16 +2337,29 @@ Widget customizeGridView({required double maxWith,required double maxHeight,requ
 
 
 TextStyle wf = const TextStyle(fontSize: 12);
-Widget mySeqButtons({required String name,required void Function() onTap,double? radius,double? verticalPadding,int? index,required IrrigationProgramMainProvider programPvd,required context}){
+Widget mySeqButtons({required String name, required void Function() onTap, double? radius, double? verticalPadding, int? index, required IrrigationProgramMainProvider programPvd, required context}) {
+  final isSelected = index != null ? (index == programPvd.selectedGroup) : true;
+  final primaryPurple = const Color(0xFF5B21B6);
+
   return InkWell(
     onTap: onTap,
+    borderRadius: BorderRadius.circular(radius ?? 12),
     child: Container(
-      padding: EdgeInsets.symmetric(vertical: verticalPadding ?? 10,horizontal: 10),
+      padding: EdgeInsets.symmetric(vertical: verticalPadding ?? 8, horizontal: 14),
       decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(radius ?? 5),
-          color: index != null ? (index == programPvd.selectedGroup ? Theme.of(context).primaryColorDark : null) : Theme.of(context).primaryColorDark,
+        borderRadius: BorderRadius.circular(radius ?? 12),
+        color: isSelected ? primaryPurple : Colors.transparent,
       ),
-      child: Center(child: Text(name,style: TextStyle(color: index != null ? (index == programPvd.selectedGroup ? Colors.white : Colors.black87) : Colors.white,fontSize: 14,fontWeight: FontWeight.w200),)),
+      child: Center(
+        child: Text(
+          name,
+          style: TextStyle(
+            color: isSelected ? Colors.white : const Color(0xFF475569),
+            fontSize: 13,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+          ),
+        ),
+      ),
     ),
   );
 }

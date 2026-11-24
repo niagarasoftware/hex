@@ -8,7 +8,8 @@ class CustomTab extends StatelessWidget {
   final double? radius;
   final double? height;
 
-  const CustomTab({super.key,
+  const CustomTab({
+    super.key,
     required this.content,
     this.label,
     required this.tabIndex,
@@ -19,14 +20,12 @@ class CustomTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Color avatarColor = tabIndex == selectedTabIndex
-        ? Theme.of(context).primaryColorLight
-        : Colors.white;
+    const primaryPurple = Color(0xFF5B21B6);
+    final bool isSelected = tabIndex == selectedTabIndex;
 
-    Color contentColor = tabIndex == selectedTabIndex
-        ? Colors.white
-        : Colors.grey.shade500
-    ;
+    Color avatarColor = isSelected ? primaryPurple : Colors.white;
+    Color contentColor = isSelected ? Colors.white : const Color(0xFF64748B);
+
     return Tab(
       height: height,
       child: Column(
@@ -36,23 +35,30 @@ class CustomTab extends StatelessWidget {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(50),
             ),
+            elevation: isSelected ? 2 : 0,
             child: CircleAvatar(
               radius: radius,
               backgroundColor: avatarColor,
               child: content is IconData
                   ? Icon(content, color: contentColor)
                   : Text(
-                content,
-                style: TextStyle(
-                    color: contentColor,
-                    // fontSize: Theme.of(context).textTheme.bodyLarge!.fontSize
-                ),
-              ),
+                      content.toString(),
+                      style: TextStyle(
+                        color: contentColor,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
             ),
           ),
           if (label != null) ...[
             const SizedBox(height: 4),
-            Text(label!, style: TextStyle(color: contentColor, fontWeight: FontWeight.bold),),
+            Text(
+              label!,
+              style: TextStyle(
+                color: isSelected ? primaryPurple : const Color(0xFF64748B),
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+              ),
+            ),
           ],
         ],
       ),

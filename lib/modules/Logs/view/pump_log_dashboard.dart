@@ -27,14 +27,14 @@ class _BarSegment {
 
 // Design tokens
 // ---------------------------------------------------------------------------
-const Color _kBg = Color(0xFFF7F9FA);
-const Color _kTeal = Color(0xFF006775);
-const Color _kBorder = Color(0xFFE5E9EB);
+const Color _kBg = Color(0xFFF8FAFC);
+const Color _kPurple = Color(0xFF5B21B6);
+const Color _kBorder = Color(0xFFE2E8F0);
 const Color _kRed = Color(0xFFE53935);
 const Color _kGreen = Color(0xFF2E9E57);
-const Color _kInk = Color(0xFF1E293B);
-const Color _kMuted = Color(0xFF8C98A4);
-const Color _kToggleBg = Color(0xFFE3F1F3);
+const Color _kInk = Color(0xFF1E1B4B);
+const Color _kMuted = Color(0xFF64748B);
+const Color _kToggleBg = Color(0xFFEDE9FE);
 
 /// Single-page unified dashboard for Pump Log, Power Graph, and Voltage Log.
 class PumpLogDashboardScreen extends StatefulWidget {
@@ -475,7 +475,7 @@ class _PumpLogDashboardScreenState extends State<PumpLogDashboardScreen> {
                   : 'Failed to download $label report.',
             ),
             duration: const Duration(seconds: 3),
-            backgroundColor: success ? _kTeal : _kRed,
+            backgroundColor: success ? _kPurple : _kRed,
           ),
         );
     }
@@ -563,7 +563,7 @@ class _PumpLogDashboardScreenState extends State<PumpLogDashboardScreen> {
     return Text(
       text,
       style: const TextStyle(
-        color: _kTeal,
+        color: _kPurple,
         fontWeight: FontWeight.w800,
         fontSize: 11,
         letterSpacing: 1.1,
@@ -602,7 +602,7 @@ class _PumpLogDashboardScreenState extends State<PumpLogDashboardScreen> {
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: isSel ? FontWeight.w700 : FontWeight.w500,
-                  color: isSel ? _kInk : _kTeal,
+                  color: isSel ? _kInk : _kPurple,
                 ),
               ),
             ),
@@ -645,8 +645,8 @@ class _PumpLogDashboardScreenState extends State<PumpLogDashboardScreen> {
                               const Padding(
                                 padding: EdgeInsets.only(bottom: 10),
                                 child: LinearProgressIndicator(
-                                  color: _kTeal,
-                                  backgroundColor: Color(0xFFE0F4F7),
+                                  color: _kPurple,
+                                  backgroundColor: _kToggleBg,
                                 ),
                               ),
 
@@ -844,7 +844,7 @@ class _PumpLogDashboardScreenState extends State<PumpLogDashboardScreen> {
                 value: 'excel',
                 child: Row(
                   children: [
-                    Icon(Icons.table_chart_outlined, color: _kTeal, size: 18),
+                    Icon(Icons.table_chart_outlined, color: _kPurple, size: 18),
                     SizedBox(width: 8),
                     Text('Excel (.xlsx)', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
                   ],
@@ -854,7 +854,7 @@ class _PumpLogDashboardScreenState extends State<PumpLogDashboardScreen> {
                 value: 'csv',
                 child: Row(
                   children: [
-                    Icon(Icons.description_outlined, color: _kTeal, size: 18),
+                    Icon(Icons.description_outlined, color: _kPurple, size: 18),
                     SizedBox(width: 8),
                     Text('CSV (.csv)', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
                   ],
@@ -874,7 +874,7 @@ class _PumpLogDashboardScreenState extends State<PumpLogDashboardScreen> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
-                color: _kTeal,
+                color: _kPurple,
                 borderRadius: BorderRadius.circular(14),
               ),
               child: const Row(
@@ -929,7 +929,7 @@ class _PumpLogDashboardScreenState extends State<PumpLogDashboardScreen> {
                   width: 30,
                   height: 30,
                   decoration: BoxDecoration(
-                    color: isSelected ? _kTeal : Colors.transparent,
+                    color: isSelected ? _kPurple : Colors.transparent,
                     shape: BoxShape.circle,
                   ),
                   alignment: Alignment.center,
@@ -985,10 +985,10 @@ class _PumpLogDashboardScreenState extends State<PumpLogDashboardScreen> {
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                     decoration: BoxDecoration(
-                      color: isSelected ? _kTeal : Colors.white,
+                      color: isSelected ? _kPurple : Colors.white,
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: isSelected ? _kTeal : const Color(0xFFE2E8F0),
+                        color: isSelected ? _kPurple : const Color(0xFFE2E8F0),
                         width: 1.2,
                       ),
                     ),
@@ -1000,13 +1000,13 @@ class _PumpLogDashboardScreenState extends State<PumpLogDashboardScreen> {
                           height: 28,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: isSelected ? Colors.white.withAlpha(50) : const Color(0xFFE0F4F7),
+                            color: isSelected ? Colors.white.withAlpha(50) : _kToggleBg,
                           ),
                           child: Center(
                             child: Text(
                               '${index + 1}',
                               style: TextStyle(
-                                color: isSelected ? Colors.white : _kTeal,
+                                color: isSelected ? Colors.white : _kPurple,
                                 fontSize: 12,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -1065,8 +1065,8 @@ class _PumpLogDashboardScreenState extends State<PumpLogDashboardScreen> {
             Container(
               width: 36,
               height: 36,
-              decoration: const BoxDecoration(shape: BoxShape.circle, color: Color(0xFFE0F4F7)),
-              child: const Center(child: Icon(Icons.router_outlined, color: _kTeal, size: 18)),
+              decoration: const BoxDecoration(shape: BoxShape.circle, color: _kToggleBg),
+              child: const Center(child: Icon(Icons.router_outlined, color: _kPurple, size: 18)),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -1085,7 +1085,7 @@ class _PumpLogDashboardScreenState extends State<PumpLogDashboardScreen> {
                         fontSize: 12,
                         fontFamily: 'monospace',
                         fontWeight: FontWeight.bold,
-                        color: _kTeal,
+                        color: _kPurple,
                       ),
                     ),
                   ],
@@ -1614,7 +1614,7 @@ class _PumpLogDashboardScreenState extends State<PumpLogDashboardScreen> {
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 fontSize: 10,
-                color: isAvailable ? const Color(0xFF006775) : const Color(0xFF94A3B8),
+                color: isAvailable ? _kPurple : const Color(0xFF94A3B8),
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -1718,7 +1718,7 @@ class _PumpLogDashboardScreenState extends State<PumpLogDashboardScreen> {
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           fontSize: 10,
-                          color: isAvailable ? const Color(0xFF006775) : const Color(0xFF94A3B8),
+                          color: isAvailable ? _kPurple : const Color(0xFF94A3B8),
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -2193,13 +2193,13 @@ class _PumpLogDashboardScreenState extends State<PumpLogDashboardScreen> {
               children: [
                 Text(
                   event.onTime,
-                  style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: _kTeal),
+                  style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: _kPurple),
                 ),
                 if (hasOffTime) ...[
                   const Text('to', style: TextStyle(fontSize: 9, color: Color(0xFF94A3B8))),
                   Text(
                     event.offTime,
-                    style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: _kTeal),
+                    style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: _kPurple),
                   ),
                 ] else if (isRunningNow) ...[
                   const SizedBox(height: 2),
