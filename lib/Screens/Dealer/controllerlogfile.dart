@@ -108,10 +108,7 @@ class _ControllerLogState extends State<ControllerLog> with SingleTickerProvider
                   backgroundColor: primaryColor,
                   elevation: 0,
                   scrolledUnderElevation: 0,
-                  leading: IconButton(
-                    icon: const Icon(Icons.arrow_back, color: Colors.white),
-                    onPressed: () => Navigator.of(context).pop(),
-                  ),
+                  automaticallyImplyLeading: false,
                   title: const Text(
                     'Controller Log',
                     style: TextStyle(

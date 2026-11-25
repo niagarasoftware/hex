@@ -75,125 +75,110 @@ class _MapScreenOroState extends State<MapScreenOro> {
     );
   }
 
-  // Compact single-row overlay: area metrics, valve chips, live sync and actions.
-  // On narrow screens the whole bar scrolls horizontally without overflowing.
   Widget _buildAreaSummary() {
+    final theme = Theme.of(context);
+    final c = theme.colorScheme;
     final total = _valveAreas.fold<double>(0, (sum, e) => sum + e.acres);
-    final running = _valveAreas.fold<double>(
-      0, (sum, e) => sum + (e.running ? e.acres : 0),
-    );
-    final inactive = math.max(0.0, total - running);
-
+    final irrigated = _valveAreas.fold<double>(0, (sum, e) => sum + e.irrigatedAcres);
+    final running = _valveAreas.fold<double>(0, (sum, e) => sum + (e.running ? e.remainingAcres : 0.0));
+    final pending = _valveAreas.fold<double>(0, (sum, e) => sum + (!e.running ? e.remainingAcres : 0.0));
     return Material(
-      color: Colors.white.withOpacity(0.94),
-      borderRadius: BorderRadius.circular(10),
-      elevation: 2,
-      child: SizedBox(
-        height: 66,
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            return SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: SizedBox(
-                width: math.max(constraints.maxWidth, 900.0),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  child: Row(
-                    children: [
-                      _areaMetric('Total', total, Colors.black87),
-                      const SizedBox(width: 16),
-                      _areaMetric('Irrigating', running, Colors.green),
-                      const SizedBox(width: 16),
-                      _areaMetric('Not Irrigating', inactive, Colors.grey),
-                      const SizedBox(width: 12),
-                      const VerticalDivider(width: 12),
-                      Expanded(
-                        child: _valveAreas.isEmpty
-                            ? const Center(child: Text('No valve areas', style: TextStyle(fontSize: 11)))
-                            : ListView.separated(
-                          scrollDirection: Axis.horizontal,
-                          itemCount: _valveAreas.length,
-                          separatorBuilder: (_, __) => const SizedBox(width: 6),
-                          itemBuilder: (context, i) {
-                            final e = _valveAreas[i];
-                            return Chip(
-                              visualDensity: VisualDensity.compact,
-                              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                              label: Text(
-                                '${e.name}: ${e.acres.toStringAsFixed(2)} ac',
-                                style: const TextStyle(fontSize: 10),
-                              ),
-                              avatar: CircleAvatar(
-                                radius: 5,
-                                backgroundColor: e.running ? Colors.green : e.color,
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      const VerticalDivider(width: 12),
-                      Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text('Live Sync', style: TextStyle(
-                            color: Colors.green, fontSize: 11, fontWeight: FontWeight.bold,
-                          )),
-                          Text(
-                            _sentTime.isEmpty ? '--' : _sentTime,
-                            style: const TextStyle(fontSize: 11, color: Colors.black87),
-                          ),
-                        ],
-                      ),
-                      if (kIsWeb) ...[
-                        IconButton(
-                          tooltip: 'Refresh',
-                          icon: const Icon(Icons.refresh, color: Colors.red),
-                          onPressed: () async {
-                             await _init();
-                          },
-                        ),
-                        if (!widget.isCheckDashboard)
-                          IconButton(
-                            tooltip: 'Edit',
-                            icon: const Icon(Icons.map_outlined, color: Colors.red),
-                            onPressed: () {
-                              Navigator.of(context).push(MaterialPageRoute(
-                                builder: (context) => MapConnectionObject(
-                                  userId: widget.userId,
-                                  customerId: widget.customerId,
-                                  controllerId: widget.controllerId,
-                                  imeiNo: widget.imeiNo,
-                                  modelId: widget.modelId,
-                                ),
-                              ));
-                            },
-                          ),
-                      ],
-                    ],
-                  ),
-                ),
-              ),
+      color: c.surface,
+      child: ListView(
+        padding: const EdgeInsets.all(12),
+        children: [
+          Text('Total field area', style: theme.textTheme.labelLarge),
+          const SizedBox(height: 6),
+          Text('${total.toStringAsFixed(2)} ac', style: theme.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold)),
+          const SizedBox(height: 12),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: SizedBox(height: 10, child: LayoutBuilder(builder: (context, constraints) {
+              final width = constraints.maxWidth;
+              return Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                SizedBox(width: total > 0 ? width * irrigated / total : 0.0, child: const ColoredBox(color: Colors.blue)),
+                SizedBox(width: total > 0 ? math.min(width * running / total, math.max(0.0, width - width * irrigated / total)) : 0.0, child: const ColoredBox(color: Colors.green)),
+                Expanded(child: ColoredBox(color: c.surfaceContainerHighest)),
+              ]);
+            })),
+          ),
+          const SizedBox(height: 14),
+          Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Expanded(child: _areaMetric('Irrigated', irrigated, Colors.blue)),
+            Expanded(child: _areaMetric('Irrigating', running, Colors.green)),
+            Expanded(child: _areaMetric('Pending', pending, c.onSurfaceVariant)),
+          ]),
+          const SizedBox(height: 8),
+          Text('Estimated area based on irrigation progress', style: theme.textTheme.bodySmall),
+          const Divider(height: 24),
+          Text('Valve areas', style: theme.textTheme.titleMedium),
+          const SizedBox(height: 10),
+          if (_valveAreas.isEmpty) const Center(child: Text('No valve areas')),
+          ..._valveAreas.map((e) {
+            final color = e.color;
+            final status = e.percentage == 100 ? 'Completed' : e.running ? 'Irrigating' : e.percentage > 0 ? 'Partially irrigated' : 'Not irrigated';
+            return Container(
+              margin: const EdgeInsets.only(bottom: 8),
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(color: c.surfaceContainerLow, borderRadius: BorderRadius.circular(8), border: Border(left: BorderSide(color: color, width: 3))),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Row(children: [
+                  Icon(Icons.water_drop_outlined, color: color, size: 18),
+                  const SizedBox(width: 6),
+                  Expanded(child: Text(e.name, style: theme.textTheme.titleSmall)),
+                  Text('${e.acres.toStringAsFixed(2)} ac', style: theme.textTheme.labelLarge),
+                ]),
+                const SizedBox(height: 6),
+                Row(children: [
+                  Expanded(child: Text(status, style: theme.textTheme.bodySmall)),
+                  Text('${e.percentage}%', style: theme.textTheme.labelLarge),
+                ]),
+                const SizedBox(height: 6),
+                ClipRRect(borderRadius: BorderRadius.circular(5), child: LinearProgressIndicator(value: e.percentage / 100.0, minHeight: 6, color: color, backgroundColor: c.surfaceContainerHighest)),
+                const SizedBox(height: 6),
+                Text('Irrigated: ${e.irrigatedAcres.toStringAsFixed(2)} ac', style: theme.textTheme.bodySmall),
+                Text('${e.running ? 'Irrigating' : 'Pending'}: ${e.remainingAcres.toStringAsFixed(2)} ac', style: theme.textTheme.bodySmall),
+              ]),
             );
-          },
-        ),
+          }),
+        ],
       ),
     );
   }
 
-  Widget _areaMetric(String label, double value, Color color) =>
-      Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(label, style: TextStyle(fontSize: 10, color: color)),
-          Text('${value.toStringAsFixed(2)} ac', style: TextStyle(
-            fontSize: 15, color: color, fontWeight: FontWeight.bold,
-          )),
+  Widget _areaMetric(String label, double value, Color color) => Column(
+      crossAxisAlignment: CrossAxisAlignment.start, children: [
+    Text(label, style: Theme.of(context).textTheme.labelSmall),
+    const SizedBox(height: 4),
+    Text('${value.toStringAsFixed(2)} ac', style: Theme.of(context).textTheme.titleMedium?.copyWith(color: color, fontWeight: FontWeight.bold)),
+  ]);
+
+  void _openMapEditor() {
+    Navigator.of(context).push(MaterialPageRoute(builder: (context) => MapConnectionObject(
+        userId: widget.userId, customerId: widget.customerId, controllerId: widget.controllerId,
+        imeiNo: widget.imeiNo, modelId: widget.modelId)));
+  }
+
+  Widget _mapHeader() {
+    final theme = Theme.of(context);
+    return Material(color: theme.colorScheme.surface, child: Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      child: Row(children: [
+        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text('Geography', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+          Text('Farm monitoring', style: theme.textTheme.bodySmall),
+        ])),
+        Flexible(child: Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
+          Text('Live Sync', style: theme.textTheme.labelMedium?.copyWith(color: Colors.green)),
+          Text(_sentTime.isEmpty ? '--' : _sentTime, maxLines: 2, overflow: TextOverflow.ellipsis, style: theme.textTheme.bodySmall),
+        ])),
+        if (kIsWeb || widget.isCheckDashboard) ...[
+          IconButton(tooltip: 'Refresh', onPressed: () async { await _init(); }, icon: const Icon(Icons.refresh)),
+           IconButton(tooltip: 'Edit', onPressed: _openMapEditor, icon: const Icon(Icons.map_outlined)),
         ],
-      );
+      ]),
+    ));
+  }
 
   @override
   void initState() {
@@ -295,7 +280,7 @@ class _MapScreenOroState extends State<MapScreenOro> {
           );
 
           int st = resultstaus["status"] ?? 0;
-          int per = resultstaus["percentage"] ?? 0;
+          int per = (resultstaus["percentage"] ?? 0).clamp(0, 100).toInt();
 
           // ---------------- OBJECT MARKER ----------------
           if (obj["lat"] != null && obj["long"] != null) {
@@ -328,7 +313,8 @@ class _MapScreenOroState extends State<MapScreenOro> {
                 newValveAreas.add(_ValveAreaEntry(
                   name: (obj['name'] ?? obj['objectName'] ?? 'Valve').toString(),
                   acres: PolygonAreaCalculator.calculateAcres(points),
-                  running: _isValveRunning(st),
+                  running: _isValveRunning(st) && per < 100,
+                  percentage: per.clamp(0, 100).toInt(),
                   color: areaColor,
                 ));
               }
@@ -519,17 +505,10 @@ class _MapScreenOroState extends State<MapScreenOro> {
     int st = status ?? 0;
     int per = percentage ?? 0;
 
-    if (per == 100) {
-      return Colors.blue;
-    } else if (st == 0 && per == 0) {
-      return Colors.grey;
-    } else if (st == 0 && per > 0) {
-      return Colors.yellow;
-    } else if (st == 1 && per <= 100) {
-      return Colors.green;
-    } else {
-      return Colors.grey;
-    }
+    if (per >= 100) return Colors.blue;
+    if (st == 1) return Colors.green;
+    if (per > 0) return Colors.amber;
+    return Colors.grey;
   }
 
   LatLng _getPolygonCenter(List<LatLng> points) {
@@ -606,22 +585,9 @@ class _MapScreenOroState extends State<MapScreenOro> {
     int st = status ?? 0;
     int per = percentage ?? 0;
 
-    if (type.contains("Valve")) {
-      if (st == 1 && per == 100) {
-        return markerIcons["blue"] ?? BitmapDescriptor.defaultMarker;
-      }
-      else if (st == 0 && per == 0) {
-        return markerIcons["gray"] ?? BitmapDescriptor.defaultMarker;
-      }
-      else if (st == 0 && per > 0) {
-        return markerIcons["yellow"] ?? BitmapDescriptor.defaultMarker;
-      }
-      else if (st == 1 && per <= 100) {
-        return markerIcons["green"] ?? BitmapDescriptor.defaultMarker;
-      }
-      else {
-        return markerIcons["gray"] ?? BitmapDescriptor.defaultMarker;
-      }
+    if (type.toLowerCase().contains('valve')) {
+      final key = per >= 100 ? 'blue' : st == 1 ? 'green' : per > 0 ? 'yellow' : 'gray';
+      return markerIcons[key] ?? BitmapDescriptor.defaultMarker;
     }
 
     if (type.contains("Pump")) {
@@ -672,7 +638,7 @@ class _MapScreenOroState extends State<MapScreenOro> {
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: () async {
-               await _init();
+              await _init();
             },
           ),
           if (!widget.isCheckDashboard)
@@ -688,9 +654,11 @@ class _MapScreenOroState extends State<MapScreenOro> {
         ],
       ) ,
 
-      body: Stack(
-        children: [
-          GoogleMap(
+      body: Column(children: [
+        _mapHeader(),
+        Expanded(child: LayoutBuilder(builder: (context, constraints) {
+          final wide = constraints.maxWidth >= 800;
+          final map = ClipRRect(borderRadius: BorderRadius.circular(10), child: GoogleMap(
             mapType: MapType.hybrid,
             onCameraMove: (CameraPosition position) {
               final oldVisible = _currentZoom >= 17;
@@ -711,21 +679,13 @@ class _MapScreenOroState extends State<MapScreenOro> {
               if (_currentZoom >= 17) ...waterDrops,
             },
             onMapCreated: _onMapCreated,
-          ),
-          Positioned(
-            top: 8,
-            left: 12,
-            right: 12,
-            child: _buildAreaSummary(),
-          ),
-          Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
-            child: buildValveStatusLegend(false),
-          ),
-        ],
-      ),
+          ));
+          final panel = ClipRRect(borderRadius: BorderRadius.circular(10), child: _buildAreaSummary());
+          return Padding(padding: const EdgeInsets.all(8), child: wide
+              ? Row(children: [Expanded(child: map), const SizedBox(width: 8), SizedBox(width: 320, child: panel)])
+              : Column(children: [Expanded(flex: 3, child: map), const SizedBox(height: 8), Expanded(flex: 2, child: panel)]));
+        })),
+      ]),
     );
   }
   // Build horizontal irrigation rows clipped to each irregular valve area.
@@ -894,11 +854,14 @@ class _ValveAreaEntry {
     required this.name,
     required this.acres,
     required this.running,
+    required this.percentage,
     required this.color,
   });
   final String name;
   final double acres;
   final bool running;
+  final int percentage;
   final Color color;
+  double get irrigatedAcres => acres * percentage / 100.0;
+  double get remainingAcres => math.max(0.0, acres - irrigatedAcres);
 }
- 

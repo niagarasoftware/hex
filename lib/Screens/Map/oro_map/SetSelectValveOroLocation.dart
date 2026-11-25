@@ -1,4 +1,3 @@
-
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -29,8 +28,7 @@ class _SetSelectOroLocationState extends State<SetSelectOroLocation> {
 
   late MqttPayloadProvider mqttPayloadProvider;
   ConnectedObject? _selectedObject;
-  bool _isDrawerOpen = false;
-  double _drawerWidth = 280;
+
 
   List<LatLng> _points = [];
   Set<Marker> _vertices = {};
@@ -115,7 +113,7 @@ class _SetSelectOroLocationState extends State<SetSelectOroLocation> {
           content: Text("Select Object first"),
         ),
       );
-      return null;
+      return;
     }
 
     final position = LatLng(lat, long);
@@ -157,6 +155,7 @@ class _SetSelectOroLocationState extends State<SetSelectOroLocation> {
   void _searchLocation() async {
     final input = _searchController.text;
     final LatLng? result = await getLatLngFromInput(input);
+    if (!mounted) return;
     if (result != null) {
       _updateMarker(result.latitude, result.longitude);
     } else {
@@ -243,233 +242,141 @@ class _SetSelectOroLocationState extends State<SetSelectOroLocation> {
 
 
 
+  void _selectObject(ConnectedObject obj) {
+    setState(() {
+      _selectedObject = obj;
+      _points = (obj.area ?? []).where((e) => e.latitude != null && e.longitude != null)
+          .map((e) => LatLng(e.latitude!, e.longitude!)).toList();
+      _vertices.clear();
+      _lines.clear();
+      _polygons.clear();
+      _isClosed = _points.length >= 3;
+      _isEditMode = false;
+      _finalPolygonPoints = List.from(_points);
+      _undoStack.clear();
+      _redoStack.clear();
+      _redoPoints.clear();
+    });
+    _loadAllMarkers();
+    _drawPolygon();
+    _mapController?.animateCamera(CameraUpdate.newLatLngZoom(
+        obj.lat != null && obj.long != null ? LatLng(obj.lat!, obj.long!) :
+        _points.isNotEmpty ? _points.first : _getInitialCameraPosition(), _currentZoom));
+  }
+
+  Widget _tool(IconData icon, String label, VoidCallback? action, {Color? color}) {
+    return IconButton(tooltip: label, onPressed: action,
+        icon: Icon(icon, color: action == null ? null : color));
+  }
+
+  Widget _toolbar() {
+    final c = Theme.of(context).colorScheme;
+    return Material(color: c.surface, borderRadius: BorderRadius.circular(12),
+        child: Wrap(alignment: WrapAlignment.center, children: [
+          _tool(Icons.undo, 'Undo', _points.isEmpty ? null : _undo),
+          _tool(Icons.redo, 'Redo', _redoPoints.isEmpty ? null : _redo),
+          _tool(_isEditMode ? Icons.check_circle : Icons.edit_outlined,
+              _isEditMode ? 'Done editing' : 'Edit boundary',
+              _selectedObject == null ? null : _toggleEditMode, color: c.primary),
+          _tool(Icons.delete_outline, 'Delete boundary', _selectedObject == null ? null : _deletePolygon, color: c.error),
+          _tool(Icons.check, 'Close boundary', _selectedObject == null || _points.length < 3 ? null : _closePolygon, color: c.primary),
+          _tool(Icons.my_location, 'Add current location', _selectedObject == null ? null : _getCurrentLocation),
+        ]));
+  }
+
+  Widget _inspector(List<ConnectedObject> objects) {
+    final theme = Theme.of(context);
+    final c = theme.colorScheme;
+    final obj = _selectedObject;
+    final first = _points.isEmpty ? null : _points.first;
+    return Material(color: c.surface, borderRadius: BorderRadius.circular(16),
+        child: Padding(padding: const EdgeInsets.all(16), child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text('Selected object', style: theme.textTheme.labelMedium),
+          const SizedBox(height: 6),
+          Text(obj?.name ?? obj?.objectName ?? 'Select an object', style: theme.textTheme.titleLarge),
+          if (obj != null) ...[
+            Text('Status: ${obj.status == 1 ? "ON" : "OFF"}'),
+            const SizedBox(height: 16),
+            Text('Field area', style: theme.textTheme.labelMedium),
+            Text('${(_points.length >= 3 ? _areaInAcres : 0.0).toStringAsFixed(3)} acres',
+                style: theme.textTheme.headlineSmall?.copyWith(color: c.primary, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            Text('${_points.length} boundary points'),
+            Text(_isEditMode ? 'Editing boundary' : _isClosed ? 'Boundary closed' : 'Boundary open'),
+            const SizedBox(height: 12),
+            Text('Boundary coordinates', style: theme.textTheme.labelMedium),
+            Text(first == null ? '--' : '${first.latitude.toStringAsFixed(6)}, ${first.longitude.toStringAsFixed(6)}'),
+          ],
+          const Divider(height: 28),
+          Text('Connected objects (${objects.length})', style: theme.textTheme.titleMedium),
+          const SizedBox(height: 8),
+          Expanded(child: objects.isEmpty ? const Center(child: Text('No connected objects')) :
+          ListView.separated(itemCount: objects.length, separatorBuilder: (_, __) => const SizedBox(height: 6),
+              itemBuilder: (context, i) {
+                final item = objects[i];
+                final selected = item == obj;
+                return ListTile(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    tileColor: c.surfaceContainerLow, selectedTileColor: c.primaryContainer,
+                    selected: selected, leading: Icon(Icons.location_on_outlined, color: selected ? c.primary : c.onSurfaceVariant),
+                    title: Text(item.name ?? item.objectName ?? 'Object'),
+                    subtitle: Text(item.area != null && item.area!.length >= 3 ? 'Boundary configured' : 'No boundary'),
+                    trailing: selected ? Icon(Icons.check_circle, color: c.primary) : null,
+                    onTap: () => _selectObject(item));
+              })),
+        ])));
+  }
+
   @override
   Widget build(BuildContext context) {
-    final objects = mqttPayloadProvider
-        .mapModelInstance.data?.deviceList?[widget.index].connectedObject;
-
+    final objects = mqttPayloadProvider.mapModelInstance.data?.deviceList?[widget.index].connectedObject ?? <ConnectedObject>[];
+    final c = Theme.of(context).colorScheme;
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Set Location'),
-        leadingWidth: 110,
-        leading: Row(
-          children: [
-            IconButton(
-              icon: Icon(Icons.arrow_back),
-              onPressed: () {
-                setState(() {
-                  Navigator.pop(context);
-                });
-              },
-            ),
-            IconButton(
-              icon: Icon(_isDrawerOpen ? Icons.close : Icons.menu),
-              onPressed: () {
-                setState(() {
-                  _isDrawerOpen = !_isDrawerOpen;
-                });
-              },
-            ),
-          ],
-        ),
-      ),
-      body: Row(
-        children: [
-          //MARK:- Side Drawer Panel (Resizable)
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 300),
-            width: _isDrawerOpen ? _drawerWidth : 0,
-            color: Colors.white,
-            child: _isDrawerOpen
-                ? Column(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  width: double.infinity,
-                  color: Colors.teal.shade500,
-                  child: const Text(
-                    "Connected Objects",
-                    style:
-                    TextStyle(color: Colors.white, fontSize: 18),
-                  ),
-                ),
-                Expanded(
-                  child: objects == null || objects.isEmpty
-                      ? const Center(
-                      child: Text("No Connected Objects"))
-                      : ListView.builder(
-                    itemCount: objects.length,
-                    itemBuilder: (context, index) {
-                      final obj = objects[index];
-                      final hasArea = obj.area != null && obj.area!.isNotEmpty;
-                      final first = hasArea ? obj.area!.first : null;
-                      return ListTile(
-                        selected: obj == _selectedObject,
-                        selectedTileColor:
-                        Colors.blue.withOpacity(0.2),
-                        title: Text(obj.name ??
-                            obj.objectName ??
-                            "Object"),
-                        subtitle: Text(
-                          "Lat: ${first?.latitude ?? '-'}, "
-                              "Long: ${first?.longitude ?? '-'}\n"
-                              "Status: ${obj.status ?? ''}",
-                        ),
-                        onTap: () {
-                          setState(() {
-                            _selectedObject = obj;
-                            AppLog.log("_selectedObject:${_selectedObject!.name},${_selectedObject!.lat},${_selectedObject!.long},obj:${obj.name},${obj.lat},${obj.long}");
-
-                            // ✅ RESET OLD POLYGON (IMPORTANT)
-                            _points.clear();
-                            _vertices.clear();
-                            _lines.clear();
-                            _polygons.clear();
-                            _isClosed = false;
-                            _isEditMode = false;
-                            _finalPolygonPoints.clear();
-                            _undoStack.clear();
-                            _redoStack.clear();
-                            _redoPoints.clear();
-
-                            // ✅ LOAD EXISTING AREA (optional)
-                            if (obj.area != null && obj.area!.isNotEmpty) {
-                              _points = obj.area!
-                                  .map((e) => LatLng(e.latitude!, e.longitude!))
-                                  .toList();
-
-                              _isClosed = _points.length >= 3;
-                              _finalPolygonPoints = List.from(_points);
-                            }
-                          });
-
-                          _drawPolygon();
-
-                          if (obj.lat != null && obj.long != null) {
-                            _mapController?.animateCamera(
-                              CameraUpdate.newLatLngZoom(
-                                LatLng(obj.lat!, obj.long!),
-                                _currentZoom,
-                              ),
-                            );
-                          }
-                        },
-                      );
-                    },
-                  ),
-                ),
-              ],
-            )
-                : null,
-          ),
-
-          // ✅ Map Area (Auto Resizes)
-          Expanded(
-            child: Column(
-              children: [
-                _buildSelectedObjectBar(),
-                // Search Bar
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          controller: _searchController,
-                          decoration: const InputDecoration(
-                            hintText:
-                            'Search Area (e.g., 11.1326952, 76.9767822)',
-                            border: OutlineInputBorder(),
-                          ),
-                          textInputAction: TextInputAction.search,
-                          onSubmitted: (value) {
-                            _searchLocation();
-                          },
-                        ),
-                      ),
-                      TextButton(
-                        onPressed: _searchLocation,
-                        child: const Text(
-                          'Search',
-                          style:
-                          TextStyle(color: Colors.blue),
-                        ),
-                      ),
-                      IconButton(onPressed: _getCurrentLocation, icon: const Icon(Icons.my_location, color: Colors.blue)),
-                    ],
-                  ),
-                ),
-                Container(
-                  height: 40,
-                  color: Colors.white,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      IconButton(
-                        icon: Icon(Icons.undo),
-                        onPressed: _points.isEmpty ? null : _undo,
-                      ),
-
-                      IconButton(
-                        icon: Icon(Icons.redo),
-                        onPressed: _redoPoints.isEmpty ? null : _redo,
-                      ),
-                      IconButton(
-                        tooltip: _isEditMode ? 'Done Editing' : 'Edit Polygon',
-                        icon: Icon(
-                          _isEditMode ? Icons.check_circle : Icons.edit,
-                          color: _isEditMode ? Colors.green : Colors.blue,
-                        ),
-                        onPressed: _toggleEditMode,
-                      ),
-                      IconButton(
-                          icon: Icon(Icons.delete, color: Colors.red),
-                          onPressed: _deletePolygon),
-                      IconButton(
-                          icon: Icon(Icons.check, color: Colors.green),
-                          onPressed: _closePolygon),
-                    ],
-                  ),
-                ),
-
-                // Google Map
-                Expanded(
-                  child: GoogleMap(
-                    mapType: MapType.hybrid,
-                    onMapCreated: _onMapCreated,
-                    onCameraMove: (CameraPosition position) {
-                      _currentZoom = position.zoom;
-                    },
-                    initialCameraPosition: CameraPosition(
-                      target: _getInitialCameraPosition(),
-                      zoom: _currentZoom,
-                    ),
-                    markers: {
-                      ..._markers,
-                      ..._vertices,           // edit points
-                      ..._buildPolygonLabels(), // ✅ polygon names
-                    },// vertices visible
-                    polylines: _lines,
-                    polygons: {
-                      ..._buildAllPolygons(),
-                      ..._polygons,
-                    },
-                    onTap: (LatLng latLng) {
-                      _addPoint(latLng); // ✅ polygon point add
-                    },
-                    myLocationButtonEnabled: true,
-                    myLocationEnabled: true,
-
-                    compassEnabled: true,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+      appBar: AppBar(title: const Text('Field Boundary Editor')),
+      body: LayoutBuilder(builder: (context, constraints) {
+        final wide = constraints.maxWidth >= 850;
+        return Padding(padding: const EdgeInsets.all(12), child: Row(children: [
+          Expanded(child: Column(children: [
+            if (!wide) ...[
+              DropdownButtonFormField<ConnectedObject>(value: objects.contains(_selectedObject) ? _selectedObject : null,
+                  isExpanded: true, decoration: const InputDecoration(labelText: 'Connected object', border: OutlineInputBorder()),
+                  items: objects.map((o) => DropdownMenuItem(value: o, child: Text(o.name ?? o.objectName ?? 'Object', overflow: TextOverflow.ellipsis))).toList(),
+                  onChanged: (o) { if (o != null) _selectObject(o); }),
+              const SizedBox(height: 8),
+            ],
+            Row(children: [Expanded(child: TextField(controller: _searchController,
+                decoration: const InputDecoration(prefixIcon: Icon(Icons.search), hintText: 'Place, map link or coordinates', border: OutlineInputBorder()),
+                textInputAction: TextInputAction.search, onSubmitted: (_) => _searchLocation())),
+              const SizedBox(width: 8), FilledButton(onPressed: _selectedObject == null ? null : _searchLocation, child: const Text('Search'))]),
+            const SizedBox(height: 8),
+            if (!wide) _toolbar(),
+            Expanded(child: ClipRRect(borderRadius: BorderRadius.circular(14), child: Stack(children: [
+              GoogleMap(mapType: MapType.hybrid, onMapCreated: _onMapCreated,
+                  onCameraMove: (p) => _currentZoom = p.zoom,
+                  initialCameraPosition: CameraPosition(target: _getInitialCameraPosition(), zoom: _currentZoom),
+                  markers: {..._markers, ..._vertices, ..._buildPolygonLabels()},
+                  polylines: _lines, polygons: {..._buildAllPolygons(), ..._polygons},
+                  onTap: _addPoint, myLocationButtonEnabled: true, myLocationEnabled: true, compassEnabled: true),
+              if (wide) Positioned(top: 12, left: 12, child: SizedBox(width: 48, child: _toolbar())),
+            ]))),
+            const SizedBox(height: 8),
+            Row(children: [Icon(Icons.info_outline, size: 16, color: c.primary), const SizedBox(width: 6),
+              Expanded(child: Text(_selectedObject == null ? 'Select an object to begin' : _isClosed && !_isEditMode ? 'Boundary closed. Edit to modify.' : 'Tap the map to add boundary points', maxLines: 2)),
+              if (!wide) Text('${(_points.length >= 3 ? _areaInAcres : 0.0).toStringAsFixed(3)} ac')]),
+          ])),
+          if (wide) ...[const SizedBox(width: 12), SizedBox(width: 310, child: _inspector(objects))],
+        ]));
+      }),
     );
   }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    _mapController?.dispose();
+    super.dispose();
+  }
+
   // Edit an existing closed polygon without removing its closing edge.
   // An unfinished polyline stays open until the user manually closes it.
   void _toggleEditMode() {
@@ -506,141 +413,6 @@ class _SetSelectOroLocationState extends State<SetSelectOroLocation> {
 
 
 
-  Widget _buildSelectedObjectBar() {
-    if (_selectedObject == null) {
-      return const SizedBox.shrink();
-    }
-
-    final obj = _selectedObject!;
-
-    final String valveName =
-        obj.name ?? obj.objectName ?? "Valve";
-
-    final bool isOn = obj.status == 1;
-
-    final Color statusColor =
-    isOn ? Colors.green : Colors.red;
-
-    // Get coordinates from polygon area (same as old code)
-    final bool hasArea =
-        obj.area != null && obj.area!.isNotEmpty;
-
-    final String latitude = hasArea &&
-        obj.area!.first.latitude != null
-        ? obj.area!.first.latitude!.toStringAsFixed(6)
-        : "-";
-
-    final String longitude = hasArea &&
-        obj.area!.first.longitude != null
-        ? obj.area!.first.longitude!.toStringAsFixed(6)
-        : "-";
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(
-        horizontal: 12,
-        vertical: 8,
-      ),
-      decoration: BoxDecoration(
-        color: Colors.teal.shade50,
-        border: Border(
-          bottom: BorderSide(
-            color: Colors.grey.shade300,
-          ),
-        ),
-      ),
-      child: Row(
-        children: [
-          // Valve Name + Status
-          Expanded(
-            flex: 2,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  valveName,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 3),
-                Text(
-                  "Status: ${isOn ? 'ON' : 'OFF'}",
-                  style: TextStyle(
-                    color: statusColor,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // Latitude and Longitude
-          Expanded(
-            flex: 3,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text(
-                  "Coordinates",
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.black54,
-                  ),
-                ),
-                const SizedBox(height: 3),
-                Text(
-                  "Lat: $latitude  Long: $longitude",
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
-          ),
-
-          // Field Area
-          Expanded(
-            flex: 2,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text(
-                  "Field Area",
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.black54,
-                  ),
-                ),
-                const SizedBox(height: 3),
-                Text(
-                  _points.length >= 3
-                      ? "${_areaInAcres.toStringAsFixed(3)} Acres"
-                      : "0.000 Acres",
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.green,
-                  ),
-                ),
-
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
   Future<void> _getCurrentLocation() async {
     bool serviceEnabled;
     LocationPermission permission;
@@ -910,4 +682,3 @@ class _SetSelectOroLocationState extends State<SetSelectOroLocation> {
   }
 
 }
-

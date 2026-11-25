@@ -4,7 +4,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:hex/utils/snack_bar.dart';
 import 'package:provider/provider.dart';
-
 import '../app/app.dart';
 import '../providers/button_loading_provider.dart';
 import '../providers/user_provider.dart';

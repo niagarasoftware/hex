@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_date_range_picker/flutter_date_range_picker.dart';
 import 'package:hex/Constants/data_convertion.dart';
+import 'package:hex/Constants/properties.dart';
 import 'package:hex/modules/IrrigationProgram/view/preview_screen.dart';
 import 'package:hex/utils/constants.dart';
 import 'package:syncfusion_flutter_datepicker/datepicker.dart';
@@ -132,7 +133,7 @@ class _FertilizerPumpRuntimeLogState extends State<FertilizerPumpRuntimeLog> {
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(8),
                     color: Colors.white,
-                    boxShadow: customBoxShadow
+                    boxShadow: AppProperties.customBoxShadowLiteTheme,
                   ),
                   child: Row(
                     spacing: 20,
