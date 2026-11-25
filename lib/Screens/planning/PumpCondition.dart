@@ -22,13 +22,13 @@ class PumpConditionScreen extends StatefulWidget {
   final bool? isProgram;
 
   const PumpConditionScreen({
-    Key? key,
+    super.key,
     required this.userId,
     required this.controllerId,
     required this.modelid,
     required this.imeiNo,
     this.isProgram, this.customerId,
-  }) : super(key: key);
+  });
 
   @override
   State<PumpConditionScreen> createState() => _PumpConditionScreenState();
@@ -50,15 +50,14 @@ class _PumpConditionScreenState extends State<PumpConditionScreen> {
   final ScrollController _tabScrollController = ScrollController();
 
   // Colors
-  // Green / teal comes from the app theme (same green as the other screens).
-  Color get _accent => Theme.of(context).primaryColor; // selected / highlight
-  Color get _accentSoft => _accent.withValues(alpha: 0.12); // soft green fill
-  static const Color _headerBg = Color(0xFFE8F0F3); // header bar background
-  static const Color _headerBorder = Color(0xFFD3DEE3); // header bar border
-  static const Color _cardBorder = Color(0xFFE5E7EB); // card & cell border
-  static const Color _cellFill = Color(0xFFF7F8FA); // normal cell fill
-  static const Color _titleText = Color(0xFF111827); // card title
-  static const Color _cellText = Color(0xFF4B5563); // normal cell text
+  Color get _accent => Theme.of(context).colorScheme.primary; // selected / highlight
+  Color get _accentSoft => Theme.of(context).colorScheme.primaryContainer; // soft fill
+  Color get _headerBg => Theme.of(context).colorScheme.surfaceContainerLow; // header bar background
+  Color get _headerBorder => Theme.of(context).colorScheme.outlineVariant; // header bar border
+  Color get _cardBorder => Theme.of(context).colorScheme.outlineVariant; // card & cell border
+  Color get _cellFill => Theme.of(context).colorScheme.surface; // normal cell fill
+  Color get _titleText => Theme.of(context).colorScheme.onSurface; // card title
+  Color get _cellText => Theme.of(context).colorScheme.onSurfaceVariant; // normal cell text
 
   @override
   void initState() {
@@ -124,19 +123,19 @@ class _PumpConditionScreenState extends State<PumpConditionScreen> {
   Widget _searchField(String hint, ValueChanged<String> onChanged) {
     final border = OutlineInputBorder(
       borderRadius: BorderRadius.circular(10),
-      borderSide: const BorderSide(color: _cardBorder),
+      borderSide: BorderSide(color: _cardBorder),
     );
 
     return TextField(
       onChanged: onChanged,
-      style: const TextStyle(fontSize: 13, color: _titleText),
+      style: TextStyle(fontSize: 13, color: _titleText),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: const TextStyle(fontSize: 13, color: _cellText),
+        hintStyle: TextStyle(fontSize: 13, color: _cellText),
         isDense: true,
         filled: true,
         fillColor: _cellFill,
-        prefixIcon: const Icon(Icons.search, size: 18, color: _cellText),
+        prefixIcon: Icon(Icons.search, size: 18, color: _cellText),
         prefixIconConstraints:
         const BoxConstraints(minWidth: 36, minHeight: 36),
         contentPadding:
@@ -217,7 +216,7 @@ class _PumpConditionScreenState extends State<PumpConditionScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 14),
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                color: active ? _accent : Colors.transparent,
+                color: active ? Theme.of(context).colorScheme.primaryContainer : Colors.transparent,
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Row(
@@ -228,7 +227,7 @@ class _PumpConditionScreenState extends State<PumpConditionScreen> {
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
-                      color: active ? Colors.white : _titleText,
+                      color: active ? Theme.of(context).colorScheme.onPrimaryContainer : _titleText,
                     ),
                   ),
                 ],
@@ -343,7 +342,7 @@ class _PumpConditionScreenState extends State<PumpConditionScreen> {
                   children: [
                     Text(
                       current.name ?? 'No Name',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
                         color: _titleText,
@@ -352,7 +351,7 @@ class _PumpConditionScreenState extends State<PumpConditionScreen> {
                     const SizedBox(height: 2),
                     Text(
                       '${selectedList.length} of ${others.length} pumps selected',
-                      style: const TextStyle(fontSize: 12, color: _cellText),
+                      style: TextStyle(fontSize: 12, color: _cellText),
                     ),
                   ],
                 ),
@@ -415,8 +414,8 @@ class _PumpConditionScreenState extends State<PumpConditionScreen> {
                   .floorToDouble();
 
               if (visible.isEmpty) {
-                return const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 8),
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
                   child: Text(
                     'No pumps found',
                     style: TextStyle(fontSize: 13, color: _cellText),
@@ -481,8 +480,8 @@ class _PumpConditionScreenState extends State<PumpConditionScreen> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         // Page title + description
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 4),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4),
           child: Text(
             'Pump condition',
             style: TextStyle(
@@ -493,8 +492,8 @@ class _PumpConditionScreenState extends State<PumpConditionScreen> {
           ),
         ),
         const SizedBox(height: 4),
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 4),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4),
           child: Text(
             'Choose a pump, then tap the other pumps it should be linked with. '
                 'Selected pumps turn teal.',
@@ -590,8 +589,8 @@ class _PumpConditionScreenState extends State<PumpConditionScreen> {
         backgroundColor: Theme.of(context).primaryColor,
         foregroundColor: Colors.white,
         onPressed: _sendData,
-        child: const Icon(Icons.send),
         tooltip: 'Send Data',
+        child: const Icon(Icons.send),
       ),
     );
   }

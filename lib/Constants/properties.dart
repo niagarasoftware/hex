@@ -10,9 +10,9 @@ class AppProperties {
     milliseconds: 200,
   );
 
-  static const primaryColorDark = Color(0xFF036673);
-  static const primaryColorMedium = Color(0xFF1D808E);
-  static const primaryColorLight = Color(0x644BDCEF);
+  static const primaryColorDark = Color(0xFF10294E);
+  static const primaryColorMedium = Color(0xFF10294E);
+  static const primaryColorLight = Color(0xFFE1EAF6);
 
   static const textColorWhite = Colors.white;
   static const textColorBlack = Colors.black;
@@ -38,16 +38,16 @@ class AppProperties {
       begin: Alignment.topLeft,
       end: Alignment.bottomRight,
       colors: [
-        const Color(0xff054750),
-        const Color(0xff054750).withOpacity(0.8),
+        const Color(0xFF10294E),
+        const Color(0xFF1D293B),
       ]
   );
   static final linearGradientPrimaryLite = LinearGradient(
       begin: Alignment.topLeft,
       end: Alignment.bottomRight,
       colors: [
-        const Color(0xff1C7B86),
-        const Color(0xff1C7B86).withOpacity(0.8),
+        const Color(0xFF263B55),
+        const Color(0xFF10294E),
       ]
   );
 
@@ -106,7 +106,7 @@ class AppProperties {
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
     colors: F.appFlavor!.name.contains('oro')
-        ? [const Color(0xff1D808E), const Color(0xff044851)]
+        ? [const Color(0xFF10294E), const Color(0xFF1D293B)]
         : [SmartCommTheme.lightTheme.primaryColor.withOpacity(0.7), SmartCommTheme.lightTheme.primaryColorDark],
   );
 
@@ -114,7 +114,7 @@ class AppProperties {
     begin: Alignment.centerLeft,
     end: Alignment.centerRight,
     colors: F.appFlavor!.name.contains('oro')
-        ? [const Color(0xff1D808E), const Color(0xff044851)]
+        ? [const Color(0xFF10294E), const Color(0xFF1D293B)]
         : [SmartCommTheme.lightTheme.primaryColor.withOpacity(0.7), SmartCommTheme.lightTheme.primaryColorDark],
   );
 

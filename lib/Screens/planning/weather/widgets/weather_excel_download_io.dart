@@ -24,7 +24,7 @@ Future<WeatherExcelSaveResult> saveWeatherExcel(
   try {
     if (Platform.isAndroid) {
       print("call isAndroid");
-      final downloadsPath = '/storage/emulated/0/Download';
+      const downloadsPath = '/storage/emulated/0/Download';
       final file = File('$downloadsPath/$safeName');
 
       await file.writeAsBytes(bytes, flush: true);

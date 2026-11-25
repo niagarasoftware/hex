@@ -9,14 +9,16 @@ class SalesChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     return Chip(
       avatar: CircleAvatar(backgroundColor: item.color),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
-        side: const BorderSide(color: Colors.black12, width: 0.1),
+        side: BorderSide(color: colorScheme.outlineVariant, width: 0.1),
       ),
-      color: WidgetStateProperty.resolveWith<Color>((states) => Colors.blueGrey.shade50),
-      label: Text('${index + 1} - ${item.categoryName}', style: const TextStyle(fontSize: 11)),
+      color: WidgetStateProperty.resolveWith<Color>((states) => colorScheme.surfaceContainerLow),
+      label: Text('${index + 1} - ${item.categoryName}', style: TextStyle(fontSize: 11, color: colorScheme.onSurface)),
       visualDensity: VisualDensity.compact,
     );
   }

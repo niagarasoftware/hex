@@ -14,16 +14,18 @@ class CustomDropDownButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    print('value :: $value');
+    final colorScheme = Theme.of(context).colorScheme;
     return DropdownButton<String>(
       isExpanded: true,
       underline: Container(),
       value: value,
-      style: style ?? Theme.of(context).textTheme.headlineSmall,
+      dropdownColor: colorScheme.surface,
+      iconEnabledColor: colorScheme.onSurface,
+      style: style ?? TextStyle(color: colorScheme.onSurface, fontSize: 13),
       items: list.map((String item) {
         return DropdownMenuItem<String>(
           value: item,
-          child: Text(item),
+          child: Text(item, style: TextStyle(color: colorScheme.onSurface)),
         );
       }).toList(),
       onChanged: onChanged,

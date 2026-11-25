@@ -1,19 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-// HexSidebar Theme Palette Constants (Centralized Single Source of Truth)
-const Color primaryPurple = Color(0xFF673AB7);
-const Color activeBgLavender = Color(0xFFEDE7F6);
-const Color brandIconBg = Color(0xFF5B22B6);
-const Color textDark = Color(0xFF1E293B);
-const Color textMuted = Color(0xFF475569);
+// Oro brand palette. Legacy names retained for existing screens.
+const Color brandOrange = Color(0xFFFA7900);
+const Color primaryPurple = Color(0xFF10294E);
+const Color activeBgLavender = Color(0xFFE1EAF6);
+const Color brandIconBg = Color(0xFF10294E);
+const Color textDark = Color(0xFF1D293B);
+const Color textMuted = Color(0xFF64748B);
 const Color iconMuted = Color(0xFF64748B);
-const Color avatarGreen = Color(0xFF1B873F);
+const Color avatarGreen = Color(0xFF16865C);
 
 Color primaryDark = brandIconBg;
 Color primary = primaryPurple;
 Color primaryLight = brandIconBg;
-Color primaryBackground = const Color(0xFFF8FAFC);
+Color primaryBackground = const Color(0xFFF4F6FA);
 Color primaryTextColor = textDark;
 Color secondaryTextColor = textMuted;
 
@@ -25,8 +26,11 @@ class OroThemeColors extends ThemeExtension<OroThemeColors> {
   final Color cardBorder;
   final Color softBackground;
   final Color successGreen;
+  final Color onSuccessGreen;
   final Color warningOrange;
+  final Color onWarningOrange;
   final Color dangerRed;
+  final Color onDangerRed;
 
   const OroThemeColors({
     required this.brandDark,
@@ -35,8 +39,11 @@ class OroThemeColors extends ThemeExtension<OroThemeColors> {
     required this.cardBorder,
     required this.softBackground,
     required this.successGreen,
+    this.onSuccessGreen = Colors.white,
     required this.warningOrange,
+    this.onWarningOrange = Colors.white,
     required this.dangerRed,
+    this.onDangerRed = Colors.white,
   });
 
   @override
@@ -47,8 +54,11 @@ class OroThemeColors extends ThemeExtension<OroThemeColors> {
     Color? cardBorder,
     Color? softBackground,
     Color? successGreen,
+    Color? onSuccessGreen,
     Color? warningOrange,
+    Color? onWarningOrange,
     Color? dangerRed,
+    Color? onDangerRed,
   }) {
     return OroThemeColors(
       brandDark: brandDark ?? this.brandDark,
@@ -57,8 +67,11 @@ class OroThemeColors extends ThemeExtension<OroThemeColors> {
       cardBorder: cardBorder ?? this.cardBorder,
       softBackground: softBackground ?? this.softBackground,
       successGreen: successGreen ?? this.successGreen,
+      onSuccessGreen: onSuccessGreen ?? this.onSuccessGreen,
       warningOrange: warningOrange ?? this.warningOrange,
+      onWarningOrange: onWarningOrange ?? this.onWarningOrange,
       dangerRed: dangerRed ?? this.dangerRed,
+      onDangerRed: onDangerRed ?? this.onDangerRed,
     );
   }
 
@@ -72,40 +85,52 @@ class OroThemeColors extends ThemeExtension<OroThemeColors> {
       cardBorder: Color.lerp(cardBorder, other.cardBorder, t)!,
       softBackground: Color.lerp(softBackground, other.softBackground, t)!,
       successGreen: Color.lerp(successGreen, other.successGreen, t)!,
+      onSuccessGreen: Color.lerp(onSuccessGreen, other.onSuccessGreen, t)!,
       warningOrange: Color.lerp(warningOrange, other.warningOrange, t)!,
+      onWarningOrange: Color.lerp(onWarningOrange, other.onWarningOrange, t)!,
       dangerRed: Color.lerp(dangerRed, other.dangerRed, t)!,
+      onDangerRed: Color.lerp(onDangerRed, other.onDangerRed, t)!,
     );
   }
 }
 
 class OroTheme {
-  static const OroThemeColors _lightCustomColors = OroThemeColors(
+  static const OroThemeColors lightCustomColors = OroThemeColors(
     brandDark: brandIconBg,
     brandPrimary: primaryPurple,
     activeLavender: activeBgLavender,
     cardBorder: Color(0xFFE2E8F0),
-    softBackground: Color(0xFFF8FAFC),
+    softBackground: Color(0xFFF4F6FA),
     successGreen: avatarGreen,
+    onSuccessGreen: Colors.white,
     warningOrange: Color(0xFFD97706),
-    dangerRed: Color(0xFFDC2626),
+    onWarningOrange: Colors.white,
+    dangerRed: Color(0xFFDC3545),
+    onDangerRed: Colors.white,
   );
 
-  static const OroThemeColors _darkCustomColors = OroThemeColors(
-    brandDark: Color(0xFF311B92),
-    brandPrimary: Color(0xFF9575CD),
-    activeLavender: Color(0xFF311B92),
+  static const OroThemeColors darkCustomColors = OroThemeColors(
+    brandDark: Color(0xFF263B55),
+    brandPrimary: Color(0xFFA9C7F2),
+    activeLavender: Color(0xFF263B55),
     cardBorder: Color(0xFF334155),
-    softBackground: Color(0xFF0F172A),
+    softBackground: Color(0xFF101827),
     successGreen: Color(0xFF22C55E),
+    onSuccessGreen: Color(0xFF10294E),
     warningOrange: Color(0xFFF59E0B),
+    onWarningOrange: Color(0xFF10294E),
     dangerRed: Color(0xFFEF4444),
+    onDangerRed: Colors.white,
   );
 
-  static ThemeData lightTheme = ThemeData.light().copyWith(
+  static const OroThemeColors _lightCustomColors = lightCustomColors;
+  static const OroThemeColors _darkCustomColors = darkCustomColors;
+
+  static ThemeData lightTheme = ThemeData.light(useMaterial3: true).copyWith(
     primaryColorDark: brandIconBg,
     primaryColor: primaryPurple,
     primaryColorLight: activeBgLavender,
-    scaffoldBackgroundColor: const Color(0xFFF8FAFC),
+    scaffoldBackgroundColor: const Color(0xFFF4F6FA),
     extensions: const [_lightCustomColors],
     appBarTheme: const AppBarTheme(
       backgroundColor: primaryPurple,
@@ -173,8 +198,21 @@ class OroTheme {
       elevation: 0,
       labelType: NavigationRailLabelType.all,
       indicatorColor: activeBgLavender,
-      unselectedIconTheme: IconThemeData(color: Color(0xFF94A3B8)),
+      unselectedIconTheme: IconThemeData(color: Colors.white),
       selectedIconTheme: IconThemeData(color: primaryPurple),
+      unselectedLabelTextStyle: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w500),
+      selectedLabelTextStyle: TextStyle(color: primaryPurple, fontSize: 11, fontWeight: FontWeight.bold),
+    ),
+    bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+      backgroundColor: primaryPurple,
+      elevation: 0,
+      type: BottomNavigationBarType.fixed,
+      selectedItemColor: primaryPurple,
+      unselectedItemColor: Colors.white,
+      selectedIconTheme: IconThemeData(color: primaryPurple),
+      unselectedIconTheme: IconThemeData(color: Colors.white),
+      selectedLabelStyle: TextStyle(color: primaryPurple, fontSize: 11, fontWeight: FontWeight.bold),
+      unselectedLabelStyle: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w500),
     ),
     chipTheme: ChipThemeData(
       backgroundColor: const Color(0xFFF1F5F9),
@@ -207,7 +245,7 @@ class OroTheme {
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(10),
-        borderSide: const BorderSide(color: Color(0xFFDC2626)),
+        borderSide: const BorderSide(color: Color(0xFFDC3545)),
       ),
       labelStyle: const TextStyle(color: textMuted),
       hintStyle: const TextStyle(color: iconMuted),
@@ -304,39 +342,43 @@ class OroTheme {
     cardColor: Colors.white,
     colorScheme: const ColorScheme(
       brightness: Brightness.light,
-      primary: primaryPurple, // 0xFF673AB7
+      primary: primaryPurple, // 0xFF10294E
       onPrimary: Colors.white,
-      primaryContainer: activeBgLavender, // 0xFFEDE7F6
-      onPrimaryContainer: brandIconBg, // 0xFF5B22B6
-      secondary: brandIconBg, // 0xFF5B22B6
+      primaryContainer: activeBgLavender, // 0xFFE1EAF6
+      onPrimaryContainer: brandIconBg, // 0xFF10294E
+      secondary: brandOrange,
       onSecondary: Colors.white,
-      secondaryContainer: Color(0xFFF1F5F9),
-      onSecondaryContainer: textDark,
-      tertiary: avatarGreen, // 0xFF1B873F
+      secondaryContainer: Color(0xFFFFE5CC),
+      onSecondaryContainer: Color(0xFF713800),
+      tertiary: avatarGreen, // 0xFF16865C
       onTertiary: Colors.white,
+      tertiaryContainer: Color(0xFFD1FAE5),
+      onTertiaryContainer: Color(0xFF065F46),
       surface: Colors.white,
-      onSurface: textDark, // 0xFF1E293B
-      onSurfaceVariant: textMuted, // 0xFF475569
-      surfaceContainerLowest: Color(0xFFF8FAFC),
+      onSurface: textDark, // 0xFF1D293B
+      onSurfaceVariant: textMuted, // 0xFF64748B
+      surfaceContainerLowest: Color(0xFFF4F6FA),
       surfaceContainerLow: Color(0xFFF1F5F9),
       surfaceContainer: Color(0xFFE2E8F0),
       surfaceContainerHigh: Color(0xFFCBD5E1),
-      surfaceContainerHighest: Color(0xFFEDE7F6),
+      surfaceContainerHighest: Color(0xFFE1EAF6),
       outline: iconMuted, // 0xFF64748B
       outlineVariant: Color(0xFFE2E8F0),
-      error: Color(0xFFDC2626),
+      error: Color(0xFFDC3545),
       onError: Colors.white,
+      errorContainer: Color(0xFFFDE8E8),
+      onErrorContainer: Color(0xFF991B1B),
     ),
   );
 
-  static ThemeData darkTheme = ThemeData.dark().copyWith(
+  static ThemeData darkTheme = ThemeData.dark(useMaterial3: true).copyWith(
     primaryColorDark: brandIconBg,
-    primaryColor: primaryPurple,
-    primaryColorLight: const Color(0xFF9575CD),
-    scaffoldBackgroundColor: const Color(0xFF0F172A),
+    primaryColor: const Color(0xFFA9C7F2),
+    primaryColorLight: const Color(0xFFA9C7F2),
+    scaffoldBackgroundColor: const Color(0xFF101827),
     extensions: const [_darkCustomColors],
     appBarTheme: const AppBarTheme(
-      backgroundColor: Color(0xFF1E1B4B),
+      backgroundColor: Color(0xFF10294E),
       foregroundColor: Colors.white,
       elevation: 0,
       titleTextStyle: TextStyle(
@@ -347,14 +389,14 @@ class OroTheme {
       iconTheme: IconThemeData(color: Colors.white),
     ),
     tabBarTheme: const TabBarThemeData(
-      indicatorColor: Color(0xFFB39DDB),
-      labelColor: Color(0xFFEDE7F6),
+      indicatorColor: Color(0xFFA9C7F2),
+      labelColor: Color(0xFFE1EAF6),
       unselectedLabelColor: Color(0xFF94A3B8),
     ),
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
-        backgroundColor: const Color(0xFF7C4DFF),
-        foregroundColor: Colors.white,
+        backgroundColor: const Color(0xFFA9C7F2),
+        foregroundColor: primaryPurple,
         textStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         shape: RoundedRectangleBorder(
@@ -365,7 +407,7 @@ class OroTheme {
     outlinedButtonTheme: OutlinedButtonThemeData(
       style: OutlinedButton.styleFrom(
         backgroundColor: Colors.transparent,
-        foregroundColor: const Color(0xFFB39DDB),
+        foregroundColor: const Color(0xFFA9C7F2),
         side: const BorderSide(color: Color(0xFF334155)),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         shape: RoundedRectangleBorder(
@@ -374,36 +416,49 @@ class OroTheme {
       ),
     ),
     dialogTheme: DialogThemeData(
-      backgroundColor: const Color(0xFF0F172A),
+      backgroundColor: const Color(0xFF101827),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
       ),
     ),
     navigationRailTheme: const NavigationRailThemeData(
-      backgroundColor: Color(0xFF0F172A),
+      backgroundColor: Color(0xFF10294E),
       elevation: 0,
       labelType: NavigationRailLabelType.all,
-      indicatorColor: Color(0xFF311B92),
-      unselectedIconTheme: IconThemeData(color: Color(0xFF94A3B8)),
-      selectedIconTheme: IconThemeData(color: Color(0xFFEDE7F6)),
+      indicatorColor: Color(0xFF263B55),
+      unselectedIconTheme: IconThemeData(color: Colors.white),
+      selectedIconTheme: IconThemeData(color: Color(0xFFD6E5FF)),
+      unselectedLabelTextStyle: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w500),
+      selectedLabelTextStyle: TextStyle(color: Color(0xFFD6E5FF), fontSize: 11, fontWeight: FontWeight.bold),
+    ),
+    bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+      backgroundColor: Color(0xFF10294E),
+      elevation: 0,
+      type: BottomNavigationBarType.fixed,
+      selectedItemColor: Color(0xFFD6E5FF),
+      unselectedItemColor: Colors.white,
+      selectedIconTheme: IconThemeData(color: Color(0xFFD6E5FF)),
+      unselectedIconTheme: IconThemeData(color: Colors.white),
+      selectedLabelStyle: TextStyle(color: Color(0xFFD6E5FF), fontSize: 11, fontWeight: FontWeight.bold),
+      unselectedLabelStyle: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w500),
     ),
     segmentedButtonTheme: SegmentedButtonThemeData(
       style: ButtonStyle(
         backgroundColor: WidgetStateProperty.resolveWith<Color?>((states) {
           if (states.contains(WidgetState.selected)) {
-            return const Color(0xFF673AB7);
+            return const Color(0xFFA9C7F2);
           }
-          return const Color(0xFF1E293B);
+          return const Color(0xFF1D293B);
         }),
         foregroundColor: WidgetStateProperty.resolveWith<Color?>((states) {
           if (states.contains(WidgetState.selected)) {
-            return Colors.white;
+            return primaryPurple;
           }
           return const Color(0xFFCBD5E1);
         }),
         iconColor: WidgetStateProperty.resolveWith<Color?>((states) {
           if (states.contains(WidgetState.selected)) {
-            return Colors.white;
+            return primaryPurple;
           }
           return const Color(0xFF94A3B8);
         }),
@@ -428,7 +483,7 @@ class OroTheme {
       bodySmall: GoogleFonts.roboto(fontSize: 12, color: const Color(0xFFCBD5E1)),
     ),
     cardTheme: CardThemeData(
-      color: const Color(0xFF1E293B),
+      color: const Color(0xFF1D293B),
       shadowColor: Colors.black,
       elevation: 2,
       shape: RoundedRectangleBorder(
@@ -436,29 +491,35 @@ class OroTheme {
         side: const BorderSide(color: Color(0xFF334155)),
       ),
     ),
-    cardColor: const Color(0xFF1E293B),
+    cardColor: const Color(0xFF1D293B),
     colorScheme: const ColorScheme(
       brightness: Brightness.dark,
-      primary: Color(0xFF9575CD),
-      onPrimary: Color(0xFF1E1B4B),
-      primaryContainer: Color(0xFF311B92),
-      onPrimaryContainer: Color(0xFFEDE7F6),
-      secondary: Color(0xFF7C4DFF),
+      primary: Color(0xFFA9C7F2),
+      onPrimary: Color(0xFF10294E),
+      primaryContainer: Color(0xFF263B55),
+      onPrimaryContainer: Color(0xFFD6E5FF),
+      secondary: brandOrange,
       onSecondary: Colors.white,
+      secondaryContainer: Color(0xFF59300D),
+      onSecondaryContainer: Color(0xFFFFDCC0),
       tertiary: Color(0xFF22C55E),
-      onTertiary: Colors.white,
-      surface: Color(0xFF0F172A),
-      onSurface: Color(0xFFF8FAFC),
+      onTertiary: Color(0xFF10294E),
+      tertiaryContainer: Color(0xFF064E3B),
+      onTertiaryContainer: Color(0xFFA7F3D0),
+      surface: Color(0xFF1D293B),
+      onSurface: Color(0xFFF4F6FA),
       onSurfaceVariant: Color(0xFFCBD5E1),
-      surfaceContainerLowest: Color(0xFF020617),
-      surfaceContainerLow: Color(0xFF0F172A),
-      surfaceContainer: Color(0xFF1E293B),
+      surfaceContainerLowest: Color(0xFF101827),
+      surfaceContainerLow: Color(0xFF162032),
+      surfaceContainer: Color(0xFF1D293B),
       surfaceContainerHigh: Color(0xFF334155),
       surfaceContainerHighest: Color(0xFF475569),
       outline: Color(0xFF94A3B8),
       outlineVariant: Color(0xFF334155),
       error: Color(0xFFEF4444),
       onError: Colors.white,
+      errorContainer: Color(0xFF7F1D1D),
+      onErrorContainer: Color(0xFFFEE2E2),
     ),
   );
 }

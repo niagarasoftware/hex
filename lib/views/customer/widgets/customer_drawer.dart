@@ -10,7 +10,6 @@ import '../../../view_models/customer/customer_screen_controller_view_model.dart
 import '../../common/user_profile/user_profile.dart';
 import '../app_info.dart';
 import '../customer_product.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
 
 import '../help_support.dart';
 
@@ -47,7 +46,7 @@ class CustomerDrawer extends StatelessWidget {
               MaterialPageRoute(builder: (context) => const UserProfile(isNarrow: true)),
             ),
           ),
-          _divider(),
+          _divider(context),
           _buildDrawerItem(
             context,
             icon: Icons.info_outline,
@@ -57,7 +56,7 @@ class CustomerDrawer extends StatelessWidget {
               MaterialPageRoute(builder: (context) => const AppInfo()),
             ),
           ),
-          _divider(),
+          _divider(context),
           _buildDrawerItem(
             context,
             icon: Icons.help_outline,
@@ -69,7 +68,7 @@ class CustomerDrawer extends StatelessWidget {
               ),
             ),
           ),
-          _divider(),
+          _divider(context),
           _buildDrawerItem(
             context,
             icon: Icons.feedback_outlined,
@@ -85,7 +84,7 @@ class CustomerDrawer extends StatelessWidget {
               ),
             ),
           ),
-          _divider(),
+          _divider(context),
           _buildDrawerItem(
             context,
             icon: Icons.support_agent_sharp,
@@ -100,7 +99,7 @@ class CustomerDrawer extends StatelessWidget {
               ),
             ),
           ),
-          _divider(),
+          _divider(context),
           _buildDrawerItem(
             context,
             icon: Icons.devices,
@@ -112,7 +111,7 @@ class CustomerDrawer extends StatelessWidget {
               ),
             ),
           ),
-          _divider(),
+          _divider(context),
           _buildLogoutButton(context),
           const Spacer(),
           _buildFooterLogo(),
@@ -122,8 +121,9 @@ class CustomerDrawer extends StatelessWidget {
   }
 
   Widget _buildHeader(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return DrawerHeader(
-      decoration: BoxDecoration(color: Theme.of(context).primaryColor),
+      decoration: BoxDecoration(color: colorScheme.primary),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -139,17 +139,17 @@ class CustomerDrawer extends StatelessWidget {
               children: [
                 Text(
                   customerName,
-                  style: const TextStyle(color: Colors.white),
+                  style: TextStyle(color: colorScheme.onPrimary, fontWeight: FontWeight.bold),
                 ),
                 Text(
                   customerMobileNo,
-                  style: const TextStyle(color: Colors.white, fontSize: 14),
+                  style: TextStyle(color: colorScheme.onPrimary, fontSize: 14),
                 ),
                 Text(
                   customerEmailId,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(color: Colors.white, fontSize: 14),
+                  style: TextStyle(color: colorScheme.onPrimary, fontSize: 14),
                 ),
               ],
             ),
@@ -161,18 +161,19 @@ class CustomerDrawer extends StatelessWidget {
 
   Widget _buildDrawerItem(BuildContext context,
       {required IconData icon, required String text, required VoidCallback onTap}) {
+    final colorScheme = Theme.of(context).colorScheme;
     return ListTile(
-      leading: Icon(icon, color: Theme.of(context).primaryColor),
-      title: Text(text, style: const TextStyle(fontWeight: FontWeight.bold)),
-      trailing: const Icon(Icons.keyboard_arrow_right_rounded),
+      leading: Icon(icon, color: colorScheme.primary),
+      title: Text(text, style: TextStyle(fontWeight: FontWeight.bold, color: colorScheme.onSurface)),
+      trailing: Icon(Icons.keyboard_arrow_right_rounded, color: colorScheme.onSurfaceVariant),
       onTap: onTap,
     );
   }
 
-  Widget _divider() {
+  Widget _divider(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(left: 40, right: 25),
-      child: Divider(height: 0, color: Colors.grey.shade300),
+      child: Divider(height: 0, color: Theme.of(context).colorScheme.outlineVariant),
     );
   }
 

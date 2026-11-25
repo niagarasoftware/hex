@@ -14,13 +14,13 @@ import 'map_conection_objects.dart';
 
 class MapScreenValveAreator extends StatefulWidget {
   const MapScreenValveAreator({
-    Key? key,
+    super.key,
     required this.userId,
     required this.customerId,
     required this.controllerId,
     required this.imeiNo,
     required this.modelId,
-  }) : super(key: key);
+  });
 
   final int userId, customerId, controllerId,modelId;
   final String imeiNo;
@@ -40,7 +40,7 @@ class _MapScreenValveAreatorState extends State<MapScreenValveAreator> {
   String _sentTime = "";
   final List<({String name, LatLng position, bool running})> _equipment = [];
   bool _loading = false;
-  Map<String, LatLng> _gifObjects = {};
+  final Map<String, LatLng> _gifObjects = {};
   Map<String, Offset> _gifOffsets = {};
   late BitmapDescriptor _redAeratorIcon;
 
@@ -571,12 +571,12 @@ class _MapScreenValveAreatorState extends State<MapScreenValveAreator> {
         Positioned(left: 12, bottom: 12, child: IgnorePointer(child: Material(
           color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(8),
-          child: Padding(padding: const EdgeInsets.all(10), child: Row(mainAxisSize: MainAxisSize.min, children: [
-            const Icon(Icons.circle, color: Colors.green, size: 10),
-            const SizedBox(width: 5), const Text('Running'),
-            const SizedBox(width: 14),
-            const Icon(Icons.circle, color: Colors.red, size: 10),
-            const SizedBox(width: 5), const Text('Stopped'),
+          child: const Padding(padding: EdgeInsets.all(10), child: Row(mainAxisSize: MainAxisSize.min, children: [
+            Icon(Icons.circle, color: Colors.green, size: 10),
+            SizedBox(width: 5), Text('Running'),
+            SizedBox(width: 14),
+            Icon(Icons.circle, color: Colors.red, size: 10),
+            SizedBox(width: 5), Text('Stopped'),
           ])),
         ))),
       ]),

@@ -798,10 +798,10 @@ class BleProvider extends ChangeNotifier {
       }
       notifyListeners();
 
-    }catch(e, backTrace){
+    }catch(e){
       fileMode = FileMode.errorOnWhileGetFileName;
       if (kDebugMode) {
-        debugPrint('Error on getting File Name :: ${e}');
+        debugPrint('Error on getting File Name :: $e');
       }
       rethrow;
     }
@@ -917,9 +917,9 @@ class BleProvider extends ChangeNotifier {
 
   void sendCalculatedCrc({required int lengthOfFile})async{
     try {
-      await Future.delayed(Duration(seconds: 1));
+      await Future.delayed(const Duration(seconds: 1));
       if (kDebugMode) {
-        debugPrint('addingResult === > ${addingResult}');
+        debugPrint('addingResult === > $addingResult');
         debugPrint('result is : ${addingResult.toRadixString(16).toUpperCase()}');
       }
 
@@ -959,7 +959,7 @@ class BleProvider extends ChangeNotifier {
       }
       int fileSize = ((lengthOfFile) * 16).toInt();
       if (kDebugMode) {
-        debugPrint('fileSize => ${fileSize}');
+        debugPrint('fileSize => $fileSize');
       }
       String fileSizeString = fileSize.toRadixString(16).toUpperCase();
       var fileSizeStringList = fileSizeString.split('');
@@ -981,7 +981,7 @@ class BleProvider extends ChangeNotifier {
         }
       }
       if (kDebugMode) {
-        debugPrint('fileSizeStringList => ${fileSizeStringList}');
+        debugPrint('fileSizeStringList => $fileSizeStringList');
       }
       List<int> crcFormatFileSizeStringList = [];
       for (var cfsf = 0; cfsf < fileSizeStringList.length; cfsf += 2) {
@@ -1008,9 +1008,9 @@ class BleProvider extends ChangeNotifier {
       }
       sentAndReceive.add(beforeConversion);
       for (var crc in finalOutPutOfCrcAndFileSize) {
-        sentAndReceive.add('${crc.toRadixString(16).padLeft(2, '0')}');
+        sentAndReceive.add(crc.toRadixString(16).padLeft(2, '0'));
       }
-      sentAndReceive.add('file size ==> ${fileSize}');
+      sentAndReceive.add('file size ==> $fileSize');
       waitingForCrcPassOrCrcFail();
       notifyListeners();
     } catch (e) {

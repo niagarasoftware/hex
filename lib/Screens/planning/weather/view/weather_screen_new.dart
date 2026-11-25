@@ -1,7 +1,6 @@
 
 
 import 'dart:convert';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../../StateManagement/customer_provider.dart';
@@ -15,11 +14,7 @@ import '../../../../views/common/widgets/build_loading_indicator.dart';
 import '../model/weather_model.dart';
 import '../view_model/weather_view_model.dart';
 import '../weather_report_monthly.dart';
-import '../widgets/info_box.dart';
 import '../widgets/sensor_chip.dart';
-import '../widgets/sun_time_card.dart';
-import '../widgets/time_of_day_icon_new.dart';
-import 'package:hex/utils/helpers/log_print.dart';
 import 'dart:async';
 
 Color sensorStatusColor(int code) {

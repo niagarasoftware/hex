@@ -27,14 +27,14 @@ class _BarSegment {
 
 // Design tokens
 // ---------------------------------------------------------------------------
-const Color _kBg = Color(0xFFF8FAFC);
-const Color _kPurple = Color(0xFF5B21B6);
+const Color _kBg = Color(0xFFF4F6FA);
+const Color _kPurple = Color(0xFF10294E);
 const Color _kBorder = Color(0xFFE2E8F0);
-const Color _kRed = Color(0xFFE53935);
-const Color _kGreen = Color(0xFF2E9E57);
-const Color _kInk = Color(0xFF1E1B4B);
+const Color _kRed = Color(0xFFDC3545);
+const Color _kGreen = Color(0xFF16865C);
+const Color _kInk = Color(0xFF1D293B);
 const Color _kMuted = Color(0xFF64748B);
-const Color _kToggleBg = Color(0xFFEDE9FE);
+const Color _kToggleBg = Color(0xFFE1EAF6);
 
 /// Single-page unified dashboard for Pump Log, Power Graph, and Voltage Log.
 class PumpLogDashboardScreen extends StatefulWidget {

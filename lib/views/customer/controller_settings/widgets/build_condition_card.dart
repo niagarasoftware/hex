@@ -9,8 +9,9 @@ import 'condition_type_selector.dart';
 
 Widget buildConditionCard(
     BuildContext context, ConditionLibraryViewModel vm, int index) {
+  final colorScheme = Theme.of(context).colorScheme;
   return Card(
-    color: Colors.white,
+    color: colorScheme.surface,
     elevation: 1,
     child: Padding(
       padding: const EdgeInsets.all(8.0),

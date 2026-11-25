@@ -44,7 +44,7 @@ SensorHourReportGsm? parseSensorHourData({
     averageValue: 'NA',
     timeStamp: null,
   );
-  if (raw == null || raw.trim().isEmpty) return zeroReport();
+  if (raw.trim().isEmpty) return zeroReport();
 
   String? timeStamp;
   if (raw.contains('@')) {
@@ -58,7 +58,7 @@ SensorHourReportGsm? parseSensorHourData({
   print("deviceBlocks:$deviceBlocks");
 
   for (final deviceBlock in deviceBlocks) {
-    if (deviceBlock == null || !deviceBlock.contains(':')) continue;
+    if (!deviceBlock.contains(':')) continue;
 
     final deviceParts = deviceBlock.split(':');
     if (deviceParts.length < 2) continue;
@@ -66,23 +66,21 @@ SensorHourReportGsm? parseSensorHourData({
 
 
     final sensorsRaw = deviceParts[1];
-    if (sensorsRaw == null) continue;
     print("sensorsRaw:$sensorsRaw");
     // 3️⃣ Split sensors
     final sensorBlocks = sensorsRaw.split('_');
     print("sensorBlocks:$sensorBlocks");
     for (final sensorBlock in sensorBlocks) {
-      if (sensorBlock == null) continue;
       final parts = sensorBlock.split(',');
 
       if (parts.length < 5) continue;
 
-      final sensorSrNo = parts[0]?.trim() ?? "";
+      final sensorSrNo = parts[0].trim() ?? "";
 
       // 4️⃣ Match sensor
       if (sensorSrNo != targetSensor) continue;
 
-      String v(int i) => (i < parts.length && parts[i] != null && parts[i].trim().isNotEmpty) ? parts[i].trim() : '0';
+      String v(int i) => (i < parts.length && parts[i].trim().isNotEmpty) ? parts[i].trim() : '0';
       final averageValue =
       parts.length > 5 && parts[5].trim().isNotEmpty
           ? parts[5].trim()

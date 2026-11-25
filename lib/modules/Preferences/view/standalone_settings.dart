@@ -34,7 +34,7 @@ class StandAloneSettings extends StatefulWidget {
 
 class _StandAloneSettingsState extends State<StandAloneSettings> {
   final PreferenceRepository repository = PreferenceRepository(HttpService());
-  int _selectedSetting = 0;
+  final int _selectedSetting = 0;
   late final bool isPumpWithLight;
 
   @override
@@ -247,7 +247,8 @@ class _StandAloneSettingsState extends State<StandAloneSettings> {
           TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: colorScheme.onSurface),
         ),
         value: setting.value,
-        activeColor: colorScheme.primary,
+        activeThumbColor: colorScheme.onPrimary,
+        activeTrackColor: colorScheme.primary,
         onChanged: (value) => setState(() => setting.value = value),
       )
           : ListTile(
@@ -277,7 +278,8 @@ class _StandAloneSettingsState extends State<StandAloneSettings> {
       case 2:
         return Switch(
           value: setting.value,
-          activeColor: colorScheme.primary,
+          activeThumbColor: colorScheme.onPrimary,
+          activeTrackColor: colorScheme.primary,
           onChanged: (value) => setState(() => setting.value = value),
         );
       case 1:
@@ -400,7 +402,7 @@ class _StandAloneSettingsState extends State<StandAloneSettings> {
           context: context,
           color: Colors.green.shade700,
         );
-      } catch (error, stackTrace) {
+      } catch (error) {
         if (!mounted) return;
         showSnackBar(
           message: 'Failed to save settings: $error',

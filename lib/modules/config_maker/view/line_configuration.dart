@@ -594,7 +594,7 @@ class _LineConfigurationState extends State<LineConfiguration> {
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(8),
-          color: Theme.of(context).colorScheme.onBackground,
+          color: Theme.of(context).colorScheme.onSurface,
         ),
         child: Row(
           spacing: 10,
@@ -753,7 +753,7 @@ class _LineConfigurationState extends State<LineConfiguration> {
     );
   }
 
-  Widget oneSourceAndOneTank({required SourceModel boreOthers, required SourceModel sumpTankWell, required IrrigationLineModel selectedIrrigationLine, required List<FiltrationModel> filterSite, required List<FertilizationModel> fertilizerSite}){;
+  Widget oneSourceAndOneTank({required SourceModel boreOthers, required SourceModel sumpTankWell, required IrrigationLineModel selectedIrrigationLine, required List<FiltrationModel> filterSite, required List<FertilizationModel> fertilizerSite}){
   return Row(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [

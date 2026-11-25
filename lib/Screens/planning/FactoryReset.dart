@@ -10,7 +10,7 @@ import '../../utils/snack_bar.dart';
 
 class ResetAccumalationScreen extends StatefulWidget {
   const ResetAccumalationScreen(
-      {Key? key,
+      {super.key,
         required this.userId,
         required this.createUser,
         required this.controllerId,
@@ -55,7 +55,7 @@ class _ResetAccumalationScreenState extends State<ResetAccumalationScreen>
     }
     catch (e, stackTrace) {
       print(' Error overAll getData => ${e.toString()}');
-      print(' trace overAll getData  => ${stackTrace}');
+      print(' trace overAll getData  => $stackTrace');
     }
   }
   createUserSentAndReceivedMessageManually(String hw) async {
@@ -67,7 +67,7 @@ class _ResetAccumalationScreenState extends State<ResetAccumalationScreen>
     }
     catch (e, stackTrace) {
       print(' Error overAll getData => ${e.toString()}');
-      print(' trace overAll getData  => ${stackTrace}');
+      print(' trace overAll getData  => $stackTrace');
     }
   }
 
@@ -348,7 +348,7 @@ class _ResetAccumalationScreenState extends State<ResetAccumalationScreen>
     }
     catch (e, stackTrace) {
       print(' Error overAll getData => ${e.toString()}');
-      print(' trace overAll getData  => ${stackTrace}');
+      print(' trace overAll getData  => $stackTrace');
     }
   }
 
@@ -366,7 +366,7 @@ class _ResetAccumalationScreenState extends State<ResetAccumalationScreen>
   void reset(double Srno) async{
     String payLoadFinal = jsonEncode({
       "5400":
-      {"5401": '${Srno},1;'},
+      {"5401": '$Srno,1;'},
     });
 
     MqttService().topicToPublishAndItsMessage(payLoadFinal, "${Environment.mqttPublishTopic}/${widget.deviceID}");

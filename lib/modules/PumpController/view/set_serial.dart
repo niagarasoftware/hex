@@ -7,6 +7,7 @@ import 'package:hex/utils/environment.dart';
 
 import '../../../models/customer/site_model.dart';
 import '../../../services/mqtt_service.dart';
+import '../../../../utils/Theme/oro_theme.dart';
 import '../model/pump_controller_data_model.dart';
 
 class SetSerialScreen extends StatefulWidget {
@@ -181,7 +182,7 @@ class _SetSerialScreenState extends State<SetSerialScreen> {
                         ),
                       ],
                     ),
-                    backgroundColor: Colors.teal.shade50,
+                    backgroundColor: Theme.of(context).colorScheme.surfaceContainerLow,
                     title: Row(
                       children: [
                         SizedBox(width: 30, child: Text('${item.serialNumber}', style: const TextStyle(fontSize: 13),)),
@@ -198,10 +199,10 @@ class _SetSerialScreenState extends State<SetSerialScreen> {
                                     child: CircleAvatar(
                                       radius: 7,
                                       backgroundColor: status[index] == '1'
-                                          ? Colors.green.shade400
+                                          ? Theme.of(context).colorScheme.tertiary
                                           : status[index] == '0'
-                                          ? Colors.grey
-                                          : Colors.redAccent,
+                                          ? Theme.of(context).colorScheme.outline
+                                          : Theme.of(context).colorScheme.error,
                                     )
                                 );
                               }
@@ -214,13 +215,13 @@ class _SetSerialScreenState extends State<SetSerialScreen> {
                             crossAxisAlignment: CrossAxisAlignment.end,
                             mainAxisAlignment: MainAxisAlignment.end,
                             children: [
-                              Text(item.deviceName, style: const TextStyle(fontWeight: FontWeight.normal, color: Colors.black, fontSize: 13)),
-                              Text(item.deviceId, style: const TextStyle(fontWeight: FontWeight.normal,fontSize: 11, color: Colors.black)),
+                              Text(item.deviceName, style: TextStyle(fontWeight: FontWeight.normal, color: Theme.of(context).colorScheme.onSurface, fontSize: 13)),
+                              Text(item.deviceId, style: TextStyle(fontWeight: FontWeight.normal,fontSize: 11, color: Theme.of(context).colorScheme.onSurfaceVariant)),
                               RichText(
                                 text: TextSpan(
                                   children: <TextSpan>[
-                                    TextSpan(text: '${item.categoryName} - ', style: const TextStyle(fontWeight: FontWeight.normal,fontSize: 10, color: Colors.black)),
-                                    TextSpan(text: mapInterfaceType(item.interface), style: const TextStyle(fontWeight: FontWeight.bold,fontSize: 10, color: Colors.black),),
+                                    TextSpan(text: '${item.categoryName} - ', style: TextStyle(fontWeight: FontWeight.normal,fontSize: 10, color: Theme.of(context).colorScheme.onSurfaceVariant)),
+                                    TextSpan(text: mapInterfaceType(item.interface), style: TextStyle(fontWeight: FontWeight.bold,fontSize: 10, color: Theme.of(context).colorScheme.onSurface),),
                                   ],
                                 ),
                               ),
@@ -236,7 +237,7 @@ class _SetSerialScreenState extends State<SetSerialScreen> {
                           mainAxisAlignment: MainAxisAlignment.start,
                           children: <Widget>[
                             Container(
-                              color: Colors.teal.shade100,
+                              color: Theme.of(context).colorScheme.primaryContainer,
                               width : 370,
                               height: 25,
                               child: Padding(

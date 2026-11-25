@@ -13,13 +13,15 @@ import '../../views/common/login/login_screen.dart';
 import 'otp_verification.dart';
 
 class LoginScreenOTP extends StatefulWidget {
+  const LoginScreenOTP({super.key});
+
   @override
   _LoginScreenState createState() => _LoginScreenState();
 }
 
 class _LoginScreenState extends State<LoginScreenOTP> {
   bool isManualDialCodeEntry = false;
-  TextEditingController _contactEditingController = TextEditingController();
+  final TextEditingController _contactEditingController = TextEditingController();
   String? dialCodeError;
   int _clickCount = 0;
   String isoCode = 'IN';
@@ -39,7 +41,7 @@ class _LoginScreenState extends State<LoginScreenOTP> {
     if (_contactEditingController.text.isEmpty) {
       showErrorDialog(context, 'Register number can\'t be empty.');
     } else {
-      String checkval = await checkNumber(selectedCountryDialCode!, '${_contactEditingController.text}');
+      String checkval = await checkNumber(selectedCountryDialCode!, _contactEditingController.text);
       if (checkval == 'true') {
 
         final responseMessage = await Navigator.push(context, MaterialPageRoute(builder: (context) => OtpVerifyScreen(contact: "$selectedCountryDialCode ${_contactEditingController.text}",)));
@@ -141,7 +143,7 @@ class _LoginScreenState extends State<LoginScreenOTP> {
       // if (_clickCount >= 7) {
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => LoginScreen()),
+          MaterialPageRoute(builder: (context) => const LoginScreen()),
         );
         // Reset click count after navigation
         _clickCount = 0;
@@ -155,16 +157,16 @@ class _LoginScreenState extends State<LoginScreenOTP> {
       context: context,
       barrierDismissible: false,
       builder: (context) => AlertDialog(
-        title: Text("Exit"),
-        content: Text("Do you want to exit?"),
+        title: const Text("Exit"),
+        content: const Text("Do you want to exit?"),
         actions: <Widget>[
           TextButton(
             onPressed: () => exit(0),
             // onPressed: () => Navigator.of(context).pop(true),// Return true to pop the route
-            child: const Text(
+            child: Text(
               "Yes",
               style: TextStyle(
-                color: Colors.blue,
+                color: Theme.of(context).colorScheme.primary,
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
               ),
@@ -173,10 +175,10 @@ class _LoginScreenState extends State<LoginScreenOTP> {
           TextButton(
             onPressed: () => Navigator.of(context)
                 .pop(false), // Return false to stay on the route
-            child: const Text(
+            child: Text(
               "No",
               style: TextStyle(
-                color: Colors.blue,
+                color: Theme.of(context).colorScheme.primary,
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
               ),
@@ -194,7 +196,7 @@ class _LoginScreenState extends State<LoginScreenOTP> {
     final screenHeight = MediaQuery.of(context).size.height;
     // final screenWidth = MediaQuery.of(context).size.width;
     return Scaffold(
-      backgroundColor: Colors.teal.shade50,
+      backgroundColor: Theme.of(context).colorScheme.surfaceContainerLowest,
       body: Center(
         child: SingleChildScrollView(
           child: Container(
@@ -226,7 +228,7 @@ class _LoginScreenState extends State<LoginScreenOTP> {
                   SizedBox(
                     height: screenHeight * 0.02,
                   ),
-                  Container(
+                  SizedBox(
                     height: 40,
                     width: 50,
                   ),

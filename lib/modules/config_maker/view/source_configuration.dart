@@ -265,7 +265,7 @@ class _SourceConfigurationState extends State<SourceConfiguration> {
                                             const Text('Outlet Valve : ', style: AppProperties.listTileBlackBoldStyle,),
                                             Expanded(
                                               child: Center(
-                                                child: Text(source.outletValves.map((sNo) => getObjectName(sNo, widget.configPvd).name!).join(', '), style: TextStyle(color: Colors.teal, fontSize: 12, fontWeight: FontWeight.bold, overflow: TextOverflow.ellipsis),),
+                                                child: Text(source.outletValves.map((sNo) => getObjectName(sNo, widget.configPvd).name!).join(', '), style: const TextStyle(color: Colors.teal, fontSize: 12, fontWeight: FontWeight.bold, overflow: TextOverflow.ellipsis),),
                                               ),
                                             ),
                                             IconButton(
@@ -515,7 +515,7 @@ class _SourceConfigurationState extends State<SourceConfiguration> {
           const SizedBox(width: 20,),
           Text('${pumpMode == 1 ? 'Inlet' : 'Outlet'} Pump : ', style: AppProperties.listTileBlackBoldStyle,),
           Center(
-            child: Text(currentParameter.isEmpty ? '-' : currentParameter.map((sNo) => getObjectName(sNo, widget.configPvd).name!).join(', '), style: TextStyle(color: Colors.teal, fontSize: 12, fontWeight: FontWeight.bold),),
+            child: Text(currentParameter.isEmpty ? '-' : currentParameter.map((sNo) => getObjectName(sNo, widget.configPvd).name!).join(', '), style: const TextStyle(color: Colors.teal, fontSize: 12, fontWeight: FontWeight.bold),),
           ),
           IconButton(
               onPressed: (){
@@ -582,7 +582,7 @@ class _SourceConfigurationState extends State<SourceConfiguration> {
           const SizedBox(width: 20,),
           Text('${currentObjectName[mode]} : ', style: AppProperties.listTileBlackBoldStyle,),
           Center(
-            child: Text(currentSno[mode] == 0.0 ? '-' : getObjectName(currentSno[mode]!, widget.configPvd).name!, style: TextStyle(color: Colors.teal, fontSize: 12, fontWeight: FontWeight.bold),),
+            child: Text(currentSno[mode] == 0.0 ? '-' : getObjectName(currentSno[mode]!, widget.configPvd).name!, style: const TextStyle(color: Colors.teal, fontSize: 12, fontWeight: FontWeight.bold),),
           ),
           IconButton(
               onPressed: (){
@@ -1108,8 +1108,8 @@ void showNutrientSelectionDialog({
       return StatefulBuilder(
         builder: (context, setDialogState) {
           return AlertDialog(
-            title: Row(
-              children: const [
+            title: const Row(
+              children: [
                 Icon(
                   Icons.science,
                   color: Colors.teal,
@@ -1149,8 +1149,8 @@ void showNutrientSelectionDialog({
                                   color: selectedSNo == 0.0 ? Colors.teal : Colors.grey.shade300,
                                 ),
                               ),
-                              child: Row(
-                                children: const [
+                              child: const Row(
+                                children: [
                                   Icon(Icons.clear, size: 18, color: Colors.grey),
                                   SizedBox(width: 8),
                                   Text('None', style: AppProperties.listTileBlackBoldStyle),

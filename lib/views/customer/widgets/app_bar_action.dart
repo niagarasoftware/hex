@@ -13,11 +13,11 @@ import '../../../modules/PumpController/view/node_settings.dart';
 import '../../../modules/UserChat/view/user_chat.dart';
 import '../../../modules/bluetooth_low_energy/state_management/ble_service.dart';
 import '../../../modules/bluetooth_low_energy/view/node_connection_page.dart';
-import '../../../modules/open_ai/view/open_ai_screen.dart';
 import '../../../providers/user_provider.dart';
 import '../../../repository/repository.dart';
 import '../../../services/http_service.dart';
 import '../../../user_manual_stub.dart';
+import '../../../utils/Theme/oro_theme.dart';
 import '../../../utils/constants.dart';
 import '../../../utils/enums.dart';
 import '../../../utils/helpers/mqtt_status_indicator.dart';
@@ -142,12 +142,13 @@ List<Widget> appBarActions(
 Widget _buildProgramRunningIcon(CustomerScreenControllerViewModel vm) {
   return Consumer<CustomerScreenControllerViewModel>(
     builder: (context, vm, child) {
+      final colorScheme = Theme.of(context).colorScheme;
       return vm.programRunning
           ? CircleAvatar(
               radius: 15,
               backgroundImage:
                   const AssetImage('assets/gif/water_drop_ani.gif'),
-              backgroundColor: Colors.blue.shade100,
+              backgroundColor: colorScheme.primaryContainer,
             )
           : const SizedBox();
     },
@@ -156,17 +157,22 @@ Widget _buildProgramRunningIcon(CustomerScreenControllerViewModel vm) {
 
 Widget _buildPauseResumeButton(
     BuildContext context, CustomerScreenControllerViewModel vm) {
+  final theme = Theme.of(context);
+  final oroColors = theme.extension<OroThemeColors>() ?? OroTheme.lightCustomColors;
+
   bool allPaused = vm.lineLiveMessage.isNotEmpty &&
       vm.lineLiveMessage.every((line) {
         final parts = line.split(',');
         return parts.length > 1 && parts[1] == '1';
       });
 
+  final btnBg = allPaused ? oroColors.successGreen : oroColors.warningOrange;
+  final btnFg = allPaused ? oroColors.onSuccessGreen : oroColors.onWarningOrange;
+
   return TextButton(
     onPressed: () => vm.linePauseOrResume(vm.lineLiveMessage),
     style: ButtonStyle(
-      backgroundColor:
-          WidgetStateProperty.all(allPaused ? Colors.green : Colors.amber),
+      backgroundColor: WidgetStateProperty.all(btnBg),
       shape: WidgetStateProperty.all(
           RoundedRectangleBorder(borderRadius: BorderRadius.circular(5))),
     ),
@@ -174,10 +180,10 @@ Widget _buildPauseResumeButton(
       mainAxisSize: MainAxisSize.min,
       children: [
         Icon(allPaused ? Icons.play_arrow_outlined : Icons.pause,
-            color: Colors.black),
+            color: btnFg),
         const SizedBox(width: 5),
         Text(allPaused ? 'RESUME ALL LINE' : 'PAUSE ALL LINE',
-            style: const TextStyle(color: Colors.black54)),
+            style: TextStyle(color: btnFg, fontWeight: FontWeight.bold)),
       ],
     ),
   );
@@ -331,10 +337,10 @@ Widget _buildHelpMenu(
         ),
       ],
     ),
-    icon: const CircleAvatar(
+    icon: CircleAvatar(
       radius: 17,
-      backgroundColor: Colors.white,
-      child: Icon(Icons.live_help_outlined),
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      child: Icon(Icons.live_help_outlined, color: Theme.of(context).colorScheme.onSurface),
     ),
   );
 }
@@ -344,6 +350,8 @@ Widget _buildAccountMenu(
     CustomerScreenControllerViewModel vm,
     dynamic viewedCustomer,
     bool isNarrow) {
+  final colorScheme = Theme.of(context).colorScheme;
+
   return IconButton(
     tooltip:
         'Your Account\n${viewedCustomer!.name}\n${viewedCustomer.mobileNo}',
@@ -351,7 +359,7 @@ Widget _buildAccountMenu(
       showMenu(
         context: context,
         position: const RelativeRect.fromLTRB(100, 0, 10, 0),
-        color: Colors.white,
+        color: colorScheme.surface,
         items: [
           PopupMenuItem(
             child: Column(
@@ -360,18 +368,18 @@ Widget _buildAccountMenu(
                 CircleAvatar(
                   radius: 30,
                   backgroundColor:
-                      Theme.of(context).primaryColor.withOpacity(0.1),
+                      colorScheme.primary.withOpacity(0.12),
                   child: Text(viewedCustomer.name.substring(0, 1).toUpperCase(),
-                      style: const TextStyle(fontSize: 25)),
+                      style: TextStyle(fontSize: 25, color: colorScheme.primary, fontWeight: FontWeight.bold)),
                 ),
                 Text('Hi, ${viewedCustomer.name}!',
-                    style: const TextStyle(fontSize: 20)),
+                    style: TextStyle(fontSize: 20, color: colorScheme.onSurface, fontWeight: FontWeight.bold)),
                 Text(viewedCustomer.mobileNo,
-                    style: const TextStyle(fontSize: 13)),
+                    style: TextStyle(fontSize: 13, color: colorScheme.onSurfaceVariant)),
                 const SizedBox(height: 8),
                 MaterialButton(
-                  color: Theme.of(context).primaryColor,
-                  textColor: Colors.white,
+                  color: colorScheme.primary,
+                  textColor: colorScheme.onPrimary,
                   child: const Text('Manage Your Account'),
                   onPressed: () async {
                     Navigator.pop(context);
@@ -382,10 +390,10 @@ Widget _buildAccountMenu(
                         heightFactor: 0.84,
                         widthFactor: 0.75,
                         child: Container(
-                          decoration: const BoxDecoration(
-                            color: Colors.white,
+                          decoration: BoxDecoration(
+                            color: colorScheme.surface,
                             borderRadius:
-                                BorderRadius.vertical(top: Radius.circular(8)),
+                                const BorderRadius.vertical(top: Radius.circular(8)),
                           ),
                           child: UserProfile(isNarrow: isNarrow),
                         ),
@@ -405,17 +413,17 @@ Widget _buildAccountMenu(
                     );
                     // Navigator.pushNamedAndRemoveUntil(context, Routes.login, (route) => false,);
                   },
-                  child: const SizedBox(
+                  child: SizedBox(
                     width: 100,
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.exit_to_app, color: Colors.red),
-                        SizedBox(width: 7),
+                        Icon(Icons.exit_to_app, color: colorScheme.error),
+                        const SizedBox(width: 7),
                         Text(
                           'Logout',
-                          style: TextStyle(color: Colors.red),
+                          style: TextStyle(color: colorScheme.error),
                         ),
                       ],
                     ),
@@ -429,8 +437,11 @@ Widget _buildAccountMenu(
     },
     icon: CircleAvatar(
       radius: 17,
-      backgroundColor: Colors.white,
-      child: Text(viewedCustomer.name.substring(0, 1).toUpperCase()),
+      backgroundColor: colorScheme.surface,
+      child: Text(
+        viewedCustomer.name.substring(0, 1).toUpperCase(),
+        style: TextStyle(color: colorScheme.onSurface, fontWeight: FontWeight.bold),
+      ),
     ),
   );
 }

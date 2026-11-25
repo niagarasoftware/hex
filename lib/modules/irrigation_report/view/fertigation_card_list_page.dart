@@ -6,7 +6,6 @@ import '../model/fertigation_card_model.dart';
 import '../repository/irrigation_repository.dart';
 import '../services/fertigation_card_mapper.dart';
 import 'excel_download_stub.dart' if (dart.library.html) 'excel_download_web.dart';
-import 'zone_log_pdf_builder.dart' if (dart.library.html) 'zone_log_exporter_web.dart';
 
 import 'widgets/program_wise_view.dart';
 import 'widgets/fertigation_table_view.dart';

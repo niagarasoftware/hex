@@ -20,15 +20,16 @@ class ConditionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Row(
       children: [
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(name, style: const TextStyle(fontSize: 15),
+              Text(name, style: TextStyle(fontSize: 15, color: colorScheme.onSurface),
                 maxLines: 1, overflow: TextOverflow.ellipsis),
-              Text(rule, style: const TextStyle(fontSize: 12, color: Colors.black54),
+              Text(rule, style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant),
                 maxLines: 2, overflow: TextOverflow.ellipsis),
               const SizedBox(height: 5),
             ],
@@ -39,8 +40,9 @@ class ConditionTile extends StatelessWidget {
           child: Tooltip(
             message: status ? 'deactivate' : 'activate',
             child: Switch(
-              hoverColor: Theme.of(context).primaryColor,
-              activeColor: Theme.of(context).primaryColorLight,
+              hoverColor: colorScheme.primary.withOpacity(0.12),
+              activeThumbColor: colorScheme.onPrimary,
+              activeTrackColor: colorScheme.primary,
               value: status,
               onChanged: onStatusChanged,
             ),

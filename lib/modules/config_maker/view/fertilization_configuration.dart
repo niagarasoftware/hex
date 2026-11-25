@@ -148,7 +148,7 @@ class _FertilizationConfigurationState extends State<FertilizationConfiguration>
     required String objectName,
 }){
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(8),
         color: Theme.of(context).primaryColorLight.withOpacity(0.1),
@@ -336,7 +336,7 @@ class _FertilizationDashboardFormationState extends State<FertilizationDashboard
             Positioned(
               left: 0,
               bottom: 50,
-              child: Text(widget.fertilizationSite.boosterPump.map((sNo) => getObjectName(sNo, configPvd).name!).join(', '), style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold),),
+              child: Text(widget.fertilizationSite.boosterPump.map((sNo) => getObjectName(sNo, configPvd).name!).join(', '), style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold),),
             )
           ],
         ),

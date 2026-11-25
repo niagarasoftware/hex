@@ -20,7 +20,7 @@ import 'package:hex/utils/helpers/log_print.dart';
 
 class ResetVerssion extends StatefulWidget {
   const ResetVerssion(
-      {Key? key,
+      {super.key,
         required this.userId,
         required this.createUser,
         required this.controllerId,
@@ -83,7 +83,7 @@ class _ResetVerssionState extends State<ResetVerssion> {
     }
     catch (e, stackTrace) {
       AppLog.log(' Error overAll getData => ${e.toString()}');
-      AppLog.log(' trace overAll getData  => ${stackTrace}');
+      AppLog.log(' trace overAll getData  => $stackTrace');
     }
 
 
@@ -116,7 +116,9 @@ class _ResetVerssionState extends State<ResetVerssion> {
 
   void _onMqttPayload() {
     if (!mounted || selectindex == null ||
-        selectindex! < 0 || selectindex! >= mergedList.length) return;
+        selectindex! < 0 || selectindex! >= mergedList.length) {
+      return;
+    }
     setState(() => status());
   }
 
@@ -339,7 +341,7 @@ class _ResetVerssionState extends State<ResetVerssion> {
             letterSpacing: 0.5,
           ),
         ),
-        SizedBox(height: 4),
+        const SizedBox(height: 4),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           mainAxisSize: MainAxisSize.min,
@@ -356,7 +358,7 @@ class _ResetVerssionState extends State<ResetVerssion> {
               ),
             ),
             if (isCopyable && value.isNotEmpty) ...[
-              SizedBox(width: 2),
+              const SizedBox(width: 2),
               InkWell(
                 onTap: () {
                   Clipboard.setData(ClipboardData(text: value));
@@ -383,7 +385,7 @@ class _ResetVerssionState extends State<ResetVerssion> {
     return SafeArea(
       child: Scaffold(
          appBar: AppBar(
-           title: Text(
+           title: const Text(
             'Controller Info',
             style: TextStyle(
               color: Colors.white,
@@ -404,7 +406,7 @@ class _ResetVerssionState extends State<ResetVerssion> {
                   mainAxisSpacing: isMobile ? 16 : 24,
                   mainAxisExtent: isMobile ? 520 : 480,
                 ),
-                padding: EdgeInsets.all(5),
+                padding: const EdgeInsets.all(5),
                 itemCount: mergedList.length,
                 itemBuilder: (context, index) {
                   return ClipRRect(
@@ -420,12 +422,12 @@ class _ResetVerssionState extends State<ResetVerssion> {
                             BoxShadow(
                               color: Theme.of(context).colorScheme.shadow.withOpacity(0.06),
                               blurRadius: 20,
-                              offset: Offset(0, 8),
+                              offset: const Offset(0, 8),
                             ),
                           ],
                         ),
                         child: Padding(
-                          padding: EdgeInsets.all(20.0),
+                          padding: const EdgeInsets.all(20.0),
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
@@ -446,7 +448,7 @@ class _ResetVerssionState extends State<ResetVerssion> {
                                       color: Theme.of(context).colorScheme.primary,
                                     ),
                                   ),
-                                  SizedBox(height: 12),
+                                  const SizedBox(height: 12),
                                   Text(
                                     'CONTROLLER SPECIFICATION',
                                     style: TextStyle(
@@ -456,7 +458,7 @@ class _ResetVerssionState extends State<ResetVerssion> {
                                       letterSpacing: 1.2,
                                     ),
                                   ),
-                                  SizedBox(height: 4),
+                                  const SizedBox(height: 4),
                                   Text(
                                     mergedList[index]['categoryName'] ?? '',
                                     style: TextStyle(
@@ -482,7 +484,7 @@ class _ResetVerssionState extends State<ResetVerssion> {
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(20),
                                       ),
-                                      padding: EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                                     ),
                                     onPressed: () {
                                       setState(() {
@@ -517,7 +519,7 @@ class _ResetVerssionState extends State<ResetVerssion> {
                                         shape: RoundedRectangleBorder(
                                           borderRadius: BorderRadius.circular(20),
                                         ),
-                                        padding: EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                                       ),
                                       onPressed: () {
                                         setState(() {
@@ -564,7 +566,7 @@ class _ResetVerssionState extends State<ResetVerssion> {
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(20),
                                       ),
-                                      padding: EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                                     ),
                                     onPressed: () {
                                       setState(() {
@@ -599,7 +601,7 @@ class _ResetVerssionState extends State<ResetVerssion> {
                                         shape: RoundedRectangleBorder(
                                           borderRadius: BorderRadius.circular(20),
                                         ),
-                                        padding: EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                                       ),
                                       onPressed: () {
                                         setState(() {
@@ -632,7 +634,7 @@ class _ResetVerssionState extends State<ResetVerssion> {
                                         Expanded(child: _buildGridItem('MODEL', mergedList[index]['modelName'] ?? '')),
                                       ],
                                     ),
-                                    SizedBox(height: 12),
+                                    const SizedBox(height: 12),
                                     Row(
                                       children: [
                                         Expanded(child: _buildGridItem('FIRMWARE BUILD', mergedList[index]['currentVersion'] ?? '')),
@@ -667,7 +669,7 @@ class _ResetVerssionState extends State<ResetVerssion> {
                               // Status / Progress indicator if active
                               if (mergedList[index]['status'] != 'Status')
                                 Padding(
-                                  padding: EdgeInsets.only(top: 4.0),
+                                  padding: const EdgeInsets.only(top: 4.0),
                                   child: Row(
                                     children: [
                                       IconButton(
@@ -686,7 +688,7 @@ class _ResetVerssionState extends State<ResetVerssion> {
                                           valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).colorScheme.primary),
                                         ),
                                       ),
-                                      SizedBox(width: 8),
+                                      const SizedBox(width: 8),
                                       Text(
                                         '${mqttPayloadProvider.proogressstatus}',
                                         style: TextStyle(
@@ -713,7 +715,7 @@ class _ResetVerssionState extends State<ResetVerssion> {
                                             shape: RoundedRectangleBorder(
                                               borderRadius: BorderRadius.circular(10),
                                             ),
-                                            padding: EdgeInsets.symmetric(vertical: 12),
+                                            padding: const EdgeInsets.symmetric(vertical: 12),
                                           ),
                                           onPressed: () {
                                             if (checkupdatediable == 0) {
@@ -733,7 +735,7 @@ class _ResetVerssionState extends State<ResetVerssion> {
                                           ),
                                         ),
                                       ),
-                                      SizedBox(width: 12),
+                                      const SizedBox(width: 12),
                                       Expanded(
                                         child: FilledButton.icon(
                                           style: FilledButton.styleFrom(
@@ -744,7 +746,7 @@ class _ResetVerssionState extends State<ResetVerssion> {
                                             shape: RoundedRectangleBorder(
                                               borderRadius: BorderRadius.circular(10),
                                             ),
-                                            padding: EdgeInsets.symmetric(vertical: 12),
+                                            padding: const EdgeInsets.symmetric(vertical: 12),
                                           ),
                                           onPressed: () {
                                             if (checkupdatediable == 0) {
@@ -753,16 +755,16 @@ class _ResetVerssionState extends State<ResetVerssion> {
                                               _showSnackBar('Please wait ....');
                                             }
                                           },
-                                          icon: Icon(Icons.upload, size: 16),
+                                          icon: const Icon(Icons.upload, size: 16),
                                           label: checkupdatediable == 0 &&
                                               mergedList[index]['currentVersion'] !=
                                                   mergedList[index]['latestVersion']
                                               ? BlinkingText(
                                             text: 'Update Firmware',
                                             style: TextStyle(color: Theme.of(context).colorScheme.onPrimary, fontWeight: FontWeight.bold, fontSize: 13),
-                                            blinkDuration: Duration(milliseconds: 500),
+                                            blinkDuration: const Duration(milliseconds: 500),
                                           )
-                                              : Text(
+                                              : const Text(
                                             'Update Firmware',
                                             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
                                           ),
@@ -777,13 +779,13 @@ class _ResetVerssionState extends State<ResetVerssion> {
                                             shape: RoundedRectangleBorder(
                                               borderRadius: BorderRadius.circular(10),
                                             ),
-                                            padding: EdgeInsets.symmetric(vertical: 12),
+                                            padding: const EdgeInsets.symmetric(vertical: 12),
                                           ),
                                           onPressed: _specialUpdateBusy
                                               ? null
                                               : () => showAdminPasswordDialog(index),
-                                          icon: Icon(Icons.upload, size: 16),
-                                          label: Text(
+                                          icon: const Icon(Icons.upload, size: 16),
+                                          label: const Text(
                                             'Update Firmware',
                                             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
                                           ),
@@ -820,7 +822,7 @@ class _ResetVerssionState extends State<ResetVerssion> {
   sendHttp(String val, String msgstatus) async {
     Map<String, dynamic> payLoadFinal = {
       "5700":
-      {"5701": "$val"},
+      {"5701": val},
 
     };
     Map<String, dynamic> body = {
@@ -924,7 +926,7 @@ class _ResetVerssionState extends State<ResetVerssion> {
     number *= 10;
     String result = number.toStringAsFixed(0);
     while (result.length < 4) {
-      result = '0' + result;
+      result = '0$result';
     }
     String firstPart = result.substring(0, 2);
     String secondPart = result.substring(2, 4);
@@ -1125,7 +1127,7 @@ class _ResetVerssionState extends State<ResetVerssion> {
                           },
                           child: const Text('Send'),
                         ),],),
-                      Text("View to Lora Details:"),
+                      const Text("View to Lora Details:"),
                       Text(mqttPayloadProvider.Loara1verssion)
 
                     ],
@@ -1162,7 +1164,7 @@ class _ResetVerssionState extends State<ResetVerssion> {
                           )),
                         ],
                       ),
-                      Text("View to Lora Details:"),
+                      const Text("View to Lora Details:"),
                       Text(mqttPayloadProvider.Loara2verssion)
                     ],
                   ),
@@ -1236,11 +1238,11 @@ class BlinkingText extends StatefulWidget {
   final Duration blinkDuration;
 
   const BlinkingText({
-    Key? key,
+    super.key,
     required this.text,
     this.style = const TextStyle(fontSize: 20, color: Colors.red),
     this.blinkDuration = const Duration(milliseconds: 500),
-  }) : super(key: key);
+  });
 
   @override
   _BlinkingTextState createState() => _BlinkingTextState();

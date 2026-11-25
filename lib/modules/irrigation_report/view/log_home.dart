@@ -62,11 +62,11 @@ class _LogHomeState extends State<LogHome> {
   List<dynamic> _localNameData = [];
   List<dynamic> _filterSiteData = [];
   int _selectedIndex = 0;
-  List<List<dynamic>> _irrigationOptionWise = [['Date',true],['Program',false],['Line',false],['Valve',false],['Status',false]];
+  final List<List<dynamic>> _irrigationOptionWise = [['Date',true],['Program',false],['Line',false],['Valve',false],['Status',false]];
   bool graphMode = false;
   DateRange? selectedDateRange;
   DateRange? lastSelectedDateRange;
-  ScrollController _graphController = ScrollController();
+  final ScrollController _graphController = ScrollController();
   StreamSubscription? _rawScheduleSubscription;
   bool isLiveSyncing = false;
   bool isLiveLoaded = false;
@@ -105,7 +105,7 @@ class _LogHomeState extends State<LogHome> {
   IrrigationLogModel irrigationParameterArrayDuplicate = IrrigationLogModel();
   String _selectedDate = '';
   String _dateCount = '';
-  String _range = '';
+  final String _range = '';
   String _rangeCount = '';
 
   @override
@@ -984,7 +984,7 @@ class _LogHomeState extends State<LogHome> {
                   children: [
                     _buildToolbar(constraint, viewRows),
                     if((dataSource == null || view.isEmpty))
-                      Expanded(child: Center(child: Text('There is no data in ${_selectedDate}'))),
+                      Expanded(child: Center(child: Text('There is no data in $_selectedDate'))),
                     if((dataSource != null || view.isNotEmpty))
                       if(graphMode == false)
                         Expanded(
@@ -1142,7 +1142,7 @@ class _LogHomeState extends State<LogHome> {
                                                           // title: AxisTitle(text: "Dur/Qty"),
                                                           minimum: 0,
                                                         ),
-                                                        legend: Legend(
+                                                        legend: const Legend(
                                                           isVisible: true,
                                                           position: LegendPosition.bottom,
                                                           overflowMode: LegendItemOverflowMode.wrap,
@@ -1227,8 +1227,8 @@ class _LogHomeState extends State<LogHome> {
                         getData();
                       }
                     },
-                    child: httpError != 2 ? const Text('RETRY',style: TextStyle(color: Colors.white),) : loadingButtuon(),
                     color: Colors.blueGrey,
+                    child: httpError != 2 ? const Text('RETRY',style: TextStyle(color: Colors.white),) : loadingButtuon(),
                   ),
                 ],
               ),
@@ -1991,8 +1991,8 @@ class _LogHomeState extends State<LogHome> {
                             onPressed: (){
                               Navigator.pop(context);
                             },
-                            child: const Text("Cancel",style: TextStyle(color: Colors.white),),
                             color: Colors.red,
+                            child: const Text("Cancel",style: TextStyle(color: Colors.white),),
                           ),
                           MaterialButton(
                             onPressed: (){
@@ -2050,8 +2050,8 @@ class _LogHomeState extends State<LogHome> {
                               });
                               Navigator.pop(context);
                             },
-                            child: const Text("OK",style: TextStyle(color: Colors.white)),
                             color: Theme.of(context).primaryColor,
+                            child: const Text("OK",style: TextStyle(color: Colors.white)),
                           )
                         ],
                       ),
@@ -2250,7 +2250,7 @@ class _LogHomeState extends State<LogHome> {
                     width: 250,
                     child: ListTile(
                       leading: const Icon(Icons.adb_outlined,color: Colors.blueGrey,),
-                      title: Text('${i.uiKey}',style: const TextStyle(fontSize: 12),),
+                      title: Text(i.uiKey,style: const TextStyle(fontSize: 12),),
                       trailing: Checkbox(
                         value: i.show,
                         onChanged: (value) {
@@ -2294,7 +2294,7 @@ class _LogHomeState extends State<LogHome> {
         height: 400,
         doubleMonth: false,
         maximumDateRangeLength: 100,
-        quickDateRanges: [
+        quickDateRanges: const [
           // QuickDateRange(dateRange: null, label: "Remove date range"),
           // QuickDateRange(
           //   label: 'Last 3 days',
@@ -2379,7 +2379,7 @@ class _ChartData {
 Widget getTableHeader(name,flex){
   return Expanded(
       flex: flex,
-      child: Container(
+      child: SizedBox(
         // color: Colors.green.shade50,
         height: 40,
         child: Center(
@@ -2392,7 +2392,7 @@ Widget getTableHeader(name,flex){
 Widget getTableRow(name,flex){
   return Expanded(
       flex: flex,
-      child: Container(
+      child: SizedBox(
         // color: Colors.green.shade50,
         height: 40,
         child: Center(

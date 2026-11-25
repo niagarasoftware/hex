@@ -3,7 +3,6 @@ import 'package:data_table_2/data_table_2.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:mqtt_client/mqtt_client.dart';
 import 'package:hex/Constants/properties.dart';
 import 'package:hex/modules/global_limit/repository/global_limit_repository.dart';
 import 'package:hex/services/mqtt_service.dart';

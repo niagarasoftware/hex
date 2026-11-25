@@ -20,15 +20,15 @@ import '../../../utils/environment.dart';
 
 
 class MapScreenOro extends StatefulWidget {
-  MapScreenOro({
-    Key? key,
+  const MapScreenOro({
+    super.key,
     required this.userId,
     required this.customerId,
     required this.controllerId,
     required this.imeiNo,
     required this.modelId,
     this.isCheckDashboard = false,
-  }) : super(key: key);
+  });
 
   final int userId, customerId, controllerId,modelId;
   final String imeiNo;
@@ -643,7 +643,7 @@ class _MapScreenOroState extends State<MapScreenOro> {
           ),
           if (!widget.isCheckDashboard)
             IconButton(
-              icon: Icon(Icons.map_outlined),
+              icon: const Icon(Icons.map_outlined),
               onPressed: () {
                 Navigator.of(context).push(MaterialPageRoute(
                   builder: (context) => MapConnectionObject(userId: widget.userId, customerId: widget.customerId, controllerId: widget.controllerId, imeiNo: widget.imeiNo,modelId: widget.modelId,),

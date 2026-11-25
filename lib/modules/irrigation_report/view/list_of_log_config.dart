@@ -143,7 +143,7 @@ class _ListOfLogConfigState extends State<ListOfLogConfig> {
       };
       var response = await IrrigationRepository().deleteUserLogConfig(body);
       Map<String, dynamic> jsonData = jsonDecode(response.body);
-      print('delete response =>${jsonData}');
+      print('delete response =>$jsonData');
       if (jsonData['code'] == 200) {
         getUserLogConfig();
       }
@@ -276,8 +276,8 @@ class _ListOfLogConfigState extends State<ListOfLogConfig> {
                   if (serverData['logConfig'].isNotEmpty)
                     for (var i = 0; i < serverData['logConfig'].length; i++)
                       Container(
-                        margin: EdgeInsets.only(bottom: 20),
-                        padding: EdgeInsets.all(8),
+                        margin: const EdgeInsets.only(bottom: 20),
+                        padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
                             color: Colors.white,
                             boxShadow: AppProperties.customBoxShadowLiteTheme,
@@ -326,8 +326,8 @@ class _ListOfLogConfigState extends State<ListOfLogConfig> {
                                   i < serverData['logConfig'].length;
                                   i++)
                                 Container(
-                                  margin: EdgeInsets.only(bottom: 20),
-                                  padding: EdgeInsets.all(8),
+                                  margin: const EdgeInsets.only(bottom: 20),
+                                  padding: const EdgeInsets.all(8),
                                   decoration: BoxDecoration(
                                       color: Colors.white,
                                       boxShadow: AppProperties.customBoxShadowLiteTheme,
@@ -336,12 +336,12 @@ class _ListOfLogConfigState extends State<ListOfLogConfig> {
                                     children: [
                                       ListTile(
                                         leading: CircleAvatar(
-                                          backgroundColor: Color(0xFF5B21B6),
+                                          backgroundColor: const Color(0xFF5B21B6),
                                           radius: 20,
                                           child: Center(
                                             child: Text(
                                               '${i + 1}',
-                                              style: TextStyle(
+                                              style: const TextStyle(
                                                   color: Colors.white),
                                             ),
                                           ),
@@ -349,7 +349,7 @@ class _ListOfLogConfigState extends State<ListOfLogConfig> {
                                         title: Text(
                                             '${serverData['logConfig'][i]['logName']}'),
                                       ),
-                                      SizedBox(
+                                      const SizedBox(
                                         height: 20,
                                       ),
                                       Row(
@@ -359,8 +359,8 @@ class _ListOfLogConfigState extends State<ListOfLogConfig> {
                                           IconButton(
                                               style: ButtonStyle(
                                                   backgroundColor:
-                                                      MaterialStateProperty.all(
-                                                          Color(0xffFFF0E5))),
+                                                      WidgetStateProperty.all(
+                                                          const Color(0xffFFF0E5))),
                                               onPressed: () async {
                                                 setState(() {
                                                   selectedIrrigationParameterArray
@@ -529,29 +529,29 @@ class _ListOfLogConfigState extends State<ListOfLogConfig> {
                                                         serverData['logConfig']
                                                             [i]['logConfigId']);
                                               },
-                                              icon: Icon(
+                                              icon: const Icon(
                                                 Icons.edit_note,
                                                 color: Colors.orange,
                                               )),
                                           IconButton(
                                               style: ButtonStyle(
                                                   backgroundColor:
-                                                      MaterialStateProperty.all(
-                                                          Color(0xffFFDEDC))),
+                                                      WidgetStateProperty.all(
+                                                          const Color(0xffFFDEDC))),
                                               onPressed: () {
                                                 deleteUserLogConfig(
                                                     id: serverData['logConfig']
                                                         [i]['logConfigId']);
                                               },
-                                              icon: Icon(
+                                              icon: const Icon(
                                                 Icons.delete,
                                                 color: Colors.red,
                                               )),
                                           IconButton(
                                               style: ButtonStyle(
                                                   backgroundColor:
-                                                      MaterialStateProperty.all(
-                                                          Color(0xFFEDE9FE))),
+                                                      WidgetStateProperty.all(
+                                                          const Color(0xFFEDE9FE))),
                                               onPressed: () {
                                                 Navigator.push(context,
                                                     MaterialPageRoute(
@@ -574,9 +574,9 @@ class _ListOfLogConfigState extends State<ListOfLogConfig> {
                                                   );
                                                 }));
                                               },
-                                              icon: Icon(
+                                              icon: const Icon(
                                                 Icons.visibility,
-                                                color: const Color(0xFF5B21B6),
+                                                color: Color(0xFF5B21B6),
                                               )),
                                           // MaterialButton(
                                           //   color: const Color(0xFF5B21B6),
@@ -964,7 +964,7 @@ class _ListOfLogConfigState extends State<ListOfLogConfig> {
           //         ),
           //       ),
           //     ),
-          SizedBox(
+          const SizedBox(
             height: 10,
           ),
         ],
@@ -1135,11 +1135,11 @@ class _ListOfLogConfigState extends State<ListOfLogConfig> {
                             onPressed: () {
                               Navigator.pop(context);
                             },
+                            color: Colors.red,
                             child: Text(
                               "Cancel",
                               style: TextStyle(color: Colors.white),
                             ),
-                            color: Colors.red,
                           ),
                           MaterialButton(
                             onPressed: () {
@@ -1185,9 +1185,9 @@ class _ListOfLogConfigState extends State<ListOfLogConfig> {
                                 Navigator.pop(context);
                               }
                             },
+                            color: Theme.of(context).primaryColor,
                             child: Text("OK",
                                 style: TextStyle(color: Colors.white)),
-                            color: Theme.of(context).primaryColor,
                           )
                         ],
                       ),
@@ -1210,14 +1210,14 @@ class _ListOfLogConfigState extends State<ListOfLogConfig> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              SizedBox(height: 25),
-                              Text('Give Log Config Name'),
+                              const SizedBox(height: 25),
+                              const Text('Give Log Config Name'),
                               SizedBox(
                                 width: 250,
                                 height: 40,
                                 child: TextFormField(
                                   initialValue: logName,
-                                  style: TextStyle(fontSize: 12),
+                                  style: const TextStyle(fontSize: 12),
                                   maxLength: 20,
                                   onChanged: (value) {
                                     print('value => $value');
@@ -1229,7 +1229,7 @@ class _ListOfLogConfigState extends State<ListOfLogConfig> {
                                   },
                                   textAlign: TextAlign.center,
                                   keyboardType: TextInputType.name,
-                                  decoration: InputDecoration(
+                                  decoration: const InputDecoration(
                                       counterText: '',
                                       border: UnderlineInputBorder(
                                         borderSide: BorderSide(
@@ -1241,7 +1241,7 @@ class _ListOfLogConfigState extends State<ListOfLogConfig> {
                               ),
                               Text(
                                 errorMessage,
-                                style: TextStyle(color: Colors.red),
+                                style: const TextStyle(color: Colors.red),
                               ),
                               //General ---------------------------
                               Column(
@@ -1322,7 +1322,7 @@ class _ListOfLogConfigState extends State<ListOfLogConfig> {
                                               trailing: Checkbox(
                                                 value: isRequired ? true : i.show,
                                                 fillColor: isRequired
-                                                    ? MaterialStateProperty.all(Theme.of(context).disabledColor)
+                                                    ? WidgetStateProperty.all(Theme.of(context).disabledColor)
                                                     : null,
                                                 checkColor: isRequired ? Colors.white : null,
                                                 onChanged: isRequired
@@ -1354,7 +1354,7 @@ class _ListOfLogConfigState extends State<ListOfLogConfig> {
                               Column(
                                 children: [
                                   ListTile(
-                                    title: Text(
+                                    title: const Text(
                                       'Water Parameter',
                                       style: TextStyle(
                                           fontWeight: FontWeight.bold),
@@ -1392,16 +1392,16 @@ class _ListOfLogConfigState extends State<ListOfLogConfig> {
                                               .waterParameterList)
                                         if (i.payloadKey != 'overAll')
                                           Container(
-                                            margin: EdgeInsets.symmetric(
+                                            margin: const EdgeInsets.symmetric(
                                                 horizontal: 5),
                                             width: 250,
                                             child: ListTile(
-                                              leading: Icon(
+                                              leading: const Icon(
                                                 Icons.adb_outlined,
                                                 color: Colors.blueGrey,
                                               ),
                                               title: Text(
-                                                '${i.uiKey}',
+                                                i.uiKey,
                                                 style: const TextStyle(
                                                     fontSize: 12),
                                               ),
@@ -1431,7 +1431,7 @@ class _ListOfLogConfigState extends State<ListOfLogConfig> {
                               Column(
                                 children: [
                                   ListTile(
-                                    title: Text(
+                                    title: const Text(
                                       'Filter Parameter',
                                       style: TextStyle(
                                           fontWeight: FontWeight.bold),
@@ -1469,16 +1469,16 @@ class _ListOfLogConfigState extends State<ListOfLogConfig> {
                                               .filterParameterList)
                                         if (i.payloadKey != 'overAll')
                                           Container(
-                                            margin: EdgeInsets.symmetric(
+                                            margin: const EdgeInsets.symmetric(
                                                 horizontal: 5),
                                             width: 250,
                                             child: ListTile(
-                                              leading: Icon(
+                                              leading: const Icon(
                                                 Icons.adb_outlined,
                                                 color: Colors.blueGrey,
                                               ),
                                               title: Text(
-                                                '${i.uiKey}',
+                                                i.uiKey,
                                                 style: const TextStyle(
                                                     fontSize: 12),
                                               ),
@@ -1508,7 +1508,7 @@ class _ListOfLogConfigState extends State<ListOfLogConfig> {
                               Column(
                                 children: [
                                   ListTile(
-                                    title: Text(
+                                    title: const Text(
                                       'Pre Post Parameter',
                                       style: TextStyle(
                                           fontWeight: FontWeight.bold),
@@ -1546,16 +1546,16 @@ class _ListOfLogConfigState extends State<ListOfLogConfig> {
                                               .prePostParameterList)
                                         if (i.payloadKey != 'overAll')
                                           Container(
-                                            margin: EdgeInsets.symmetric(
+                                            margin: const EdgeInsets.symmetric(
                                                 horizontal: 5),
                                             width: 250,
                                             child: ListTile(
-                                              leading: Icon(
+                                              leading: const Icon(
                                                 Icons.adb_outlined,
                                                 color: Colors.blueGrey,
                                               ),
                                               title: Text(
-                                                '${i.uiKey}',
+                                                i.uiKey,
                                                 style: const TextStyle(
                                                     fontSize: 12),
                                               ),
@@ -1623,16 +1623,16 @@ class _ListOfLogConfigState extends State<ListOfLogConfig> {
                                               .centralEcPhParameterList)
                                         if (i.payloadKey != 'overAll')
                                           Container(
-                                            margin: EdgeInsets.symmetric(
+                                            margin: const EdgeInsets.symmetric(
                                                 horizontal: 5),
                                             width: 250,
                                             child: ListTile(
-                                              leading: Icon(
+                                              leading: const Icon(
                                                 Icons.adb_outlined,
                                                 color: Colors.blueGrey,
                                               ),
                                               title: Text(
-                                                '${i.uiKey}',
+                                                i.uiKey,
                                                 style: const TextStyle(
                                                     fontSize: 12),
                                               ),
@@ -1748,16 +1748,16 @@ class _ListOfLogConfigState extends State<ListOfLogConfig> {
                                               .localEcPhParameterList)
                                         if (i.payloadKey != 'overAll')
                                           Container(
-                                            margin: EdgeInsets.symmetric(
+                                            margin: const EdgeInsets.symmetric(
                                                 horizontal: 5),
                                             width: 250,
                                             child: ListTile(
-                                              leading: Icon(
+                                              leading: const Icon(
                                                 Icons.adb_outlined,
                                                 color: Colors.blueGrey,
                                               ),
                                               title: Text(
-                                                '${i.uiKey}',
+                                                i.uiKey,
                                                 style: const TextStyle(
                                                     fontSize: 12),
                                               ),
@@ -1831,7 +1831,7 @@ class _ListOfLogConfigState extends State<ListOfLogConfig> {
                                   ),
                                 ],
                               ),
-                              SizedBox(
+                              const SizedBox(
                                 height: 50,
                               ),
                             ],

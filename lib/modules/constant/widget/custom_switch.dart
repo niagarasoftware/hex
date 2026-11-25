@@ -7,12 +7,17 @@ class CustomSwitch extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Switch(
-      activeColor: Theme.of(context).primaryColorLight,
+      activeThumbColor: colorScheme.onPrimary,
       value: value,
       onChanged: onChanged,
-      activeTrackColor: Theme.of(context).primaryColorLight,
-      thumbIcon: WidgetStateProperty.all(Icon(Icons.circle, color: value ? Colors.white : Colors.grey, size: 25,)),
+      activeTrackColor: colorScheme.primary,
+      thumbIcon: WidgetStateProperty.all(Icon(
+        Icons.circle,
+        color: value ? colorScheme.onPrimary : colorScheme.outline,
+        size: 25,
+      )),
       trackOutlineWidth: WidgetStateProperty.all(0.0),
       materialTapTargetSize: MaterialTapTargetSize.padded,
     );

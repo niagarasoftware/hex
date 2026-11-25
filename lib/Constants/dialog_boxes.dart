@@ -47,7 +47,7 @@ void simpleDialogBox({
                 height: 100,
                 child: Image.asset('assets/Images/Png/no_data.png'),
               ),
-              SizedBox(height: 10,),
+              const SizedBox(height: 10,),
               Text(
                 message,
                 style: const TextStyle(fontSize: 16, color: Color(0xff727272)),

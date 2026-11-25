@@ -22,108 +22,211 @@ class WideLayout extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(
-      mainAxisSize: MainAxisSize.min,
       children: [
-        _companyLogo(context),
-        _buildLoginInputs(context),
+        _buildBrandingSection(context),
+        _buildAuthenticationFormPanel(context),
       ],
     );
   }
 
-  Widget _companyLogo(BuildContext context) {
+  Widget _buildBrandingSection(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Expanded(
       child: Container(
         height: double.infinity,
-        color: Theme.of(context).primaryColorDark,
-        child: isOro ? Padding(
-          padding: const EdgeInsets.all(50.0),
-          child: SvgPicture.asset('assets/svg_images/login_left_picture.svg'),
-        ) : isATel ? Padding(
-          padding: const EdgeInsets.all(50.0),
-          child: SvgPicture.asset('assets/svg_images/agritel_left_picture.svg'),
-        ) : const Image(
-          image: AssetImage('assets/png/lk_login_left_picture.png'),
-          fit: BoxFit.fill,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              colorScheme.primary,
+              colorScheme.primary.withValues(alpha: 0.85),
+              colorScheme.surfaceContainerHighest,
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+        padding: const EdgeInsets.all(48.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            // Top Logo
+          const SizedBox(height: 50,),
+            // Center IoT Highlights
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Smart Irrigation ',
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white,
+                    letterSpacing: -0.5,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                const Text(
+                  AppConstants.appShortContent,
+                  style: TextStyle(
+                    fontSize: 14.5,
+                    color: Colors.white70,
+                    height: 1.5,
+                  ),
+                ),
+                const SizedBox(height: 28),
+                Wrap(
+                  spacing: 12,
+                  runSpacing: 12,
+                  children: [
+                    _buildFeatureChip(
+                      icon: Icons.water_drop_outlined,
+                      label: 'Smart Water Management',
+                    ),
+                    _buildFeatureChip(
+                      icon: Icons.sensors_outlined,
+                      label: 'Real-time Field Telemetry',
+                    ),
+                    _buildFeatureChip(
+                      icon: Icons.science_outlined,
+                      label: 'Automated Fertigation Control',
+                    ),
+                  ],
+                ),
+              ],
+            ),
+
+            // Bottom Footer
+            const Row(
+              children: [
+                Icon(Icons.verified_user_outlined,
+                    size: 16, color: Colors.white60),
+                SizedBox(width: 8),
+                Text(
+                  'Enterprise Grade Security & Encryption',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.white60,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildLoginInputs(BuildContext context) {
-    return SizedBox(
-      width: 400,
-      child: Container(
-        color: Colors.white,
-        child: Column(
-          children: [
-            isATel ? const SizedBox() :
-            isOro ? const Expanded(
-              child: Row(
-                children: [
-                  Spacer(flex: 3),
-                  Image(image: AssetImage('assets/png/login_top_corner.png')),
-                ],
-              ),
-            ) :
-            Padding(
-              padding: const EdgeInsets.only(left: 150, top: 40),
-              child: SvgPicture.asset(
-                'assets/svg_images/lk_login_top_corner.svg',
-                fit: BoxFit.fitWidth,
-              ),
+  Widget _buildFeatureChip({required IconData icon, required String label}) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 16, color: Colors.white),
+          const SizedBox(width: 8),
+          Text(
+            label,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 12.5,
+              fontWeight: FontWeight.w600,
             ),
-            Expanded(
-              flex: 5,
-              child: Padding(
-                padding: const EdgeInsets.all(10.0),
-                child: Column(
-                  children: [
-                    if (isOro)...[
-                      SvgPicture.asset('assets/svg_images/oro_logo.svg', fit: BoxFit.cover),
-                      const SizedBox(height: 10)
-                    ],
-                    if (isATel)...[
-                      const SizedBox(height: 50),
-                      const Image(
-                        image: AssetImage('assets/png/agritel_logo.png'),
-                        fit: BoxFit.cover,
-                      ),
-                      const SizedBox(height: 20)
-                    ],
-                    Padding(
-                      padding: const EdgeInsets.only(left: 5, right: 5, bottom: 5),
-                      child: Text(
-                        AppConstants.appShortContent,
-                        style: Theme.of(context).textTheme.titleMedium,
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                    const SizedBox(height: 15),
-                    const PhoneInputField(isWeb: true),
-                    const SizedBox(height: 15),
-                    const PasswordInputField(isWeb: true),
-                    if (viewModel.errorMessage.isNotEmpty)
-                      SizedBox(
-                        width: 400,
-                        child: Padding(
-                          padding: const EdgeInsets.only(left: 40, top: 4),
-                          child: Text(
-                            viewModel.errorMessage,
-                            textAlign: TextAlign.left,
-                            style: const TextStyle(color: Colors.red),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAuthenticationFormPanel(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Container(
+      width: 480,
+      height: double.infinity,
+      color: colorScheme.surface,
+      padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 48),
+      child: Center(
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              if (isOro) ...[
+                SvgPicture.asset('assets/svg_images/oro_logo.svg',
+                    height: 52, fit: BoxFit.contain),
+                const SizedBox(height: 24),
+              ],
+              if (isATel) ...[
+                const Image(
+                  image: AssetImage('assets/png/agritel_logo.png'),
+                  height: 52,
+                  fit: BoxFit.contain,
+                ),
+                const SizedBox(height: 24),
+              ],
+              Text(
+                'Welcome Back',
+                style: TextStyle(
+                  fontSize: 26,
+                  fontWeight: FontWeight.w800,
+                  color: colorScheme.onSurface,
+                  letterSpacing: -0.5,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'Sign in to access your smart irrigation controller.',
+                style: TextStyle(
+                  fontSize: 13.5,
+                  color: colorScheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 32),
+              const PhoneInputField(isWeb: true),
+              const SizedBox(height: 18),
+              const PasswordInputField(isWeb: true),
+              const SizedBox(height: 12),
+              if (viewModel.errorMessage.isNotEmpty) ...[
+                Container(
+                  width: double.infinity,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: colorScheme.errorContainer,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.error_outline_rounded,
+                          size: 18, color: colorScheme.onErrorContainer),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          viewModel.errorMessage,
+                          style: TextStyle(
+                            color: colorScheme.onErrorContainer,
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
                       ),
-                    const SizedBox(height: 20),
-                    const Padding(
-                      padding: EdgeInsets.only(left: 40),
-                      child: ContinueButton(),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-            ),
-          ],
+                const SizedBox(height: 18),
+              ],
+              const SizedBox(height: 10),
+              const ContinueButton(),
+            ],
+          ),
         ),
       ),
     );

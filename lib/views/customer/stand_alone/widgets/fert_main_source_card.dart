@@ -228,7 +228,7 @@ class _FertMainSourceCardState extends State<FertMainSourceCard> {
                                         scale: 0.6,
                                         child: Switch(
                                           value: pump.selected,
-                                          activeColor: colorScheme.onPrimary,
+                                          activeThumbColor: colorScheme.onPrimary,
                                           activeTrackColor: colorScheme.primary,
                                           inactiveTrackColor: colorScheme
                                               .surfaceContainerHighest,
@@ -510,7 +510,7 @@ class _FertTankValveCardState extends State<FertTankValveCard> {
                                         scale: 0.6,
                                         child: Switch(
                                           value: v.selected,
-                                          activeColor: colorScheme.onPrimary,
+                                          activeThumbColor: colorScheme.onPrimary,
                                           activeTrackColor: colorScheme.primary,
                                           inactiveTrackColor: colorScheme
                                               .surfaceContainerHighest,

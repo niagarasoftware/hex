@@ -43,6 +43,8 @@ class CustomSwitchTile extends StatelessWidget {
         child: Center(
           child: Switch(
             value: value,
+            activeThumbColor: Theme.of(context).colorScheme.onPrimary,
+            activeTrackColor: Theme.of(context).colorScheme.primary,
             onChanged: onChanged,
           ),
         ),

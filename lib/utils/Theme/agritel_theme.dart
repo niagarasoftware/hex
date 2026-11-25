@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'oro_theme.dart';
 
 Color primaryDark = const Color(0xFF155A03);
 Color primary = const Color(0xFF1A7103);
@@ -14,6 +15,7 @@ class ATelTheme {
     primaryColor: primary,
     primaryColorLight: primaryLight,
     scaffoldBackgroundColor:  primaryBackground,
+    extensions: const [OroTheme.lightCustomColors],
     appBarTheme: AppBarTheme(
       backgroundColor: primary,
       titleTextStyle: const TextStyle(color: Colors.white, fontSize: 22),
@@ -135,6 +137,7 @@ class ATelTheme {
     primaryColor: primary,
     primaryColorLight: primaryLight,
     scaffoldBackgroundColor:  primaryBackground,
+    extensions: const [OroTheme.lightCustomColors],
     appBarTheme: AppBarTheme(
       backgroundColor: primary,
       titleTextStyle: const TextStyle(color: Colors.white, fontSize: 22),
@@ -170,7 +173,6 @@ class ATelTheme {
         side: const BorderSide(color: Colors.white),
       ),
     ),
-    dialogBackgroundColor: Colors.white,
     dialogTheme: DialogThemeData(
       shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(0)

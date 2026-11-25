@@ -113,7 +113,7 @@ class _AddHandlerSheetState extends State<AddHandlerSheet> {
                         ),
                       ),
                     );
-                  }).toList(),
+                  }),
               ],
             ),
     );
@@ -196,7 +196,7 @@ class _AddServicePersonSheetState extends State<AddServicePersonSheet> {
                   ),
                 ),
               );
-            }).toList(),
+            }),
         ],
       ),
     );
