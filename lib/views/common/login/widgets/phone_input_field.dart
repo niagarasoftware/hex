@@ -11,25 +11,72 @@ class PhoneInputField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final viewModel = Provider.of<LoginViewModel>(context);
-    return IntlPhoneField(
-      decoration: InputDecoration(
-        hintText: 'Mobile number',
-        border: const OutlineInputBorder(),
-        suffixIcon: IconButton(
-          icon: const Icon(Icons.clear, color: Colors.red),
-          onPressed: () => viewModel.mobileNoController.clear(),
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(bottom: 6, left: 2),
+          child: Text(
+            'Mobile Number',
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.bold,
+              color: colorScheme.onSurface,
+            ),
+          ),
         ),
-        icon: Icon(Icons.phone_outlined, color: isWeb? Colors.black : Colors.white),
-        filled: true,
-        fillColor: Colors.white,
-        contentPadding: const EdgeInsets.symmetric(vertical: 18, horizontal: 12),
-        counterText: '',
-      ),
-      languageCode: "en",
-      initialCountryCode: 'IN',
-      controller: viewModel.mobileNoController,
-      onChanged: (phone) {},
-      onCountryChanged: (country) => viewModel.countryCode = country.dialCode,
+        IntlPhoneField(
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: colorScheme.onSurface,
+          ),
+          dropdownTextStyle: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: colorScheme.onSurface,
+          ),
+          decoration: InputDecoration(
+            hintText: 'Enter mobile number',
+            hintStyle: TextStyle(
+              fontSize: 13.5,
+              color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+            ),
+            filled: true,
+            fillColor: colorScheme.surfaceContainerLow,
+            contentPadding:
+            const EdgeInsets.symmetric(vertical: 16, horizontal: 14),
+            counterText: '',
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: colorScheme.outlineVariant),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: colorScheme.outlineVariant),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: colorScheme.primary, width: 1.5),
+            ),
+            suffixIcon: viewModel.mobileNoController.text.isNotEmpty
+                ? IconButton(
+              icon: Icon(Icons.close_rounded,
+                  size: 18, color: colorScheme.error),
+              onPressed: () => viewModel.mobileNoController.clear(),
+            )
+                : null,
+          ),
+          languageCode: "en",
+          initialCountryCode: 'IN',
+          controller: viewModel.mobileNoController,
+          onChanged: (phone) {},
+          onCountryChanged: (country) =>
+          viewModel.countryCode = country.dialCode,
+        ),
+      ],
     );
   }
 }

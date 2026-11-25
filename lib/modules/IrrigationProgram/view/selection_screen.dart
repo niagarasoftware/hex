@@ -18,7 +18,7 @@ final greenLight = const Color(0xffECF5EF).withValues(alpha: 0.5);
 final greenDark = const Color(0xff10E196).withValues(alpha: 0.35);
 const yellowLight = Color(0xffFFF7E5);
 const yellowDark = Color(0xfffdce7f);
-final primaryColorLight = const Color(0xFFF5F3FF);
+const primaryColorLight = Color(0xFFF5F3FF);
 
 class SelectionScreen extends StatefulWidget{
   final List<NodeListModel> nodeList;
@@ -140,7 +140,7 @@ class _SelectionScreenState extends State<SelectionScreen> with SingleTickerProv
                 if(!allSelectedValvesExist)
                   buildSection(
                     title: "Main Valves",
-                    dataList: irrigationLine!.map((e) => e.mainValve ?? []).expand((list) => list).toList(),
+                    dataList: irrigationLine.map((e) => e.mainValve ?? []).expand((list) => list).toList(),
                     lightColor: yellowLight,
                     darkColor: yellowDark,
                     image: Image.asset(
@@ -803,13 +803,14 @@ class _SelectionScreenState extends State<SelectionScreen> with SingleTickerProv
     EdgeInsets? padding,
     void Function()? onTap,
   }) {
-    final primaryPurple = const Color(0xFF5B21B6);
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     return Container(
       padding: padding ?? const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
-        color: color ?? Colors.white,
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        color: color ?? colorScheme.surface,
+        border: Border.all(color: colorScheme.outlineVariant),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.02),
@@ -822,7 +823,7 @@ class _SelectionScreenState extends State<SelectionScreen> with SingleTickerProv
         title: Text(
           title,
           style: TextStyle(
-            color: textColor ?? const Color(0xFF0F172A),
+            color: textColor ?? colorScheme.onSurface,
             fontWeight: FontWeight.bold,
             fontSize: 14,
           ),
@@ -830,7 +831,7 @@ class _SelectionScreenState extends State<SelectionScreen> with SingleTickerProv
         subtitle: subTitle != null
             ? Text(
                 '$subTitle',
-                style: const TextStyle(color: Color(0xFF64748B), fontSize: 12),
+                style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 12),
               )
             : null,
         contentPadding: const EdgeInsets.symmetric(horizontal: 8),
@@ -839,10 +840,10 @@ class _SelectionScreenState extends State<SelectionScreen> with SingleTickerProv
           width: 40,
           height: 40,
           decoration: BoxDecoration(
-            color: const Color(0xFFF5F3FF),
+            color: colorScheme.primaryContainer,
             borderRadius: BorderRadius.circular(10),
           ),
-          child: Icon(icon, color: primaryPurple, size: 20),
+          child: Icon(icon, color: colorScheme.primary, size: 20),
         ),
         trailing: trailing,
         onTap: onTap,

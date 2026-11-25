@@ -12,11 +12,11 @@ import 'getUserInformationScreen.dart';
 
 class CropListScreen extends StatefulWidget {
   const CropListScreen({
-    Key? key,
+    super.key,
     required this.userId,
     required this.controllerId,
     this.isInsideTabs = false,
-  }) : super(key: key);
+  });
 
   final int userId, controllerId;
   final bool isInsideTabs;

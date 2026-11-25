@@ -13,8 +13,7 @@ import 'package:hex/utils/helpers/log_print.dart';
 
 
 class ServiceRequestsHistory extends StatefulWidget {
-  const ServiceRequestsHistory({
-    Key? key,
+  const ServiceRequestsHistory({super.key, 
     required this.userId, required this.name,
   });
   final int userId;
@@ -29,6 +28,7 @@ class _ServiceRequestsHistoryState extends State<ServiceRequestsHistory> {
   ServiceDealerModel _serviceDealerModel = ServiceDealerModel();
   DateFormat dateFormat = DateFormat("yyyy-MM-dd");
 
+  @override
   void initState() {
     // TODO: implement initState
     super.initState();
@@ -53,7 +53,7 @@ class _ServiceRequestsHistoryState extends State<ServiceRequestsHistory> {
     }
     catch (e, stackTrace) {
       AppLog.log(' Error overAll getData => ${e.toString()}');
-      AppLog.log(' trace overAll getData  => ${stackTrace}');
+      AppLog.log(' trace overAll getData  => $stackTrace');
     }
   }
 
@@ -67,7 +67,7 @@ class _ServiceRequestsHistoryState extends State<ServiceRequestsHistory> {
           style: TextStyle(fontWeight: FontWeight.normal, color: Colors.black),
         ),
       );
-    } else if (_serviceDealerModel.data!.length <= 0) {
+    } else if (_serviceDealerModel.data!.isEmpty) {
       return const Center(
         child: Text(
           '',
@@ -214,7 +214,7 @@ class _ServiceRequestsHistoryState extends State<ServiceRequestsHistory> {
       "estimatedDate": estimatedDate,
       "status": status,
       "closedDate":
-      status == 'Closed' ? '${dateFormat.format(DateTime.now())}' : null,
+      status == 'Closed' ? dateFormat.format(DateTime.now()) : null,
       "modifyUser": userid
     };
     final response =

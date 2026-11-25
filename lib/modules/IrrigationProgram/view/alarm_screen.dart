@@ -55,7 +55,8 @@ class _AlarmScreenState extends State<AlarmScreen> {
   @override
   Widget build(BuildContext context) {
     irrigationProgramMainProvider = Provider.of<IrrigationProgramMainProvider>(context, listen: true);
-    final primaryPurple = const Color(0xFF5B21B6);
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -66,7 +67,8 @@ class _AlarmScreenState extends State<AlarmScreen> {
             padding: const EdgeInsets.only(right: 4, bottom: 12),
             child: FilledButton.icon(
               style: FilledButton.styleFrom(
-                backgroundColor: primaryPurple,
+                backgroundColor: colorScheme.primary,
+                foregroundColor: colorScheme.onPrimary,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                 padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
               ),
@@ -101,7 +103,8 @@ class _AlarmScreenState extends State<AlarmScreen> {
   }
 
   Widget _buildAlarmListTile(int index) {
-    final primaryPurple = const Color(0xFF5B21B6);
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final iconIndex = alarmList.indexOf(alarmList[index]);
     final icon = iconIndex < iconList.length ? iconList[iconIndex] : Icons.warning_amber_outlined;
 
@@ -109,8 +112,8 @@ class _AlarmScreenState extends State<AlarmScreen> {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
-        color: Colors.white,
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        color: colorScheme.surface,
+        border: Border.all(color: colorScheme.outlineVariant),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.02),
@@ -124,15 +127,16 @@ class _AlarmScreenState extends State<AlarmScreen> {
         horizontalTitleGap: 16,
         title: Text(
           alarmList[index].name,
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF0F172A)),
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: colorScheme.onSurface),
         ),
-        subtitle: const Text(
+        subtitle: Text(
           "Trigger system alert when condition occurs",
-          style: TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+          style: TextStyle(fontSize: 11, color: colorScheme.onSurfaceVariant),
         ),
         trailing: Switch(
           value: alarmList[index].value,
-          activeColor: primaryPurple,
+          activeThumbColor: colorScheme.onPrimary,
+          activeTrackColor: colorScheme.primary,
           onChanged: (newValue) {
             setState(() {
               final newIndex = irrigationProgramMainProvider.newAlarmList!.alarmList.indexWhere((e) => e.sNo == alarmList[index].sNo);
@@ -144,17 +148,17 @@ class _AlarmScreenState extends State<AlarmScreen> {
           width: 42,
           height: 42,
           decoration: BoxDecoration(
-            color: const Color(0xFFF5F3FF),
+            color: colorScheme.primaryContainer,
             borderRadius: BorderRadius.circular(12),
           ),
           child: Center(
             child: icon is IconData
-                ? Icon(icon, color: primaryPurple, size: 22)
+                ? Icon(icon, color: colorScheme.primary, size: 22)
                 : SvgPicture.asset(
                     icon as String,
                     width: 22,
                     height: 22,
-                    colorFilter: ColorFilter.mode(primaryPurple, BlendMode.srcIn),
+                    colorFilter: ColorFilter.mode(colorScheme.primary, BlendMode.srcIn),
                   ),
           ),
         ),

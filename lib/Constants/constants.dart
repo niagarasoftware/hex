@@ -32,7 +32,7 @@ class Constants {
               siteFormation[siteKey] = siteFormation[siteKey] is List<dynamic>
                   ? (siteFormation[siteKey] as List<dynamic>).map((element) {
                 if(element is double){
-                  print("element : ${element}");
+                  print("element : $element");
                   return configObject.firstWhere((object) => object['sNo'] == element);
                 }else{
                   var object = configObject.firstWhere((object) => object['sNo'] == element['sNo']);

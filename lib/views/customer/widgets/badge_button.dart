@@ -16,13 +16,14 @@ class BadgeButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Stack(
       children: [
         IconButton(
           tooltip: 'Alarm',
           onPressed: onPressed,
-          icon: Icon(icon, color: isOMS ? Colors.black : Colors.white,),
-          hoverColor: isOMS ? Colors.black12: Theme.of(context).primaryColorLight,
+          icon: Icon(icon, color: isOMS ? colorScheme.onSurface : colorScheme.onPrimary,),
+          hoverColor: isOMS ? colorScheme.onSurface.withOpacity(0.12) : colorScheme.onPrimary.withOpacity(0.12),
         ),
         if (badgeNumber > 0)
           Positioned(

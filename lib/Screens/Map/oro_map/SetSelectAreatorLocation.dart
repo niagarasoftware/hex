@@ -12,7 +12,7 @@ import '../googlemap_model.dart';
 import 'getlatlong.dart';
 
 class MapScreenSetAreatorLocation extends StatefulWidget {
-  const MapScreenSetAreatorLocation({Key? key, required this.index}) : super(key: key);
+  const MapScreenSetAreatorLocation({super.key, required this.index});
   final int index;
 
   @override
@@ -28,14 +28,14 @@ class _MapScreenSetAreatorLocationState extends State<MapScreenSetAreatorLocatio
   bool _isAreaMode = false;
   late MqttPayloadProvider mqttPayloadProvider;
   ConnectedObject? _selectedObject;
-  bool _isDrawerOpen = false;
-  double _drawerWidth = 280;
+  final bool _isDrawerOpen = false;
+  final double _drawerWidth = 280;
 
   List<LatLng> _points = [];
   bool _isClosed = false;
-  Set<Marker> _vertices = {};
-  Set<Polyline> _lines = {};
-  Set<Polygon> _fill = {};
+  final Set<Marker> _vertices = {};
+  final Set<Polyline> _lines = {};
+  final Set<Polygon> _fill = {};
   BitmapDescriptor? _dotIcon;
 
   @override
@@ -162,7 +162,7 @@ class _MapScreenSetAreatorLocationState extends State<MapScreenSetAreatorLocatio
     });
 
     AppLog.log('Lat: ${_selectedObject?.lat}, Long: ${_selectedObject?.long}');
-    AppLog.log('Lat: ${lat}, Long: ${long}');
+    AppLog.log('Lat: $lat, Long: $long');
     AppLog.log('_selectedObject:${_selectedObject?.name} ${_selectedObject?.objectId}');
     _selectedObject!.lat = lat;
     _selectedObject!.long = long;
@@ -504,7 +504,7 @@ class _MapScreenSetAreatorLocationState extends State<MapScreenSetAreatorLocatio
           if (!wide) ...[
             DropdownButtonFormField<ConnectedObject>(
               isExpanded: true,
-              value: objects.contains(_selectedObject) ? _selectedObject : null,
+              initialValue: objects.contains(_selectedObject) ? _selectedObject : null,
               decoration: const InputDecoration(labelText: 'Connected object', border: OutlineInputBorder()),
               items: objects.map((o) => DropdownMenuItem(value: o,
                   child: Text(o.name ?? o.objectName ?? 'Object', overflow: TextOverflow.ellipsis))).toList(),

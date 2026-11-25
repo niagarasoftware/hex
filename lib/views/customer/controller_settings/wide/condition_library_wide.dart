@@ -40,13 +40,14 @@ class _ConditionLibraryWideState extends State<ConditionLibraryWide> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return ChangeNotifierProvider(
       create: (_) => ConditionLibraryViewModel(Repository(HttpService()))
         ..getConditionLibraryData(widget.customerId, widget.controllerId),
       child: Consumer<ConditionLibraryViewModel>(
         builder: (context, vm, _) {
           return Scaffold(
-            backgroundColor: const Color(0xFFFBFBFD),
+            backgroundColor: colorScheme.surfaceContainerLowest,
             body: Column(
               children: [
                 _buildHeader(context, vm),
@@ -65,30 +66,31 @@ class _ConditionLibraryWideState extends State<ConditionLibraryWide> {
   }
 
   Widget _buildHeader(BuildContext context, ConditionLibraryViewModel vm) {
+    final colorScheme = Theme.of(context).colorScheme;
     final conditionCount = vm.isLoading ? 0 : vm.clData.cnLibrary.condition.length;
     final limit = vm.isLoading ? 0 : vm.clData.defaultData.conditionLimit;
     final canCreate = conditionCount != limit && !vm.isLoading;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-      color: Colors.white,
+      color: colorScheme.surface,
       child: Row(
         children: [
           Container(
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              color: const Color(0xFFF3EEFF),
+              color: colorScheme.primaryContainer,
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.layers_rounded,
-              color: Color(0xFF5B22B6),
+              color: colorScheme.primary,
               size: 24,
             ),
           ),
           const SizedBox(width: 14),
-          const Column(
+          Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -97,16 +99,16 @@ class _ConditionLibraryWideState extends State<ConditionLibraryWide> {
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF0F172A),
+                  color: colorScheme.onSurface,
                 ),
               ),
-              SizedBox(height: 2),
+              const SizedBox(height: 2),
               Text(
                 'Create and manage device conditions',
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.normal,
-                  color: Color(0xFF64748B),
+                  color: colorScheme.onSurfaceVariant,
                 ),
               ),
             ],
@@ -117,14 +119,14 @@ class _ConditionLibraryWideState extends State<ConditionLibraryWide> {
             width: 220,
             height: 38,
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: colorScheme.surface,
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: const Color(0xFFE2E8F0)),
+              border: Border.all(color: colorScheme.outlineVariant),
             ),
             padding: const EdgeInsets.symmetric(horizontal: 12),
             child: Row(
               children: [
-                const Icon(Icons.search_rounded, size: 18, color: Color(0xFF94A3B8)),
+                Icon(Icons.search_rounded, size: 18, color: colorScheme.onSurfaceVariant),
                 const SizedBox(width: 8),
                 Expanded(
                   child: TextField(
@@ -134,14 +136,14 @@ class _ConditionLibraryWideState extends State<ConditionLibraryWide> {
                         _searchQuery = val.trim().toLowerCase();
                       });
                     },
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       hintText: 'Search condition...',
-                      hintStyle: TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
+                      hintStyle: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant),
                       border: InputBorder.none,
                       isDense: true,
                       contentPadding: EdgeInsets.zero,
                     ),
-                    style: const TextStyle(fontSize: 12, color: Color(0xFF0F172A)),
+                    style: TextStyle(fontSize: 12, color: colorScheme.onSurface),
                   ),
                 ),
                 if (_searchQuery.isNotEmpty)
@@ -152,7 +154,7 @@ class _ConditionLibraryWideState extends State<ConditionLibraryWide> {
                         _searchQuery = '';
                       });
                     },
-                    child: const Icon(Icons.close, size: 16, color: Color(0xFF94A3B8)),
+                    child: Icon(Icons.close, size: 16, color: colorScheme.onSurfaceVariant),
                   ),
               ],
             ),
@@ -176,16 +178,16 @@ class _ConditionLibraryWideState extends State<ConditionLibraryWide> {
               width: 38,
               height: 38,
               decoration: BoxDecoration(
-                color: _filterType == 'All' ? Colors.white : const Color(0xFFF3EEFF),
+                color: _filterType == 'All' ? colorScheme.surface : colorScheme.primaryContainer,
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(
-                  color: _filterType == 'All' ? const Color(0xFFE2E8F0) : const Color(0xFF5B22B6),
+                  color: _filterType == 'All' ? colorScheme.outlineVariant : colorScheme.primary,
                 ),
               ),
               child: Icon(
                 Icons.filter_alt_outlined,
                 size: 18,
-                color: _filterType == 'All' ? const Color(0xFF64748B) : const Color(0xFF5B22B6),
+                color: _filterType == 'All' ? colorScheme.onSurfaceVariant : colorScheme.primary,
               ),
             ),
           ),
@@ -194,15 +196,15 @@ class _ConditionLibraryWideState extends State<ConditionLibraryWide> {
           ElevatedButton.icon(
             onPressed: canCreate ? () => vm.createNewCondition() : null,
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF5B22B6),
-              foregroundColor: Colors.white,
-              disabledBackgroundColor: Colors.grey.shade300,
-              disabledForegroundColor: Colors.grey.shade500,
+              backgroundColor: colorScheme.primary,
+              foregroundColor: colorScheme.onPrimary,
+              disabledBackgroundColor: colorScheme.surfaceContainerHigh,
+              disabledForegroundColor: colorScheme.onSurfaceVariant,
               elevation: 0,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             ),
-            icon: const Icon(Icons.add, size: 18, color: Colors.white),
+            icon: Icon(Icons.add, size: 18, color: colorScheme.onPrimary),
             label: const Text(
               'Create Condition',
               style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
@@ -309,11 +311,12 @@ class _ConditionLibraryWideState extends State<ConditionLibraryWide> {
     Condition condition,
     int index,
   ) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFF1F5F9)),
+        border: Border.all(color: colorScheme.outlineVariant),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.02),
@@ -328,12 +331,12 @@ class _ConditionLibraryWideState extends State<ConditionLibraryWide> {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // Left Purple Accent Line
+            // Left Accent Line
             Container(
               width: 3.5,
               height: 46,
               decoration: BoxDecoration(
-                color: const Color(0xFF5B22B6),
+                color: colorScheme.primary,
                 borderRadius: BorderRadius.circular(4),
               ),
             ),
@@ -475,7 +478,7 @@ class _ConditionLibraryWideState extends State<ConditionLibraryWide> {
             fit: BoxFit.contain,
             child: Switch(
               value: condition.status,
-              activeColor: const Color(0xFF22C55E),
+              activeThumbColor: const Color(0xFF22C55E),
               activeTrackColor: const Color(0xFFBBF7D0),
               inactiveThumbColor: Colors.white,
               inactiveTrackColor: const Color(0xFFCBD5E1),
@@ -495,6 +498,7 @@ class _ConditionLibraryWideState extends State<ConditionLibraryWide> {
   }
 
   Widget _buildTypeRadioOption(String label, bool isSelected, VoidCallback onTap) {
+    final colorScheme = Theme.of(context).colorScheme;
     return InkWell(
       borderRadius: BorderRadius.circular(4),
       onTap: onTap,
@@ -509,10 +513,10 @@ class _ConditionLibraryWideState extends State<ConditionLibraryWide> {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: isSelected ? const Color(0xFF5B22B6) : const Color(0xFFCBD5E1),
+                  color: isSelected ? colorScheme.primary : colorScheme.outline,
                   width: isSelected ? 4 : 1.5,
                 ),
-                color: Colors.white,
+                color: colorScheme.surface,
               ),
             ),
             const SizedBox(width: 4),
@@ -521,7 +525,7 @@ class _ConditionLibraryWideState extends State<ConditionLibraryWide> {
               style: TextStyle(
                 fontSize: 11.5,
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                color: isSelected ? const Color(0xFF0F172A) : const Color(0xFF334155),
+                color: isSelected ? colorScheme.onSurface : colorScheme.onSurfaceVariant,
               ),
             ),
           ],
@@ -788,19 +792,20 @@ class _ConditionLibraryWideState extends State<ConditionLibraryWide> {
     final isNumericSensor = isSensor &&
         !(cSNo.toString().startsWith('23.') || cSNo.toString().startsWith('40.'));
 
+    final colorScheme = Theme.of(context).colorScheme;
     final valLower = condition.value.toLowerCase().trim();
     Color bg;
     Color textColor;
 
     if (valLower == 'true' || valLower == 'high') {
-      bg = const Color(0xFFDCFCE7);
-      textColor = const Color(0xFF166534);
+      bg = colorScheme.tertiaryContainer;
+      textColor = colorScheme.onTertiaryContainer;
     } else if (valLower == 'false' || valLower == 'low') {
-      bg = const Color(0xFFFEE2E2);
-      textColor = const Color(0xFF991B1B);
+      bg = colorScheme.errorContainer;
+      textColor = colorScheme.onErrorContainer;
     } else {
-      bg = const Color(0xFFEDE9FE);
-      textColor = const Color(0xFF5B22B6);
+      bg = colorScheme.primaryContainer;
+      textColor = colorScheme.primary;
     }
 
     if (isNumericSensor) {
@@ -913,8 +918,8 @@ class _ConditionLibraryWideState extends State<ConditionLibraryWide> {
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF5B22B6),
-                foregroundColor: Colors.white,
+                backgroundColor: Theme.of(context).colorScheme.primary,
+                foregroundColor: Theme.of(context).colorScheme.onPrimary,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
               ),
               onPressed: () {
@@ -1184,8 +1189,8 @@ class _ConditionLibraryWideState extends State<ConditionLibraryWide> {
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF5B22B6),
-              foregroundColor: Colors.white,
+              backgroundColor: Theme.of(context).colorScheme.primary,
+              foregroundColor: Theme.of(context).colorScheme.onPrimary,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             ),
             onPressed: () {
@@ -1204,6 +1209,7 @@ class _ConditionLibraryWideState extends State<ConditionLibraryWide> {
 
   void _confirmDelete(BuildContext context, ConditionLibraryViewModel vm, int index) {
     final condition = vm.clData.cnLibrary.condition[index];
+    final colorScheme = Theme.of(context).colorScheme;
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -1219,7 +1225,7 @@ class _ConditionLibraryWideState extends State<ConditionLibraryWide> {
               Navigator.of(ctx).pop();
               vm.removeCondition(index);
             },
-            child: const Text('Remove', style: TextStyle(color: Colors.red)),
+            child: Text('Remove', style: TextStyle(color: colorScheme.error)),
           ),
         ],
       ),
@@ -1227,33 +1233,34 @@ class _ConditionLibraryWideState extends State<ConditionLibraryWide> {
   }
 
   Widget _buildBottomBar(BuildContext context, ConditionLibraryViewModel vm) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(top: BorderSide(color: Color(0xFFF1F5F9))),
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        border: Border(top: BorderSide(color: colorScheme.outlineVariant)),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
           Text(
             'Total: ${vm.clData.cnLibrary.condition.length} of ${vm.clData.defaultData.conditionLimit}',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w600,
-              color: Color(0xFF0F172A),
+              color: colorScheme.onSurface,
             ),
           ),
           const SizedBox(width: 16),
           ElevatedButton.icon(
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF5B22B6),
-              foregroundColor: Colors.white,
+              backgroundColor: colorScheme.primary,
+              foregroundColor: colorScheme.onPrimary,
               elevation: 0,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
             ),
-            icon: const Icon(Icons.save_outlined, size: 18, color: Colors.white),
+            icon: Icon(Icons.save_outlined, size: 18, color: colorScheme.onPrimary),
             label: const Text(
               'Save',
               style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),

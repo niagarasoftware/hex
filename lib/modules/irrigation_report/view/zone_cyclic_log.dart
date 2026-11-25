@@ -775,26 +775,26 @@ class _ZoneCyclicLogState extends State<ZoneCyclicLog> {
       color: Colors.white,
       child: Row(
         children: [
-          Icon(
+          const Icon(
             Icons.date_range,
             size: 18,
-            color: const Color(0xFF5B21B6),
+            color: Color(0xFF5B21B6),
           ),
           const SizedBox(width: 6),
           Text(
             range,
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w600,
-              color: const Color(0xFF5B21B6),
+              color: Color(0xFF5B21B6),
             ),
           ),
           const Spacer(),
           IconButton(
             tooltip: 'Refresh',
-            icon: Icon(
+            icon: const Icon(
               Icons.refresh,
-              color: const Color(0xFF5B21B6),
+              color: Color(0xFF5B21B6),
             ),
             onPressed: getData,
           ),
@@ -808,8 +808,8 @@ class _ZoneCyclicLogState extends State<ZoneCyclicLog> {
   // ------------------------------------------------------------
 
   Widget _buildTable(List<Map<String, dynamic>> pageRows) {
-    final Color headBg =
-    const Color(0xFFEDE9FE);
+    const Color headBg =
+    Color(0xFFEDE9FE);
 
     return Container(
       margin: const EdgeInsets.all(8),
@@ -853,12 +853,12 @@ class _ZoneCyclicLogState extends State<ZoneCyclicLog> {
                       vertical: 14,
                     ),
                     color: headBg,
-                    child: Text(
+                    child: const Text(
                       'General',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
-                        color: const Color(0xFF5B21B6),
+                        color: Color(0xFF5B21B6),
                       ),
                     ),
                   ),
@@ -955,10 +955,10 @@ class _ZoneCyclicLogState extends State<ZoneCyclicLog> {
         children: [
           Text(
             '${date["date"] ?? "-"}',
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.bold,
-              color: const Color(0xFF5B21B6),
+              color: Color(0xFF5B21B6),
             ),
           ),
           _summaryChip(
@@ -1083,8 +1083,8 @@ class _ZoneCyclicLogState extends State<ZoneCyclicLog> {
       int end,
       int totalPages,
       ) {
-    final Color barColor =
-        const Color(0xFF5B21B6);
+    const Color barColor =
+        Color(0xFF5B21B6);
 
     Widget pageBtn(IconData icon, VoidCallback? onTap) {
       return InkWell(

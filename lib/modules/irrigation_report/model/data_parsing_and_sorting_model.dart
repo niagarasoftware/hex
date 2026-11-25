@@ -2094,7 +2094,7 @@ class IrrigationLogModel {
     var graphData = [];
     var fixedColumn = 'Date';
     generalColumn.removeWhere((item) => item == 'Date');
-    print("noOfDate  => ${noOfDate}");
+    print("noOfDate  => $noOfDate");
     for(var findDate in noOfDate){
       if(findDate['show'] == true){
         graphData.add({

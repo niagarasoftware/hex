@@ -1031,7 +1031,7 @@ class _SensorHourlyReportPageState extends State<SensorHourlyReportPage> {
         headingRowHeight: 50,
 
         headingRowColor:
-        MaterialStateProperty.all(
+        WidgetStateProperty.all(
           Colors.teal,
         ),
 
@@ -1131,11 +1131,11 @@ class _SensorHourlyReportPageState extends State<SensorHourlyReportPage> {
 
             return DataRow(
               color:
-              MaterialStateProperty
+              WidgetStateProperty
                   .resolveWith<
                   Color?>(
                     (Set<
-                    MaterialState>
+                    WidgetState>
                 states) {
                   return rowColor;
                 },

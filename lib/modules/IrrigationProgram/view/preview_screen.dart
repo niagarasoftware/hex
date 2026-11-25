@@ -837,7 +837,7 @@ class _PreviewScreenState extends State<PreviewScreen> {
                     return const Color(0xff15C0E6);
                   }
                 },
-                xValueMapper: (ChartData data, _) => "${data.sequenceName}",
+                xValueMapper: (ChartData data, _) => data.sequenceName,
                 highValueMapper: (ChartData data, _) => data.preValueHigh,
                 lowValueMapper: (ChartData data, _) => data.preValueLow,
               ),
@@ -853,7 +853,7 @@ class _PreviewScreenState extends State<PreviewScreen> {
                     return const Color(0xff10E196);
                   }
                 },
-                xValueMapper: (ChartData data, _) => "${data.sequenceName}",
+                xValueMapper: (ChartData data, _) => data.sequenceName,
                 highValueMapper: (ChartData data, _) => data.waterValueHigh,
                 lowValueMapper: (ChartData data, _) => data.waterValueLow,
               ),
@@ -1104,7 +1104,7 @@ class _PreviewScreenState extends State<PreviewScreen> {
     String? title6, itemList5, itemList6, String? title7, itemList7, bool showRow2 = false, bool showWidget2 = false}) {
     print("title3$title3");
     print("itemList3$itemList3");
-    print("itemList3${itemList3}");
+    print("itemList3$itemList3");
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1326,14 +1326,15 @@ Widget buildIndividualRow(item) {
 }
 
 Widget buildItemsCard({required BuildContext context, required String title, required Widget child, margin, padding}){
-  const primaryPurple = Color(0xFF5B21B6);
+  final theme = Theme.of(context);
+  final colorScheme = theme.colorScheme;
   return Container(
     margin: margin ?? const EdgeInsets.all(8),
     padding: padding ?? const EdgeInsets.all(12),
     decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
-        color: Colors.white,
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        color: colorScheme.surface,
+        border: Border.all(color: colorScheme.outlineVariant),
         boxShadow: customBoxShadow
     ),
     child: Column(
@@ -1347,12 +1348,12 @@ Widget buildItemsCard({required BuildContext context, required String title, req
               width: 32,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: const Color(0xFFF5F3FF),
+                color: colorScheme.primaryContainer,
               ),
               child: Center(
                 child: Text(
                   (title.split(" ").first[0]+title.split(" ").last[0]).toUpperCase(),
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: primaryPurple),
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: colorScheme.primary),
                 ),
               ),
             ),
@@ -1408,7 +1409,7 @@ dynamic dateFormatConversion(item) {
   return dateFormat.format(DateTime.parse(item));
 }
 
-Widget _buildScheduleDetailsItem(scheduleType, item, {string = false, TextAlign textAlign = TextAlign.start}) {
+Widget _buildScheduleDetailsItem(scheduleType, item, {string = false}) {
   return Text(
       string
           ? '${scheduleType.schedule[item]}'

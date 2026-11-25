@@ -4,11 +4,9 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:hex/views/common/user_dashboard/widgets/sensor_widget.dart';
 import 'package:hex/views/common/user_dashboard/widgets/valve_widget.dart';
-import 'package:provider/provider.dart';
 
 import '../../../../Widgets/pump_widget.dart';
 import '../../../../models/customer/site_model.dart';
-import '../../../../view_models/customer/customer_screen_controller_view_model.dart';
 import '../../../customer/widgets/agitator_widget.dart';
 import '../../../customer/widgets/booster_widget.dart';
 import '../../../customer/widgets/channel_widget.dart';
@@ -21,7 +19,6 @@ import '../../../customer/widgets/main_valve_widget.dart';
 import '../../../customer/widgets/source_column_widget.dart';
 import 'customer_widget_builders.dart';
 import 'fert_tank_system_widget.dart';
-import 'fertilizer_live_panel.dart';
 
 class IrrigationLineWide extends StatelessWidget {
   final int customerId, controllerId, modelId;

@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'dart:html' as html;
-import 'dart:typed_data';
 import 'package:excel/excel.dart';
 import 'package:flutter/foundation.dart';
 import 'irrigation_log_pdf_builder.dart';

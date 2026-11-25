@@ -19,7 +19,6 @@ import '../../SystemDefinitions/widgets/custom_snack_bar.dart';
 import '../../../services/http_service.dart';
 import '../widgets/custom_sliding_button.dart';
 import '../widgets/progress_dialog_ecogem.dart';
-import 'conditions_screen.dart';
 
 class AdditionalDataScreen extends StatefulWidget {
   final int serialNumber;
@@ -623,13 +622,15 @@ Widget buildListTile({
   EdgeInsets? padding,
   void Function()? onTap,
 }) {
-  final primaryPurple = const Color(0xFF5B21B6);
+  final theme = Theme.of(context);
+  final colorScheme = theme.colorScheme;
+
   return Container(
     padding: padding ?? const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
     decoration: BoxDecoration(
       borderRadius: BorderRadius.circular(14),
-      color: color ?? Colors.white,
-      border: Border.all(color: const Color(0xFFE2E8F0)),
+      color: color ?? colorScheme.surface,
+      border: Border.all(color: colorScheme.outlineVariant),
       boxShadow: [
         BoxShadow(
           color: Colors.black.withOpacity(0.02),
@@ -639,18 +640,18 @@ Widget buildListTile({
       ],
     ),
     child: ListTile(
-      title: Text(title, style: TextStyle(color: textColor ?? const Color(0xFF0F172A), fontWeight: FontWeight.bold, fontSize: 14)),
-      subtitle: subTitle != null ? Text('$subTitle', style: const TextStyle(color: Color(0xFF64748B), fontSize: 12)) : null,
+      title: Text(title, style: TextStyle(color: textColor ?? colorScheme.onSurface, fontWeight: FontWeight.bold, fontSize: 14)),
+      subtitle: subTitle != null ? Text('$subTitle', style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 12)) : null,
       contentPadding: const EdgeInsets.symmetric(horizontal: 10),
       horizontalTitleGap: 14,
       leading: Container(
         width: 40,
         height: 40,
         decoration: BoxDecoration(
-          color: const Color(0xFFF5F3FF),
+          color: colorScheme.primaryContainer,
           borderRadius: BorderRadius.circular(10),
         ),
-        child: Icon(icon, color: primaryPurple, size: 20),
+        child: Icon(icon, color: colorScheme.primary, size: 20),
       ),
       trailing: trailing,
       onTap: onTap,

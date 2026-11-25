@@ -113,7 +113,7 @@ class EmptyState extends StatelessWidget {
           const Text('Select a ticket',
               style: TextStyle(color: ServiceRequestPalette.ink, fontSize: 17, fontWeight: FontWeight.w700)),
           const SizedBox(height: 4),
-          Text('Its timeline and details will show up here',
+          const Text('Its timeline and details will show up here',
               style: TextStyle(color: ServiceRequestPalette.mutedLight, fontSize: 13)),
         ],
       ),
@@ -261,7 +261,7 @@ class SheetShell extends StatelessWidget {
                   style: const TextStyle(
                       fontSize: 26, fontWeight: FontWeight.w800, color: ServiceRequestPalette.ink, letterSpacing: -0.5)),
               const SizedBox(height: 6),
-              Text(subtitle, style: TextStyle(color: ServiceRequestPalette.muted, fontSize: 14.5)),
+              Text(subtitle, style: const TextStyle(color: ServiceRequestPalette.muted, fontSize: 14.5)),
               const SizedBox(height: 28),
               child,
               const SizedBox(height: 28),
@@ -270,7 +270,7 @@ class SheetShell extends StatelessWidget {
                 children: [
                   TextButton(
                     onPressed: () => Navigator.pop(context),
-                    child: Text('Cancel', style: TextStyle(color: ServiceRequestPalette.muted, fontWeight: FontWeight.w600)),
+                    child: const Text('Cancel', style: TextStyle(color: ServiceRequestPalette.muted, fontWeight: FontWeight.w600)),
                   ),
                   const SizedBox(width: 12),
                   ElevatedButton(
@@ -337,7 +337,7 @@ InputDecoration fieldDecoration({String? hint}) {
   return InputDecoration(
     isDense: true,
     hintText: hint,
-    hintStyle: TextStyle(color: ServiceRequestPalette.mutedLight, fontSize: 13.5),
+    hintStyle: const TextStyle(color: ServiceRequestPalette.mutedLight, fontSize: 13.5),
     filled: true,
     fillColor: ServiceRequestPalette.field,
     contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),

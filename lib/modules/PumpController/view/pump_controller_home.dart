@@ -1,20 +1,14 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:hex/app.dart';
-import 'package:hex/modules/Preferences/view/preference_main_screen.dart';
 import 'package:hex/modules/PumpController/view/pump_dashboard_screen.dart';
 import 'package:hex/modules/PumpController/widget/custom_outline_button.dart';
 import 'package:hex/utils/constants.dart';
-import 'package:hex/views/customer/widgets/customer_fab_menu.dart';
 import 'package:provider/provider.dart';
 import 'package:table_calendar/table_calendar.dart';
 
 import '../../../models/customer/site_model.dart';
-import '../../../providers/user_provider.dart';
-import '../../../view_models/customer/customer_screen_controller_view_model.dart';
 import '../../../views/common/user_dashboard/widgets/valve_status_legend.dart';
 import '../../../views/customer/controller_settings/settings_menu_narrow.dart';
-import '../../../views/customer/controller_settings/wide/controller_settings_wide.dart';
 import '../../Logs/view/power_graph_screen.dart';
 import '../../Logs/view/pump_log.dart';
 import '../../Logs/view/pump_logs_home.dart';

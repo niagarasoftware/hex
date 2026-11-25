@@ -221,7 +221,7 @@ class ReusableSensorCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Text(
-                '$leafStatusText',
+                leafStatusText,
                 style: TextStyle(
                   color: leafStatusColor,
                   fontSize: 10,

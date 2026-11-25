@@ -66,7 +66,7 @@ class ScrollingTable extends StatefulWidget {
   final List<String> groupOptions;
   final ValueChanged<String>? onGroupChanged;
 
-  ScrollingTable({
+  const ScrollingTable({
     super.key,
     required this.fixedColumn,
     required this.fixedColumnData,
@@ -1853,7 +1853,7 @@ Widget getColumnDotLine() {
     height: 50,
     child: CustomPaint(
       painter: VerticalDotBorder(),
-      size: Size(0, 50),
+      size: const Size(0, 50),
     ),
   );
 }
@@ -1864,8 +1864,8 @@ class VerticalDotBorder extends CustomPainter {
     Paint border = Paint();
     border.color = Colors.black;
     border.strokeWidth = 0.5;
-    final double dashWidth = 5;
-    final double dashSpace = 5;
+    const double dashWidth = 5;
+    const double dashSpace = 5;
     double currentY = 0;
 
     while (currentY < size.height) {

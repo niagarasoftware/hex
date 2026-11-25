@@ -260,7 +260,7 @@ class ConstantProvider extends ChangeNotifier {
         }
       }
 
-      print("listOfFertilizerSiteObject => ${listOfFertilizerSiteObject}");
+      print("listOfFertilizerSiteObject => $listOfFertilizerSiteObject");
       // update general
       general = (defaultData['general'] as List<dynamic>).map((menu) {
         List<dynamic> oldValue = [];
@@ -301,7 +301,7 @@ class ConstantProvider extends ChangeNotifier {
       }
       normalCriticalAlarm = listOfIrrigationLineObject.map((line) {
         if (kDebugMode) {
-          print("constantOldData['normalCriticalAlarm'] : ${constantOldData}");
+          print("constantOldData['normalCriticalAlarm'] : $constantOldData");
         }
         List<dynamic> lineData =
             (constantOldData['normalCriticalAlarm'] as List<dynamic>)
@@ -539,7 +539,7 @@ class ConstantProvider extends ChangeNotifier {
       if (kDebugMode) {
         print('channel updated..');
       }
-      print("listOfFertilizerSiteObject => ${listOfFertilizerSiteObject}");
+      print("listOfFertilizerSiteObject => $listOfFertilizerSiteObject");
       // update ec ph
       if (listOfFertilizerSiteObject.isNotEmpty) {
         // find out and filter the fertilizer site has ec or ph
@@ -547,14 +547,14 @@ class ConstantProvider extends ChangeNotifier {
             defaultData: defaultData, keyName: 'ecPhSensor');
         List<dynamic> fertilizerSiteWithEcPh =
             listOfFertilizerSiteObject.where((site) {
-          print("listOfEcObject : ${listOfEcObject}");
-          print("site : ${site}");
+          print("listOfEcObject : $listOfEcObject");
+          print("site : $site");
           bool ecAvailable = listOfEcObject
               .any((ecSensor) => site['ec'].contains(ecSensor['sNo']));
           bool phAvailable = listOfPhObject
               .any((phSensor) => site['ph'].contains(phSensor['sNo']));
-          print('ecAvailable : ${ecAvailable}');
-          print('phAvailable : ${phAvailable}');
+          print('ecAvailable : $ecAvailable');
+          print('phAvailable : $phAvailable');
           if (ecAvailable || phAvailable) {
             return true;
           } else {

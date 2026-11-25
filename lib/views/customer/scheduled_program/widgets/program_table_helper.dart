@@ -206,7 +206,7 @@ class ProgramTableHelper {
                             categoryId: categoryId,
                             modelId: modelId,
                             deviceName: deviceId,
-                            categoryName: '', nodeList: [],
+                            categoryName: '', nodeList: const [],
                           ),
                         ),
                       );

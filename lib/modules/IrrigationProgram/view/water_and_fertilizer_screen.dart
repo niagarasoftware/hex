@@ -1694,7 +1694,7 @@ class _WaterAndFertilizerScreenState extends State<WaterAndFertilizerScreen> {
         leading: const Icon(Icons.add_alert,),
         trailing: Checkbox(
             checkColor: Colors.white,
-            fillColor: MaterialStateProperty.all(themeData.primaryColor),
+            fillColor: WidgetStateProperty.all(themeData.primaryColor),
             value: programPvd.sequenceData[programPvd.selectedGroup][programPvd.segmentedControlCentralLocal == 0 ? 'applyFertilizerForCentral' : 'applyFertilizerForLocal'],
             onChanged: (value){
               programPvd.editGroupSiteInjector(programPvd.segmentedControlCentralLocal == 0 ? 'applyFertilizer' : 'applyFertilizer', value);
@@ -2339,7 +2339,8 @@ Widget customizeGridView({required double maxWith,required double maxHeight,requ
 TextStyle wf = const TextStyle(fontSize: 12);
 Widget mySeqButtons({required String name, required void Function() onTap, double? radius, double? verticalPadding, int? index, required IrrigationProgramMainProvider programPvd, required context}) {
   final isSelected = index != null ? (index == programPvd.selectedGroup) : true;
-  final primaryPurple = const Color(0xFF5B21B6);
+  final theme = Theme.of(context);
+  final colorScheme = theme.colorScheme;
 
   return InkWell(
     onTap: onTap,
@@ -2348,13 +2349,13 @@ Widget mySeqButtons({required String name, required void Function() onTap, doubl
       padding: EdgeInsets.symmetric(vertical: verticalPadding ?? 8, horizontal: 14),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(radius ?? 12),
-        color: isSelected ? primaryPurple : Colors.transparent,
+        color: isSelected ? colorScheme.primary : Colors.transparent,
       ),
       child: Center(
         child: Text(
           name,
           style: TextStyle(
-            color: isSelected ? Colors.white : const Color(0xFF475569),
+            color: isSelected ? colorScheme.onPrimary : colorScheme.onSurfaceVariant,
             fontSize: 13,
             fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
           ),

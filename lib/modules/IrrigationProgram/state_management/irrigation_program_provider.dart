@@ -74,7 +74,7 @@ class IrrigationProgramMainProvider extends ChangeNotifier {
   List<FertilizerSourceTank>? get tank => _tank ;
 
   List<DeviceObjectModel>? _selectedObjects;
-  List<Map<String, dynamic>> _selectedControllers = [];
+  final List<Map<String, dynamic>> _selectedControllers = [];
   List<DeviceObjectModel>? get selectedObjects=> _selectedObjects;
   List<Map<String, dynamic>> get selectedControllers=> _selectedControllers;
   List<Map<String, dynamic>> irrigationLineFromConfigMaker = [];
@@ -1682,7 +1682,7 @@ class IrrigationProgramMainProvider extends ChangeNotifier {
         var site = sq['centralDosing'][sq['selectedCentralSite']];
 
         for(var ft in site['fertilizer']){
-          centralMethodList.add('${fertMethodHw(ft['method'])}');
+          centralMethodList.add(fertMethodHw(ft['method']));
           centralFertOnOffList.add('${ft['onOff'] == true ? 1 : 0}');
           centralFertSnoList.add('${ft['sNo']}');
           centralTankValveList.add(ft['outletTankValve'] == null ? '' : ft['outletTankValve'].toString());
@@ -2693,15 +2693,15 @@ class IrrigationProgramMainProvider extends ChangeNotifier {
         var literForOneSeconds = waterFlowRate/3600;
         var fertilizerGapInLiters = literForOneSeconds * diff;
         var userInput = value != '' ? double.parse(value) : 0;
-        var howMany1000In_fertilizerGapInLiters = fertilizerGapInLiters/1000;
-        var injectorPer1000L = howMany1000In_fertilizerGapInLiters * userInput;
+        var howmany1000inFertilizergapinliters = fertilizerGapInLiters/1000;
+        var injectorPer1000L = howmany1000inFertilizergapinliters * userInput;
         var flowRate = getFlowRate(index);
         var maxFertilizerLimitInLiters = diff * flowRate;
-        print('howMany1000In_fertilizerGapInLiters => $howMany1000In_fertilizerGapInLiters  fertilizerGapInLiters => $fertilizerGapInLiters injectorPer1000L => $injectorPer1000L  maxFertilizerLimitInLiters => $maxFertilizerLimitInLiters');
+        print('howMany1000In_fertilizerGapInLiters => $howmany1000inFertilizergapinliters  fertilizerGapInLiters => $fertilizerGapInLiters injectorPer1000L => $injectorPer1000L  maxFertilizerLimitInLiters => $maxFertilizerLimitInLiters');
         if(editingSelectedFertilizer['method'] == 'Pro.quant per 1000L'){
           if(injectorPer1000L > maxFertilizerLimitInLiters){
             editingSelectedFertilizer['quantityValue'] = ((maxFertilizerLimitInLiters /
-                howMany1000In_fertilizerGapInLiters) - 0.1)
+                howmany1000inFertilizergapinliters) - 0.1)
                 .toStringAsFixed(1); // 0.2 for ensure always fertilizer is less than water
             getInjectorController(index).text = editingSelectedFertilizer['quantityValue'].toString();
             return {'message' : 'fertilizer value limit up to ${getInjectorController(index).text}'};
@@ -2730,7 +2730,7 @@ class IrrigationProgramMainProvider extends ChangeNotifier {
   String giveNameForSequence(dynamic data){
     var name = '';
     for(var i in data['selected']){
-      name += '${name.length != 0 ? '&' : ''}$i';
+      name += '${name.isNotEmpty ? '&' : ''}$i';
     }
     return name;
   }

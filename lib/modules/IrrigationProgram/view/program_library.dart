@@ -20,6 +20,7 @@ import '../../../StateManagement/overall_use.dart';
 import '../widgets/custom_alert_dialog.dart';
 import '../../SystemDefinitions/widgets/custom_snack_bar.dart';
 import '../../../utils/environment.dart';
+import 'package:hex/utils/Theme/oro_theme.dart';
 import '../widgets/custom_drop_down_tile.dart';
 import '../widgets/progress_dialog_ecogem.dart';
 import 'irrigation_program_main.dart';
@@ -57,6 +58,7 @@ class ProgramLibraryScreenNew extends StatefulWidget {
 }
 
 class _ProgramLibraryScreenNewState extends State<ProgramLibraryScreenNew> {
+  static const Color primaryPurple = Color(0xFF10294E);
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _programNameFocusNode = FocusNode();
   late IrrigationProgramMainProvider irrigationProgramMainProvider;
@@ -167,12 +169,12 @@ class _ProgramLibraryScreenNewState extends State<ProgramLibraryScreenNew> {
   Widget build(BuildContext context) {
     irrigationProgramMainProvider = Provider.of<IrrigationProgramMainProvider>(context, listen: true);
     final theme = Theme.of(context);
-    final primaryPurple = const Color(0xFF5B21B6);
+    final colorScheme = theme.colorScheme;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: colorScheme.surfaceContainerLowest,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFF8FAFC),
+        backgroundColor: colorScheme.surfaceContainerLowest,
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: false,
@@ -189,11 +191,11 @@ class _ProgramLibraryScreenNewState extends State<ProgramLibraryScreenNew> {
               child: Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: colorScheme.surface,
                   shape: BoxShape.circle,
-                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                  border: Border.all(color: colorScheme.outlineVariant),
                 ),
-                child: const Icon(Icons.arrow_back, size: 20, color: Color(0xFF1E293B)),
+                child: Icon(Icons.arrow_back, size: 20, color: colorScheme.onSurface),
               ),
             ),
             const SizedBox(width: 16),
@@ -201,19 +203,19 @@ class _ProgramLibraryScreenNewState extends State<ProgramLibraryScreenNew> {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text(
+                Text(
                   'Program Library',
                   style: TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF1E1B4B),
+                    color: colorScheme.onSurface,
                   ),
                 ),
                 Text(
                   'Manage irrigation Planning Methods, manual cycles and zone assignments',
                   style: TextStyle(
                     fontSize: 12,
-                    color: Colors.grey[600],
+                    color: colorScheme.onSurfaceVariant,
                     fontWeight: FontWeight.w400,
                   ),
                 ),
@@ -231,11 +233,11 @@ class _ProgramLibraryScreenNewState extends State<ProgramLibraryScreenNew> {
                   showIrrigationSettings(context);
                 },
                 style: OutlinedButton.styleFrom(
-                  side: BorderSide(color: primaryPurple),
+                  side: BorderSide(color: colorScheme.primary),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                 ),
-                child: Text("Day count RTC", style: TextStyle(color: primaryPurple, fontWeight: FontWeight.w600)),
+                child: Text("Day count RTC", style: TextStyle(color: colorScheme.primary, fontWeight: FontWeight.w600)),
               ),
             ),
           Padding(
@@ -248,14 +250,15 @@ class _ProgramLibraryScreenNewState extends State<ProgramLibraryScreenNew> {
                 createProgram(context, irrigationProgramMainProvider);
               },
               style: FilledButton.styleFrom(
-                backgroundColor: primaryPurple,
+                backgroundColor: colorScheme.primary,
+                foregroundColor: colorScheme.onPrimary,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                 padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
               ),
-              icon: const Icon(Icons.add, size: 18, color: Colors.white),
-              label: const Text(
+              icon: Icon(Icons.add, size: 18, color: colorScheme.onPrimary),
+              label: Text(
                 "Create Program",
-                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                style: TextStyle(color: colorScheme.onPrimary, fontWeight: FontWeight.bold, fontSize: 13),
               ),
             ),
           ),
@@ -315,16 +318,17 @@ class _ProgramLibraryScreenNewState extends State<ProgramLibraryScreenNew> {
   }
 
   Widget _buildMasterListPanel(List<Program> filteredList) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final activeCount = _getActiveCount();
     final inactiveCount = _getInactiveCount();
-    final primaryPurple = const Color(0xFF5B21B6);
 
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: colorScheme.outlineVariant),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.02),
@@ -372,8 +376,8 @@ class _ProgramLibraryScreenNewState extends State<ProgramLibraryScreenNew> {
                                   ? FontWeight.bold
                                   : FontWeight.w500,
                               color: irrigationProgramMainProvider.selectedFilterType == 0
-                                  ? primaryPurple
-                                  : const Color(0xFF64748B),
+                                  ? colorScheme.primary
+                                  : colorScheme.onSurfaceVariant,
                             ),
                           ),
                           const SizedBox(width: 6),
@@ -381,8 +385,8 @@ class _ProgramLibraryScreenNewState extends State<ProgramLibraryScreenNew> {
                             padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                             decoration: BoxDecoration(
                               color: irrigationProgramMainProvider.selectedFilterType == 0
-                                  ? primaryPurple.withOpacity(0.15)
-                                  : const Color(0xFFE2E8F0),
+                                  ? colorScheme.primaryContainer
+                                  : colorScheme.surfaceContainerLow,
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: Text(
@@ -391,8 +395,8 @@ class _ProgramLibraryScreenNewState extends State<ProgramLibraryScreenNew> {
                                 fontSize: 11,
                                 fontWeight: FontWeight.bold,
                                 color: irrigationProgramMainProvider.selectedFilterType == 0
-                                    ? primaryPurple
-                                    : const Color(0xFF64748B),
+                                    ? colorScheme.primary
+                                    : colorScheme.onSurfaceVariant,
                               ),
                             ),
                           ),
@@ -414,7 +418,7 @@ class _ProgramLibraryScreenNewState extends State<ProgramLibraryScreenNew> {
                       padding: const EdgeInsets.symmetric(vertical: 8),
                       decoration: BoxDecoration(
                         color: irrigationProgramMainProvider.selectedFilterType == 1
-                            ? const Color(0xFFEDE9FE)
+                            ? colorScheme.primaryContainer
                             : Colors.transparent,
                         borderRadius: BorderRadius.circular(8),
                       ),
@@ -429,8 +433,8 @@ class _ProgramLibraryScreenNewState extends State<ProgramLibraryScreenNew> {
                                   ? FontWeight.bold
                                   : FontWeight.w500,
                               color: irrigationProgramMainProvider.selectedFilterType == 1
-                                  ? primaryPurple
-                                  : const Color(0xFF64748B),
+                                  ? colorScheme.primary
+                                  : colorScheme.onSurfaceVariant,
                             ),
                           ),
                           const SizedBox(width: 6),
@@ -438,8 +442,8 @@ class _ProgramLibraryScreenNewState extends State<ProgramLibraryScreenNew> {
                             padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                             decoration: BoxDecoration(
                               color: irrigationProgramMainProvider.selectedFilterType == 1
-                                  ? primaryPurple.withOpacity(0.15)
-                                  : const Color(0xFFE2E8F0),
+                                  ? colorScheme.primaryContainer
+                                  : colorScheme.surfaceContainerLow,
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: Text(
@@ -448,8 +452,8 @@ class _ProgramLibraryScreenNewState extends State<ProgramLibraryScreenNew> {
                                 fontSize: 11,
                                 fontWeight: FontWeight.bold,
                                 color: irrigationProgramMainProvider.selectedFilterType == 1
-                                    ? primaryPurple
-                                    : const Color(0xFF64748B),
+                                    ? colorScheme.primary
+                                    : colorScheme.onSurfaceVariant,
                               ),
                             ),
                           ),
@@ -543,7 +547,7 @@ class _ProgramLibraryScreenNewState extends State<ProgramLibraryScreenNew> {
                                     style: TextStyle(
                                       fontWeight: FontWeight.bold,
                                       fontSize: 13,
-                                      color: isSelected ? primaryPurple : const Color(0xFF047857),
+                                      color: isSelected ? colorScheme.primary : const Color(0xFF047857),
                                     ),
                                   ),
                                 ),
@@ -558,7 +562,7 @@ class _ProgramLibraryScreenNewState extends State<ProgramLibraryScreenNew> {
                                       style: TextStyle(
                                         fontWeight: FontWeight.bold,
                                         fontSize: 13,
-                                        color: isSelected ? const Color(0xFF1E1B4B) : const Color(0xFF1E293B),
+                                        color: isSelected ? colorScheme.primary : colorScheme.onSurface,
                                       ),
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
@@ -566,9 +570,9 @@ class _ProgramLibraryScreenNewState extends State<ProgramLibraryScreenNew> {
                                     const SizedBox(height: 2),
                                     Text(
                                       subtitleText,
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontSize: 11,
-                                        color: Color(0xFF64748B),
+                                        color: colorScheme.onSurfaceVariant,
                                       ),
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
@@ -580,16 +584,16 @@ class _ProgramLibraryScreenNewState extends State<ProgramLibraryScreenNew> {
                                 children: [
                                   Text(
                                     '$zoneCount zone${zoneCount > 1 ? 's' : ''}',
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 11,
-                                      color: Color(0xFF64748B),
+                                      color: colorScheme.onSurfaceVariant,
                                       fontWeight: FontWeight.w500,
                                     ),
                                   ),
                                   const SizedBox(width: 4),
                                   IconButton(
                                     icon: const Icon(Icons.arrow_forward_ios, size: 14),
-                                    color: isSelected ? primaryPurple : const Color(0xFF94A3B8),
+                                    color: isSelected ? colorScheme.primary : colorScheme.outline,
                                     padding: EdgeInsets.zero,
                                     constraints: const BoxConstraints(),
                                     tooltip: "Configure program steps",
@@ -646,7 +650,8 @@ class _ProgramLibraryScreenNewState extends State<ProgramLibraryScreenNew> {
   }
 
   Widget _buildPlanningMethodCard(Program programItem) {
-    const primaryPurple = Color(0xFF5B21B6);
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
 
     final scheduleByDays = programItem.schedule['selected'] == irrigationProgramMainProvider.scheduleTypes[1];
     final scheduleAsRunList = programItem.schedule['selected'] == irrigationProgramMainProvider.scheduleTypes[2];
@@ -708,9 +713,9 @@ class _ProgramLibraryScreenNewState extends State<ProgramLibraryScreenNew> {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
+        color: colorScheme.surfaceContainerLowest,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: colorScheme.outlineVariant),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -719,7 +724,7 @@ class _ProgramLibraryScreenNewState extends State<ProgramLibraryScreenNew> {
             (scheduleByDays || scheduleAsRunList)
                 ? "$startDateOnly - ${(isForceToEndDate ?? false) ? endDateOnly : "No end date"}"
                 : "Manual start",
-            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF64748B)),
+            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: colorScheme.onSurfaceVariant),
           ),
           const SizedBox(height: 6),
           Row(
@@ -733,10 +738,10 @@ class _ProgramLibraryScreenNewState extends State<ProgramLibraryScreenNew> {
                             programItem.schedule['selected'].toString().toLowerCase().substring(1))
                         : "No schedule")
                     : "Inactive program",
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF0F172A),
+                  color: colorScheme.onSurface,
                 ),
               ),
               Text(
@@ -758,12 +763,12 @@ class _ProgramLibraryScreenNewState extends State<ProgramLibraryScreenNew> {
                     margin: const EdgeInsets.only(right: 6),
                     padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFEDE9FE),
+                      color: Theme.of(context).colorScheme.primaryContainer,
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text(
                       days[index],
-                      style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: primaryPurple),
+                      style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: colorScheme.primary),
                     ),
                   )
               else if (scheduleAsRunList)
@@ -775,7 +780,7 @@ class _ProgramLibraryScreenNewState extends State<ProgramLibraryScreenNew> {
                       color: index >= int.parse(programItem.schedule['scheduleByDays']?['schedule']?['runDays']?.toString().isNotEmpty == true
                           ? programItem.schedule['scheduleByDays']['schedule']['runDays'].toString() : "0")
                           ? const Color(0xFFFFEFE1)
-                          : const Color(0xFFEDE9FE),
+                          : Theme.of(context).colorScheme.primaryContainer,
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text(
@@ -786,7 +791,7 @@ class _ProgramLibraryScreenNewState extends State<ProgramLibraryScreenNew> {
                         color: index >= int.parse(programItem.schedule['scheduleByDays']?['schedule']?['runDays']?.toString().isNotEmpty == true
                             ? programItem.schedule['scheduleByDays']['schedule']['runDays'].toString() : "0")
                             ? const Color(0xFFC2410C)
-                            : primaryPurple,
+                            : Theme.of(context).colorScheme.primary,
                       ),
                     ),
                   )
@@ -930,7 +935,8 @@ class _ProgramLibraryScreenNewState extends State<ProgramLibraryScreenNew> {
       );
     }
 
-    final primaryPurple = const Color(0xFF5B21B6);
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final name = program.programName.isNotEmpty ? program.programName : program.defaultProgramName;
     final zoneCount = program.sequence.length;
 
@@ -942,9 +948,9 @@ class _ProgramLibraryScreenNewState extends State<ProgramLibraryScreenNew> {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: colorScheme.outlineVariant),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.02),
@@ -1060,18 +1066,19 @@ class _ProgramLibraryScreenNewState extends State<ProgramLibraryScreenNew> {
                       }
                     },
                     style: FilledButton.styleFrom(
-                      backgroundColor: primaryPurple,
+                      backgroundColor: colorScheme.primary,
+                      foregroundColor: colorScheme.onPrimary,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                     ),
                     icon: Icon(
                       program.active == "1" ? Icons.play_arrow : Icons.check_circle_outline,
                       size: 16,
-                      color: Colors.white,
+                      color: colorScheme.onPrimary,
                     ),
                     label: Text(
                       program.active == "1" ? "Run now" : "Activate",
-                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                      style: TextStyle(color: colorScheme.onPrimary, fontWeight: FontWeight.bold, fontSize: 13),
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -1348,7 +1355,7 @@ class _ProgramLibraryScreenNewState extends State<ProgramLibraryScreenNew> {
                 SwitchListTile(
                   title: const Text('Enable Day Count RTC'),
                   value: dayCountRtcModel.dayCountRtc,
-                  activeColor: theme.primaryColor,
+                  activeThumbColor: theme.primaryColor,
                   onChanged: (v) => setState(() => dayCountRtcModel.dayCountRtc = v),
                 ),
                 if (dayCountRtcModel.dayCountRtc) ...[
@@ -1378,7 +1385,7 @@ class _ProgramLibraryScreenNewState extends State<ProgramLibraryScreenNew> {
                     SwitchListTile(
                       title: const Text('Enable Queue Restart'),
                       value: programQueueModel.autoQueueRestart,
-                      activeColor: theme.primaryColor,
+                      activeThumbColor: theme.primaryColor,
                       onChanged: (v) => setState(() => programQueueModel.autoQueueRestart = v),
                     ),
                     const SizedBox(height: 12),
@@ -1390,7 +1397,7 @@ class _ProgramLibraryScreenNewState extends State<ProgramLibraryScreenNew> {
                               child: Text('${index + 1}', style: const TextStyle(fontWeight: FontWeight.bold)),
                             ),
                             title: DropdownButtonFormField<String>(
-                              value: programQueueModel.queueOrder[index] != '0' ? programQueueModel.queueOrder[index] : '0',
+                              initialValue: programQueueModel.queueOrder[index] != '0' ? programQueueModel.queueOrder[index] : '0',
                               decoration: InputDecoration(border: OutlineInputBorder(borderRadius: BorderRadius.circular(8))),
                               items: [
                                 const DropdownMenuItem(value: '0', child: Text('None')),
@@ -1443,7 +1450,7 @@ class _ProgramLibraryScreenNewState extends State<ProgramLibraryScreenNew> {
                 SwitchListTile(
                   title: const Text('Enable Skip Days'),
                   value: programQueueModel.skipDays,
-                  activeColor: theme.primaryColor,
+                  activeThumbColor: theme.primaryColor,
                   onChanged: (v) => setState(() => programQueueModel.skipDays = v),
                 ),
                 if (programQueueModel.skipDays) ...[
@@ -1471,7 +1478,7 @@ class _ProgramLibraryScreenNewState extends State<ProgramLibraryScreenNew> {
                 SwitchListTile(
                   title: const Text('Drip Standalone Mode'),
                   value: programQueueModel.dripStandaloneMode,
-                  activeColor: theme.primaryColor,
+                  activeThumbColor: theme.primaryColor,
                   onChanged: (v) => setState(() => programQueueModel.dripStandaloneMode = v),
                 ),
                 const Divider(height: 40),
@@ -2122,9 +2129,7 @@ Future<void> validatePayloadSent({
                     (resPayloadCode == '401' || resPayloadCode == '402'))) {
               isAcknowledged = true;
               matched4201 = map4201;
-              MqttService().acknowledgementPayload = message is Map<String, dynamic>
-                  ? message
-                  : {'cM': {'4201': map4201}};
+              MqttService().acknowledgementPayload = message;
               break;
             }
           }

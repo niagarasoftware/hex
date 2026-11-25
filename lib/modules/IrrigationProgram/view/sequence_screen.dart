@@ -393,9 +393,8 @@ class _SequenceScreenState extends State<SequenceScreen> {
     final sequence = _provider.irrigationLine!.sequence;
     final indexToShow = _getIndexToShow;
 
-    return ButtonBar(
+    return OverflowBar(
       alignment: MainAxisAlignment.end,
-      layoutBehavior: ButtonBarLayoutBehavior.constrained,
       children: [
         _buildAddNextButton(context, sequence, indexToShow),
         _buildDeleteButton(context, indexToShow),
@@ -751,7 +750,7 @@ class _SequenceScreenState extends State<SequenceScreen> {
         ? sequence[indexToShow]['mainValve']?.any((e) => e['sNo'] == item.sNo) ?? false
         : sequence[indexToShow]['valve']?.any((e) => e['sNo'] == item.sNo) ?? false;
     for(var i in sequence[indexToShow]['mainValve']){
-      print('flow valve => ${i}');
+      print('flow valve => $i');
     }
     print("sequence[indexToShow]['selectedGroup'] : ${sequence[indexToShow]['selectedGroup']}");
 
@@ -846,18 +845,19 @@ Widget buildListOfContainer({
   required String itemName,
   EdgeInsets padding = const EdgeInsets.symmetric(vertical: 0, horizontal: 10),
 }) {
-  final primaryPurple = const Color(0xFF5B21B6);
+  final theme = Theme.of(context);
+  final colorScheme = theme.colorScheme;
 
   return ChoiceChip(
     label: Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        if (selected) const Icon(Icons.check_circle, color: Colors.white, size: 16),
+        if (selected) Icon(Icons.check_circle, color: colorScheme.onPrimary, size: 16),
         if (selected) const SizedBox(width: 4),
         Text(
           itemName,
           style: TextStyle(
-            color: selected ? Colors.white : const Color(0xFF1E293B),
+            color: selected ? colorScheme.onPrimary : colorScheme.onSurface,
             fontWeight: selected ? FontWeight.bold : FontWeight.w500,
             fontSize: 13,
           ),
@@ -867,12 +867,12 @@ Widget buildListOfContainer({
     selected: selected,
     showCheckmark: false,
     onSelected: (_) => onTap(),
-    selectedColor: primaryPurple,
-    backgroundColor: selected ? primaryPurple : const Color(0xFFF1F5F9),
+    selectedColor: colorScheme.primary,
+    backgroundColor: selected ? colorScheme.primary : colorScheme.surfaceContainerLow,
     shape: RoundedRectangleBorder(
       borderRadius: BorderRadius.circular(10),
       side: BorderSide(
-        color: selected ? primaryPurple : const Color(0xFFE2E8F0),
+        color: selected ? colorScheme.primary : colorScheme.outlineVariant,
         width: 1,
       ),
     ),

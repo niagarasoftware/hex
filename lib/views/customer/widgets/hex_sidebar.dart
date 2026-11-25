@@ -1,9 +1,7 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../../../models/customer/site_model.dart';
 import '../../../models/user_model.dart';
 import '../../../utils/constants.dart';
-import '../../../utils/enums.dart';
 import '../../common/user_profile/user_profile.dart';
 import '../help_support.dart';
 
@@ -188,16 +186,9 @@ class _HexSidebarState extends State<HexSidebar> {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final items = HexSidebar.buildItems(widget.master);
-
-    final primaryPurple = colorScheme.primary;
-    final activeBgLavender = colorScheme.primaryContainer;
-    final brandIconBg = colorScheme.secondary;
-    final textDark = colorScheme.onSurface;
-    final textMuted = colorScheme.onSurfaceVariant;
-    final iconMuted = colorScheme.outline;
-    final avatarGreen = colorScheme.tertiary;
 
     final String displayName = (widget.userName != null && widget.userName!.trim().isNotEmpty)
         ? widget.userName!.trim()
@@ -257,20 +248,20 @@ class _HexSidebarState extends State<HexSidebar> {
                   width: 36,
                   height: 36,
                   decoration: BoxDecoration(
-                    color: brandIconBg,
+                    color: colorScheme.primary,
                     borderRadius: BorderRadius.circular(10),
                     boxShadow: [
                       BoxShadow(
-                        color: brandIconBg.withOpacity(0.3),
+                        color: colorScheme.primary.withOpacity(0.2),
                         blurRadius: 6,
                         offset: const Offset(0, 2),
                       ),
                     ],
                   ),
-                  child: const Center(
+                  child: Center(
                     child: Icon(
                       Icons.hexagon_rounded,
-                      color: Colors.white,
+                      color: colorScheme.onPrimary,
                       size: 20,
                     ),
                   ),
@@ -282,7 +273,7 @@ class _HexSidebarState extends State<HexSidebar> {
                     style: TextStyle(
                       fontSize: 19,
                       fontWeight: FontWeight.w800,
-                      color: textDark,
+                      color: colorScheme.onSurface,
                       letterSpacing: 0.6,
                     ),
                   ),
@@ -313,7 +304,7 @@ class _HexSidebarState extends State<HexSidebar> {
                     borderRadius: BorderRadius.circular(10),
                     onTap: () => widget.onDestinationSelected(item.index),
                     hoverColor: isSelected
-                        ? activeBgLavender
+                        ? colorScheme.primaryContainer
                         : colorScheme.surfaceContainerLow,
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 150),
@@ -322,7 +313,7 @@ class _HexSidebarState extends State<HexSidebar> {
                         vertical: 10.5,
                       ),
                       decoration: BoxDecoration(
-                        color: isSelected ? activeBgLavender : Colors.transparent,
+                        color: isSelected ? colorScheme.primaryContainer : Colors.transparent,
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Row(
@@ -333,7 +324,7 @@ class _HexSidebarState extends State<HexSidebar> {
                           Icon(
                             item.icon,
                             size: 20,
-                            color: isSelected ? primaryPurple : iconMuted,
+                            color: isSelected ? colorScheme.onPrimaryContainer : colorScheme.outline,
                           ),
                           if (_isExpanded) ...[
                             const SizedBox(width: 14),
@@ -345,7 +336,7 @@ class _HexSidebarState extends State<HexSidebar> {
                                   fontWeight: isSelected
                                       ? FontWeight.w600
                                       : FontWeight.w500,
-                                  color: isSelected ? primaryPurple : textMuted,
+                                  color: isSelected ? colorScheme.onPrimaryContainer : colorScheme.onSurfaceVariant,
                                 ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
@@ -403,7 +394,7 @@ class _HexSidebarState extends State<HexSidebar> {
                           Icon(
                             Icons.help_outline_rounded,
                             size: 20,
-                            color: iconMuted,
+                            color: colorScheme.outline,
                           ),
                           if (_isExpanded) ...[
                             const SizedBox(width: 14),
@@ -413,7 +404,7 @@ class _HexSidebarState extends State<HexSidebar> {
                                 style: TextStyle(
                                   fontSize: 13.5,
                                   fontWeight: FontWeight.w500,
-                                  color: textMuted,
+                                  color: colorScheme.onSurfaceVariant,
                                 ),
                               ),
                             ),
@@ -454,11 +445,11 @@ class _HexSidebarState extends State<HexSidebar> {
                         children: [
                           CircleAvatar(
                             radius: 17,
-                            backgroundColor: avatarGreen,
+                            backgroundColor: colorScheme.tertiary,
                             child: Text(
                               initials,
-                              style: const TextStyle(
-                                color: Colors.white,
+                              style: TextStyle(
+                                color: colorScheme.onTertiary,
                                 fontSize: 12.5,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -476,7 +467,7 @@ class _HexSidebarState extends State<HexSidebar> {
                                     style: TextStyle(
                                       fontSize: 13,
                                       fontWeight: FontWeight.w600,
-                                      color: textDark,
+                                      color: colorScheme.onSurface,
                                     ),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
@@ -487,7 +478,7 @@ class _HexSidebarState extends State<HexSidebar> {
                                       displayMobile,
                                       style: TextStyle(
                                         fontSize: 11,
-                                        color: iconMuted,
+                                        color: colorScheme.onSurfaceVariant,
                                       ),
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,

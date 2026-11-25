@@ -62,7 +62,7 @@ class _NodeDashboardState extends State<NodeDashboard> {
       Map<String, dynamic> nodeJsonData = jsonDecode(nodeBluetoothResponse.body);
       bleService.editNodeDataFromServer(nodeJsonData['data']['default'], widget.nodeData);
       return nodeJsonData['code'];
-    }catch(e,stacktrace){
+    }catch(e){
       // print('Error on getting constant data :: $e');
       // print('Stacktrace on getting constant data :: $stacktrace');
       rethrow;
@@ -219,7 +219,7 @@ class _NodeDashboardState extends State<NodeDashboard> {
         barrierDismissible: false,
         context: context, builder: (context){
       return AlertDialog(
-        title: Text('Do you want to update firmware', style: TextStyle(fontSize: 14),),
+        title: const Text('Do you want to update firmware', style: TextStyle(fontSize: 14),),
         actions: [
           CustomMaterialButton(
             outlined: true,
@@ -294,7 +294,7 @@ class _NodeDashboardState extends State<NodeDashboard> {
                             onPressed: (){
                               Navigator.of(context).pop();
                             },
-                            child: Text('Cancel')
+                            child: const Text('Cancel')
                         ),
                         CustomMaterialButton(
                           onPressed: () {
@@ -304,7 +304,7 @@ class _NodeDashboardState extends State<NodeDashboard> {
                               userShouldWaitUntilRestart();
                             }
                           },
-                          child: Text('Ok', style: TextStyle(color: Colors.white),),
+                          child: const Text('Ok', style: TextStyle(color: Colors.white),),
                         ),
                       ],
                     );

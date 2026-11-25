@@ -382,16 +382,16 @@ class AddHandlerPlaceholder extends StatelessWidget {
             borderRadius: BorderRadius.circular(16),
             border: Border.all(color: ServiceRequestPalette.border, width: 1.5),
           ),
-          child: Column(
+          child: const Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.person_add_alt_1_outlined, size: 34, color: ServiceRequestPalette.primary),
-              const SizedBox(height: 10),
-              const Text('Add ticket handler',
+              Icon(Icons.person_add_alt_1_outlined, size: 34, color: ServiceRequestPalette.primary),
+              SizedBox(height: 10),
+              Text('Add ticket handler',
                   style: TextStyle(
                       color: ServiceRequestPalette.inkSoft, fontSize: 14.5, fontWeight: FontWeight.w700)),
-              const SizedBox(height: 2),
-              const Text('Assign who owns this ticket',
+              SizedBox(height: 2),
+              Text('Assign who owns this ticket',
                   style: TextStyle(color: ServiceRequestPalette.mutedLight, fontSize: 12)),
             ],
           ),

@@ -133,7 +133,7 @@ class _ValveCardTableState extends State<ValveCardTable> {
                       scale: 0.75,
                       child: Switch(
                         value: widget.switchValue,
-                        activeColor: colorScheme.onPrimary,
+                        activeThumbColor: colorScheme.onPrimary,
                         activeTrackColor: colorScheme.primary,
                         inactiveTrackColor: colorScheme.surfaceContainerHighest,
                         onChanged: widget.onSwitchChanged,
@@ -240,7 +240,7 @@ class _ValveCardTableState extends State<ValveCardTable> {
                                     scale: 0.65,
                                     child: Switch(
                                       value: item.isOn,
-                                      activeColor: colorScheme.onPrimary,
+                                      activeThumbColor: colorScheme.onPrimary,
                                       activeTrackColor: colorScheme.primary,
                                       inactiveTrackColor: colorScheme
                                           .surfaceContainerHighest,

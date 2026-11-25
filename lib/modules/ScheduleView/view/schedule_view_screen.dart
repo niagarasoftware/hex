@@ -141,7 +141,7 @@ class _ScheduleViewScreenState extends State<ScheduleViewScreen> {
           MqttService().schedulePayload = [{"message" : convertedJson['message']}];
         }
       }
-    } catch (e, stackTrace) {
+    } catch (e) {
       // print('Error: $e');
       // print('stackTrace: $stackTrace');
     }
@@ -380,7 +380,7 @@ class _ScheduleViewScreenState extends State<ScheduleViewScreen> {
                   try {
                     await sentToServer(sentMessage.join('\n'), dataToHardware, widget.userId, widget.controllerId, widget.customerId);
                     _requestScheduleData();
-                  } catch(error, stackTrace) {
+                  } catch(error) {
                     // print("error ==> $error");
                     // print("stackTrace ==> $stackTrace");
                   }
@@ -809,20 +809,22 @@ class _ScheduleViewScreenState extends State<ScheduleViewScreen> {
 
   /// Helper function to build icon buttons
   Widget _buildIconButton(IconData icon, Function()? onPressed) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     return GestureDetector(
       onTap: onPressed,
       child: PhysicalModel(
-        color: onPressed != null ? const Color(0xffE4F5FF) : Colors.grey[200]!,
+        color: onPressed != null ? colorScheme.primaryContainer : colorScheme.surfaceContainerLow,
         shape: BoxShape.circle,
         elevation: 5,
-        shadowColor: onPressed != null ? const Color(0xffA2DEFF) : Colors.grey,
+        shadowColor: onPressed != null ? colorScheme.primary.withOpacity(0.3) : colorScheme.outlineVariant,
         child: Container(
           padding: const EdgeInsets.all(5),
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            border: Border.all(color: onPressed != null ? const Color(0xffA2DEFF) : Colors.grey, width: 1),
+            border: Border.all(color: onPressed != null ? colorScheme.primary : colorScheme.outlineVariant, width: 1),
           ),
-          child: Icon(icon, color: Colors.grey, size: 20,),
+          child: Icon(icon, color: onPressed != null ? colorScheme.primary : colorScheme.onSurfaceVariant, size: 20,),
         ),
       ),
     );
@@ -1136,7 +1138,7 @@ class _ScheduleViewScreenState extends State<ScheduleViewScreen> {
 
         return AlertDialog(
           title: Text('Color indications', style: TextStyle(color: Theme.of(context).primaryColor),),
-          content: Container(
+          content: SizedBox(
             height: 320,
             child: SingleChildScrollView(
               child: Column(

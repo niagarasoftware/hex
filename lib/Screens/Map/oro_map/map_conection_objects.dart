@@ -74,9 +74,11 @@ class _MapConnectionObjectState extends State<MapConnectionObject> {
       });
       final jsonRes = jsonDecode(response.body);
       final ok = response.statusCode >= 200 && response.statusCode < 300;
-      if (mounted) GlobalSnackBar.show(context,
+      if (mounted) {
+        GlobalSnackBar.show(context,
           jsonRes['message']?.toString() ?? (ok ? 'Success' : 'Update failed'),
           ok ? 200 : 400);
+      }
     } catch (e) {
       if (mounted) GlobalSnackBar.show(context, 'Update failed', 400);
     } finally {
@@ -94,7 +96,7 @@ class _MapConnectionObjectState extends State<MapConnectionObject> {
   Future<void> _openEditor([int? index]) async {
     await Navigator.push(context, MaterialPageRoute(builder: (_) {
       if (index == null) {
-        return widget.modelId == 72 ? SetAreatorLocationDraw() : SetSelectOroDeviceLocation();
+        return widget.modelId == 72 ? const SetAreatorLocationDraw() : const SetSelectOroDeviceLocation();
       }
       return widget.modelId == 72 ? MapScreenSetAreatorLocation(index: index) : SetSelectOroLocation(index: index);
     }));

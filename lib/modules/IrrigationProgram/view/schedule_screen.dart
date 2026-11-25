@@ -696,7 +696,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                           additionalInfo: !isForceToEndDate ? "Not Needed" : "Needed",
                           child: Switch(
                             value: isForceToEndDate,
-                            activeColor: Colors.white,
+                            activeThumbColor: Colors.white,
                             activeTrackColor: darkColor4,
                             onChanged: (newValue) {
                               irrigationProgramProvider.updateForceToEndDate2(newValue: newValue);
@@ -1311,7 +1311,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                           onPressed: [() => addTab(functionCondition), () => deleteTab(functionCondition)][i],
                           icon: Icon([Icons.add, Icons.delete][i], color: [Colors.green, Colors.red][i],),
                           style: ButtonStyle(
-                              backgroundColor: MaterialStateProperty.all(Colors.black.withOpacity(0.05))
+                              backgroundColor: WidgetStateProperty.all(Colors.black.withOpacity(0.05))
                           ),
                         )
                     ],

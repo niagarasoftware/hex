@@ -13,7 +13,7 @@ import 'package:hex/utils/helpers/log_print.dart';
 
 
 class SetSelectOroLocation extends StatefulWidget {
-  const SetSelectOroLocation({Key? key, required this.index}) : super(key: key);
+  const SetSelectOroLocation({super.key, required this.index});
   final int index;
   @override
   _SetSelectOroLocationState createState() => _SetSelectOroLocationState();
@@ -31,16 +31,16 @@ class _SetSelectOroLocationState extends State<SetSelectOroLocation> {
 
 
   List<LatLng> _points = [];
-  Set<Marker> _vertices = {};
-  Set<Polyline> _lines = {};
-  Set<Polygon> _polygons = {};
+  final Set<Marker> _vertices = {};
+  final Set<Polyline> _lines = {};
+  final Set<Polygon> _polygons = {};
 
   bool _isClosed = false;
   bool _isEditMode = false;
-  List<List<LatLng>> _undoStack = [];
-  List<List<LatLng>> _redoStack = [];
+  final List<List<LatLng>> _undoStack = [];
+  final List<List<LatLng>> _redoStack = [];
   List<LatLng> _finalPolygonPoints = [];
-  List<LatLng> _redoPoints = [];
+  final List<LatLng> _redoPoints = [];
 
 
   @override
@@ -338,7 +338,7 @@ class _SetSelectOroLocationState extends State<SetSelectOroLocation> {
         return Padding(padding: const EdgeInsets.all(12), child: Row(children: [
           Expanded(child: Column(children: [
             if (!wide) ...[
-              DropdownButtonFormField<ConnectedObject>(value: objects.contains(_selectedObject) ? _selectedObject : null,
+              DropdownButtonFormField<ConnectedObject>(initialValue: objects.contains(_selectedObject) ? _selectedObject : null,
                   isExpanded: true, decoration: const InputDecoration(labelText: 'Connected object', border: OutlineInputBorder()),
                   items: objects.map((o) => DropdownMenuItem(value: o, child: Text(o.name ?? o.objectName ?? 'Object', overflow: TextOverflow.ellipsis))).toList(),
                   onChanged: (o) { if (o != null) _selectObject(o); }),

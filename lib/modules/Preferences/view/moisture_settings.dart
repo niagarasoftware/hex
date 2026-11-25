@@ -186,7 +186,8 @@ class _SwitchTile extends StatelessWidget {
           ),
           Switch(
             value: value,
-            activeColor: colorScheme.primary,
+            activeThumbColor: colorScheme.onPrimary,
+            activeTrackColor: colorScheme.primary,
             onChanged: onChanged,
           ),
         ],

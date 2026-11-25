@@ -13,6 +13,8 @@ class UserAccountMenu extends StatelessWidget {
   Widget build(BuildContext context) {
     final showLogo = (!F.appFlavor!.name.contains('oro') && !F.appFlavor!.name.contains('agritel'));
     final customer = Provider.of<UserProvider>(context).viewedCustomer;
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Row(
       children: [
         if (showLogo)
@@ -25,20 +27,20 @@ class UserAccountMenu extends StatelessWidget {
         isNarrow ? Padding(
           padding: const EdgeInsets.only(right: 20),
           child: GestureDetector(
-            onTapDown: (details) => _showUserMenu(context, details, customer!.name),
-            child: const Icon(Icons.account_circle_outlined),
+            onTapDown: (details) => _showUserMenu(context, details, customer?.name ?? ''),
+            child: Icon(Icons.account_circle_outlined, color: colorScheme.onPrimary),
           ),
         ) :
         MouseRegion(
           cursor: SystemMouseCursors.click,
           child: GestureDetector(
-            onTapDown: (details) => _showUserMenu(context, details, customer.name),
+            onTapDown: (details) => _showUserMenu(context, details, customer?.name ?? ''),
             child: Container(
               width: 230,
               height: 36,
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.only(
+              decoration: BoxDecoration(
+                color: colorScheme.surface,
+                borderRadius: const BorderRadius.only(
                   topLeft: Radius.circular(20),
                   bottomLeft: Radius.circular(20),
                 ),
@@ -52,11 +54,11 @@ class UserAccountMenu extends StatelessWidget {
                   ),
                   const SizedBox(width: 5),
                   Text(
-                    customer!.name,
-                    style: const TextStyle(fontWeight: FontWeight.bold),
+                    customer?.name ?? 'User',
+                    style: TextStyle(fontWeight: FontWeight.bold, color: colorScheme.onSurface),
                   ),
                   const Spacer(),
-                  const Icon(Icons.arrow_drop_down_sharp, color: Colors.black54),
+                  Icon(Icons.arrow_drop_down_sharp, color: colorScheme.onSurface),
                 ],
               ),
             ),
@@ -67,6 +69,7 @@ class UserAccountMenu extends StatelessWidget {
   }
 
   Future<void> _onMenuSelected(BuildContext context, String? value) async {
+    final colorScheme = Theme.of(context).colorScheme;
     switch (value) {
       case 'profile':
         isNarrow ? Navigator.push(
@@ -80,9 +83,9 @@ class UserAccountMenu extends StatelessWidget {
             heightFactor: 0.84,
             widthFactor: 0.75,
             child: Container(
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(8)),
+              decoration: BoxDecoration(
+                color: colorScheme.surface,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
               ),
               child: const UserProfile(isNarrow: false),
             ),
@@ -99,40 +102,43 @@ class UserAccountMenu extends StatelessWidget {
   }
 
   void _showUserMenu(BuildContext context, TapDownDetails details, String userName) {
+    final colorScheme = Theme.of(context).colorScheme;
     final offset = details.globalPosition;
     showMenu<String>(
       context: context,
+      color: colorScheme.surface,
       position: RelativeRect.fromLTRB(offset.dx, offset.dy, offset.dx, 0),
       items: [
-        if(isNarrow)...[
+        if (isNarrow) ...[
           PopupMenuItem<String>(
             enabled: false,
-            child: Text(userName,
-              style: const TextStyle(
+            child: Text(
+              userName,
+              style: TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 15,
-                color: Colors.black45,
+                color: colorScheme.onSurfaceVariant,
               ),
             ),
           ),
         ],
-        const PopupMenuItem<String>(
+        PopupMenuItem<String>(
           value: 'profile',
           child: Row(
             children: [
-              Icon(Icons.person_outline, color: Colors.black),
-              SizedBox(width: 8),
-              Text('Profile Settings', style: TextStyle(color: Colors.black87)),
+              Icon(Icons.person_outline, color: colorScheme.onSurface),
+              const SizedBox(width: 8),
+              Text('Profile Settings', style: TextStyle(color: colorScheme.onSurface)),
             ],
           ),
         ),
-        const PopupMenuItem<String>(
+        PopupMenuItem<String>(
           value: 'logout',
           child: Row(
             children: [
-              Icon(Icons.logout, color: Colors.redAccent),
-              SizedBox(width: 5),
-              Text('Logout'),
+              Icon(Icons.logout, color: colorScheme.error),
+              const SizedBox(width: 5),
+              Text('Logout', style: TextStyle(color: colorScheme.error)),
             ],
           ),
         ),

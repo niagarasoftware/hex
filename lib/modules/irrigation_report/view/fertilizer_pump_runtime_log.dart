@@ -21,10 +21,10 @@ class FertilizerPumpRuntimeLog extends StatefulWidget {
 
 class _FertilizerPumpRuntimeLogState extends State<FertilizerPumpRuntimeLog> {
   DateTime? selectedDate;
-  String _selectedDate = '';
-  String _dateCount = '';
-  String _range = '';
-  String _rangeCount = '';
+  final String _selectedDate = '';
+  final String _dateCount = '';
+  final String _range = '';
+  final String _rangeCount = '';
   DateRange? selectedDateRange;
 
   Map<String, dynamic> data = {};
@@ -128,7 +128,7 @@ class _FertilizerPumpRuntimeLogState extends State<FertilizerPumpRuntimeLog> {
                 const SizedBox(height: 1,),
                 for(var i = 0; i < 3;i++)
                   Container(
-                  padding: EdgeInsets.all(8),
+                  padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(8),
                     color: Colors.white,
@@ -139,12 +139,12 @@ class _FertilizerPumpRuntimeLogState extends State<FertilizerPumpRuntimeLog> {
                     children: [
                       Container(
                         color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
+                        padding: const EdgeInsets.all(5),
                         child: Image.asset(
                             'assets/Images/Png/objectId_${AppConstants.boosterObjectId}.png',
                           width: 70,
                           height: 100,
                         ),
-                        padding: EdgeInsets.all(5),
                       ),
                       Expanded(
                         child: Column(

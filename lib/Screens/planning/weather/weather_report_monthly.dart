@@ -1211,7 +1211,7 @@ class _SensorHourlyReportPageState
           minY: limits['min']!,
           maxY: limits['max']!,
 
-          gridData: FlGridData(
+          gridData: const FlGridData(
             show: true,
             drawVerticalLine: false,
           ),
@@ -1421,12 +1421,12 @@ class _SensorHourlyReportPageState
                 LinearGradient(
                   colors: [
                     Colors.teal
-                        .withOpacity(
-                      0.25,
+                        .withValues(
+                      alpha: 0.25,
                     ),
                     Colors.teal
-                        .withOpacity(
-                      0.02,
+                        .withValues(
+                      alpha: 0.02,
                     ),
                   ],
                   begin:
@@ -1535,7 +1535,7 @@ class _SensorHourlyReportPageState
           minY: limits['min']!,
           maxY: limits['max']!,
 
-          gridData: FlGridData(
+          gridData: const FlGridData(
             show: true,
             drawVerticalLine: false,
           ),
@@ -1758,12 +1758,12 @@ class _SensorHourlyReportPageState
                 LinearGradient(
                   colors: [
                     Colors.teal
-                        .withOpacity(
-                      0.25,
+                        .withValues(
+                      alpha: 0.25,
                     ),
                     Colors.teal
-                        .withOpacity(
-                      0.02,
+                        .withValues(
+                      alpha: 0.02,
                     ),
                   ],
                   begin:
@@ -1994,7 +1994,7 @@ class _SensorHourlyReportPageState
           headingRowHeight: 50,
 
           headingRowColor:
-          MaterialStateProperty.all(
+          WidgetStateProperty.all(
             Colors.teal,
           ),
 
@@ -2131,7 +2131,7 @@ class _SensorHourlyReportPageState
           headingRowHeight: 50,
 
           headingRowColor:
-          MaterialStateProperty.all(
+          WidgetStateProperty.all(
             Colors.teal,
           ),
 
@@ -2266,14 +2266,14 @@ class _SensorHourlyReportPageState
 
       decoration: BoxDecoration(
         color:
-        color.withOpacity(0.08),
+        color.withValues(alpha: 0.08),
 
         borderRadius:
         BorderRadius.circular(20),
 
         border: painting.Border.all(
           color:
-          color.withOpacity(0.20),
+          color.withValues(alpha: 0.20),
         ),
       ),
 

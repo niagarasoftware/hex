@@ -1,4 +1,3 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:hex/views/common/user_dashboard/widgets/sensor_widget.dart';
 import 'package:provider/provider.dart';

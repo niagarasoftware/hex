@@ -3,7 +3,6 @@ import 'dart:convert';
 import '../repository/repository.dart';
 import '../services/http_service.dart';
 import '../services/weather_service.dart';
-import '../services/ai_service.dart';
 
 import 'package:flutter/foundation.dart';
 

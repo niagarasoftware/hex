@@ -206,10 +206,12 @@ class _IrrigationAndPumpLogState extends State<IrrigationAndPumpLog>
           if (card.page is FertigationCardListPage) {
             return card.page;
           }
+          final theme = Theme.of(context);
+          final colorScheme = theme.colorScheme;
           return Scaffold(
-            backgroundColor: const Color(0xFFF8FAFC),
+            backgroundColor: colorScheme.surfaceContainerLowest,
             appBar: AppBar(
-              backgroundColor: const Color(0xFFF8FAFC),
+              backgroundColor: colorScheme.surfaceContainerLowest,
               elevation: 0,
               scrolledUnderElevation: 0,
               centerTitle: false,
@@ -225,11 +227,11 @@ class _IrrigationAndPumpLogState extends State<IrrigationAndPumpLog>
                     child: Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: colorScheme.surface,
                         shape: BoxShape.circle,
-                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                        border: Border.all(color: colorScheme.outlineVariant),
                       ),
-                      child: const Icon(Icons.arrow_back, size: 20, color: Color(0xFF1E293B)),
+                      child: Icon(Icons.arrow_back, size: 20, color: colorScheme.onSurface),
                     ),
                   ),
                   const SizedBox(width: 16),
@@ -240,17 +242,17 @@ class _IrrigationAndPumpLogState extends State<IrrigationAndPumpLog>
                       children: [
                         Text(
                           card.title,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 22,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF1E1B4B),
+                            color: colorScheme.onSurface,
                           ),
                         ),
                         Text(
                           card.subtitle,
                           style: TextStyle(
                             fontSize: 12,
-                            color: Colors.grey[600],
+                            color: colorScheme.onSurfaceVariant,
                             fontWeight: FontWeight.w400,
                           ),
                           maxLines: 1,

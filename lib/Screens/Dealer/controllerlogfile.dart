@@ -30,7 +30,7 @@ class ControllerLog extends StatefulWidget {
   final String deviceID;
   final String communicationType;
 
-  const ControllerLog({Key? key, required this.deviceID, required this.communicationType}) : super(key: key);
+  const ControllerLog({super.key, required this.deviceID, required this.communicationType});
 
   @override
   _ControllerLogState createState() => _ControllerLogState();
