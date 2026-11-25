@@ -16,14 +16,13 @@ class CustomDropdownWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
     List<DropdownMenuItem<String>> items = [];
 
     if (includeNoneOption) {
       items.add(
-        DropdownMenuItem<String>(
+        const DropdownMenuItem<String>(
           value: 'None',
-          child: Text('None', style: TextStyle(color: colorScheme.onSurface)),
+          child: Text('None'),
         ),
       );
     }
@@ -31,7 +30,7 @@ class CustomDropdownWidget extends StatelessWidget {
     items.addAll(dropdownItems.where((name) => name != null).map((pumpName) {
         return DropdownMenuItem<String>(
           value: pumpName,
-          child: Text(pumpName, style: TextStyle(color: colorScheme.onSurface)),
+          child: Text(pumpName),
         );
       }).toList(),
     );
@@ -40,9 +39,6 @@ class CustomDropdownWidget extends StatelessWidget {
       isExpanded: true,
       underline: Container(),
       value: selectedValue,
-      dropdownColor: colorScheme.surface,
-      iconEnabledColor: colorScheme.onSurface,
-      style: TextStyle(color: colorScheme.onSurface, fontSize: 13),
       items: items,
       onChanged: onChanged,
     );

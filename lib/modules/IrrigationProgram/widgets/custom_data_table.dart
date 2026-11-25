@@ -42,16 +42,15 @@ class CustomDataTable extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    const primaryPurple = Color(0xFF5B21B6);
 
     return Scrollbar(
       controller: scrollController,
       child: CustomPaginatedDataTable(
         controller: scrollController,
         columnSpacing: columnSpacing,
-        arrowHeadColor: colorScheme.primary,
-        headingRowColor: WidgetStatePropertyAll<Color>(colorScheme.primary),
+        arrowHeadColor: primaryPurple,
+        headingRowColor: const WidgetStatePropertyAll<Color>(primaryPurple),
         headingRowHeight: 40,
         showFirstLastButtons: rowsPerPage > rows.length,
         dataRowMaxHeight: dataRowMaxHeight,
@@ -59,11 +58,11 @@ class CustomDataTable extends StatelessWidget {
         header: headerText != null
             ? Row(
                 children: [
-                  Icon(icon, color: colorScheme.primary),
+                  Icon(icon, color: primaryPurple),
                   const SizedBox(width: 12),
                   Text(
                     headerText ?? "",
-                    style: TextStyle(color: colorScheme.primary, fontWeight: FontWeight.bold),
+                    style: const TextStyle(color: primaryPurple, fontWeight: FontWeight.bold),
                   ),
                 ],
               )

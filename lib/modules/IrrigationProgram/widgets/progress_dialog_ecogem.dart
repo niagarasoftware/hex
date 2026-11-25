@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:mqtt_client/mqtt_client.dart';
 import '../../../services/mqtt_service.dart';
 import '../../../utils/environment.dart';
 

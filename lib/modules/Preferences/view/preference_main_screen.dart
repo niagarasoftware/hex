@@ -3360,6 +3360,31 @@ String? _getUnitSuffix(String title) {
   return null;
 }
 
+Widget buildPopUpMenuButton({
+  required BuildContext context,
+  required List<String> dataList,
+  required void Function(String) onSelected,
+  required Widget child,
+}) {
+  final colorScheme = Theme.of(context).colorScheme;
+  return PopupMenuButton<String>(
+    color: colorScheme.surface,
+    onSelected: onSelected,
+    itemBuilder: (context) {
+      return dataList.map((item) {
+        return PopupMenuItem<String>(
+          value: item,
+          child: Text(
+            item,
+            style: TextStyle(color: colorScheme.onSurface, fontSize: 13),
+          ),
+        );
+      }).toList();
+    },
+    child: child,
+  );
+}
+
 Widget buildCustomListTileWidget(
     {required int modelId,
       required BuildContext context,

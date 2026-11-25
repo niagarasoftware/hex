@@ -20,12 +20,11 @@ class CustomTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    const primaryPurple = Color(0xFF5B21B6);
     final bool isSelected = tabIndex == selectedTabIndex;
 
-    Color avatarColor = isSelected ? colorScheme.primary : colorScheme.surface;
-    Color contentColor = isSelected ? colorScheme.onPrimary : colorScheme.onSurfaceVariant;
+    Color avatarColor = isSelected ? primaryPurple : Colors.white;
+    Color contentColor = isSelected ? Colors.white : const Color(0xFF64748B);
 
     return Tab(
       height: height,
@@ -56,7 +55,7 @@ class CustomTab extends StatelessWidget {
             Text(
               label!,
               style: TextStyle(
-                color: isSelected ? colorScheme.primary : colorScheme.onSurfaceVariant,
+                color: isSelected ? primaryPurple : const Color(0xFF64748B),
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
               ),
             ),

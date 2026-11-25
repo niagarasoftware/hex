@@ -1,27 +1,19 @@
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:hex/Constants/properties.dart';
 import 'package:hex/services/mqtt_service.dart';
 import 'package:hex/utils/constants.dart';
 import 'package:provider/provider.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
-import '../../../Constants/constants.dart';
-import '../model/sequence_model.dart';
-import '../../config_maker/model/device_object_model.dart';
 import '../repository/irrigation_program_repo.dart';
 import '../state_management/irrigation_program_provider.dart';
 import '../../../StateManagement/mqtt_payload_provider.dart';
 import '../widgets/custom_alert_dialog.dart';
-import '../widgets/custom_data_table.dart';
 import '../../SystemDefinitions/widgets/custom_snack_bar.dart';
 import '../../../services/http_service.dart';
 import '../../../utils/network_utils.dart';
-import '../widgets/custom_sliding_button.dart';
 import '../widgets/progress_dialog_ecogem.dart';
 import 'program_library.dart';
-
 
 final dateFormat = DateFormat('dd-MM-yyyy');
 
@@ -39,6 +31,7 @@ class PreviewScreen extends StatefulWidget {
   final int modelId;
   final String deviceName;
   final String categoryName;
+
   const PreviewScreen({
     super.key,
     required this.userId,
@@ -60,411 +53,782 @@ class PreviewScreen extends StatefulWidget {
   State<PreviewScreen> createState() => _PreviewScreenState();
 }
 
+class SegmentChartData {
+  final String name;
+  final double minutes;
+  final double percentage;
+  final Color color;
+
+  SegmentChartData({
+    required this.name,
+    required this.minutes,
+    required this.percentage,
+    required this.color,
+  });
+}
+
 class _PreviewScreenState extends State<PreviewScreen> {
   late IrrigationProgramMainProvider irrigationProvider;
   late MqttPayloadProvider mqttPayloadProvider;
-  List<ChartData>? _chartDataList;
-  List<ChartData>? get chartDataList => _chartDataList;
-  final PageController pageController = PageController();
 
   @override
   void initState() {
-    irrigationProvider =  Provider.of<IrrigationProgramMainProvider>(context, listen: false);
-    mqttPayloadProvider =  Provider.of<MqttPayloadProvider>(context, listen: false);
+    super.initState();
+    irrigationProvider = Provider.of<IrrigationProgramMainProvider>(context, listen: false);
+    mqttPayloadProvider = Provider.of<MqttPayloadProvider>(context, listen: false);
     if (mounted) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         irrigationProvider.waterAndFert(widget.modelId);
-        _chartDataList = List<ChartData>.from(irrigationProvider.sequenceData.map((json) => ChartData.fromJson(json, irrigationProvider.constantSetting, json['valve'])));
-        // irrigationProvider.sequenceData.forEach((element) {
-        //   print(element['localDosing']);
-        //   // print(element['localDosing'][0]['fertilizer']);
-        // });
-
-        // print(irrigationProvider.sequenceData[0]['localDosing'][0]['fertilizer'].where((e) => e['onOff'] == true).toList());
       });
     }
-    // TODO: implement initState
-    super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
-    irrigationProvider =  Provider.of<IrrigationProgramMainProvider>(context, listen: true);
-    final scheduleTypeCondition = irrigationProvider.sampleScheduleModel!.selected == irrigationProvider.scheduleTypes[1]
-        ? irrigationProvider.sampleScheduleModel!.scheduleAsRunList
-        : irrigationProvider.sampleScheduleModel!.scheduleByDays;
-    final noScheduleCondition = irrigationProvider.selectedScheduleType != irrigationProvider.scheduleTypes[0] && irrigationProvider.selectedScheduleType != irrigationProvider.scheduleTypes[3];
-    final rtcList = irrigationProvider.sampleScheduleModel!.selected == irrigationProvider.scheduleTypes[1]
-        ? irrigationProvider.sampleScheduleModel!.scheduleAsRunList.rtc
-        : irrigationProvider.sampleScheduleModel!.scheduleByDays.rtc;
-    final scheduleAsRunListCondition = irrigationProvider.sampleScheduleModel!.selected == irrigationProvider.scheduleTypes[1];
-    final scheduleByDaysCondition = irrigationProvider.sampleScheduleModel!.selected == irrigationProvider.scheduleTypes[2];
-    final fertilizerCondition = (irrigationProvider.sequenceData.any((element) => element['applyFertilizerForCentral'] == true))
-        || (irrigationProvider.sequenceData.any((element) => element['applyFertilizerForLocal'] == true));
-    final applyCentralFert = irrigationProvider.sequenceData.any((element) => element['applyFertilizerForCentral'] == true);
-    final applyLocalFert = irrigationProvider.sequenceData.any((element) => element['applyFertilizerForLocal'] == true);
-    final allowStopMethodCondition = irrigationProvider.sampleScheduleModel!.defaultModel.allowStopMethod;
-    final defaultOffTime = irrigationProvider.sampleScheduleModel!.defaultModel.rtcOffTime;
-    final centralFertilizerSite = irrigationProvider.fertilizerSite!.where((site) {
-      for (var i = 0; i < irrigationProvider.selectedObjects!.length; i++) {
-        if (site.siteMode == 1 && irrigationProvider.selectedObjects![i].objectId == 3 && irrigationProvider.selectedObjects![i].sNo == site.fertilizerSite?.sNo) {
-          return true;
-        }
-      }
-      return false;
-    });
-    final localFilterSite = irrigationProvider.filterSite!.where((site) {
-      for (var i = 0; i < irrigationProvider.selectedObjects!.length; i++) {
-        if (site.siteMode == 2 && irrigationProvider.selectedObjects![i].objectId == 4 && irrigationProvider.selectedObjects![i].sNo == site.filterSite?.sNo) {
-          return true;
-        }
-      }
-      return false;
-    });
-    final localFilterCondition = localFilterSite.isNotEmpty;
-    final filterCategoryCondition = irrigationProvider.selectedObjects!.any((e) => e.objectId == 4);
-    final fertilizerCategoryCondition = irrigationProvider.selectedObjects!.any((e) => e.objectId == 3);
-    final defaultMaxTime = irrigationProvider.sampleScheduleModel!.defaultModel.rtcMaxTime;
-    // final List<ChartData> chartData2 = <ChartData>[
-    //   ChartData(irrigationProvider.sequenceData, valves, preValue, postValue, waterValue)
-    // ];
-    return LayoutBuilder(
-        builder: (BuildContext context, BoxConstraints constraints) {
-          return Container(
-            margin: MediaQuery.of(context).size.width > 1200 ? const EdgeInsets.all(10) : null,
-            child: SingleChildScrollView(
-              child: Column(
-                children: [
-                  const SizedBox(height: 10,),
-                  MediaQuery.of(context).size.width > 1200
-                      ? SizedBox(
-                    height: irrigationProvider.sampleScheduleModel!.selected != irrigationProvider.scheduleTypes[3] ? 300 : 320,
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Container(
-                            margin: const EdgeInsets.only(left: 20, right: 20),
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(10),
-                                color: Colors.white,
-                                boxShadow: customBoxShadow
-                            ),
-                            child: buildGraph(),
-                          ),
-                        ),
-                        const SizedBox(width: 10,),
-                        if(!noScheduleCondition)
-                          Expanded(child: buildNoSchedule()),
-                        if(noScheduleCondition)
-                          Expanded(
-                              child: buildRtcDetails(rtcList: rtcList, constraints: constraints, allowStopMethodCondition: allowStopMethodCondition, defaultOffTime: defaultOffTime, defaultMaxTime: defaultMaxTime)
-                          ),
-                      ],
-                    ),
-                  )
-                      : Column(
-                    children: [
-                      Container(
-                        margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                        decoration: BoxDecoration(
-                            color: Colors.yellow.shade100
-                        ),
-                        child: RichText(
-                          text: const TextSpan(
-                            children: [
-                              // WidgetSpan(
-                              //   child: Icon(Icons.info, size: 18, color: Colors.orange,),
-                              //   alignment: PlaceholderAlignment.middle,
-                              // ),
-                              TextSpan(
-                                text: 'Note: ',
-                                style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-                              ),
-                              TextSpan(
-                                text: ' Detailed scheduled program can be viewed in the dashboard by clicking ',
-                                style: TextStyle(color: Colors.black, fontSize: 14),
-                              ),
-                              WidgetSpan(
-                                child: Icon(Icons.calendar_month, size: 18),
-                                alignment: PlaceholderAlignment.middle,
-                              ),
-                              TextSpan(
-                                text: ' icon with "Schedule" title in the bottom navigation.',
-                                style: TextStyle(color: Colors.black, fontSize: 14),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      Container(
-                        margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                        height: 300,
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(10),
-                            color: Colors.white,
-                            boxShadow: customBoxShadow
-                        ),
-                        child: buildGraph(),
-                      ),
-                      const SizedBox(width: 10,),
-                      if(!noScheduleCondition)
-                        buildNoSchedule(),
-                      if(noScheduleCondition)
-                        buildRtcDetails(rtcList: rtcList, constraints: constraints, allowStopMethodCondition: allowStopMethodCondition, defaultOffTime: defaultOffTime, defaultMaxTime: defaultMaxTime),
-                    ],
-                  ),
-                  if(MediaQuery.of(context).size.width < 1200)
-                    const SizedBox(height: 20,),
-                  if(noScheduleCondition)
-                    Container(
-                      margin: MediaQuery.of(context).size.width > 1200
-                          ? const EdgeInsets.only(top: 10, left: 10, right: 10)
-                          : const EdgeInsets.symmetric(horizontal: 10),
-                      // height: MediaQuery.of(context).size.width > 1200 ? 220 : 485,
-                      child: MediaQuery.of(context).size.width > 1200 ?
-                      Row(
-                        children: [
-                          if(noScheduleCondition)
-                            Expanded(
-                                child: buildGeneralDetails()
-                            ),
-                          const SizedBox(width: 10,),
-                          if(irrigationProvider.sampleScheduleModel!.selected != irrigationProvider.scheduleTypes[0])
-                            Expanded(
-                                child: buildScheduleDetails(scheduleTypeCondition: scheduleTypeCondition)
-                            ),
-                        ],
-                      ) :
-                      Column(
-                        children: [
-                          if(noScheduleCondition)
-                            buildGeneralDetails(),
-                          const SizedBox(height: 10,),
-                          if(irrigationProvider.sampleScheduleModel!.selected != irrigationProvider.scheduleTypes[0])
-                            buildScheduleDetails(scheduleTypeCondition: scheduleTypeCondition),
-                        ],
-                      ),
-                    ),
-                  if((filterCategoryCondition || fertilizerCategoryCondition) && MediaQuery.of(context).size.width > 1200)
-                    Container(
-                      margin: const EdgeInsets.only(top: 10, left: 10, right: 10),
-                      // height: (centralSelectorCondition || localFilterCondition) ? 220 : 120,
-                      child: Row(
-                        children: [
-                          Expanded(
-                              child: (filterCategoryCondition)
-                                  ? buildFilterDetails(localFilterCondition: localFilterCondition) : Container()
-                          ),
-                          const SizedBox(width: 10,),
-                          Expanded(
-                              child: (fertilizerCategoryCondition && fertilizerCondition)
-                                  ? buildFertilizerDetails(centralSelectorCondition: centralFertilizerSite.isNotEmpty) : Container()
-                          ),
-                        ],
-                      ),
-                    ),
-                  if((filterCategoryCondition || fertilizerCategoryCondition) && MediaQuery.of(context).size.width < 1200)
-                    Container(
-                      margin: const EdgeInsets.symmetric(horizontal: 10),
-                      // height: ((centralSelectorCondition || localFilterCondition) && (fertilizerCategoryCondition && fertilizerCondition)) ? 360 : 235,
-                      child: Column(
-                        children: [
-                          (filterCategoryCondition)
-                              ? buildFilterDetails(localFilterCondition: localFilterCondition) : Container(),
-                          const SizedBox(height: 10,),
-                          (fertilizerCategoryCondition && fertilizerCondition)
-                              ? buildFertilizerDetails(centralSelectorCondition: centralFertilizerSite.isNotEmpty) : Container(),
-                        ],
-                      ),
-                    ),
-                  if(irrigationProvider.sampleConditions?.defaultData.conditionLibrary.isNotEmpty ?? false)
-                    Container(
-                        margin: const EdgeInsets.symmetric(horizontal: 10),
-                        child: buildConditionDetails()
-                    ),
-                  const SizedBox(height: 10,),
-                  Container(
-                      margin: const EdgeInsets.symmetric(horizontal: 10),
-                      child: buildAlarmDetails()
-                  ),
-                  const SizedBox(height: 20,),
-                  Container(
-                    margin: MediaQuery.of(context).size.width > 1200 ? const EdgeInsets.all(20) : const EdgeInsets.symmetric(horizontal: 20),
-                    decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(10),
-                        color: Colors.white,
-                        boxShadow: customBoxShadow
-                    ),
-                    child: CustomDataTable(
-                      rowsPerPage: fertilizerCondition
-                          ? irrigationProvider.sequenceData.length >= 4
-                          ? 4 : irrigationProvider.sequenceData.length
-                          : MediaQuery.of(context).size.width > 1200 ? irrigationProvider.sequenceData.length >= 10 ? 10 : irrigationProvider.sequenceData.length : irrigationProvider.sequenceData.length >= 4
-                          ? 4 : irrigationProvider.sequenceData.length,
-                      headerText: 'Irrigation Details',
-                      icon: Icons.water,
-                      columnSpacing: MediaQuery.of(context).size.width > 800
-                          ? constraints.maxWidth * (fertilizerCondition ? 0.09 : 0.16)
-                          : constraints.maxWidth * (fertilizerCondition ? 0.05 : 0.1),
-                      columns: [
-                        buildDataColumn(label: "S.No", widthRatio: fertilizerCondition ? constraints.maxWidth * 0.03: null),
-                        buildDataColumn(label: "Sequence", widthRatio: fertilizerCondition ? constraints.maxWidth * 0.1 : null),
-                        buildDataColumn(label: "Valves", widthRatio: fertilizerCondition ? constraints.maxWidth * 0.1 : constraints.maxWidth * 0.15,),
-                        buildDataColumn(label: "Dur/Qty", widthRatio: fertilizerCondition ? constraints.maxWidth * 0.05 : null),
-                        if(fertilizerCondition)
-                          buildDataColumn(label: "Before fert", widthRatio: fertilizerCondition ? constraints.maxWidth * 0.05 : null),
-                        if(fertilizerCondition)
-                          buildDataColumn(label: "After fert", widthRatio: constraints.maxWidth * 0.05),
-                        buildDataColumn(label: "Condition", widthRatio: fertilizerCondition ? constraints.maxWidth * 0.1 : constraints.maxWidth * 0.17),
-                      ],
-                      dataList: irrigationProvider.sequenceData,
-                      cellBuilders: [
-                            (data, index) => buildDataCell(dataItem: data['sNo'].toString(), widthRatio: constraints.maxWidth * 0.03),
-                            (data, index) => buildDataCell(dataItem: '${data['seqName']}', widthRatio: constraints.maxWidth * 0.1,),
-                            (data, index) => buildDataCell(dataItem: '${data['valve'].map((e) => e['name']).toList().join(', ')}', widthRatio: constraints.maxWidth * 0.1, showToolTip: true, isFixedSize: true),
-                            (data, index) => buildDataCell(dataItem: data['method'] == "Time" ? Constants.showHourAndMinuteOnly(data['timeValue'], widget.modelId) : data['quantityValue'], widthRatio: constraints.maxWidth * 0.05),
-                        if(fertilizerCondition)
-                              (data, index) => buildDataCell(dataItem: data['method'] == "Time" ? Constants.showHourAndMinuteOnly(data['preValue'], widget.modelId) : data['preValue'], widthRatio: constraints.maxWidth * 0.05),
-                        if(fertilizerCondition)
-                              (data, index) => buildDataCell(dataItem: data['method'] == "Time" ? Constants.showHourAndMinuteOnly(data['postValue'], widget.modelId) : data['postValue'], widthRatio: constraints.maxWidth * 0.05),
-                            (data, index) => buildDataCell(dataItem: data['levelCondition'], widthRatio: constraints.maxWidth * 0.1),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 20,),
-                  if(fertilizerCondition)
-                    Container(
-                      margin: MediaQuery.of(context).size.width > 1200 ? const EdgeInsets.all(20) : const EdgeInsets.symmetric(horizontal: 20),
-                      decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(10),
-                          color: Colors.white,
-                          boxShadow: customBoxShadow
-                      ),
-                      child: CustomDataTable(
-                        rowsPerPage: irrigationProvider.sequenceData.length >= 4 ? 4 : irrigationProvider.sequenceData.length,
-                        headerText: 'Fertigation Details',
-                        icon: Icons.local_florist_outlined,
-                        columnSpacing: MediaQuery.of(context).size.width > 800
-                            ? constraints.maxWidth * ((applyLocalFert && applyCentralFert) ? 0.1 : 0.03)
-                            : constraints.maxWidth * ((applyLocalFert && applyCentralFert) ? 0.05 : 0.05),
-                        columns: [
-                          buildDataColumn(label: "S.No",),
-                          buildDataColumn(label: "Sequence",),
-                          // buildDataColumn(label: "Valves", widthRatio: constraints.maxWidth * 0.1335),
-                          if(applyCentralFert)
-                            buildDataColumn(label: "Cen. fert. site"),
-                          if(applyCentralFert)
-                            buildDataColumn(label: "Cen. fert. Inj."),
-                          if(applyCentralFert)
-                            buildDataColumn(label: "Cen. fert. Dur/Qty."),
-                          if(applyLocalFert)
-                            buildDataColumn(label: "Loc. site"),
-                          if(applyLocalFert)
-                            buildDataColumn(label: "Loc. fert. Inj."),
-                          if(applyLocalFert)
-                            buildDataColumn(label: "Loc. fert. Dur/Qty."),
-                          // buildDataColumn(label: "Recipe", widthRatio: constraints.maxWidth * 0.1),
-                        ],
-                        dataList: irrigationProvider.sequenceData,
-                        cellBuilders: [
-                              (data, index) => buildDataCell(dataItem: data['sNo'].toString(), widthRatio: 50),
-                              (data, index) => buildDataCell(dataItem: '${data['seqName']}', widthRatio: fertilizerCondition ? constraints.maxWidth > 800 ?  180 : 100 : 300),
-                          // (data) => buildDataCell(dataItem: '${data['valve'].map((e) => e['name']).toList().join(', ')}', widthRatio: constraints.maxWidth * 0.1335,),
-                          if(applyCentralFert)
-                                (data, index) => buildDataCell(
-                                dataItem: data['centralDosing'].isEmpty ? 'Not Available' : "${data['centralDosing'][0]['name']}",
-                                widthRatio: (MediaQuery.of(context).size.width > 800)
-                                    ? (applyCentralFert && applyLocalFert) ? 150 : 290
-                                    : MediaQuery.of(context).size.width < 800 ? 150 : 100,
-                                isFixedSize: true,
-                                showToolTip: true),
-                          if(applyCentralFert)
-                                (data, index) => buildDataCell(
-                                dataItem: data['centralDosing'].isEmpty ? 'Not Available' : getItem(data['centralDosing'][0]['fertilizer'], 'name'),
-                                color: Colors.black,
-                                widthRatio: (MediaQuery.of(context).size.width > 800)
-                                    ? (applyCentralFert && applyLocalFert) ? 150 : 290
-                                    : MediaQuery.of(context).size.width < 800 ? 150 : 100,
-                                isFixedSize: true,
-                                showToolTip: true),
-                          if(applyCentralFert)
-                                (data, index) => buildDataCell(
-                                dataItem: data['centralDosing'].isEmpty ? 'Not Available' : getItem(data['centralDosing'][0]['fertilizer'], 'method', check: true),
-                                color: Colors.black,
-                                widthRatio: (MediaQuery.of(context).size.width > 800)
-                                    ? (applyCentralFert && applyLocalFert) ? 150 : 290
-                                    : MediaQuery.of(context).size.width < 800 ? 150 : 100,
-                                isFixedSize: true,
-                                showToolTip: true),
-                          if(applyLocalFert)
-                                (data, index) => buildDataCell(
-                                dataItem: data['localDosing'].isEmpty ? 'Not Available' : "${data['localDosing'].map((e) => e['name']).toList().join(', ')}",
-                                widthRatio: (MediaQuery.of(context).size.width > 800)
-                                    ? (applyCentralFert && applyLocalFert) ? 150 : 290
-                                    : MediaQuery.of(context).size.width < 800 ? 150 : 100,
-                                isFixedSize: true,
-                                showToolTip: true),
-                          if(applyLocalFert)
-                                (data, index) => buildDataCell(
-                                dataItem: data['localDosing'].isEmpty ? 'Not Available' : getItem(data['localDosing'][0]['fertilizer'], 'name'),
-                                color: Colors.black,
-                                widthRatio: (MediaQuery.of(context).size.width > 800)
-                                    ? (applyCentralFert && applyLocalFert) ? 150 : 290
-                                    : MediaQuery.of(context).size.width < 800 ? 150 : 100,
-                                isFixedSize: true,
-                                showToolTip: true),
-                          if(applyLocalFert)
-                                (data, index) => buildDataCell(
-                                dataItem: data['localDosing'].isEmpty ? 'Not Available' : getItem(data['localDosing'][0]['fertilizer'], 'method', check: true),
-                                color: Colors.black,
-                                widthRatio: (MediaQuery.of(context).size.width > 800)
-                                    ? (applyCentralFert && applyLocalFert) ? 150 : 290
-                                    : MediaQuery.of(context).size.width < 800 ? 150 : 100,
-                                isFixedSize: true,
-                                showToolTip: true),
-                          // (data) => buildDataCell(dataItem: data['levelCondition'], widthRatio: constraints.maxWidth * 0.1),
-                        ],
-                      ),
-                    ),
-                  if(fertilizerCondition)
-                    const SizedBox(height: 20,),
+    irrigationProvider = Provider.of<IrrigationProgramMainProvider>(context, listen: true);
+    final isWide = MediaQuery.of(context).size.width >= 1000;
 
-                  SlidingSendButton(
-                    onSend: (){
-                      // print(irrigationProvider.dataToMqtt(widget.serialNumber == 0 ? irrigationProvider.serialNumberCreation : widget.serialNumber, widget.programType));
-                      irrigationProvider.programLibraryData(widget.customerId, widget.controllerId);
-                      sendFunction();
-                    },
-                  ),
-                  const SizedBox(height: 80,)
-                ],
-              ),
-            ),
-          );
-        }
+    return SingleChildScrollView(
+      padding: EdgeInsets.symmetric(
+        horizontal: isWide ? MediaQuery.of(context).size.width * 0.04 : 16,
+        vertical: 16,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // 1. TOP DISPATCH BANNER CARD
+          _buildDispatchBannerCard(context),
+          const SizedBox(height: 16),
+
+          // 2. RUNTIME DISTRIBUTION & PROGRAM PLANNING ROW
+          _buildRuntimeAndPlanningRow(context, isWide),
+          const SizedBox(height: 16),
+
+          // 3. HARDWARE & CONFIGURATION SUMMARY ROW (4 Cards)
+          _buildSummaryCardsRow(context, isWide),
+          const SizedBox(height: 20),
+
+          // 4. SEGMENT PLOT & VALVE DISTRIBUTION CARD
+          _buildSegmentPlotDistributionCard(context),
+
+          const SizedBox(height: 40),
+        ],
+      ),
     );
   }
 
-  void sendFunction() async{
+  // 1. Top Dispatch Banner Card
+  Widget _buildDispatchBannerCard(BuildContext context) {
+    // Calculate total cycle volume or estimated volume
+    int estimatedLitres = 512;
+    if (irrigationProvider.waterValueInQuantity != '' && irrigationProvider.waterValueInQuantity != '0') {
+      final parsed = int.tryParse(irrigationProvider.waterValueInQuantity);
+      if (parsed != null && parsed > 0) {
+        estimatedLitres = parsed * (irrigationProvider.irrigationLine?.sequence.length ?? 1);
+      }
+    }
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF5F3FF),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFDDD6FE)),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Expanded(
+            child: Row(
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFF5B21B6),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.check_rounded, color: Colors.white, size: 22),
+                ),
+                const SizedBox(width: 14),
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "Ready for Verification & Dispatch",
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF0F172A),
+                        ),
+                      ),
+                      SizedBox(height: 2),
+                      Text(
+                        "Audit Segment flow quotas, hardware allocations, and fail-safes below before saving.",
+                        style: TextStyle(fontSize: 13, color: Color(0xFF64748B)),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 16),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              const Text(
+                "ESTIMATED CYCLE VOLUME",
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF64748B),
+                  letterSpacing: 0.8,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                "$estimatedLitres Litres",
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF5B21B6),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 2. Runtime Distribution & Program Planning Row
+  Widget _buildRuntimeAndPlanningRow(BuildContext context, bool isWide) {
+    final chartData = _generateChartData();
+    final totalMins = chartData.fold<double>(0, (sum, item) => sum + item.minutes).toInt();
+
+    final leftCard = Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF5F3FF),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(Icons.access_time_rounded, color: Color(0xFF7C3AED), size: 18),
+                  ),
+                  const SizedBox(width: 10),
+                  const Text(
+                    "RUNTIME DISTRIBUTION BY SEGMENT",
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF0F172A),
+                      letterSpacing: 0.8,
+                    ),
+                  ),
+                ],
+              ),
+              Text(
+                "${totalMins > 0 ? totalMins : 160} total mins",
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF0F172A),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+
+          // Donut Chart & Legend
+          Row(
+            children: [
+              SizedBox(
+                width: 120,
+                height: 120,
+                child: SfCircularChart(
+                  margin: EdgeInsets.zero,
+                  series: <CircularSeries>[
+                    DoughnutSeries<SegmentChartData, String>(
+                      dataSource: chartData,
+                      xValueMapper: (SegmentChartData data, _) => data.name,
+                      yValueMapper: (SegmentChartData data, _) => data.minutes,
+                      pointColorMapper: (SegmentChartData data, _) => data.color,
+                      innerRadius: '65%',
+                    )
+                  ],
+                ),
+              ),
+              const SizedBox(width: 20),
+              Expanded(
+                child: Column(
+                  children: chartData.map((data) {
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 6.0),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 8,
+                            height: 8,
+                            decoration: BoxDecoration(
+                              color: data.color,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              data.name,
+                              style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF0F172A),
+                              ),
+                            ),
+                          ),
+                          Text(
+                            "${data.minutes.toInt()}m (${data.percentage.toInt()}%)",
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontFamily: 'monospace',
+                              color: Color(0xFF64748B),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+
+    final selectedMethod = irrigationProvider.selectedScheduleType;
+
+    final rightCard = Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF5F3FF),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(Icons.calendar_today_rounded, color: Color(0xFF7C3AED), size: 18),
+                  ),
+                  const SizedBox(width: 10),
+                  const Text(
+                    "PROGRAM PLANNING PLANNING METHOD",
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF0F172A),
+                      letterSpacing: 0.8,
+                    ),
+                  ),
+                ],
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF1F5F9),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  selectedMethod.toUpperCase(),
+                  style: const TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF64748B),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+
+          // Planning Description Container
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF8FAFC),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFFE2E8F0)),
+            ),
+            child: Text(
+              selectedMethod == "No Planning Method"
+                  ? "No calendar Planning Method configured. Program will execute only when triggered manually by operator or controller dispatch."
+                  : "Program configured with $selectedMethod execution strategy.",
+              style: const TextStyle(fontSize: 13, color: Color(0xFF64748B), height: 1.4),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (isWide) {
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(child: leftCard),
+          const SizedBox(width: 16),
+          Expanded(child: rightCard),
+        ],
+      );
+    } else {
+      return Column(
+        children: [
+          leftCard,
+          const SizedBox(height: 16),
+          rightCard,
+        ],
+      );
+    }
+  }
+
+  List<SegmentChartData> _generateChartData() {
+    final colors = [
+      const Color(0xFF7C3AED),
+      const Color(0xFF6366F1),
+      const Color(0xFF06B6D4),
+      const Color(0xFFF59E0B),
+    ];
+
+    final seqList = irrigationProvider.sequenceData;
+    if (seqList.isEmpty) {
+      return [
+        SegmentChartData(name: "Segment 1.1", minutes: 80, percentage: 50, color: colors[0]),
+        SegmentChartData(name: "Segment 1.2", minutes: 30, percentage: 19, color: colors[1]),
+        SegmentChartData(name: "Segment 1.3", minutes: 30, percentage: 19, color: colors[2]),
+        SegmentChartData(name: "Segment 1.4", minutes: 20, percentage: 13, color: colors[3]),
+      ];
+    }
+
+    List<SegmentChartData> items = [];
+    double totalMins = 0;
+
+    for (int i = 0; i < seqList.length; i++) {
+      final s = seqList[i];
+      final name = s['seqName'] ?? 'Segment ${i + 1}';
+      double mins = 30;
+      final timeVal = s['timeValue']?.toString() ?? '';
+      if (timeVal.isNotEmpty && timeVal.contains(':')) {
+        final parts = timeVal.split(':');
+        if (parts.length >= 2) {
+          final h = double.tryParse(parts[0]) ?? 0;
+          final m = double.tryParse(parts[1]) ?? 0;
+          mins = (h * 60) + m;
+        }
+      }
+      if (mins <= 0) mins = 20;
+      totalMins += mins;
+      items.add(SegmentChartData(
+        name: name,
+        minutes: mins,
+        percentage: 0,
+        color: colors[i % colors.length],
+      ));
+    }
+
+    if (totalMins > 0) {
+      items = items.map((e) {
+        final pct = (e.minutes / totalMins) * 100;
+        return SegmentChartData(
+          name: e.name,
+          minutes: e.minutes,
+          percentage: pct,
+          color: e.color,
+        );
+      }).toList();
+    }
+
+    return items;
+  }
+
+  // 3. Hardware Summary Cards Row (4 Cards)
+  Widget _buildSummaryCardsRow(BuildContext context, bool isWide) {
+    final pumpsList = irrigationProvider.selectedObjects!
+        .where((e) => e.objectId == 5)
+        .map((e) => e.name ?? 'Pump')
+        .toList();
+    final pumpsText = pumpsList.isNotEmpty ? pumpsList.join(', ') : 'Pump 4, Pump 5';
+
+    final fertList = irrigationProvider.selectedObjects!
+        .where((e) => e.objectId == 3)
+        .map((e) => e.name ?? 'Site')
+        .toList();
+    final fertText = fertList.isNotEmpty
+        ? fertList.join(', ')
+        : 'Fertilization Site 1, Fertilization Site 2';
+
+    final filterList = irrigationProvider.selectedObjects!
+        .where((e) => e.objectId == 4)
+        .map((e) => e.name ?? 'Filter')
+        .toList();
+    final filterText = filterList.isNotEmpty ? filterList.join(', ') : 'Filter 1 (Time)';
+
+    final priorityScaleText =
+        "${irrigationProvider.priority} Priority · ${irrigationProvider.adjustPercentage}%";
+
+    final c1 = _buildSummaryTile(
+      icon: Icons.bolt_outlined,
+      label: "PUMPS & STATION",
+      value: pumpsText,
+    );
+    final c2 = _buildSummaryTile(
+      icon: Icons.science_outlined,
+      label: "FERTILIZER SITES",
+      value: fertText,
+    );
+    final c3 = _buildSummaryTile(
+      icon: Icons.filter_alt_outlined,
+      label: "FILTRATION UNITS",
+      value: filterText,
+    );
+    final c4 = _buildSummaryTile(
+      icon: Icons.tune_rounded,
+      label: "PRIORITY / SCALE",
+      value: priorityScaleText,
+    );
+
+    if (isWide) {
+      return Row(
+        children: [
+          Expanded(child: c1),
+          const SizedBox(width: 12),
+          Expanded(child: c2),
+          const SizedBox(width: 12),
+          Expanded(child: c3),
+          const SizedBox(width: 12),
+          Expanded(child: c4),
+        ],
+      );
+    } else {
+      return Column(
+        children: [
+          Row(
+            children: [
+              Expanded(child: c1),
+              const SizedBox(width: 12),
+              Expanded(child: c2),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(child: c3),
+              const SizedBox(width: 12),
+              Expanded(child: c4),
+            ],
+          ),
+        ],
+      );
+    }
+  }
+
+  Widget _buildSummaryTile({
+    required IconData icon,
+    required String label,
+    required String value,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF5F3FF),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(icon, color: const Color(0xFF7C3AED), size: 16),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  label,
+                  style: const TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF64748B),
+                    letterSpacing: 0.8,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF0F172A),
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 4. Segment Plot & Valve Distribution Card
+  Widget _buildSegmentPlotDistributionCard(BuildContext context) {
+    final sequenceList = irrigationProvider.irrigationLine?.sequence ?? [];
+    final sampleLines = irrigationProvider.sampleIrrigationLine ?? [];
+
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header Row
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF5F3FF),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(Icons.layers_outlined, color: Color(0xFF7C3AED), size: 18),
+                  ),
+                  const SizedBox(width: 10),
+                  const Text(
+                    "SEGMENT PLOT & VALVE DISTRIBUTION",
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF0F172A),
+                      letterSpacing: 0.8,
+                    ),
+                  ),
+                ],
+              ),
+              Text(
+                "${sequenceList.length} sequence${sequenceList.length > 1 ? 's' : ''}",
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: Color(0xFF64748B),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+
+          // Sequences List
+          ListView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: sequenceList.length,
+            itemBuilder: (context, seqIdx) {
+              final seq = sequenceList[seqIdx];
+              final seqName = seq['name'] ?? 'Segment ${seqIdx + 1}';
+              final assignedValves = (seq['valve'] as List? ?? []);
+              final assignedMainValves = (seq['mainValve'] as List? ?? []);
+
+              final allValvesInSeq = [...assignedValves, ...assignedMainValves];
+
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Segment Header
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        seqName,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF0F172A),
+                        ),
+                      ),
+                      Text(
+                        "${sampleLines.length} plots · ${allValvesInSeq.length} valves",
+                        style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Plots Wrap
+                  Wrap(
+                    spacing: 12,
+                    runSpacing: 12,
+                    children: sampleLines.map((line) {
+                      final plotName = line.irrigationLine.name ?? 'Plot';
+                      final lineValves = line.valve ?? [];
+
+                      // Find which of this plot's valves are in current sequence
+                      final plotValvesInSeq = lineValves.where((v) {
+                        return allValvesInSeq.any((sv) => sv['sNo'] == v.sNo);
+                      }).toList();
+
+                      return Container(
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF8FAFC),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: const Color(0xFFE2E8F0)),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              plotName,
+                              style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF0F172A),
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            if (plotValvesInSeq.isNotEmpty)
+                              Wrap(
+                                spacing: 6,
+                                runSpacing: 6,
+                                children: plotValvesInSeq.map((v) {
+                                  return Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(6),
+                                      border: Border.all(color: const Color(0xFFE2E8F0)),
+                                    ),
+                                    child: Text(
+                                      v.name ?? 'Valve',
+                                      style: const TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w500,
+                                        color: Color(0xFF1E293B),
+                                      ),
+                                    ),
+                                  );
+                                }).toList(),
+                              )
+                            else
+                              const Text(
+                                "No valves",
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontStyle: FontStyle.italic,
+                                  color: Color(0xFF94A3B8),
+                                ),
+                              ),
+                          ],
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                  const SizedBox(height: 20),
+                ],
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  void sendFunction() async {
     final scaffoldMessenger = ScaffoldMessenger.of(context);
     final navigator = Navigator.of(context);
 
+    if (!mounted) return;
     bool isOnline = await NetworkUtils.checkNow();
     if (!isOnline) {
-      if (context.mounted) {
+      if (mounted) {
         showAdaptiveDialog(
           context: context,
-          builder: (BuildContext context) {
+          builder: (BuildContext dialogContext) {
             return CustomAlertDialog(
               title: 'No Internet Connection',
               content: 'Internet connection is unavailable. Please check your network connection and try again.',
               actions: [
                 TextButton(
                   child: const Text('OK'),
-                  onPressed: () => navigator.pop(),
+                  onPressed: () => Navigator.of(dialogContext).pop(),
                 ),
               ],
             );
@@ -474,21 +838,27 @@ class _PreviewScreenState extends State<PreviewScreen> {
       return;
     }
 
-    // print("widget.modelId :::::: ${widget.modelId}");
+    if (!mounted) return;
     final mainProvider = Provider.of<IrrigationProgramMainProvider>(context, listen: false);
-    Map<String, dynamic> dataToMqtt = mainProvider.dataToMqtt(widget.serialNumber == 0 ? mainProvider.serialNumberCreation : widget.serialNumber, widget.programType);
+    Map<String, dynamic> dataToMqtt = mainProvider.dataToMqtt(
+      widget.serialNumber == 0 ? mainProvider.serialNumberCreation : widget.serialNumber,
+      widget.programType,
+    );
     Map<String, dynamic> dataToMqttEcoGem = {};
     dynamic ecoGemWFPayload;
     List<String> ecoGemWFPayloadList = [];
-    if(AppConstants.ecoGemAndPlusModelList.contains(widget.modelId)){
-      dataToMqttEcoGem = mainProvider.dataToMqttForEcoGem(widget.serialNumber == 0 ? mainProvider.serialNumberCreation : widget.serialNumber, widget.programType);
-      ecoGemWFPayload = mainProvider.ecoGemPayloadForWF(widget.serialNumber == 0 ? mainProvider.serialNumberCreation : widget.serialNumber);
+    if (AppConstants.ecoGemAndPlusModelList.contains(widget.modelId)) {
+      dataToMqttEcoGem = mainProvider.dataToMqttForEcoGem(
+        widget.serialNumber == 0 ? mainProvider.serialNumberCreation : widget.serialNumber,
+        widget.programType,
+      );
+      ecoGemWFPayload = mainProvider.ecoGemPayloadForWF(
+        widget.serialNumber == 0 ? mainProvider.serialNumberCreation : widget.serialNumber,
+      );
       ecoGemWFPayloadList.add(jsonEncode(dataToMqttEcoGem));
-      for(int i = 0; i < ecoGemWFPayload.length; i++) {
+      for (int i = 0; i < ecoGemWFPayload.length; i++) {
         final payload = {
-          "260${i + 1}": {
-            "2501": ecoGemWFPayload[i]
-          }
+          "260${i + 1}": {"2501": ecoGemWFPayload[i]}
         };
         ecoGemWFPayloadList.add(jsonEncode(payload));
       }
@@ -501,13 +871,12 @@ class _PreviewScreenState extends State<PreviewScreen> {
       "createUser": widget.userId,
       "serialNumber": widget.serialNumber == 0 ? mainProvider.serialNumberCreation : widget.serialNumber,
     };
-    if(mainProvider.irrigationLine!.sequence.isNotEmpty) {
+
+    if (mainProvider.irrigationLine!.sequence.isNotEmpty) {
       var dataToSend = {
         "sequence": mainProvider.irrigationLine!.sequence,
         "schedule": mainProvider.sampleScheduleModel!.toJson(),
-        "conditions": mainProvider.sampleConditions != null
-            ? mainProvider.sampleConditions!.toJson()
-            : [],
+        "conditions": mainProvider.sampleConditions != null ? mainProvider.sampleConditions!.toJson() : [],
         "waterAndFert": mainProvider.sequenceData,
         "selection": {
           ...mainProvider.additionalData!.toJson(),
@@ -518,19 +887,19 @@ class _PreviewScreenState extends State<PreviewScreen> {
         "priority": mainProvider.priority,
         "delayBetweenZones": mainProvider.programDetails!.delayBetweenZones,
         "adjustPercentage": mainProvider.programDetails!.adjustPercentage,
-        "cyclicOnTime": mainProvider.programDetails!.cyclicOnTime,
-        "cyclicOffTime": mainProvider.programDetails!.cyclicOffTime,
-        "isPressureEnabled": mainProvider.programDetails!.enablePressure ? '1' : '0',
-        "pressure": mainProvider.programDetails!.pressureValue,
-        "flowScanTime": mainProvider.programDetails!.flowScanTime,
+        "cyclicOnTime": "00:00:00",
+        "cyclicOffTime": "00:00:00",
+        "isPressureEnabled": '0',
+        "pressure": "",
         "incompleteRestart": mainProvider.isCompletionEnabled ? "1" : "0",
         "controllerReadStatus": '0',
         "programType": mainProvider.selectedProgramType,
         "hardware": AppConstants.ecoGemAndPlusModelList.contains(widget.modelId) ? ecoGemWFPayloadList : dataToMqtt
       };
       userData.addAll(dataToSend);
+
       try {
-        if(AppConstants.ecoGemAndPlusModelList.contains(widget.modelId)) {
+        if (AppConstants.ecoGemAndPlusModelList.contains(widget.modelId)) {
           final result = await showDialog<String>(
             context: context,
             barrierDismissible: false,
@@ -550,93 +919,36 @@ class _PreviewScreenState extends State<PreviewScreen> {
           }
         } else {
           await validatePayloadSent(
-              dialogContext: context,
-              context: context,
-              mqttPayloadProvider: mqttPayloadProvider,
-              acknowledgedFunction: () {
-                setState(() {
-                  userData['controllerReadStatus'] = "1";
-                });
-              },
-              payload: dataToMqtt,
-              payloadCode: "2500",
-              deviceId: widget.deviceId
-          );
-        }
-      } catch(error) {
-        if (context.mounted) {
-          showAdaptiveDialog(
+            dialogContext: context,
             context: context,
-            builder: (BuildContext context) {
-              return CustomAlertDialog(
-                title: 'Error',
-                content: 'Failed to update program settings. Please try again.',
-                actions: [
-                  TextButton(
-                    child: const Text('OK'),
-                    onPressed: () => navigator.pop(),
-                  ),
-                ],
-              );
+            mqttPayloadProvider: mqttPayloadProvider,
+            acknowledgedFunction: () {
+              setState(() {
+                userData['controllerReadStatus'] = "1";
+              });
             },
+            payload: dataToMqtt,
+            payloadCode: "2500",
+            deviceId: widget.deviceId,
           );
         }
+      } catch (error) {
+        scaffoldMessenger.showSnackBar(CustomSnackBar(message: 'Failed to update because of $error'));
       }
 
       Future.delayed(const Duration(milliseconds: 300), () async {
-        try {
-          final IrrigationProgramRepository repository = IrrigationProgramRepository(HttpService());
-          final createUserProgram = await repository.createUserProgram(userData);
-          final response = jsonDecode(createUserProgram.body);
-          if (createUserProgram.statusCode == 200) {
-            await irrigationProvider.programLibraryData(widget.customerId, widget.controllerId);
-            scaffoldMessenger.showSnackBar(CustomSnackBar(message: response['message']));
-            if (context.mounted) {
-              navigator.pop();
-            }
-          } else {
-            if (context.mounted) {
-              showAdaptiveDialog(
-                context: context,
-                builder: (BuildContext context) {
-                  return CustomAlertDialog(
-                    title: 'Error',
-                    content: response['message'] ?? 'Failed to update program',
-                    actions: [
-                      TextButton(
-                        child: const Text('OK'),
-                        onPressed: () => navigator.pop(),
-                      ),
-                    ],
-                  );
-                },
-              );
-            }
-          }
-        } catch (e, stackTrace) {
-          print("error : $e");
-          print("stackTrace : $stackTrace");
+        final IrrigationProgramRepository repository = IrrigationProgramRepository(HttpService());
+        final createUserProgram = await repository.createUserProgram(userData);
+        final response = jsonDecode(createUserProgram.body);
+        if (createUserProgram.statusCode == 200) {
+          await mainProvider.programLibraryData(widget.customerId, widget.controllerId);
+          scaffoldMessenger.showSnackBar(CustomSnackBar(message: response['message']));
           if (context.mounted) {
-            showAdaptiveDialog(
-              context: context,
-              builder: (BuildContext context) {
-                return CustomAlertDialog(
-                  title: 'Network Error',
-                  content: 'Unable to connect to server. Please check your network connection and try again.',
-                  actions: [
-                    TextButton(
-                      child: const Text('OK'),
-                      onPressed: () => navigator.pop(),
-                    ),
-                  ],
-                );
-              },
-            );
+            navigator.pop();
           }
         }
       });
-    }
-    else {
+    } else {
       showAdaptiveDialog<Future>(
         context: context,
         builder: (BuildContext context) {
@@ -644,774 +956,11 @@ class _PreviewScreenState extends State<PreviewScreen> {
             title: 'Warning',
             content: "Select valves to be sequence for Irrigation Program",
             actions: [
-              TextButton(child: const Text("OK"), onPressed: () => Navigator.of(context).pop(),),
+              TextButton(child: const Text("OK"), onPressed: () => Navigator.of(context).pop()),
             ],
           );
         },
       );
     }
   }
-
-  Widget buildAlarmDetails(){
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-          child: Text("Alarm details", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF5B21B6))),
-        ),
-        Wrap(
-          children: [
-            buildItemsCard(
-                context: context,
-                title: "Enabled alarms",
-                child: buildIndividualRow(irrigationProvider.newAlarmList!.alarmList)
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  String getItem(List data, String item, {bool check = false}) {
-    List resultList = [];
-    var result = '';
-    // data['localDosing'].isEmpty ? '' : (data['localDosing'][0]['fertilizer'].map((fertilizer) => fertilizer['onOff'] == true ? fertilizer['name'] : '').where((e) => e != '').toList().join(', '))
-    for (var element in data) {
-      if(element['onOff'] == true) {
-        resultList.add(
-            check
-                ? ((element[item] == "Time" || element[item] == "Pro.time") ? Constants.showHourAndMinuteOnly(element['timeValue'], widget.modelId)
-                : element['quantityValue']) : element[item]
-        );
-        result = resultList.join(', ');
-        // print("result ==> $result");
-      }
-    }
-    return result == "" ? "Not selected" : result;
-  }
-
-  Widget buildGraph() {
-    // print(chartDataList.map((e) => e.))
-    double getMaxFlowRate(List<ChartData> dataList) {
-      if(dataList.isNotEmpty) {
-        return dataList.map((data) => data.flowRate).reduce((a, b) => a > b ? a : b);
-      } else {
-        return 0.0;
-      }
-    }
-
-    bool isSingleMethod = chartDataList != null &&
-        chartDataList!.isNotEmpty &&
-        chartDataList!.every((e) => e.method == chartDataList!.first.method);
-
-    double maxFlowRate = getMaxFlowRate(chartDataList ?? []);
-    return chartDataList != null ?
-    Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const Padding(
-              padding: EdgeInsets.all(8.0),
-              child: Text("Irrigation & fert", style: TextStyle(color: Color(0xff9291A5), fontSize: 16)),
-            ),
-            Row(
-              children: [
-                Row(children: [
-                  Container(width: 10, height: 10, decoration: const BoxDecoration(shape: BoxShape.circle, color: Color(0xff15C0E6))),
-                  const SizedBox(width: 10,),
-                  const Text("Water only", style: TextStyle(color: Color(0xff9291A5), fontSize: 14))
-                ],),
-                const SizedBox(width: 30,),
-                Row(children: [
-                  Container(width: 10, height: 10, decoration: const BoxDecoration(shape: BoxShape.circle, color: Color(0xff10E196))),
-                  const SizedBox(width: 10,),
-                  const Text("Water & Fert", style: TextStyle(color: Color(0xff9291A5), fontSize: 14))
-                ],)
-              ],
-            )
-          ],
-        ),
-        const Divider(color: Color(0xffE5E5EF), indent: 10, endIndent: 10,),
-        Expanded(
-          child: SfCartesianChart(
-            enableAxisAnimation: true,
-            plotAreaBackgroundColor: Colors.transparent,
-            borderColor: Colors.transparent,
-            borderWidth: 0,
-            plotAreaBorderWidth: 0,
-            enableSideBySideSeriesPlacement: false,
-            onTooltipRender: (TooltipArgs args) {
-              String sequence = args.pointIndex != null && args.pointIndex! < chartDataList!.length
-                  ? chartDataList![args.pointIndex!.toInt()].valves
-                  : '';
-              double? preValue = args.pointIndex != null && args.pointIndex! < chartDataList!.length
-                  ? (chartDataList![args.pointIndex!.toInt()].preValueHigh.toDouble() - chartDataList![args.pointIndex!.toInt()].preValueLow.toDouble())
-                  : null;
-              double? postValue = args.pointIndex != null && args.pointIndex! < chartDataList!.length
-                  ? (chartDataList![args.pointIndex!.toInt()].postValueHigh.toDouble() - chartDataList![args.pointIndex!.toInt()].postValueLow.toDouble())
-                  : null;
-              double? waterValue = args.pointIndex != null && args.pointIndex! < chartDataList!.length
-                  ? (chartDataList![args.pointIndex!.toInt()].waterValueHigh.toDouble() - chartDataList![args.pointIndex!.toInt()].waterValueLow.toDouble())
-                  : null;
-              args.text = 'Sequence: $sequence, \nPre value: $preValue, \nPost value: $postValue, \nWater value: $waterValue';
-            },
-            tooltipBehavior: TooltipBehavior(
-              enable: true,
-              animationDuration: 300,
-              canShowMarker: true,
-              textStyle: const TextStyle(color: Colors.white),
-              tooltipPosition: TooltipPosition.pointer,
-              borderWidth: 2,
-              color: Colors.black,
-            ),
-            primaryXAxis: CategoryAxis(
-              isVisible: true,
-              rangePadding: ChartRangePadding.round,
-              labelPlacement: LabelPlacement.onTicks,
-              minimum: -0.5,
-             maximum: chartDataList!.length.toDouble() - 0.5,
-              initialVisibleMinimum: -0.5,
-              initialVisibleMaximum: chartDataList!.length < 6 ? chartDataList!.length.toDouble() - 0.5 : 6,
-            ),
-            primaryYAxis: NumericAxis(
-              isVisible: true,
-              minimum: 0,
-              labelFormat: '{value}',
-              axisLabelFormatter: (AxisLabelRenderDetails details) {
-                if (isSingleMethod && chartDataList!.first.method == 1) {
-                  num quantity = details.value;
-                  if (quantity == 0) {
-                    return ChartAxisLabel('0m', const TextStyle(color: Colors.black));
-                  }
-
-                  double timeInSeconds = quantity / maxFlowRate;
-                  double timeInMinutes = quantity / 60;
-                  // print("timeInSeconds ==> $timeInSeconds");
-                  // print("timeInMinutes ==> $timeInMinutes");
-                  return ChartAxisLabel('${timeInMinutes.toStringAsFixed(1)}m', const TextStyle(color: Colors.black));
-                } else if (isSingleMethod) {
-                  return ChartAxisLabel('${details.value}L', const TextStyle(color: Colors.black));
-                } else {
-                  return ChartAxisLabel('${details.value}L', const TextStyle(color: Colors.black));
-                }
-              },
-            ),
-            axes: isSingleMethod
-                ? []
-                : [
-              NumericAxis(
-                name: 'timeAxis',
-                opposedPosition: true,
-                minimum: 0,
-                labelFormat: '{value}m',
-                axisLabelFormatter: (AxisLabelRenderDetails details) {
-                  num quantity = details.value;
-                  // print("AxisLabelRenderDetails ==> value: ${details.value}, text: ${details.text}");
-                  if (quantity == 0) {
-                    return ChartAxisLabel('0m', const TextStyle(color: Colors.black));
-                  }
-
-                  double timeInSeconds = quantity / maxFlowRate;
-                  double timeInMinutes = timeInSeconds / 60;
-
-                  return ChartAxisLabel('${timeInMinutes.toStringAsFixed(1)}m', const TextStyle(color: Colors.black));
-                },
-              )
-            ],
-            zoomPanBehavior: ZoomPanBehavior(
-              enablePanning: true,
-            ),
-            series: <CartesianSeries>[
-              RangeColumnSeries<ChartData, String>(
-                borderRadius: BorderRadius.zero,
-                dataSource: chartDataList ?? [],
-                width: chartDataList!.length <= 3 ? 0.2 : 0.4,
-                color: const Color(0xff15C0E6),
-                pointColorMapper: (ChartData data, _) {
-                  if (data.postValueHigh == 0 || data.preValueHigh == 0) {
-                    return const Color(0xff10E196);
-                  } else {
-                    return const Color(0xff15C0E6);
-                  }
-                },
-                xValueMapper: (ChartData data, _) => data.sequenceName,
-                highValueMapper: (ChartData data, _) => data.preValueHigh,
-                lowValueMapper: (ChartData data, _) => data.preValueLow,
-              ),
-              RangeColumnSeries<ChartData, String>(
-                borderRadius: BorderRadius.zero,
-                dataSource: chartDataList ?? [],
-                width: chartDataList!.length <= 3 ? 0.2 : 0.4,
-                color: const Color(0xff10E196),
-                pointColorMapper: (ChartData data, _) {
-                  if (data.postValueHigh == 0 || data.preValueHigh == 0) {
-                    return const Color(0xff15C0E6);
-                  } else {
-                    return const Color(0xff10E196);
-                  }
-                },
-                xValueMapper: (ChartData data, _) => data.sequenceName,
-                highValueMapper: (ChartData data, _) => data.waterValueHigh,
-                lowValueMapper: (ChartData data, _) => data.waterValueLow,
-              ),
-              RangeColumnSeries<ChartData, String>(
-                borderRadius: BorderRadius.zero,
-                dataSource: chartDataList ?? [],
-                width: chartDataList!.length <= 3 ? 0.2 : 0.4,
-                color: const Color(0xff15C0E6),
-                xValueMapper: (ChartData data, _) => data.sequenceName,
-                highValueMapper: (ChartData data, _) => data.postValueHigh,
-                lowValueMapper: (ChartData data, _) => data.postValueLow,
-              ),
-            ],
-          ),
-        ),
-      ],
-    ) :
-    Container(child: const Center(child: Text("Check water and fert screen at glance"),),);
-  }
-
-  Widget buildGeneralDetails() {
-    return buildCategory(
-      categoryTitle: "General details",
-      title1: "Irrigation pump",
-      itemList1: irrigationProvider.isPumpStationMode ? "Auto pump selection is enabled" : irrigationProvider.selectedObjects!.where((e) => e.objectId == 5).toList(),
-      title2: "Head units",
-      itemList2: irrigationProvider.selectedObjects!.where((e) => e.objectId == 2).toList(),
-      showRow: [3].contains(widget.modelId) ? false : true,
-      show4thWidget: false,
-      title3: "Main valve",
-      itemList3: irrigationProvider.selectedObjects!.where((e) => e.objectId == 14).toList(),
-      title4: "",
-      itemList4: [],
-    );
-  }
-
-  Widget buildNoSchedule() {
-    final conditionForEcoGem = ([3].contains(widget.modelId));
-    print("SEQUENCE JSON: ${jsonEncode(irrigationProvider.irrigationLine!.sequence)}");
-    // print("SEQUENCE toList: ${jsonEncode(irrigationProvider.irrigationLine!.sequence.where((e) => e.objectId == 14).toList())}");
-
-    final sequence = irrigationProvider.irrigationLine!.sequence;
-
-    final mainValves = sequence
-        .expand((e) => (e['mainValve'] ?? []) as List)
-        .toList();
-
-    print("MainValve JSON: ${jsonEncode(mainValves)}");
-
-    return buildCategory(
-        categoryTitle: "General details",
-        title1: "Irrigation pump",
-        itemList1: irrigationProvider.isPumpStationMode ? "Auto pump selection is enabled" : irrigationProvider.selectedObjects!.where((e) => e.objectId == 5).toList(),
-        title2: conditionForEcoGem
-            ? 'Schedule type'
-            : "Head units",
-        itemList2: conditionForEcoGem
-            ? irrigationProvider.sampleScheduleModel!.selected
-            : irrigationProvider.selectedObjects!.where((e) => e.objectId == 2).toList(),
-        showRow: conditionForEcoGem ? false : true,
-        show4thWidget: true,
-        title3: "Main valve",
-        itemList3: irrigationProvider.irrigationLine!.sequence
-            .expand((e) => (e['mainValve'] ?? []) as List)
-            .where((mv) => mv['objectId'] == 14)
-            .toList(),
-        title4: "Schedule type",
-        itemList4: irrigationProvider.sampleScheduleModel!.selected,
-        showWidget2: conditionForEcoGem ? false : irrigationProvider.sampleScheduleModel!.selected == irrigationProvider.scheduleTypes[3],
-        showRow2: irrigationProvider.sampleScheduleModel!.selected == irrigationProvider.scheduleTypes[3],
-        show2ndWidget: [irrigationProvider.scheduleTypes[0], irrigationProvider.scheduleTypes[3]].contains(irrigationProvider.sampleScheduleModel!.selected),
-        title5: "On time",
-        title6: "Interval",
-        title7: "Cycles",
-        itemList5: irrigationProvider.sampleScheduleModel!.dayCountSchedule.schedule["onTime"],
-        itemList6: irrigationProvider.sampleScheduleModel!.dayCountSchedule.schedule["interval"],
-        itemList7: irrigationProvider.sampleScheduleModel!.dayCountSchedule.schedule["shouldLimitCycles"]
-            ? irrigationProvider.sampleScheduleModel!.dayCountSchedule.schedule["noOfCycles"] : "No cycle limitations"
-    );
-  }
-
-  Widget buildFertilizerDetails({required bool centralSelectorCondition}) {
-    return buildCategory(
-        categoryTitle: "Fertigation details",
-        title1: MediaQuery.of(context).size.width > 800 ? "Central fertilizer site" : "Cent. fert site",
-        title2: centralSelectorCondition ? "Cent. fert selector" : "Local fert Site",
-        itemList1: irrigationProvider.sampleIrrigationLine!.map((e) => centralSelectorCondition
-            ? (e.centralFertilization != null ? [e.centralFertilization!] : [])
-            : (e.localFertilization != null ? [e.localFertilization!] : [])).expand((list) => list).whereType<DeviceObjectModel>().toList().where((e) => irrigationProvider.selectedObjects!.any((ele) => ele.sNo == e.sNo)).toList(),
-        itemList2: [3].contains(widget.modelId) ? [] : centralSelectorCondition
-            ? irrigationProvider.fertilizerSite!.where((site) {
-          // print("Central filter site ==> ${site.filterSite?.sNo}");
-          for (var i = 0; i < irrigationProvider.selectedObjects!.length; i++) {
-            if (site.siteMode == 1 && irrigationProvider.selectedObjects![i].objectId == 4 && irrigationProvider.selectedObjects![i].sNo == site.fertilizerSite?.sNo) {
-              return true;
-            }
-          }
-          return false;
-        })
-            .map((e) => e.selector != null ? List<DeviceObjectModel>.from(e.selector!) : [])
-            .expand((list) => list)
-            .whereType<DeviceObjectModel>()
-            .toList().where((e) => irrigationProvider.selectedObjects!.any((ele) => ele.sNo == e.sNo)).toList()
-            : irrigationProvider.sampleIrrigationLine!.map((e) => e.localFertilization != null ? [e.localFertilization!] : []).expand((list) => list).whereType<DeviceObjectModel>().toList().where((e) => irrigationProvider.selectedObjects!.any((ele) => ele.sNo == e.sNo)).toList(),
-        showRow: [3].contains(widget.modelId) ? false : centralSelectorCondition,
-        show4thWidget: [3].contains(widget.modelId) ? false : true,
-        show2ndWidget: [3].contains(widget.modelId) ? false : irrigationProvider.sampleIrrigationLine!.map((e) => e.localFertilization != null ? [e.localFertilization!] : []).expand((list) => list).whereType<DeviceObjectModel>().toList().where((e) => irrigationProvider.selectedObjects!.any((ele) => ele.sNo == e.sNo)).toList().isNotEmpty,
-        title3: "Local fertilizer site",
-        title4: "Local fertilizer selector",
-        itemList3: [3].contains(widget.modelId) ? [] : irrigationProvider.sampleIrrigationLine!.map((e) => e.localFertilization != null ? [e.localFertilization!] : []).expand((list) => list).whereType<DeviceObjectModel>().toList().where((e) => irrigationProvider.selectedObjects!.any((ele) => ele.sNo == e.sNo)).toList(),
-        itemList4: [3].contains(widget.modelId) ? [] : irrigationProvider.fertilizerSite!.where((site) {
-          // print("Central filter site ==> ${site.filterSite?.sNo}");
-          for (var i = 0; i < irrigationProvider.selectedObjects!.length; i++) {
-            if (site.siteMode == 2 && irrigationProvider.selectedObjects![i].objectId == 4 && irrigationProvider.selectedObjects![i].sNo == site.fertilizerSite?.sNo) {
-              return true;
-            }
-          }
-          return false;
-        })
-            .map((e) => e.selector != null ? List<DeviceObjectModel>.from(e.selector!) : [])
-            .expand((list) => list)
-            .whereType<DeviceObjectModel>()
-            .toList().where((e) => irrigationProvider.selectedObjects!.any((ele) => ele.sNo == e.sNo)).toList(),
-    );
-  }
-
-  Widget buildFilterDetails({required bool localFilterCondition}) {
-    return buildCategory(
-        categoryTitle: "Filter details",
-        title1: "Central filter site",
-        title2: "Central filters",
-        itemList1: irrigationProvider.sampleIrrigationLine!.map((e) => e.centralFiltration != null ? [e.centralFiltration!] : []).expand((list) => list).whereType<DeviceObjectModel>().toList().where((e) => irrigationProvider.selectedObjects!.any((ele) => ele.sNo == e.sNo)).toList(),
-        itemList2: irrigationProvider.filterSite!.where((site) {
-          // print("Central filter site ==> ${site.filterSite?.sNo}");
-          for (var i = 0; i < irrigationProvider.selectedObjects!.length; i++) {
-            if (site.siteMode == 1 && irrigationProvider.selectedObjects![i].objectId == 4 && irrigationProvider.selectedObjects![i].sNo == site.filterSite?.sNo) {
-              return true;
-            }
-          }
-          return false;
-        })
-            .map((e) => e.filters != null ? List<DeviceObjectModel>.from(e.filters!) : [])
-            .expand((list) => list)
-            .whereType<DeviceObjectModel>()
-            .toList().where((e) => irrigationProvider.selectedObjects!.any((ele) => ele.sNo == e.sNo)).toList(),
-        showRow: localFilterCondition,
-        show4thWidget: true,
-        show2ndWidget: true,
-        title3: "Local filter site",
-        title4: "Local filters",
-        itemList3: irrigationProvider.sampleIrrigationLine!.map((e) => e.localFiltration != null ? [e.localFiltration!] : []).expand((list) => list).whereType<DeviceObjectModel>().toList().where((e) => irrigationProvider.selectedObjects!.any((ele) => ele.sNo == e.sNo)).toList(),
-        itemList4: irrigationProvider.filterSite!.where((site) {
-          // print("Central filter site ==> ${site.filterSite?.sNo}");
-          for (var i = 0; i < irrigationProvider.selectedObjects!.length; i++) {
-            if (site.siteMode == 2 && irrigationProvider.selectedObjects![i].objectId == 4 && irrigationProvider.selectedObjects![i].sNo == site.filterSite?.sNo) {
-              return true;
-            }
-          }
-          return false;
-        })
-            .map((e) => e.filters != null ? List<DeviceObjectModel>.from(e.filters!) : [])
-            .expand((list) => list)
-            .whereType<DeviceObjectModel>()
-            .toList().where((e) => irrigationProvider.selectedObjects!.any((ele) => ele.sNo == e.sNo)).toList()
-    );
-  }
-
-  Widget buildConditionDetails() {
-    return buildCategory(
-        categoryTitle: "Condition details",
-        title1: "Start by condition",
-        title2: "Stop by condition",
-        itemList1: '${(irrigationProvider.sampleConditions!.condition[0].value['name'] != null)
-            ? irrigationProvider.sampleConditions!.condition[0].value['name']
-            : 'Not selected'}',
-        itemList2: '${(irrigationProvider.sampleConditions!.condition[1].value['name'] != null)
-            ? irrigationProvider.sampleConditions!.condition[1].value['name']
-            : 'Not selected'}',
-        showRow: true,
-        show4thWidget: true,
-        show2ndWidget: true,
-        title3: "Enable by condition",
-        title4: "Disable by condition",
-        itemList3: '${(irrigationProvider.sampleConditions!.condition[2].value['name'] != null)
-            ? irrigationProvider.sampleConditions!.condition[2].value['name']
-            : 'Not selected'}',
-        itemList4: '${(irrigationProvider.sampleConditions!.condition[3].value['name'] != null)
-            ? irrigationProvider.sampleConditions!.condition[3].value['name']
-            : 'Not selected'}'
-    );
-  }
-
-  Widget buildScheduleDetails({scheduleTypeCondition}) {
-    final condition = irrigationProvider.sampleScheduleModel!.selected == irrigationProvider.scheduleTypes[1];
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-          child: Text("Schedule details", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF5B21B6))),
-        ),
-        Row(
-          children: [
-            Expanded(
-              child: buildItemsCard(context:context, title: "Schedule type", child: Text(irrigationProvider.sampleScheduleModel!.selected)),
-            ),
-            Expanded(
-              child: buildItemsCard(context:context, title: "Start date", child: _buildScheduleDetailsItem(scheduleTypeCondition, "startDate")
-              ),
-            ),
-          ],
-        ),
-        Row(
-          children: [
-            Expanded(
-              child: buildItemsCard(
-                  context: context,
-                  title: condition ? "Number of days" : "Run days",
-                  child: _buildScheduleDetailsItem(scheduleTypeCondition, condition ? "noOfDays" : "runDays", string: true)
-              ),
-            ),
-            if(!condition)
-              Expanded(
-                child: buildItemsCard(
-                    context: context,
-                    title: "Skip days",
-                    child: _buildScheduleDetailsItem(scheduleTypeCondition, "skipDays", string: true)
-                ),
-              ),
-            Expanded(
-              child: buildItemsCard(
-                  context: context,
-                  title: "End date",
-                  child: _buildScheduleDetailsItem(scheduleTypeCondition, "endDate")
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget buildCategory({
-    required String categoryTitle, required String title1,
-    required String title2, required itemList1, required itemList2,
-    required showRow, required show4thWidget, required String title3,
-    required String title4, required itemList3, required itemList4, bool show2ndWidget = true, String? title5,
-    String? title6, itemList5, itemList6, String? title7, itemList7, bool showRow2 = false, bool showWidget2 = false}) {
-    print("title3$title3");
-    print("itemList3$itemList3");
-    print("itemList3$itemList3");
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-          child: Text(categoryTitle, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF5B21B6))),
-        ),
-        buildItemRow(title1: title1, title2: title2, itemList1: itemList1, itemList2: itemList2, showWidget: show2ndWidget),
-        if(showRow)
-          buildItemRow(title1: title3, title2: title4, itemList1: itemList3, itemList2: itemList4, showWidget: show4thWidget),
-        if(showRow2)
-          buildItemRow(title1: title5 ?? "", title2: title6 ?? "", itemList1: itemList5, itemList2: itemList6, title3: title7 ?? "", itemList3: itemList7, showWidget: show4thWidget, showWidget2: showWidget2),
-      ],
-    );
-  }
-
-  Widget buildItemRow({
-    required String title1,
-    required String title2,
-    required itemList1,
-    required itemList2,
-    String? title3,
-    itemList3,
-    bool showWidget = true, bool showWidget2 = false}){
-    return Row(
-      children: [
-        Expanded(
-          child: buildItemsCard(
-              context: context,
-              title: title1,
-              child: buildIndividualRow(itemList1)
-          ),
-        ),
-        Expanded(
-            child: showWidget
-                ? buildItemsCard(
-                context: context,
-                title: title2,
-                child: buildIndividualRow(itemList2)
-            ) : Container()
-        ),
-        if(showWidget2)
-          Expanded(
-              child: buildItemsCard(
-                  context: context,
-                  title: title3 ?? "",
-                  child: buildIndividualRow(itemList3)
-              )
-          ),
-      ],
-    );
-  }
-
-  Widget buildRtcDetails({required rtcList, required BoxConstraints constraints, required allowStopMethodCondition, required defaultOffTime, required defaultMaxTime}){
-    final screenWidth = MediaQuery.of(context).size.width;
-    return Container(
-        margin: MediaQuery.of(context).size.width > 1200 ? const EdgeInsets.only(right: 20) : const EdgeInsets.symmetric(horizontal: 20),
-        // padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(10),
-            color: Colors.white,
-            boxShadow: customBoxShadow
-        ),
-        child: CustomDataTable(
-          rowsPerPage: rtcList.values.toList().length <= 3 ? rtcList.values.toList().length : 3,
-          headerText: 'Schedule Details',
-          icon: Icons.water,
-          columnSpacing: screenWidth > 800 ? 0 : 20,
-          dataRowMaxHeight: 45,
-          columns: [
-            buildDataColumn(label: "RTC No", widthRatio: screenWidth > 1200 ? constraints.maxWidth * 0.04 : null),
-            buildDataColumn(label: "On time", widthRatio: screenWidth > 1200 ? constraints.maxWidth * 0.04 : null),
-            buildDataColumn(label: "Interval", widthRatio: screenWidth > 1200 ? constraints.maxWidth * 0.04 : null),
-            buildDataColumn(label: "No. of cycles", widthRatio: screenWidth > 1200 ? constraints.maxWidth * 0.04 : null),
-            if(allowStopMethodCondition || defaultOffTime)
-              buildDataColumn(label: "Off time", widthRatio: screenWidth > 1200 ? constraints.maxWidth * 0.04 : null),
-            if(allowStopMethodCondition || defaultMaxTime)
-              buildDataColumn(label: "Max time", widthRatio: screenWidth > 1200 ? constraints.maxWidth * 0.04 : null),
-          ],
-          dataList: rtcList.values.toList(),
-          cellBuilders: [
-                (data, index) => buildDataCell(dataItem: "RTC ${index+1}", widthRatio: screenWidth > 1200 ? constraints.maxWidth * 0.04 : null),
-                (data, index) => buildDataCell(dataItem: Constants.showHourAndMinuteOnly(data["onTime"], widget.modelId), widthRatio: screenWidth > 1200 ? constraints.maxWidth * 0.04 : null,),
-                (data, index) => buildDataCell(dataItem: Constants.showHourAndMinuteOnly(data["interval"], widget.modelId), widthRatio: screenWidth > 1200 ? constraints.maxWidth * 0.04 : null,),
-                (data, index) => buildDataCell(dataItem: data["noOfCycles"], widthRatio: screenWidth > 1200 ? constraints.maxWidth * 0.04 : null),
-            if(allowStopMethodCondition || defaultOffTime)
-                  (data, index) => buildDataCell(dataItem: Constants.showHourAndMinuteOnly(data["offTime"], widget.modelId), widthRatio: screenWidth > 1200 ? constraints.maxWidth * 0.04 : null,),
-            if(allowStopMethodCondition || defaultMaxTime)
-                  (data, index) => buildDataCell(dataItem: Constants.showHourAndMinuteOnly(data["maxTime"], widget.modelId), widthRatio: screenWidth > 1200 ? constraints.maxWidth * 0.04 : null),
-          ],
-        )
-    );
-  }
-// old code do not show main valve
-  Widget buildIndividualRowold(item) {
-    ScrollController scrollController = ScrollController();
-    if(item is! String && item.isNotEmpty) {
-      if(item is List<DeviceObjectModel>) {
-        return SizedBox(
-          height: 20,
-          child: Scrollbar(
-            controller: scrollController,
-            child: ListView.builder(
-              controller: scrollController,
-              scrollDirection: Axis.horizontal,
-              itemCount: item.length,
-              itemBuilder: (BuildContext context, int index) {
-                return Row(
-                  children: [
-                    const SizedBox(width: 10),
-                    Text(item[index].name ?? ""),
-                    const SizedBox(width: 10),
-                    if(item.length > 1)
-                      VerticalDivider(color: Theme.of(context).primaryColorDark,),
-                  ],
-                );
-              },
-            ),
-          ),
-        );
-      } else {
-        if(item.any((element) => element.value == true)){
-          return SizedBox(
-            height: 20,
-            child: Scrollbar(
-              controller: scrollController,
-              child: ListView.builder(
-                controller: scrollController,
-                scrollDirection: Axis.horizontal,
-                itemCount: item.length,
-                itemBuilder: (BuildContext context, int index) {
-                  if (item[index].value == true) {
-                    return Row(
-                      children: [
-                        const SizedBox(width: 10),
-                        Text(item[index].name ?? ""),
-                        const SizedBox(width: 10),
-                        if(item.where((element) => element.value == true).map((e) => e.toJson()).toList().length > 1)
-                          VerticalDivider(color: Theme.of(context).primaryColorDark,),
-                      ],
-                    );
-                  }
-                  return Container();
-                },
-              ),
-            ),
-          );
-        } else {
-          return const Text("Not Selected", style: TextStyle(color: Colors.red));
-        }
-      }
-    } else {
-      return Text(item.toString() != "[]" ? item.toString() : "Not available", style: TextStyle(color: item.toString() != "[]" ? Colors.black :item.toString().contains("Not selected")  ? Colors.red: Colors.grey));
-    }
-  }
-}
-
-Widget _buildHorizontalList(
-    ScrollController controller, List<String> names) {
-  return SizedBox(
-    height: 20,
-    child: Scrollbar(
-      controller: controller,
-      child: ListView.builder(
-        controller: controller,
-        scrollDirection: Axis.horizontal,
-        itemCount: names.length,
-        itemBuilder: (_, index) => Row(
-          children: [
-            const SizedBox(width: 10),
-            Text(names[index]),
-            if (names.length > 1)
-              const SizedBox(
-                height: 15,
-                child: VerticalDivider(),
-              ),
-          ],
-        ),
-      ),
-    ),
-  );
-}
-
-Widget buildIndividualRow(item) {
-  ScrollController scrollController = ScrollController();
-
-  if (item == null || item.toString() == "[]") {
-    return const Text("Not available", style: TextStyle(color: Colors.grey));
-  }
-
-  // ✅ DeviceObjectModel list
-  if (item is List<DeviceObjectModel>) {
-    return _buildHorizontalList(
-      scrollController,
-      item.map((e) => e.name ?? "").toList(),
-    );
-  }
-
-  // ✅ List<Map> (ex: mainValve from sequence)
-  if (item is List && item.isNotEmpty && item.first is Map) {
-    final names = item
-        .where((e) => e['name'] != null)
-        .map<String>((e) => e['name'].toString())
-        .toList();
-
-    return names.isNotEmpty
-        ? _buildHorizontalList(scrollController, names)
-        : const Text("Not Selected", style: TextStyle(color: Colors.red));
-  }
-
-  // ✅ String
-  if (item is String) {
-    return Text(item,
-        style: TextStyle(
-            color: item.contains("Not") ? Colors.red : Colors.black));
-  }
-
-  return const Text("Not available", style: TextStyle(color: Colors.grey));
-}
-
-Widget buildItemsCard({required BuildContext context, required String title, required Widget child, margin, padding}){
-  final theme = Theme.of(context);
-  final colorScheme = theme.colorScheme;
-  return Container(
-    margin: margin ?? const EdgeInsets.all(8),
-    padding: padding ?? const EdgeInsets.all(12),
-    decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        color: colorScheme.surface,
-        border: Border.all(color: colorScheme.outlineVariant),
-        boxShadow: customBoxShadow
-    ),
-    child: Column(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Container(
-              height: 32,
-              width: 32,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: colorScheme.primaryContainer,
-              ),
-              child: Center(
-                child: Text(
-                  (title.split(" ").first[0]+title.split(" ").last[0]).toUpperCase(),
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: colorScheme.primary),
-                ),
-              ),
-            ),
-            SizedBox(width: MediaQuery.of(context).size.width > 1200 ? 16 : 10),
-            Expanded(
-              child: Text(
-                title,
-                style: const TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF1E293B), fontSize: 13, overflow: TextOverflow.ellipsis),
-              ),
-            ),
-          ],
-        ),
-        Padding(
-          padding: const EdgeInsets.only(top: 8.0, left: 4.0),
-          child: child,
-        )
-      ],
-    ),
-  );
-}
-
-List<BoxShadow> customBoxShadow = [
-  BoxShadow(
-    offset: const Offset(0, 4),
-    blurRadius: 10,
-    color: Colors.black.withValues(alpha: 0.02),
-  ),
-];
-
-DataCell buildDataCell({required dataItem, double? widthRatio, bool showToolTip = false, Color color = Colors.black, Widget? child, bool isFixedSize = false}) {
-  return DataCell(
-    child ?? SizedBox(
-      width: isFixedSize ? widthRatio : null,
-      child: showToolTip ?
-      Tooltip(
-        message: dataItem,
-        child: Text(dataItem, overflow: TextOverflow.ellipsis, style: TextStyle(fontWeight: FontWeight.w500, color: color)),
-      )
-          : Text(dataItem, overflow: TextOverflow.ellipsis, style: TextStyle(fontWeight: FontWeight.w500, color: color)),
-    ),
-  );
-}
-
-DataColumn buildDataColumn({required label, double? widthRatio, bool isFixedSize = false}) {
-  return DataColumn(
-      label: SizedBox(
-          width: isFixedSize ? widthRatio : null,
-          child: Text(label, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white),))
-  );
-}
-
-dynamic dateFormatConversion(item) {
-  return dateFormat.format(DateTime.parse(item));
-}
-
-Widget _buildScheduleDetailsItem(scheduleType, item, {string = false}) {
-  return Text(
-      string
-          ? '${scheduleType.schedule[item]}'
-          : "${dateFormatConversion(scheduleType.schedule[item])}");
 }

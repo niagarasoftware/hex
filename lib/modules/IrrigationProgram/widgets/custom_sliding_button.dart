@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../../../utils/Theme/oro_theme.dart';
 
 class SlidingSendButton extends StatefulWidget {
   final Function onSend;
@@ -18,8 +17,7 @@ class _SlidingSendButtonState extends State<SlidingSendButton> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    const primaryPurple = Color(0xFF5B21B6);
 
     return GestureDetector(
       onHorizontalDragUpdate: (details) {
@@ -47,7 +45,7 @@ class _SlidingSendButtonState extends State<SlidingSendButton> {
             width: _maxDragDistance + 50,
             height: 50,
             decoration: BoxDecoration(
-              color: colorScheme.outlineVariant,
+              color: const Color(0xFFE2E8F0),
               borderRadius: BorderRadius.circular(25),
             ),
           ),
@@ -57,7 +55,7 @@ class _SlidingSendButtonState extends State<SlidingSendButton> {
             child: Text(
               isSent ? "Sent!" : "-- Slide to Send -->",
               style: TextStyle(
-                color: isSent ? colorScheme.primary : colorScheme.onSurfaceVariant,
+                color: isSent ? primaryPurple : const Color(0xFF64748B),
                 fontWeight: FontWeight.bold,
                 fontSize: 13,
               ),
@@ -72,7 +70,7 @@ class _SlidingSendButtonState extends State<SlidingSendButton> {
               width: 50,
               height: 50,
               decoration: BoxDecoration(
-                color: isSent ? colorScheme.tertiary : colorScheme.primary,
+                color: isSent ? const Color(0xFF059669) : primaryPurple,
                 borderRadius: BorderRadius.circular(25),
                 boxShadow: const [
                   BoxShadow(
@@ -84,7 +82,7 @@ class _SlidingSendButtonState extends State<SlidingSendButton> {
               ),
               child: Icon(
                 icon,
-                color: isSent ? colorScheme.onTertiary : colorScheme.onPrimary,
+                color: Colors.white,
                 size: 20,
               ),
             ),

@@ -111,7 +111,7 @@ class CustomPaginatedDataTable extends StatefulWidget {
 
   final bool? primary;
 
-  final WidgetStateProperty<Color?>? headingRowColor;
+  final MaterialStateProperty<Color?>? headingRowColor;
 
   @override
   CustomPaginatedDataTableState createState() => CustomPaginatedDataTableState();

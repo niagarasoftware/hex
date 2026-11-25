@@ -457,19 +457,18 @@ class _IrrigationProgramState extends State<IrrigationProgram> with SingleTicker
 
       final sequenceLength = mainProvider.irrigationLine?.sequence.length ?? 0;
       final priority = mainProvider.programDetails?.priority ?? "Low";
-      final theme = Theme.of(context);
-      final colorScheme = theme.colorScheme;
+      final primaryPurple = const Color(0xFF5B21B6);
 
       return DefaultTabController(
         length: labels.length,
         child: Scaffold(
-          backgroundColor: colorScheme.surfaceContainerLowest,
+          backgroundColor: const Color(0xFFF8FAFC),
           body: Column(
             children: [
               // Header
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                color: colorScheme.surface,
+                color: Colors.white,
                 child: Row(
                   children: [
                     InkWell(
@@ -481,10 +480,10 @@ class _IrrigationProgramState extends State<IrrigationProgram> with SingleTicker
                       child: Container(
                         padding: const EdgeInsets.all(6),
                         decoration: BoxDecoration(
-                          color: colorScheme.surfaceContainerLow,
+                          color: const Color(0xFFF1F5F9),
                           shape: BoxShape.circle,
                         ),
-                        child: Icon(Icons.arrow_back, size: 18, color: colorScheme.onSurface),
+                        child: const Icon(Icons.arrow_back, size: 18, color: Color(0xFF1E293B)),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -492,10 +491,10 @@ class _IrrigationProgramState extends State<IrrigationProgram> with SingleTicker
                       width: 36,
                       height: 36,
                       decoration: BoxDecoration(
-                        color: colorScheme.primary,
+                        color: primaryPurple,
                         borderRadius: BorderRadius.circular(10),
                       ),
-                      child: Icon(Icons.water_drop, color: colorScheme.onPrimary, size: 20),
+                      child: const Icon(Icons.water_drop, color: Colors.white, size: 20),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -504,11 +503,11 @@ class _IrrigationProgramState extends State<IrrigationProgram> with SingleTicker
                         children: [
                           Text(
                             programName,
-                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: colorScheme.onSurface),
+                            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
                           ),
                           Text(
                             '$sequenceLength Segments · Priority: $priority',
-                            style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant),
+                            style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
                           ),
                         ],
                       ),
@@ -520,25 +519,24 @@ class _IrrigationProgramState extends State<IrrigationProgram> with SingleTicker
                         );
                       },
                       style: FilledButton.styleFrom(
-                        backgroundColor: colorScheme.primary,
-                        foregroundColor: colorScheme.onPrimary,
+                        backgroundColor: primaryPurple,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                       ),
-                      icon: Icon(Icons.save_outlined, size: 16, color: colorScheme.onPrimary),
-                      label: Text(
+                      icon: const Icon(Icons.save_outlined, size: 16, color: Colors.white),
+                      label: const Text(
                         "Save Program",
-                        style: TextStyle(color: colorScheme.onPrimary, fontWeight: FontWeight.bold, fontSize: 13),
+                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
                       ),
                     ),
                   ],
                 ),
               ),
-              Divider(height: 1, color: colorScheme.outlineVariant),
+              const Divider(height: 1, color: Color(0xFFE2E8F0)),
 
               // Horizontal Stepper Bar
               Container(
-                color: colorScheme.surface,
+                color: Colors.white,
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
@@ -554,7 +552,7 @@ class _IrrigationProgramState extends State<IrrigationProgram> with SingleTicker
                             duration: const Duration(milliseconds: 200),
                             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                             decoration: BoxDecoration(
-                              color: isSelected ? colorScheme.primary : colorScheme.surfaceContainerLow,
+                              color: isSelected ? primaryPurple : const Color(0xFFF1F5F9),
                               borderRadius: BorderRadius.circular(20),
                             ),
                             child: Row(
@@ -648,7 +646,7 @@ class _IrrigationProgramState extends State<IrrigationProgram> with SingleTicker
                           width: i == mainProvider.selectedTabIndex ? 20 : 7,
                           height: 7,
                           decoration: BoxDecoration(
-                            color: i == mainProvider.selectedTabIndex ? colorScheme.primary : colorScheme.outlineVariant,
+                            color: i == mainProvider.selectedTabIndex ? primaryPurple : const Color(0xFFCBD5E1),
                             borderRadius: BorderRadius.circular(4),
                           ),
                         );
@@ -668,16 +666,15 @@ class _IrrigationProgramState extends State<IrrigationProgram> with SingleTicker
                           }
                         },
                         style: FilledButton.styleFrom(
-                          backgroundColor: colorScheme.primary,
-                          foregroundColor: colorScheme.onPrimary,
+                          backgroundColor: primaryPurple,
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                           padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
                         ),
-                        label: Text(
+                        label: const Text(
                           "Next Step",
-                          style: TextStyle(color: colorScheme.onPrimary, fontWeight: FontWeight.bold, fontSize: 13),
+                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
                         ),
-                        icon: Icon(Icons.arrow_forward, size: 16, color: colorScheme.onPrimary),
+                        icon: const Icon(Icons.arrow_forward, size: 16, color: Colors.white),
                       )
                     else
                       const SizedBox(width: 110),
