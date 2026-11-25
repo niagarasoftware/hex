@@ -90,8 +90,7 @@ class _CustomerProductState extends State<CustomerProduct> {
             return matchesSearch && matchesCategory && matchesSite;
           }).toList();
 
-          final totalPages =
-          (filteredProducts.length / _pageSize).ceil();
+          final totalPages = (filteredProducts.length / _pageSize).ceil();
 
           if (totalPages == 0) {
             _currentPage = 0;
@@ -101,8 +100,8 @@ class _CustomerProductState extends State<CustomerProduct> {
 
           final startIndex = _currentPage * _pageSize;
 
-          final endIndex = (startIndex + _pageSize)
-              .clamp(0, filteredProducts.length);
+          final endIndex =
+          (startIndex + _pageSize).clamp(0, filteredProducts.length);
 
           final pageProducts =
           filteredProducts.sublist(startIndex, endIndex);
@@ -187,7 +186,6 @@ class _CustomerProductState extends State<CustomerProduct> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // SUMMARY
                   _buildSummarySection(
                     total: products.length,
                     active: activeCount,
@@ -197,17 +195,14 @@ class _CustomerProductState extends State<CustomerProduct> {
 
                   const SizedBox(height: 18),
 
-                  // SEARCH AND SITE FILTER
                   _buildSearchSection(sites),
 
                   const SizedBox(height: 12),
 
-                  // CATEGORY FILTER
                   _buildCategoryFilters(categories, products),
 
                   const SizedBox(height: 12),
 
-                  // TABLE (fills remaining height -> horizontal scrollbar stays visible at the bottom of the screen)
                   Expanded(
                     child: Container(
                       width: double.infinity,
@@ -282,13 +277,11 @@ class _CustomerProductState extends State<CustomerProduct> {
                                       ),
                                     ),
                                   ),
-
                                   DataCell(
                                     _buildCategoryBadge(
                                       device.categoryName,
                                     ),
                                   ),
-
                                   DataCell(
                                     Text(
                                       device.model,
@@ -299,7 +292,6 @@ class _CustomerProductState extends State<CustomerProduct> {
                                       ),
                                     ),
                                   ),
-
                                   DataCell(
                                     Row(
                                       children: [
@@ -342,7 +334,6 @@ class _CustomerProductState extends State<CustomerProduct> {
                                       ],
                                     ),
                                   ),
-
                                   DataCell(
                                     Text(
                                       device.productStatus == 3
@@ -355,13 +346,11 @@ class _CustomerProductState extends State<CustomerProduct> {
                                       ),
                                     ),
                                   ),
-
                                   DataCell(
                                     _buildStatusBadge(
                                       device.productStatus,
                                     ),
                                   ),
-
                                   DataCell(
                                     _buildDateCell(
                                       device.modifyDate,
@@ -452,7 +441,7 @@ class _CustomerProductState extends State<CustomerProduct> {
     required IconData icon,
   }) {
     return Container(
-      height: 76,
+      height: 58, // Changed from 76 to 58
       padding: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -625,8 +614,11 @@ class _CustomerProductState extends State<CustomerProduct> {
 
   void _scrollCategories(double delta) {
     if (!_categoryScrollController.hasClients) return;
+
     final pos = _categoryScrollController.position;
-    final target = (pos.pixels + delta).clamp(0.0, pos.maxScrollExtent);
+    final target =
+    (pos.pixels + delta).clamp(0.0, pos.maxScrollExtent);
+
     _categoryScrollController.animateTo(
       target,
       duration: const Duration(milliseconds: 250),
@@ -669,7 +661,6 @@ class _CustomerProductState extends State<CustomerProduct> {
           const SizedBox(width: 8),
           Expanded(
             child: ScrollConfiguration(
-              // allows mouse / touch drag scrolling on web
               behavior: ScrollConfiguration.of(context).copyWith(
                 dragDevices: {
                   PointerDeviceKind.touch,
@@ -751,13 +742,9 @@ class _CustomerProductState extends State<CustomerProduct> {
           vertical: 6,
         ),
         decoration: BoxDecoration(
-          color: selected
-              ? color.withOpacity(0.12)
-              : Colors.white,
+          color: selected ? color.withOpacity(0.12) : Colors.white,
           border: Border.all(
-            color: selected
-                ? color.withOpacity(0.5)
-                : borderColor,
+            color: selected ? color.withOpacity(0.5) : borderColor,
           ),
           borderRadius: BorderRadius.circular(20),
         ),
@@ -921,6 +908,7 @@ class _CustomerProductState extends State<CustomerProduct> {
 
     if (parsedDate != null) {
       final now = DateTime.now();
+
       final difference = DateTime(
         now.year,
         now.month,
