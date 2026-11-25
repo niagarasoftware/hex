@@ -16,10 +16,11 @@ class CropAdvisoryWebSidebar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     return Container(
       width: 260,
       decoration: BoxDecoration(
-        color: theme.primaryColor,
+        color: colorScheme.primary,
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.1),
@@ -37,7 +38,7 @@ class CropAdvisoryWebSidebar extends StatelessWidget {
               child: Align(
                 alignment: Alignment.centerLeft,
                 child: IconButton(
-                  icon: const Icon(Icons.arrow_back, color: Colors.white),
+                  icon: Icon(Icons.arrow_back, color: colorScheme.onPrimary),
                   onPressed: () => Navigator.pop(context),
                 ),
               ),
@@ -55,7 +56,7 @@ class CropAdvisoryWebSidebar extends StatelessWidget {
               child: Text(
                 'Crop Setup',
                 style: GoogleFonts.poppins(
-                  color: Colors.white70,
+                  color: colorScheme.onPrimary,
                   fontSize: 14,
                   fontStyle: FontStyle.italic,
                 ),
@@ -67,6 +68,7 @@ class CropAdvisoryWebSidebar extends StatelessWidget {
   }
 
   Widget _buildSideNavItem(BuildContext context, int index, String label, String iconPath) {
+    final colorScheme = Theme.of(context).colorScheme;
     bool isSelected = selectedIndex == index;
     return InkWell(
       onTap: isSetup ? null : () => onItemSelected?.call(index),
@@ -75,11 +77,11 @@ class CropAdvisoryWebSidebar extends StatelessWidget {
         decoration: BoxDecoration(
           border: Border(
             left: BorderSide(
-              color: isSelected ? Colors.white : Colors.transparent,
+              color: isSelected ? colorScheme.onPrimaryContainer : Colors.transparent,
               width: 5,
             ),
           ),
-          color: isSelected ? Colors.white.withValues(alpha: 0.1) : Colors.transparent,
+          color: isSelected ? colorScheme.primaryContainer : Colors.transparent,
         ),
         child: Row(
           children: [
@@ -87,7 +89,7 @@ class CropAdvisoryWebSidebar extends StatelessWidget {
               iconPath,
               width: 24,
               height: 24,
-              color: isSelected ? Colors.white : Colors.white70,
+              color: isSelected ? colorScheme.onPrimaryContainer : colorScheme.onPrimary,
             ),
             const SizedBox(width: 16),
             Text(
@@ -95,7 +97,7 @@ class CropAdvisoryWebSidebar extends StatelessWidget {
               style: GoogleFonts.poppins(
                 fontSize: 16,
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                color: isSelected ? Colors.white : Colors.white70,
+                color: isSelected ? colorScheme.onPrimaryContainer : colorScheme.onPrimary,
               ),
             ),
           ],

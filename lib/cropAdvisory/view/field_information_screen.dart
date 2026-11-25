@@ -427,7 +427,7 @@ class _FieldInformationScreenState extends State<FieldInformationScreen> {
                       print("data:$data");
                       print("responseBody:$responseBody");
                       print("Status Code : ${response.statusCode}");
-                      print("Status Code : ${response}");
+                      print("Status Code : $response");
 
                       if (response.statusCode == 200) {
                         Navigator.push(

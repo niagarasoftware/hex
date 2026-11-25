@@ -51,6 +51,10 @@ class TimeLine extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final effectiveLineColor = lineColor == Colors.grey ? theme.colorScheme.outlineVariant : lineColor;
+    final effectiveIndicatorColor = indicatorColor == Colors.blue ? theme.colorScheme.primary : indicatorColor;
+
     return ListView.separated(
       padding: padding,
       separatorBuilder: (_, __) => SizedBox(height: itemGap),
@@ -62,11 +66,11 @@ class TimeLine extends StatelessWidget {
       primary: primary,
       itemBuilder: (context, index) {
         final child = children[index];
-        final _indicators = indicators;
+        final currentIndicators = indicators;
 
         Widget? indicator;
-        if (_indicators != null) {
-          indicator = _indicators[index];
+        if (currentIndicators != null) {
+          indicator = currentIndicators[index];
         }
 
         final isFirst = index == 0;
@@ -76,8 +80,8 @@ class TimeLine extends StatelessWidget {
           CustomPaint(
             foregroundPainter: _TimelinePainter(
               hideDefaultIndicator: indicator != null,
-              lineColor: lineColor,
-              indicatorColor: indicatorColor,
+              lineColor: effectiveLineColor,
+              indicatorColor: effectiveIndicatorColor,
               indicatorSize: indicatorSize,
               indicatorStyle: indicatorStyle,
               isFirst: isFirst,

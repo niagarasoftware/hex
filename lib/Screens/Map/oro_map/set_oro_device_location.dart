@@ -7,10 +7,10 @@ import '../MapAreaModel.dart' hide Area;
 import '../googlemap_model.dart';
 import 'getlatlong.dart';
 
- 
+
 
 class SetSelectOroDeviceLocation extends StatefulWidget {
-  const SetSelectOroDeviceLocation({Key? key}) : super(key: key);
+  const SetSelectOroDeviceLocation({super.key});
 
   @override
   _SetSelectOroDeviceLocationState createState() => _SetSelectOroDeviceLocationState();
@@ -30,8 +30,7 @@ class _SetSelectOroDeviceLocationState extends State<SetSelectOroDeviceLocation>
 
   late MqttPayloadProvider mqttPayloadProvider;
 
-  bool _isDrawerOpen = false;
-  double _drawerWidth = 280;
+  bool _searching = false;
 
   @override
   void initState() {
@@ -39,6 +38,7 @@ class _SetSelectOroDeviceLocationState extends State<SetSelectOroDeviceLocation>
     mqttPayloadProvider = Provider.of<MqttPayloadProvider>(context, listen: false);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
       _initializeSelectedDevice();
       _addAllDeviceMarkers();
     });
@@ -47,6 +47,7 @@ class _SetSelectOroDeviceLocationState extends State<SetSelectOroDeviceLocation>
   void _initializeSelectedDevice() {
     final devices = mqttPayloadProvider.mapModelInstance.data?.deviceList ?? [];
     if (devices.isNotEmpty) {
+      _selectedDevice = devices.first;
       // Select first device with valid lat/long
       for (int i = 0; i < devices.length; i++) {
         final dev = devices[i];
@@ -101,6 +102,7 @@ class _SetSelectOroDeviceLocationState extends State<SetSelectOroDeviceLocation>
                   _selectedPosition = position;
                   _selectedDeviceIndex = devices.indexOf(device);
                 });
+                _addAllDeviceMarkers();
                 _mapController?.animateCamera(CameraUpdate.newLatLngZoom(position, _currentZoom));
               },
             ),
@@ -134,18 +136,29 @@ class _SetSelectOroDeviceLocationState extends State<SetSelectOroDeviceLocation>
     _mapController?.animateCamera(CameraUpdate.newLatLngZoom(position, _currentZoom));
   }
 
-  void _searchLocation() async {
-    final input = _searchController.text;
-    final LatLng? result = await getLatLngFromInput(input);
-
-    if (result != null) {
-      _updateMarker(result.latitude, result.longitude);
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Enter valid area name, map link or lat,long"),
-        ),
-      );
+  Future<void> _searchLocation() async {
+    if (_searching || _selectedDevice == null) return;
+    final input = _searchController.text.trim();
+    if (input.isEmpty) return;
+    final index = _selectedDeviceIndex;
+    setState(() => _searching = true);
+    try {
+      final result = await getLatLngFromInput(input);
+      if (!mounted || index != _selectedDeviceIndex) return;
+      if (result != null) {
+        _updateMarker(result.latitude, result.longitude);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Enter valid area name, map link or lat,long'),
+        ));
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Unable to find location')));
+      }
+    } finally {
+      if (mounted) setState(() => _searching = false);
     }
   }
 
@@ -166,139 +179,134 @@ class _SetSelectOroDeviceLocationState extends State<SetSelectOroDeviceLocation>
   }
 
   @override
+  void dispose() {
+    _searchController.dispose();
+    _mapController?.dispose();
+    super.dispose();
+  }
+
+  void _selectDevice(int index) {
+    final devices = mqttPayloadProvider.mapModelInstance.data?.deviceList ?? [];
+    if (index < 0 || index >= devices.length) return;
+    final device = devices[index];
+    final geo = device.geography;
+    final position = geo?.lat != null && geo?.long != null
+        ? LatLng(geo!.lat!, geo.long!) : null;
+    setState(() {
+      _selectedDevice = device;
+      _selectedDeviceIndex = index;
+      _selectedPosition = position;
+    });
+    _addAllDeviceMarkers();
+    if (position != null) {
+      _mapController?.animateCamera(CameraUpdate.newLatLngZoom(position, _currentZoom));
+    }
+  }
+
+  Widget _devicePanel(List<DeviceList> devices) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Padding(padding: const EdgeInsets.all(16), child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text('Select device', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+        const SizedBox(height: 4),
+        Text('Choose a device to locate', style: theme.textTheme.bodySmall),
+      ],
+      )),
+      Expanded(child: devices.isEmpty ? const Center(child: Text('No devices')) : ListView.separated(
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        itemCount: devices.length,
+        separatorBuilder: (_, __) => const SizedBox(height: 8),
+        itemBuilder: (context, index) {
+          final d = devices[index];
+          final selected = _selectedDevice != null && index == _selectedDeviceIndex;
+          final mapped = d.geography?.lat != null && d.geography?.long != null;
+          return Material(
+            color: selected ? cs.primaryContainer : cs.surfaceContainerLow,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: BorderSide(color: selected ? cs.primary : cs.outlineVariant)),
+            child: ListTile(
+              leading: Icon(Icons.location_on_outlined, color: selected ? cs.onPrimaryContainer : cs.primary),
+              title: Text(d.deviceName ?? 'Device', maxLines: 1, overflow: TextOverflow.ellipsis),
+              subtitle: Text('${mapped ? 'Location configured' : 'Not mapped'}\nStatus: ${d.geography?.status ?? 'Unknown'}'),
+              trailing: selected ? Icon(Icons.check_circle, color: cs.primary) : null,
+              onTap: () => _selectDevice(index),
+            ),
+          );
+        },
+      )),
+      Padding(padding: const EdgeInsets.all(16), child: Text('1. Select a device\n2. Search or tap on the map\n3. Review the coordinates', style: theme.textTheme.bodySmall)),
+    ]);
+  }
+
+  Widget _searchBar() => Padding(
+    padding: const EdgeInsets.all(12),
+    child: Row(children: [
+      Expanded(child: TextField(
+        controller: _searchController,
+        enabled: _selectedDevice != null && !_searching,
+        textInputAction: TextInputAction.search,
+        onSubmitted: (_) => _searchLocation(),
+        decoration: InputDecoration(prefixIcon: const Icon(Icons.search), hintText: 'Place, map link or lat,long', border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)), isDense: true),
+      )),
+      const SizedBox(width: 8),
+      FilledButton(onPressed: _searching || _selectedDevice == null ? null : _searchLocation,
+          child: _searching ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2)) : const Text('Search')),
+    ]),
+  );
+
+  Widget _coordinates() {
+    final theme = Theme.of(context);
+    final pos = _selectedPosition;
+    return Padding(padding: const EdgeInsets.all(12), child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
+      Text('Selected device', style: theme.textTheme.labelMedium),
+      Text(_selectedDevice?.deviceName ?? 'No device selected', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+      const SizedBox(height: 8),
+      Row(children: [
+        Expanded(child: Text('Latitude\n${pos?.latitude.toStringAsFixed(6) ?? "—"}')),
+        Expanded(child: Text('Longitude\n${pos?.longitude.toStringAsFixed(6) ?? "—"}')),
+        IconButton(tooltip: 'Locate device', onPressed: pos == null ? null : () => _mapController?.animateCamera(CameraUpdate.newLatLngZoom(pos, _currentZoom)), icon: const Icon(Icons.my_location)),
+      ]),
+    ],
+    ));
+  }
+
+  @override
   Widget build(BuildContext context) {
     final devices = mqttPayloadProvider.mapModelInstance.data?.deviceList ?? [];
-
+    final mapped = devices.where((d) => d.geography?.lat != null && d.geography?.long != null).length;
+    final cs = Theme.of(context).colorScheme;
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Set Device Locations'),
-        leadingWidth: 110,
-        leading: Row(
-          children: [
-            IconButton(
-              icon: Icon(Icons.arrow_back),
-              onPressed: () {
-                setState(() {
-                  Navigator.pop(context);
-                });
-              },
-            ),
-            IconButton(
-              icon: Icon(_isDrawerOpen ? Icons.close : Icons.menu),
-              onPressed: () {
-                setState(() {
-                  _isDrawerOpen = !_isDrawerOpen;
-                });
-              },
-            ),
-          ],
-        ),
-      ),
-      body: Row(
-        children: [
-          // Side Drawer
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 300),
-            width: _isDrawerOpen ? _drawerWidth : 0,
-            color: Colors.white,
-            child: _isDrawerOpen
-                ? Column(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  width: double.infinity,
-                  color: Colors.teal.shade500,
-                  child: const Text(
-                    "Devices",
-                    style: TextStyle(color: Colors.white, fontSize: 18),
-                  ),
-                ),
-                Expanded(
-                  child: devices.isEmpty
-                      ? const Center(child: Text("No Devices"))
-                      : ListView.builder(
-                    itemCount: devices.length,
-                    itemBuilder: (context, index) {
-                      final device = devices[index];
-                      return ListTile(
-                        selected: device.deviceId == _selectedDevice?.deviceId,
-                        selectedTileColor: Colors.blue.withOpacity(0.2),
-                        title: Text(device.deviceName ?? "Device"),
-                        subtitle: Text(
-                            "Lat: ${device.geography?.lat ?? '-'}, Long: ${device.geography?.long ?? '-'}\nStatus: ${device.geography?.status ?? 'Unknown'}"),
-                        onTap: () {
-                          final position = device.geography?.lat != null &&
-                              device.geography?.long != null
-                              ? LatLng(device.geography!.lat!, device.geography!.long!)
-                              : _getInitialCameraPosition();
-
-                          setState(() {
-                            _selectedDevice = device;
-                            _selectedDeviceIndex = index;
-                            _selectedPosition = position;
-                          });
-
-                          _addAllDeviceMarkers();
-
-                          _mapController?.animateCamera(
-                              CameraUpdate.newLatLngZoom(position, 12));
-                        },
-                      );
-                    },
-                  ),
-                ),
-              ],
-            )
-                : null,
-          ),
-
-          // Map Area
-          Expanded(
-            child: Column(
-              children: [
-                // Search bar
-                Padding(
-                  padding: const EdgeInsets.all(8),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          controller: _searchController,
-                          decoration: const InputDecoration(
-                            hintText: 'Search Area (lat,long or name)',
-                            border: OutlineInputBorder(),
-                          ),
-                          textInputAction: TextInputAction.search,
-                          onSubmitted: (value) => _searchLocation(),
-                        ),
-                      ),
-                      TextButton(
-                        onPressed: _searchLocation,
-                        child: const Text('Search', style: TextStyle(color: Colors.blue)),
-                      ),
-                    ],
-                  ),
-                ),
-
-                // Map
-                Expanded(
-                  child: GoogleMap(
-                    mapType: MapType.hybrid,
-                    onMapCreated: _onMapCreated,
-                    onCameraMove: (CameraPosition position) {
-                      _currentZoom = position.zoom;
-                    },
-                    initialCameraPosition:
-                    CameraPosition(target: _getInitialCameraPosition(), zoom: _currentZoom),
-                    markers: _markers,
-                    onTap: (LatLng latLng) => _updateMarker(latLng.latitude, latLng.longitude),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+      appBar: AppBar(title: const Text('Device Locations'), actions: [
+        Padding(padding: const EdgeInsets.symmetric(horizontal: 12), child: Center(child: Text('$mapped / ${devices.length} mapped'))),
+      ]),
+      body: SafeArea(child: LayoutBuilder(builder: (context, constraints) {
+        final wide = constraints.maxWidth >= 760;
+        return Row(children: [
+          if (wide) SizedBox(width: 280, child: _devicePanel(devices)),
+          if (wide) const VerticalDivider(width: 1),
+          Expanded(child: Column(children: [
+            if (!wide) Padding(padding: const EdgeInsets.fromLTRB(12, 8, 12, 0), child: DropdownButtonFormField<int>(
+              initialValue: _selectedDevice != null && _selectedDeviceIndex < devices.length ? _selectedDeviceIndex : null,
+              isExpanded: true,
+              decoration: const InputDecoration(labelText: 'Select device', border: OutlineInputBorder()),
+              items: List.generate(devices.length, (i) => DropdownMenuItem(value: i, child: Text(devices[i].deviceName ?? 'Device', overflow: TextOverflow.ellipsis))),
+              onChanged: (i) { if (i != null) _selectDevice(i); },
+            )),
+            _searchBar(),
+            Expanded(child: Padding(padding: const EdgeInsets.symmetric(horizontal: 12), child: ClipRRect(borderRadius: BorderRadius.circular(12), child: GoogleMap(
+              mapType: MapType.hybrid,
+              onMapCreated: _onMapCreated,
+              onCameraMove: (position) => _currentZoom = position.zoom,
+              initialCameraPosition: CameraPosition(target: _getInitialCameraPosition(), zoom: _currentZoom),
+              markers: _markers,
+              onTap: (position) { if (_selectedDevice != null) _updateMarker(position.latitude, position.longitude); },
+            )))),
+            Container(color: cs.surface, child: _coordinates()),
+          ])),
+        ]);
+      })),
     );
   }
 }

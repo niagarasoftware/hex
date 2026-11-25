@@ -85,7 +85,7 @@ class PreferenceProvider extends ChangeNotifier {
         final result = jsonDecode(response.body);
         generalData = GeneralData.fromJson(result['data'][0]);
       }
-    } catch (error, stackTrace) {
+    } catch (error) {
       // print("Error parsing general data: $error");
       // print("Stack trace general data: $stackTrace");
     }
@@ -128,7 +128,7 @@ class PreferenceProvider extends ChangeNotifier {
           }
         }
       }
-    } catch (error, stackTrace) {
+    } catch (error) {
       // print("Error parsing setting data: $error");
       // print("Stack trace setting data: $stackTrace");
     }
@@ -172,7 +172,7 @@ class PreferenceProvider extends ChangeNotifier {
             Map<String, dynamic>.from(result['data']['moistureSetting']));
       }
       notifyListeners();
-    } catch (error, stackTrace) {
+    } catch (error) {
       // print("Error parsing setting data: $error");
       // print("Stack trace setting data: $stackTrace");
     }
@@ -194,7 +194,7 @@ class PreferenceProvider extends ChangeNotifier {
       final response = await repository.checkPassword(userData);
       final result = jsonDecode(response.body);
       passwordValidationCode = result['code'];
-    } catch (error, stackTrace) {
+    } catch (error) {
       // print("Error parsing setting data: $error");
       // print("Stack trace setting data: $stackTrace");
     }
@@ -248,8 +248,7 @@ class PreferenceProvider extends ChangeNotifier {
                 individualPumpSetting.controllerReadStatus = "1";
                 individualPumpSetting.changed = false;
                 // print("$key acknowledged");
-              }
-              ;
+              } {}
               break;
           }
         }

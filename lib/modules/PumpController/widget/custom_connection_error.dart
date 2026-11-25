@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_material_design_icons/flutter_material_design_icons.dart';
-import 'package:mqtt_client/mqtt_client.dart';
 
 class ConnectionErrorToast extends StatelessWidget {
   final int dataFetchingStatus;

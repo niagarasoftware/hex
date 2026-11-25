@@ -185,7 +185,7 @@ class CreateAccount extends StatelessWidget {
                               labelText: AppConstants.country,
                               icon: Icon(CupertinoIcons.globe, color: Theme.of(context).primaryColorDark),
                             ),
-                            value: viewModel.country,
+                            initialValue: viewModel.country,
                             items: viewModel.countries.map((countryItem) {
                               return DropdownMenuItem(
                                 value: countryItem,
@@ -216,7 +216,7 @@ class CreateAccount extends StatelessWidget {
                               labelText: AppConstants.state,
                               icon: Icon(CupertinoIcons.placemark, color: Theme.of(context).primaryColorDark),
                             ),
-                            value: viewModel.state,
+                            initialValue: viewModel.state,
                             items: viewModel.states.map((stateItem) {
                               return DropdownMenuItem(
                                 value: stateItem,

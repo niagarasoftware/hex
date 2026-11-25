@@ -34,10 +34,13 @@ class SideActionMenu extends StatelessWidget {
     final hasStandaloneOnOff = cM.getPermissionStatus("Standalone On/Off");
     final hasViewLog = cM.getPermissionStatus("View Controller Log");
 
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Container(
       width: 60,
       height: screenHeight,
-      color: Theme.of(context).primaryColor,
+      color: colorScheme.primary,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         mainAxisAlignment: MainAxisAlignment.start,
@@ -45,7 +48,7 @@ class SideActionMenu extends StatelessWidget {
           const SizedBox(height: 10),
 
           /// WiFi Strength
-          _buildWifiStrength(vm),
+          _buildWifiStrength(context, vm),
 
           const SizedBox(height: 15),
 
@@ -91,7 +94,8 @@ class SideActionMenu extends StatelessWidget {
 
   /// ------------------ Private helper widgets -------------------
 
-  Widget _buildWifiStrength(CustomerScreenControllerViewModel vm) {
+  Widget _buildWifiStrength(BuildContext context, CustomerScreenControllerViewModel vm) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(5),
@@ -112,11 +116,11 @@ class SideActionMenu extends StatelessWidget {
                 : vm.wifiStrength <= 80
                 ? Icons.network_wifi_3_bar_outlined
                 : Icons.wifi,
-            color: Colors.white,
+            color: colorScheme.onPrimary,
           ),
           Text(
             '${vm.wifiStrength} %',
-            style: const TextStyle(fontSize: 11.0, color: Colors.white70),
+            style: TextStyle(fontSize: 11.0, color: colorScheme.onPrimary.withValues(alpha: 0.7)),
           ),
         ],
       ),

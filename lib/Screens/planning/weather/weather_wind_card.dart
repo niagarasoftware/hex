@@ -72,7 +72,7 @@ class WindCard extends StatelessWidget {
 
           Row(
             children: [
-              SizedBox(width: 48,),
+              const SizedBox(width: 48,),
               Text(
                 statusCode == 255 ? 'Normal' : 'Alert',
                 style: TextStyle(

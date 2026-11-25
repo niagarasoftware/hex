@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'oro_theme.dart';
 
 
 Color primaryDark = const Color(0xFF004265);
@@ -16,6 +17,7 @@ class SmartCommTheme {
     primaryColor: primary,
     primaryColorLight: primaryLight,
     scaffoldBackgroundColor:  primaryBackground,
+    extensions: const [OroTheme.lightCustomColors],
     appBarTheme: AppBarTheme(
       backgroundColor: primary,
       titleTextStyle: const TextStyle(color: Colors.white, fontSize: 22),
@@ -138,6 +140,7 @@ class SmartCommTheme {
     primaryColor: primary,
     primaryColorLight: primaryLight,
     scaffoldBackgroundColor:  primaryBackground,
+    extensions: const [OroTheme.lightCustomColors],
     appBarTheme: AppBarTheme(
       backgroundColor: primary,
       titleTextStyle: const TextStyle(color: Colors.white, fontSize: 22),
@@ -173,7 +176,6 @@ class SmartCommTheme {
         side: const BorderSide(color: Colors.white),
       ),
     ),
-    dialogBackgroundColor: Colors.white,
     dialogTheme: DialogThemeData(
       shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(0)

@@ -121,7 +121,7 @@ class _ValveConfigurationState extends State<ValveConfiguration> {
           const SizedBox(width: 20,),
           Text('$name : ', style: AppProperties.listTileBlackBoldStyle,),
           Center(
-            child: Text(list.isEmpty ? '-' : list.map((sNo) => getObjectName(sNo, widget.configPvd).name!).join(', '), style: TextStyle(color: Colors.teal, fontSize: 12, fontWeight: FontWeight.bold),),
+            child: Text(list.isEmpty ? '-' : list.map((sNo) => getObjectName(sNo, widget.configPvd).name!).join(', '), style: const TextStyle(color: Colors.teal, fontSize: 12, fontWeight: FontWeight.bold),),
           ),
           IconButton(
               onPressed: (){

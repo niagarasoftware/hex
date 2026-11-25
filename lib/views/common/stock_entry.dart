@@ -52,7 +52,7 @@ class _StockEntryState extends State<StockEntry> {
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
                                       DropdownButtonFormField<SimpleCategory>(
-                                        value: viewModel.selectedCategory,
+                                        initialValue: viewModel.selectedCategory,
                                         hint: const Text("Select a category"),
                                         decoration: _inputDecoration(),
                                         items: viewModel.categoryList.map((category) {
@@ -348,7 +348,7 @@ class _StockEntryState extends State<StockEntry> {
                               width: 220,
                               height: 50,
                               child: DropdownButtonFormField<SimpleCategory>(
-                                value: viewModel.selectedCategory,
+                                initialValue: viewModel.selectedCategory,
                                 hint: const Text("Select a category",),
                                 decoration: const InputDecoration(
                                   enabledBorder: OutlineInputBorder(

@@ -10,7 +10,7 @@ class WaveView extends StatefulWidget {
   final double height;
   final double borderRadius;
 
-  WaveView({super.key, this.percentageValue = 100.0, this.width = 50, this.height = 100, this.borderRadius = 80});
+  const WaveView({super.key, this.percentageValue = 100.0, this.width = 50, this.height = 100, this.borderRadius = 80});
 
   @override
   _WaveViewState createState() => _WaveViewState();

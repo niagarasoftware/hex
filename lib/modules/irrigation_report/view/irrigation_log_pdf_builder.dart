@@ -559,7 +559,7 @@ Uint8List generateIrrigationLogPdfBytes(dynamic dataInput, String fileName, {Str
     final Map<String, int>? statusSummary =
     pageData['statusSummary'] != null ? Map<String, int>.from(pageData['statusSummary']) : null;
     if (statusSummary != null && statusSummary.isNotEmpty) {
-      final text = 'Status Summary:  ' + statusSummary.entries.map((e) => '${e.key}: ${e.value}').join('   |   ');
+      final text = 'Status Summary:  ${statusSummary.entries.map((e) => '${e.key}: ${e.value}').join('   |   ')}';
       streamBuf.write("0.85 0.92 0.94 rg $startX 474 $tableWidth 20 re f\n");
       streamBuf.write("0.60 0.75 0.80 RG 0.8 w $startX 474 $tableWidth 20 re S\n");
       streamBuf.write("0.00 0.25 0.35 rg\n");

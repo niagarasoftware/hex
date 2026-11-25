@@ -11,8 +11,11 @@ import 'master_selector_widget.dart';
 
 Widget appBarDropDownMenu(BuildContext context,
     CustomerScreenControllerViewModel vm, MasterControllerModel master) {
+  final theme = Theme.of(context);
+  final colorScheme = theme.colorScheme;
+
   return Container(
-    color: Theme.of(context).primaryColor,
+    color: colorScheme.primary,
     child: Padding(
       padding: const EdgeInsets.symmetric(horizontal: 7.0),
       child: SingleChildScrollView(
@@ -32,35 +35,35 @@ Widget appBarDropDownMenu(BuildContext context,
                 tooltip: 'refresh',
                 onPressed: vm.onRefreshClicked,
                 icon: const Icon(Icons.refresh),
-                color: Colors.white,
+                color: colorScheme.onPrimary,
                 iconSize: 24.0,
-                hoverColor: Theme.of(context).primaryColorLight,
+                hoverColor: colorScheme.onPrimary.withOpacity(0.12),
               ),
             ),
             Selector<CustomerScreenControllerViewModel, String>(
               selector: (_, vm) => vm.mqttProvider.liveDateAndTime,
               builder: (_, liveDateAndTime, __) => Text(
                 'Last sync - ${Formatters.formatDateTime(liveDateAndTime)}',
-                style: const TextStyle(fontSize: 14, color: Colors.white60),
+                style: TextStyle(fontSize: 14, color: colorScheme.onPrimary.withOpacity(0.7)),
               ),
             ),
 
             const SizedBox(width: 5),
 
             if (vm.mySiteList.data.length > 1)...[
-              const VerticalDividerWhite(),
+              VerticalDividerWhite(color: colorScheme.onPrimary.withOpacity(0.54)),
             ],
             SiteSelectorWidget(vm: vm, context: context),
 
             if (vm.mySiteList.data[vm.sIndex].master.length > 1)...[
-              const VerticalDividerWhite(),
+              VerticalDividerWhite(color: colorScheme.onPrimary.withOpacity(0.54)),
             ],
             MasterSelectorWidget(vm: vm, sIndex: vm.sIndex, mIndex: vm.mIndex),
 
             if ([...AppConstants.gemModelList, ...AppConstants.ecoGemModelList]
                 .contains(master.modelId) &&
                 master.irrigationLine.length > 1)...[
-              const VerticalDividerWhite(),
+              VerticalDividerWhite(color: colorScheme.onPrimary.withOpacity(0.54)),
             ],
 
             IrrigationLineSelectorWidget(vm: vm),
@@ -74,17 +77,19 @@ Widget appBarDropDownMenu(BuildContext context,
 }
 
 class VerticalDividerWhite extends StatelessWidget {
-  const VerticalDividerWhite({super.key});
+  final Color? color;
+  const VerticalDividerWhite({super.key, this.color});
 
   @override
   Widget build(BuildContext context) {
-    return const Padding(
-      padding: EdgeInsets.symmetric(horizontal: 8),
+    final dividerColor = color ?? Theme.of(context).colorScheme.onPrimary.withOpacity(0.54);
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8),
       child: SizedBox(
         width: 1,
         height: 20,
         child: DecoratedBox(
-          decoration: BoxDecoration(color: Colors.white54),
+          decoration: BoxDecoration(color: dividerColor),
         ),
       ),
     );

@@ -11,35 +11,37 @@ import '../../../StateManagement/mqtt_payload_provider.dart';
 import '../googlemap_model.dart';
 import 'getlatlong.dart';
 
-class MapScreen extends StatefulWidget {
-  const MapScreen({Key? key, required this.index}) : super(key: key);
+class MapScreenSetAreatorLocation extends StatefulWidget {
+  const MapScreenSetAreatorLocation({super.key, required this.index});
   final int index;
 
   @override
-  _MapScreenState createState() => _MapScreenState();
+  _MapScreenSetAreatorLocationState createState() => _MapScreenSetAreatorLocationState();
 }
 
 
-class _MapScreenState extends State<MapScreen> {
+class _MapScreenSetAreatorLocationState extends State<MapScreenSetAreatorLocation> {
   GoogleMapController? _mapController;
   final TextEditingController _searchController = TextEditingController();
   Set<Marker> _markers = {};
-   double _currentZoom = 15;
+  double _currentZoom = 15;
   bool _isAreaMode = false;
   late MqttPayloadProvider mqttPayloadProvider;
   ConnectedObject? _selectedObject;
-  bool _isDrawerOpen = false;
-  double _drawerWidth = 280;
+  final bool _isDrawerOpen = false;
+  final double _drawerWidth = 280;
 
   List<LatLng> _points = [];
   bool _isClosed = false;
-  Set<Marker> _vertices = {};
-  Set<Polyline> _lines = {};
-  Set<Polygon> _fill = {};
+  final Set<Marker> _vertices = {};
+  final Set<Polyline> _lines = {};
+  final Set<Polygon> _fill = {};
   BitmapDescriptor? _dotIcon;
 
   @override
   void dispose() {
+    _searchController.dispose();
+    _mapController?.dispose();
     super.dispose();
   }
 
@@ -99,7 +101,7 @@ class _MapScreenState extends State<MapScreen> {
     AppLog.log('Device geography long: ${device?.geography?.long}');
     AppLog.log('Connected objects: ${objects?.length ?? 0}');
 
-    if (objects == null || objects.isEmpty) return;
+    if (!mounted || objects == null || objects.isEmpty) return;
 
     Set<Marker> newMarkers = {};
 
@@ -160,7 +162,7 @@ class _MapScreenState extends State<MapScreen> {
     });
 
     AppLog.log('Lat: ${_selectedObject?.lat}, Long: ${_selectedObject?.long}');
-    AppLog.log('Lat: ${lat}, Long: ${long}');
+    AppLog.log('Lat: $lat, Long: $long');
     AppLog.log('_selectedObject:${_selectedObject?.name} ${_selectedObject?.objectId}');
     _selectedObject!.lat = lat;
     _selectedObject!.long = long;
@@ -178,6 +180,7 @@ class _MapScreenState extends State<MapScreen> {
     final input = _searchController.text;
     final LatLng? result = await getLatLngFromInput(input);
 
+    if (!mounted) return;
     if (result != null) {
       _updateMarker(result.latitude, result.longitude);
     } else {
@@ -280,8 +283,7 @@ class _MapScreenState extends State<MapScreen> {
               // 🚀 Update the master point list with the new position
               setState(() {
                 _points[i] = newPos;
-                _selectedObject!.area![i].latitude = newPos.latitude;
-                _selectedObject!.area![i].longitude = newPos.longitude;
+                _syncArea();
                 _refreshLayers();
               });
             },
@@ -315,255 +317,211 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   void _handleMapTap(LatLng pos) {
-    if (_isClosed) return;
+    if (_isClosed || _selectedObject == null) return;
+    _points.add(pos);
+    _syncArea();
+    _refreshLayers();
 
+
+  }
+
+
+  void _selectObject(ConnectedObject obj) {
     setState(() {
-      _points.add(pos);
-      _refreshLayers();
+      _selectedObject = obj;
+      _points = (obj.area ?? [])
+          .where((p) => p.latitude != null && p.longitude != null)
+          .map((p) => LatLng(p.latitude!, p.longitude!)).toList();
+      _isClosed = _points.length >= 3;
     });
+    _refreshLayers();
+    _loadAllMarkers();
+    if (obj.lat != null && obj.long != null) {
+      _mapController?.animateCamera(CameraUpdate.newLatLngZoom(
+          LatLng(obj.lat!, obj.long!), _currentZoom));
+    } else if (_points.isNotEmpty) {
+      _mapController?.animateCamera(CameraUpdate.newLatLngZoom(
+          _points.first, _currentZoom));
+    }
+  }
 
+  void _syncArea() {
+    if (_selectedObject == null) return;
+    _selectedObject!.area = _points.map((p) =>
+        Area(latitude: p.latitude, longitude: p.longitude)).toList();
+    mqttPayloadProvider.notifyListeners();
+  }
 
+  bool _mapped(ConnectedObject obj) =>
+      obj.lat != null && obj.long != null &&
+          (obj.lat != 0 || obj.long != 0);
+
+  Widget _panel({required Widget child}) {
+    final c = Theme.of(context).colorScheme;
+    return Container(
+        decoration: BoxDecoration(color: c.surface,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: c.outlineVariant)),
+        clipBehavior: Clip.antiAlias, child: child);
+  }
+
+  Widget _modeSwitch() {
+    return SegmentedButton<bool>(
+      segments: const [
+        ButtonSegment(value: false, icon: Icon(Icons.location_on_outlined),
+            label: Text('Marker')),
+        ButtonSegment(value: true, icon: Icon(Icons.polyline),
+            label: Text('Area')),
+      ],
+      selected: {_isAreaMode},
+      onSelectionChanged: (v) => setState(() => _isAreaMode = v.first),
+    );
+  }
+
+  Widget _objectList(List<ConnectedObject> objects) {
+    final c = Theme.of(context).colorScheme;
+    final count = objects.where(_mapped).length;
+    return _panel(child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(padding: const EdgeInsets.all(16), child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text('Connected objects', style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: 4),
+            Text('$count of ${objects.length} locations configured'),
+            const SizedBox(height: 12),
+            LinearProgressIndicator(value: objects.isEmpty ? 0.0 : count / objects.length),
+          ])),
+          const Divider(height: 1),
+          Expanded(child: objects.isEmpty ? const Center(child: Text('No connected objects'))
+              : ListView.builder(padding: const EdgeInsets.all(10),
+              itemCount: objects.length, itemBuilder: (context, i) {
+                final obj = objects[i];
+                final selected = obj == _selectedObject;
+                return Padding(padding: const EdgeInsets.only(bottom: 8),
+                    child: Material(
+                      color: selected ? c.primaryContainer : c.surfaceContainerLow,
+                      borderRadius: BorderRadius.circular(12),
+                      child: ListTile(
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        leading: Icon(_mapped(obj) ? Icons.location_on : Icons.location_off_outlined),
+                        title: Text(obj.name ?? obj.objectName ?? 'Object'),
+                        subtitle: Text(_mapped(obj) ? 'Location configured' : 'Not mapped'),
+                        trailing: selected ? Icon(Icons.check_circle, color: c.primary) : null,
+                        onTap: () => _selectObject(obj),
+                      ),
+                    ));
+              })),
+        ]));
+  }
+
+  Widget _selectedDetails() {
+    final obj = _selectedObject;
+    return _panel(child: Padding(padding: const EdgeInsets.all(12),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min, children: [
+              Text(obj?.name ?? obj?.objectName ?? 'Select an object',
+                  style: Theme.of(context).textTheme.titleMedium),
+              const SizedBox(height: 6),
+              if (obj != null) Wrap(spacing: 20, runSpacing: 6, children: [
+                Text('Lat: ${obj.lat?.toStringAsFixed(6) ?? "-"}'),
+                Text('Long: ${obj.long?.toStringAsFixed(6) ?? "-"}'),
+                Text('Status: ${obj.status == 1 ? "ON" : "OFF"}'),
+                if (_isAreaMode) Text('${_points.length} points · ${_isClosed ? "Closed" : "Open"}'),
+              ]),
+              const SizedBox(height: 4),
+              Text(obj == null ? 'Choose equipment before editing.'
+                  : _isAreaMode ? 'Tap map to add points. Drag points to adjust.'
+                  : 'Tap map to relocate the selected object.'),
+            ])));
+  }
+
+  Widget _mapWorkspace() {
+    return Column(children: [
+      Row(children: [
+        Expanded(child: TextField(controller: _searchController,
+            textInputAction: TextInputAction.search,
+            onSubmitted: (_) => _searchLocation(),
+            decoration: InputDecoration(
+                hintText: 'Place, map link or coordinates',
+                prefixIcon: const Icon(Icons.search),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                isDense: true))),
+        const SizedBox(width: 8),
+        IconButton.filledTonal(onPressed: _selectedObject == null ? null : _searchLocation,
+            tooltip: 'Search', icon: const Icon(Icons.search)),
+        IconButton.filledTonal(onPressed: _selectedObject == null ? null : _getCurrentLocation,
+            tooltip: 'Current location', icon: const Icon(Icons.my_location)),
+      ]),
+      const SizedBox(height: 8),
+      if (_isAreaMode) Wrap(spacing: 8, children: [
+        TextButton.icon(onPressed: _selectedObject == null || _points.isEmpty ? null : () {
+          _points.removeLast();
+          if (_points.length < 3) _isClosed = false;
+          _syncArea(); _refreshLayers();
+        }, icon: const Icon(Icons.undo), label: const Text('Undo point')),
+        TextButton.icon(onPressed: _points.length < 3 || _isClosed ? null : () {
+          _isClosed = true; _syncArea(); _refreshLayers();
+        }, icon: const Icon(Icons.check), label: const Text('Close')),
+        TextButton.icon(onPressed: !_isClosed ? null : () {
+          _isClosed = false; _refreshLayers();
+        }, icon: const Icon(Icons.edit), label: const Text('Reopen')),
+      ]),
+      Expanded(child: _panel(child: GoogleMap(
+        mapType: MapType.hybrid,
+        onMapCreated: _onMapCreated,
+        onCameraMove: (p) => _currentZoom = p.zoom,
+        initialCameraPosition: CameraPosition(target: _getInitialCameraPosition(), zoom: _currentZoom),
+        markers: {..._markers, ..._vertices},
+        polylines: _lines, polygons: _fill,
+        onTap: (p) {
+          if (_selectedObject == null) {
+            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Select an object first')));
+            return;
+          }
+          if (_isAreaMode) { _handleMapTap(p); } else { _updateMarker(p.latitude, p.longitude); }
+        },
+        myLocationButtonEnabled: false, compassEnabled: true,
+      ))),
+      const SizedBox(height: 8),
+      _selectedDetails(),
+    ]);
   }
 
   @override
   Widget build(BuildContext context) {
-    final objects = mqttPayloadProvider
-        .mapModelInstance.data?.deviceList?[widget.index].connectedObject;
-
+    final devices = mqttPayloadProvider.mapModelInstance.data?.deviceList;
+    final List<ConnectedObject> objects = devices != null &&
+        widget.index >= 0 && widget.index < devices.length
+        ? (devices[widget.index].connectedObject ?? []) : [];
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Set Location'),
-        leadingWidth: 110,
-        leading: Row(
-          children: [
-            IconButton(
-              icon: Icon(Icons.arrow_back),
-              onPressed: () {
-                setState(() {
-                  Navigator.pop(context);
-                });
-              },
+      appBar: AppBar(title: const Text('Object Mapping')),
+      body: SafeArea(child: LayoutBuilder(builder: (context, constraints) {
+        final wide = constraints.maxWidth >= 850;
+        return Padding(padding: const EdgeInsets.all(12), child: Column(children: [
+          Align(alignment: Alignment.centerRight, child: _modeSwitch()),
+          const SizedBox(height: 12),
+          if (!wide) ...[
+            DropdownButtonFormField<ConnectedObject>(
+              isExpanded: true,
+              initialValue: objects.contains(_selectedObject) ? _selectedObject : null,
+              decoration: const InputDecoration(labelText: 'Connected object', border: OutlineInputBorder()),
+              items: objects.map((o) => DropdownMenuItem(value: o,
+                  child: Text(o.name ?? o.objectName ?? 'Object', overflow: TextOverflow.ellipsis))).toList(),
+              onChanged: (o) { if (o != null) _selectObject(o); },
             ),
-            IconButton(
-              icon: Icon(_isDrawerOpen ? Icons.close : Icons.menu),
-              onPressed: () {
-                setState(() {
-                  _isDrawerOpen = !_isDrawerOpen;
-                });
-              },
-            ),
+            const SizedBox(height: 10),
           ],
-        ),
-      ),
-      body: Row(
-        children: [
-          // ✅ Side Drawer Panel (Resizable)
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 300),
-            width: _isDrawerOpen ? _drawerWidth : 0,
-            color: Colors.white,
-            child: _isDrawerOpen
-                ? Column(
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  width: double.infinity,
-                  color: Colors.teal.shade500,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        "Connected Objects",
-                        style: TextStyle(color: Colors.white, fontSize: 18),
-                      ),
-                      // 🚀 THE SINGLE TOGGLE ICON
-                      IconButton(
-                        icon: Icon(
-                          _isAreaMode ? Icons.polyline : Icons.location_on,
-                          color: Colors.white,
-                        ),
-                        tooltip: _isAreaMode ? "Switch to Marker Mode" : "Switch to Area Mode",
-                        onPressed: () {
-                          setState(() {
-                            _isAreaMode = !_isAreaMode;
-                          });
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(_isAreaMode ? "Area Mode Active" : "Marker Mode Active"),
-                              duration: const Duration(milliseconds: 600),
-                            ),
-                          );
-                        },
-                      ),
-                    ],
-                  ),
-                ),
-                Expanded(
-                  child: objects == null || objects.isEmpty
-                      ? const Center(
-                      child: Text("No Connected Objects"))
-                      : ListView.builder(
-                    itemCount: objects.length,
-                    itemBuilder: (context, index) {
-                      final obj = objects[index];
-
-                      return ListTile(
-                        selected: obj == _selectedObject,
-                        selectedTileColor:
-                        Colors.blue.withOpacity(0.2),
-                        title: Text(obj.name ??
-                            obj.objectName ??
-                            "Object"),
-                        subtitle: Text(
-                            "Lat: ${obj.lat}, Long: ${obj.long}\nStatus: ${obj.status ?? "Unknown"}"),
-                        onTap: () {
-                          setState(() {
-                            _selectedObject = obj;
-                          });
-
-                          if (obj.lat != null &&
-                              obj.long != null) {
-                            _mapController?.animateCamera(
-                              CameraUpdate.newLatLngZoom(
-                                LatLng(
-                                    obj.lat!, obj.long!),
-                                _currentZoom,
-                              ),
-                            );
-                          }
-
-                          _loadAllMarkers();
-                        },
-                      );
-                    },
-                  ),
-                ),
-              ],
-            )
-                : null,
-          ),
-
-          // ✅ Map Area (Auto Resizes)
-          Expanded(
-            child: Column(
-              children: [
-                _buildSelectedObjectBar(),
-                // Search Bar
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          controller: _searchController,
-                          decoration: const InputDecoration(
-                            hintText:
-                            'Search Area (e.g., 11.1326952, 76.9767822)',
-                            border: OutlineInputBorder(),
-                          ),
-                          textInputAction: TextInputAction.search,
-                          onSubmitted: (value) {
-                            _searchLocation();
-                          },
-                        ),
-                      ),
-                      TextButton(
-                        onPressed: _searchLocation,
-                        child: const Text(
-                          'Search',
-                          style:
-                          TextStyle(color: Colors.blue),
-                        ),
-                      ),
-                      IconButton(onPressed: _getCurrentLocation, icon: const Icon(Icons.my_location, color: Colors.blue)),
-                    ],
-                  ),
-                ),
-                // Google Map
-                Expanded(
-                  child: GoogleMap(
-                    mapType: MapType.hybrid,
-                    onMapCreated: _onMapCreated,
-                    onCameraMove: (CameraPosition position) {
-                      _currentZoom = position.zoom;
-                    },
-                    initialCameraPosition: CameraPosition(
-                      target: _getInitialCameraPosition(),
-                      zoom: _currentZoom,
-                    ),
-                    // ✅ CONDITION: Switch between object markers and boundary vertices
-                    // markers: _isAreaMode ? _vertices : _markers,
-                    markers: {
-                      ..._markers,  // The device pins (Green/Red/Azure)
-                      ..._vertices, // The boundary dots (Yellow/Blue)
-                    },
-
-                    // ✅ CONDITION: Only show lines and fills when in Area Mode
-                    polylines: _lines ,
-                    polygons: _fill ,
-
-                    // ✅ CONDITION: Change what happens when the user taps the map
-                    onTap: (LatLng latLng) {
-                      if (_isAreaMode) {
-                        _handleMapTap(latLng);
-                        // _updateArea(Area(latitude: latLng.latitude,longitude: latLng.longitude)); // Boundary Logic
-                      } else {
-                        _updateMarker(latLng.latitude, latLng.longitude); // Marker Logic
-                      }
-                    },
-
-                    myLocationButtonEnabled: true,
-                    myLocationEnabled: true,
-                    compassEnabled: true,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+          Expanded(child: wide ? Row(children: [
+            SizedBox(width: 280, child: _objectList(objects)),
+            const SizedBox(width: 12),
+            Expanded(child: _mapWorkspace()),
+          ]) : _mapWorkspace()),
+        ]));
+      })),
     );
   }
-  Widget _buildSelectedObjectBar() {
-    if (_selectedObject == null) {
-      return Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(5),
-        color: Colors.grey.shade200,
-        child: const Text(
-          "No Object Selected",
-          style: TextStyle(fontSize: 16),
-        ),
-      );
-    }
 
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(5),
-      color: Colors.teal.shade50,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            _selectedObject!.name ??
-                _selectedObject!.objectName ??
-                "Connected Object",
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          Text(
-            "Lat: ${_selectedObject!.lat ?? "-"}  "
-                "Long: ${_selectedObject!.long ?? "-"}",
-          ),
-          Text(
-            "Status: ${_selectedObject!.status == 1 ? "ON" : "OFF"}",
-          ),
-        ],
-      ),
-    );
-  }
   Future<void> _getCurrentLocation() async {
     bool serviceEnabled;
     LocationPermission permission;
@@ -583,7 +541,8 @@ class _MapScreenState extends State<MapScreen> {
       permission = await Geolocator.requestPermission();
     }
 
-    if (permission == LocationPermission.deniedForever) {
+    if (!mounted) return;
+    if (permission == LocationPermission.deniedForever || permission == LocationPermission.denied) {
       return;
     }
 
@@ -593,7 +552,12 @@ class _MapScreenState extends State<MapScreen> {
     );
 
     // ✅ Add marker
-    _updateMarker(position.latitude, position.longitude);
+    if (!mounted) return;
+    if (_isAreaMode) {
+      _handleMapTap(LatLng(position.latitude, position.longitude));
+    } else {
+      _updateMarker(position.latitude, position.longitude);
+    }
   }
 
 }

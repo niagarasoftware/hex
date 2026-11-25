@@ -20,7 +20,6 @@ import '../state_management/preference_provider.dart';
 import '../../SystemDefinitions/widgets/custom_snack_bar.dart';
 import '../../../utils/environment.dart';
 import '../../IrrigationProgram/view/program_library.dart';
-import '../widgets/custom_segmented_control.dart';
 import '../widgets/progress_dialog.dart';
 
 final otherSettingsIcons = [
@@ -200,6 +199,13 @@ class _PreferenceMainScreenState extends State<PreferenceMainScreen>
   int selectedSetting = 0;
   TextEditingController passwordController = TextEditingController();
   final MqttService mqttService = MqttService();
+  int activeCommonCategoryIndex = 0;
+
+  static const commonCategories = [
+    {"title": "Other Settings", "icon": Icons.tune_rounded},
+    {"title": "Voltage Settings", "icon": Icons.bolt_rounded},
+  ];
+
   late bool isToGem;
   late bool isPumpWithValveModel;
   late bool isPumpOnly;
@@ -313,48 +319,13 @@ class _PreferenceMainScreenState extends State<PreferenceMainScreen>
                 child: Column(
                   children: [
                     const SizedBox(height: 12),
-                    if (!isValveSetting) ...[
-                      Container(
-                        margin: const EdgeInsets.symmetric(horizontal: 4),
-                        child: Row(
-                          children: [
-                            if (preferenceProvider.commonPumpSettings!.isNotEmpty)
-                              if (!viewConfig)
-                                Expanded(
-                                  flex: 6,
-                                  child: _buildStepNavigationBar(context),
-                                )
-                              else
-                                Expanded(child: Container()),
-                            if (preferenceProvider.commonPumpSettings!.isNotEmpty &&
-                                constraints.maxWidth >= 700)
-                              const SizedBox(width: 16),
-                            if (constraints.maxWidth >= 700)
-                              Expanded(
-                                flex: 6,
-                                child: _getDefaultTabController(),
-                              ),
-                            if (selectedSetting == 0 &&
-                                MediaQuery.of(context).size.width > 500 &&
-                                preferenceProvider.commonPumpSettings!.isNotEmpty) ...[
-                              const SizedBox(width: 12),
-                              FilledButton.tonalIcon(
-                                  onPressed: () {
-                                    setState(() {
-                                      viewConfig = !viewConfig;
-                                    });
-                                  },
-                                  icon: Icon(viewConfig ? Icons.edit : Icons.visibility_rounded, size: 18),
-                                  label: Text(viewConfig ? 'Edit' : 'View'))
-                            ]
-                          ],
-                        ),
-                      ),
-                    ],
-                    if (constraints.maxWidth <= 700 && !isValveSetting)
-                      _getDefaultTabController(),
-                    if (!isValveSetting)
+                    if (!isValveSetting &&
+                        preferenceProvider.commonPumpSettings != null &&
+                        preferenceProvider.commonPumpSettings!.isNotEmpty) ...[
+                      if (!viewConfig) _buildPreferenceCards(context, constraints),
+                      _buildPumpUnitSelector(context),
                       const SizedBox(height: 12),
+                    ],
                     if (selectedSetting != 2 &&
                         commonPumpTabController != null &&
                         individualPumpTabController != null)
@@ -452,95 +423,156 @@ class _PreferenceMainScreenState extends State<PreferenceMainScreen>
     }
   }
 
-  Widget _buildStepNavigationBar(BuildContext context) {
+  Widget _buildPreferenceCards(BuildContext context, BoxConstraints constraints) {
     final colorScheme = Theme.of(context).colorScheme;
-    final steps = [
-      {"index": 0, "number": "1", "title": "Common setting"},
-      {"index": 1, "number": "2", "title": "Individual setting"},
-      {"index": 2, "number": "3", "title": "Calibration"},
+    final isDesktop = constraints.maxWidth >= 700;
+
+    final items = [
+      {
+        "index": 0,
+        "title": "Common setting",
+        "description": "Configure global parameters for shared pump units",
+        "icon": Icons.tune_rounded,
+      },
+      {
+        "index": 1,
+        "title": "Individual setting",
+        "description": "Customize settings for specific pump units",
+        "icon": Icons.tune_outlined,
+      },
+      {
+        "index": 2,
+        "title": "Calibration",
+        "description": "Calibrate sensors, current and voltage thresholds",
+        "icon": Icons.auto_fix_high_rounded,
+      },
     ];
 
-    return Container(
-      padding: const EdgeInsets.all(4),
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: colorScheme.outlineVariant.withOpacity(0.4),
-        ),
-      ),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: steps.map((step) {
-            final idx = step["index"] as int;
-            final isSelected = selectedSetting == idx;
+    Widget buildCard(Map<String, dynamic> item) {
+      final idx = item["index"] as int;
+      final isSelected = selectedSetting == idx;
 
-            return Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 2),
-              child: InkWell(
-                onTap: () {
-                  if (idx == 2) {
-                    _handleCalibrationTap();
-                  } else {
-                    setState(() {
-                      selectedSetting = idx;
-                      preferenceProvider.updateValidationCode();
-                    });
-                  }
-                },
-                borderRadius: BorderRadius.circular(10),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      return Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {
+            if (idx == 2) {
+              _handleCalibrationTap();
+            } else {
+              setState(() {
+                selectedSetting = idx;
+                preferenceProvider.updateValidationCode();
+              });
+            }
+          },
+          borderRadius: BorderRadius.circular(12),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: isSelected ? colorScheme.primaryContainer : colorScheme.surface,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: isSelected ? colorScheme.primary : colorScheme.outlineVariant,
+                width: isSelected ? 1.5 : 1.0,
+              ),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 36,
+                  height: 36,
                   decoration: BoxDecoration(
-                    color: isSelected ? colorScheme.primary : Colors.transparent,
-                    borderRadius: BorderRadius.circular(10),
+                    color: isSelected
+                        ? colorScheme.primary.withOpacity(0.15)
+                        : colorScheme.surfaceContainerLow,
+                    borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Row(
+                  child: Icon(
+                    item["icon"] as IconData,
+                    size: 20,
+                    color: isSelected ? colorScheme.primary : colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Container(
-                        width: 22,
-                        height: 22,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: isSelected
-                              ? colorScheme.onPrimary
-                              : colorScheme.primaryContainer,
-                        ),
-                        child: Center(
-                          child: Text(
-                            step["number"] as String,
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.bold,
-                              color: isSelected
-                                  ? colorScheme.primary
-                                  : colorScheme.onPrimaryContainer,
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Flexible(
+                            child: Text(
+                              item["title"] as String,
+                              style: TextStyle(
+                                fontSize: 13.5,
+                                fontWeight: FontWeight.bold,
+                                color: isSelected
+                                    ? colorScheme.onPrimaryContainer
+                                    : colorScheme.onSurface,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                        ),
+                          if (isSelected)
+                            Icon(
+                              Icons.check_circle_rounded,
+                              size: 16,
+                              color: colorScheme.primary,
+                            ),
+                        ],
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(height: 3),
                       Text(
-                        step["title"] as String,
+                        item["description"] as String,
                         style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                          fontSize: 11,
                           color: isSelected
-                              ? colorScheme.onPrimary
+                              ? colorScheme.onPrimaryContainer.withOpacity(0.8)
                               : colorScheme.onSurfaceVariant,
                         ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ],
                   ),
                 ),
-              ),
-            );
-          }).toList(),
+              ],
+            ),
+          ),
         ),
+      );
+    }
+
+    if (isDesktop) {
+      return Row(
+        children: items.map((item) {
+          return Expanded(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              child: buildCard(item),
+            ),
+          );
+        }).toList(),
+      );
+    }
+
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: items.map((item) {
+          return SizedBox(
+            width: 260,
+            child: Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: buildCard(item),
+            ),
+          );
+        }).toList(),
       ),
     );
   }
@@ -860,7 +892,7 @@ class _PreferenceMainScreenState extends State<PreferenceMainScreen>
                 ),
                 onPressed: () async {
                   final rtcError = validateAllRtcSettings();
-                  print("rtcError : ${rtcError}");
+                  print("rtcError : $rtcError");
                   if (rtcError != null) {
                     _showRtcErrorDialog(rtcError);
                     return;
@@ -948,11 +980,12 @@ class _PreferenceMainScreenState extends State<PreferenceMainScreen>
     );
   }
 
-  Widget _getDefaultTabController() {
+  Widget _buildPumpUnitSelector(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final commonLength = preferenceProvider.commonPumpSettings?.length ?? 0;
     final individualLength = preferenceProvider.individualPumpSetting?.length ?? 0;
     final targetLength = selectedSetting != 1 ? commonLength : individualLength;
+
     if (targetLength == 0) return const SizedBox();
 
     final activeTabController = selectedSetting != 1
@@ -961,115 +994,140 @@ class _PreferenceMainScreenState extends State<PreferenceMainScreen>
 
     if (activeTabController == null) return const SizedBox();
 
-    return DefaultTabController(
-      length: targetLength,
+    final currentIdx = activeTabController.index.clamp(0, targetLength - 1);
+
+    return Container(
+      margin: const EdgeInsets.only(top: 8),
       child: Row(
         children: [
-          Text("Pump unit", style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: colorScheme.onSurfaceVariant)),
-          const SizedBox(width: 8),
+          Text(
+            "Pump unit:",
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(width: 10),
           Expanded(
             child: Container(
-              padding: const EdgeInsets.all(3),
+              height: 40,
+              padding: const EdgeInsets.symmetric(horizontal: 12),
               decoration: BoxDecoration(
-                color: colorScheme.surfaceContainerLow,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: colorScheme.outlineVariant.withOpacity(0.4)),
+                color: colorScheme.surface,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: colorScheme.outlineVariant),
               ),
-              child: TabBar(
-                controller: activeTabController,
-                labelPadding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 4),
-                indicator: BoxDecoration(
-                  color: colorScheme.primaryContainer,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                indicatorSize: TabBarIndicatorSize.tab,
-                tabAlignment: TabAlignment.start,
-                labelColor: colorScheme.onPrimaryContainer,
-                labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-                unselectedLabelColor: colorScheme.onSurfaceVariant,
-                unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13),
-                dividerColor: Colors.transparent,
-                isScrollable: true,
-                onTap: (value) async {
-                  final curIdx = commonPumpTabController?.index ?? 0;
-                  preferenceProvider.updateTabIndex(curIdx);
-                  if (selectedSetting == 2 && isToGem && preferenceProvider.commonPumpSettings != null && curIdx < preferenceProvider.commonPumpSettings!.length) {
-                    mqttPayloadProvider.viewSettingsList.clear();
-                    final oroPumpSerialNumber = preferenceProvider
-                        .commonPumpSettings![curIdx]
-                        .serialNumber;
-                    final referenceNumber = preferenceProvider
-                        .commonPumpSettings![curIdx]
-                        .referenceNumber;
-                    final deviceId = preferenceProvider
-                        .commonPumpSettings![curIdx]
-                        .deviceId;
-                    final interfaceType = preferenceProvider
-                        .commonPumpSettings![curIdx]
-                        .interfaceTypeId;
-                    final categoryId = preferenceProvider
-                        .commonPumpSettings![curIdx]
-                        .categoryId;
-                    final payload = jsonEncode({"sentSms": "viewconfig"});
-                    final payload2 = jsonEncode({"0": payload});
-                    final viewConfig = {
-                      "5900": {
-                        "5901":
-                        "$oroPumpSerialNumber+$referenceNumber+$deviceId+$interfaceType+$payload2+$categoryId",
-                      }
-                    };
-                    await context.read<CommunicationService>().sendCommand(
-                      serverMsg: '',
-                      payload: isWlc
-                          ? Constants.sendPayloadWithCrc(payload)
-                          : jsonEncode(viewConfig),
-                    );
-                  }
-                },
-                tabs: [
-                  if (selectedSetting != 1)
-                    ...preferenceProvider.commonPumpSettings!
-                        .asMap()
-                        .entries
-                        .map((entry) {
-                      final element = entry.value;
-                      return preferenceProvider.commonPumpSettings!.length > 1
-                          ? Tab(
-                        text: "${element.deviceName} (${element.deviceId})",
-                      )
-                          : Container();
-                    })
-                  else
-                    ...preferenceProvider.individualPumpSetting!
-                        .asMap()
-                        .entries
-                        .map((entry) {
-                      final element = entry.value;
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<int>(
+                  value: currentIdx,
+                  isExpanded: true,
+                  dropdownColor: colorScheme.surface,
+                  icon: Icon(Icons.arrow_drop_down, color: colorScheme.onSurface),
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: colorScheme.onSurface,
+                  ),
+                  onChanged: (newIndex) async {
+                    if (newIndex == null) return;
+                    setState(() {
+                      activeTabController.animateTo(newIndex);
+                    });
+                    preferenceProvider.updateTabIndex(newIndex);
 
+                    if (selectedSetting == 2 &&
+                        isToGem &&
+                        preferenceProvider.commonPumpSettings != null &&
+                        newIndex < preferenceProvider.commonPumpSettings!.length) {
+                      mqttPayloadProvider.viewSettingsList.clear();
+                      final oroPumpSerialNumber = preferenceProvider
+                          .commonPumpSettings![newIndex]
+                          .serialNumber;
+                      final referenceNumber = preferenceProvider
+                          .commonPumpSettings![newIndex]
+                          .referenceNumber;
+                      final deviceId = preferenceProvider
+                          .commonPumpSettings![newIndex]
+                          .deviceId;
+                      final interfaceType = preferenceProvider
+                          .commonPumpSettings![newIndex]
+                          .interfaceTypeId;
+                      final categoryId = preferenceProvider
+                          .commonPumpSettings![newIndex]
+                          .categoryId;
+                      final payload = jsonEncode({"sentSms": "viewconfig"});
+                      final payload2 = jsonEncode({"0": payload});
+                      final viewConfigData = {
+                        "5900": {
+                          "5901":
+                          "$oroPumpSerialNumber+$referenceNumber+$deviceId+$interfaceType+$payload2+$categoryId",
+                        }
+                      };
+                      await context.read<CommunicationService>().sendCommand(
+                        serverMsg: '',
+                        payload: isWlc
+                            ? Constants.sendPayloadWithCrc(payload)
+                            : jsonEncode(viewConfigData),
+                      );
+                    }
+                  },
+                  items: List.generate(targetLength, (index) {
+                    String label = "";
+                    if (selectedSetting != 1) {
+                      final element = preferenceProvider.commonPumpSettings![index];
+                      label = preferenceProvider.commonPumpSettings!.length > 1
+                          ? "${element.deviceName} (${element.deviceId})"
+                          : element.deviceName;
+                    } else {
+                      final element = preferenceProvider.individualPumpSetting![index];
                       CommonPumpSetting? matchingCommonPump;
                       try {
-                        matchingCommonPump =
-                            preferenceProvider.commonPumpSettings!.firstWhere(
-                                    (common) => common.deviceId == element.deviceId);
-                      } catch (e) {
+                        matchingCommonPump = preferenceProvider.commonPumpSettings!.firstWhere(
+                              (common) => common.deviceId == element.deviceId,
+                        );
+                      } catch (_) {
                         matchingCommonPump = null;
                       }
+                      label = (preferenceProvider.commonPumpSettings!.length > 1 && matchingCommonPump != null)
+                          ? "${element.name} (${matchingCommonPump.deviceId})"
+                          : element.name;
+                    }
 
-                      return preferenceProvider.individualPumpSetting!.length > 1
-                          ? Tab(
-                        text: (preferenceProvider
-                            .commonPumpSettings!.length >
-                            1 &&
-                            matchingCommonPump != null)
-                            ? "${element.name} (${matchingCommonPump.deviceId})"
-                            : element.name,
-                      )
-                          : Container();
-                    })
-                ],
+                    return DropdownMenuItem<int>(
+                      value: index,
+                      child: Text(
+                        label,
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: index == currentIdx ? FontWeight.bold : FontWeight.w500,
+                          color: colorScheme.onSurface,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    );
+                  }),
+                ),
               ),
             ),
           ),
+          if (selectedSetting == 0 &&
+              preferenceProvider.commonPumpSettings!.isNotEmpty) ...[
+            const SizedBox(width: 10),
+            FilledButton.tonalIcon(
+              onPressed: () {
+                setState(() {
+                  viewConfig = !viewConfig;
+                });
+              },
+              style: FilledButton.styleFrom(
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              ),
+              icon: Icon(viewConfig ? Icons.edit : Icons.visibility_rounded, size: 18),
+              label: Text(viewConfig ? 'Edit' : 'View'),
+            ),
+          ],
         ],
       ),
     );
@@ -1176,6 +1234,92 @@ class _PreferenceMainScreenState extends State<PreferenceMainScreen>
     );
   }
 
+  Widget _buildCommonCategorySelector(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: List.generate(commonCategories.length, (index) {
+            final cat = commonCategories[index];
+            final isSelected = activeCommonCategoryIndex == index;
+
+            return Padding(
+              padding: const EdgeInsets.only(right: 8.0),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () {
+                    setState(() {
+                      activeCommonCategoryIndex = index;
+                    });
+                  },
+                  borderRadius: BorderRadius.circular(10),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 180),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: isSelected ? colorScheme.primary : colorScheme.surfaceContainerLow,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          cat["icon"] as IconData,
+                          size: 16,
+                          color: isSelected ? colorScheme.onPrimary : colorScheme.onSurfaceVariant,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          cat["title"] as String,
+                          style: TextStyle(
+                            fontSize: 12.5,
+                            fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                            color: isSelected ? colorScheme.onPrimary : colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            );
+          }),
+        ),
+      ),
+    );
+  }
+
+  List<SettingList> _getFilteredCategories(List<SettingList> settingList, int activeCategoryIdx) {
+    final filtered = <SettingList>[];
+    for (final cat in settingList) {
+      final nameLower = cat.name.toLowerCase();
+      final type = cat.type;
+
+      bool matches = false;
+      if (activeCategoryIdx == 1) {
+        // Voltage Settings
+        matches = AppConstants.voltageSetting.contains(type) || nameLower.contains('voltage');
+      } else {
+        // Other Settings
+        matches = !AppConstants.voltageSetting.contains(type) && !nameLower.contains('voltage');
+      }
+
+      if (matches) {
+        filtered.add(cat);
+      }
+    }
+
+    if (filtered.isEmpty) {
+      return settingList;
+    }
+
+    return filtered;
+  }
+
   Widget buildSettingsCategory(
       {required BuildContext context,
         required List<SettingList> settingList,
@@ -1189,7 +1333,7 @@ class _PreferenceMainScreenState extends State<PreferenceMainScreen>
           const spacing = 16.0;
           final isMobile = boxConstraints.maxWidth < 700;
 
-          final visibleCategories = <SettingList>[];
+          var visibleCategories = <SettingList>[];
           for (var i = 0; i < settingList.length; i++) {
             if (_shouldShowCategory(settingList[i], pumpIndex)) {
               visibleCategories.add(settingList[i]);
@@ -1200,89 +1344,37 @@ class _PreferenceMainScreenState extends State<PreferenceMainScreen>
             return const SizedBox();
           }
 
-          if (isMobile) {
-            return Column(
-              children: [
-                for (final cat in visibleCategories) ...[
-                  _buildCategoryCard(
-                    context: context,
-                    settingCategory: cat,
-                    constraints: boxConstraints,
-                    pumpIndex: pumpIndex,
-                  ),
-                  const SizedBox(height: spacing),
-                ],
-              ],
-            );
+          bool isCommonSetting = selectedSetting == 0;
+          if (isCommonSetting) {
+            visibleCategories = _getFilteredCategories(visibleCategories, activeCommonCategoryIndex);
           }
 
-          // Desktop / Tablet: Independent Dual-Column Masonry Layout
-          final leftColumn = <Widget>[];
-          final rightColumn = <Widget>[];
-          final fullWidthWidgets = <Widget>[];
-
-          for (int i = 0; i < visibleCategories.length; i++) {
-            final cat = visibleCategories[i];
-            final cardWidget = _buildCategoryCard(
-              context: context,
-              settingCategory: cat,
-              constraints: boxConstraints,
-              pumpIndex: pumpIndex,
-            );
-
-            if (_isFullWidthCategory(cat)) {
-              fullWidthWidgets.add(cardWidget);
-            } else {
-              if (leftColumn.length <= rightColumn.length) {
-                leftColumn.add(cardWidget);
-              } else {
-                rightColumn.add(cardWidget);
-              }
-            }
-          }
-
-          final colWidth = (boxConstraints.maxWidth - spacing) / 2;
-
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          Widget contentList = Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              if (leftColumn.isNotEmpty || rightColumn.isNotEmpty)
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    SizedBox(
-                      width: colWidth,
-                      child: Column(
-                        children: [
-                          for (int i = 0; i < leftColumn.length; i++) ...[
-                            leftColumn[i],
-                            if (i < leftColumn.length - 1)
-                              const SizedBox(height: spacing),
-                          ],
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: spacing),
-                    SizedBox(
-                      width: colWidth,
-                      child: Column(
-                        children: [
-                          for (int i = 0; i < rightColumn.length; i++) ...[
-                            rightColumn[i],
-                            if (i < rightColumn.length - 1)
-                              const SizedBox(height: spacing),
-                          ],
-                        ],
-                      ),
-                    ),
-                  ],
+              for (final cat in visibleCategories) ...[
+                _buildCategoryCard(
+                  context: context,
+                  settingCategory: cat,
+                  constraints: boxConstraints,
+                  pumpIndex: pumpIndex,
                 ),
-              for (final fw in fullWidthWidgets) ...[
                 const SizedBox(height: spacing),
-                fw,
               ],
             ],
           );
+
+          if (isCommonSetting) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildCommonCategorySelector(context),
+                contentList,
+              ],
+            );
+          }
+
+          return contentList;
         },
       );
     } catch (error, stackTrace) {
@@ -1301,6 +1393,7 @@ class _PreferenceMainScreenState extends State<PreferenceMainScreen>
     final colorScheme = Theme.of(context).colorScheme;
 
     return Container(
+      width: double.infinity,
       decoration: BoxDecoration(
         color: colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
@@ -1349,33 +1442,45 @@ class _PreferenceMainScreenState extends State<PreferenceMainScreen>
               ],
             ),
           ),
-          ClipRRect(
-            borderRadius: const BorderRadius.only(
-              bottomLeft: Radius.circular(16),
-              bottomRight: Radius.circular(16),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: LayoutBuilder(
+              builder: (context, innerConstraints) {
+                const spacing = 12.0;
+                final isMobile = innerConstraints.maxWidth < 650;
+                final tileWidth = isMobile
+                    ? innerConstraints.maxWidth
+                    : (innerConstraints.maxWidth - spacing) / 2;
+
+                final List<Widget> settingTiles = [];
+
                 for (var settingIndex = 0;
                 settingIndex < settingCategory.setting.length;
-                settingIndex++)
-                  if (settingCategory.setting[settingIndex].title.toUpperCase() == "RTC TIMER")
-                    _buildRtcTimer(
-                        0,
-                        settingIndex,
-                        pumpIndex,
-                        [settingCategory])
-                  else if (settingCategory.setting[settingIndex].title.toUpperCase() == "2 PHASE" ||
+                settingIndex++) {
+                  Widget tileWidget;
+
+                  if (settingCategory.setting[settingIndex].title.toUpperCase() == "RTC TIMER") {
+                    tileWidget = _buildRtcTimer(
+                      0,
+                      settingIndex,
+                      pumpIndex,
+                      [settingCategory],
+                    );
+                  } else if (settingCategory.setting[settingIndex].title.toUpperCase() == "2 PHASE" ||
                       settingCategory.setting[settingIndex].title.toUpperCase() == "AUTO RESTART 2 PHASE" ||
                       (settingCategory.setting[settingIndex].title.toUpperCase() == "AUTO RESTART" &&
                           settingCategory.setting[settingIndex].serialNumber == 8) ||
                       (isNova &&
                           (settingCategory.setting[settingIndex].title.toUpperCase() == "UPPER TANK LINEAR LEVEL SENSOR" ||
-                              settingCategory.setting[settingIndex].title.toUpperCase() == "LOWER TANK LINEAR LEVEL SENSOR")))
-                    _buildTwoPhaseCard(0, settingIndex, pumpIndex, [settingCategory])
-                  else
-                    buildCustomListTileWidget(
+                              settingCategory.setting[settingIndex].title.toUpperCase() == "LOWER TANK LINEAR LEVEL SENSOR"))) {
+                    tileWidget = _buildTwoPhaseCard(
+                      0,
+                      settingIndex,
+                      pumpIndex,
+                      [settingCategory],
+                    );
+                  } else {
+                    tileWidget = buildCustomListTileWidget(
                       context: context,
                       title: settingCategory.setting[settingIndex].title,
                       widgetType: _getWidgetType(0, settingIndex, [settingCategory]),
@@ -1391,8 +1496,9 @@ class _PreferenceMainScreenState extends State<PreferenceMainScreen>
                       value: _getInitialValue(0, settingIndex, [settingCategory], pumpIndex),
                       leading: _buildLeading(0, settingIndex, [settingCategory]),
                       onValueChange: (newValue) => onChangeValue(
-                          0, settingIndex, [settingCategory], newValue,
-                          pumpIndex: pumpIndex),
+                        0, settingIndex, [settingCategory], newValue,
+                        pumpIndex: pumpIndex,
+                      ),
                       conditionToShow: getConditionToShow(
                         type: settingCategory.type,
                         serialNumber: settingCategory.setting[settingIndex].serialNumber,
@@ -1408,8 +1514,33 @@ class _PreferenceMainScreenState extends State<PreferenceMainScreen>
                           : settingCategory.setting[settingIndex].hidden,
                       enabled: true,
                       modelId: widget.masterData['modelId'],
-                    )
-              ],
+                    );
+                  }
+
+                  settingTiles.add(
+                    SizedBox(
+                      width: isMobile ? innerConstraints.maxWidth : tileWidth,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: colorScheme.surfaceContainerLow.withOpacity(0.3),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: colorScheme.outlineVariant.withOpacity(0.3),
+                          ),
+                        ),
+                        child: tileWidget,
+                      ),
+                    ),
+                  );
+                }
+
+                return Wrap(
+                  spacing: spacing,
+                  runSpacing: spacing,
+                  children: settingTiles,
+                );
+              },
             ),
           ),
         ],
@@ -1836,7 +1967,8 @@ class _PreferenceMainScreenState extends State<PreferenceMainScreen>
                         value: settingList[categoryIndex]
                             .setting[settingIndex]
                             .value[index],
-                        activeColor: colorScheme.primary,
+                        activeThumbColor: colorScheme.onPrimary,
+                        activeTrackColor: colorScheme.primary,
                         onChanged: (newValue) {
                           if (!mounted) return;
                           setState(() {
@@ -2692,10 +2824,10 @@ class _PreferenceMainScreenState extends State<PreferenceMainScreen>
 
   String onDelayTimer() {
     List<String> result = [];
-    preferenceProvider.individualPumpSetting!.forEach((element) {
+    for (var element in preferenceProvider.individualPumpSetting!) {
       String combinedResult = '${element.toGem()},${element.oDt()}';
       result.add(combinedResult);
-    });
+    }
 
     return result.join(';');
   }
@@ -2814,12 +2946,14 @@ class _PreferenceMainScreenState extends State<PreferenceMainScreen>
               }
             }
 
-            if (currentConfigList.isNotEmpty)
+            if (currentConfigList.isNotEmpty) {
               temp.add(currentConfigList.join('_'));
+            }
             if (delayConfigList.isNotEmpty) temp.add(delayConfigList.join('_'));
             if (rtcConfigList.isNotEmpty) temp.add(rtcConfigList.join('_'));
-            if (scheduleConfigList.isNotEmpty)
+            if (scheduleConfigList.isNotEmpty) {
               temp.add(scheduleConfigList.join('_'));
+            }
           }
         }
       }
@@ -2951,12 +3085,14 @@ class _PreferenceMainScreenState extends State<PreferenceMainScreen>
               }
             }
 
-            if (currentConfigList.isNotEmpty)
+            if (currentConfigList.isNotEmpty) {
               temp.add(currentConfigList.join('_'));
+            }
             if (delayConfigList.isNotEmpty) temp.add(delayConfigList.join('_'));
             if (rtcConfigList.isNotEmpty) temp.add(rtcConfigList.join('_'));
-            if (scheduleConfigList.isNotEmpty)
+            if (scheduleConfigList.isNotEmpty) {
               temp.add(scheduleConfigList.join('_'));
+            }
           }
         }
       }
@@ -3213,6 +3349,42 @@ String? _titleDescription(String title) {
   }
 }
 
+String? _getUnitSuffix(String title) {
+  final u = title.toUpperCase();
+  if (u.contains('VOLTAGE') || u.contains('PHASE CUT')) return 'V';
+  if (u.contains('CURRENT') || u.contains('OVERLOAD') || u.contains('DRY RUN')) return 'A';
+  if (u.contains('PRESSURE')) return 'bar';
+  if (u.contains('HEIGHT') || u.contains('TANK HEIGHT') || u.contains('SENSOR HEIGHT')) return 'm';
+  if (u.contains('MINIMUM LEVEL') || u.contains('MAXIMUM LEVEL') || u.contains('TANK LEVEL') || u.contains('PERCENT')) return '%';
+  if (u.contains('DELAY') || u.contains('TIMER') || u.contains('RESTART') || u.contains('STAR TO DELTA')) return 's';
+  return null;
+}
+
+Widget buildPopUpMenuButton({
+  required BuildContext context,
+  required List<String> dataList,
+  required void Function(String) onSelected,
+  required Widget child,
+}) {
+  final colorScheme = Theme.of(context).colorScheme;
+  return PopupMenuButton<String>(
+    color: colorScheme.surface,
+    onSelected: onSelected,
+    itemBuilder: (context) {
+      return dataList.map((item) {
+        return PopupMenuItem<String>(
+          value: item,
+          child: Text(
+            item,
+            style: TextStyle(color: colorScheme.onSurface, fontSize: 13),
+          ),
+        );
+      }).toList();
+    },
+    child: child,
+  );
+}
+
 Widget buildCustomListTileWidget(
     {required int modelId,
       required BuildContext context,
@@ -3234,12 +3406,12 @@ Widget buildCustomListTileWidget(
   debugPrint("$title == $widgetType ");
   final colorScheme = Theme.of(context).colorScheme;
   const mono = TextStyle(
-      fontFamily: 'monospace', fontSize: 14, fontWeight: FontWeight.w600);
+      fontFamily: 'monospace', fontSize: 13, fontWeight: FontWeight.w600);
 
   Widget filledBox({required Widget child}) => Container(
     width: double.infinity,
-    height: 42,
-    padding: const EdgeInsets.symmetric(horizontal: 12),
+    height: 38,
+    padding: const EdgeInsets.symmetric(horizontal: 10),
     alignment: Alignment.centerLeft,
     decoration: BoxDecoration(
         color: colorScheme.surfaceContainerLow, borderRadius: BorderRadius.circular(8)),
@@ -3251,7 +3423,7 @@ Widget buildCustomListTileWidget(
     case 1:
     case 4:
       customWidget = Container(
-        height: 42,
+        height: 38,
         decoration: BoxDecoration(
             color: colorScheme.surfaceContainerLow, borderRadius: BorderRadius.circular(8)),
         child: TextFormField(
@@ -3264,10 +3436,16 @@ Widget buildCustomListTileWidget(
           (widgetType == 1 && AppConstants.gemModelList.contains(modelId))
               ? AppProperties.regexForNumbers
               : AppProperties.regexForDecimal,
-          decoration: const InputDecoration(
+          decoration: InputDecoration(
             hintText: "000",
+            suffixText: _getUnitSuffix(title),
+            suffixStyle: TextStyle(
+              fontSize: 11.5,
+              fontWeight: FontWeight.bold,
+              color: colorScheme.onSurfaceVariant,
+            ),
             isDense: true,
-            contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
             border: InputBorder.none,
           ),
           onTapOutside: (_) => FocusScope.of(context).unfocus(),
@@ -3278,7 +3456,8 @@ Widget buildCustomListTileWidget(
     case 2:
       customWidget = Switch(
         value: enabled ? (value != "" ? value : false) ?? false : false,
-        activeColor: colorScheme.primary,
+        activeThumbColor: colorScheme.onPrimary,
+        activeTrackColor: colorScheme.primary,
         onChanged: (newValue) {
           if (enabled) onValueChange?.call(newValue);
         },
@@ -3316,7 +3495,7 @@ Widget buildCustomListTileWidget(
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-              Icon(Icons.arrow_drop_down, color: colorScheme.onSurfaceVariant, size: 20),
+              Icon(Icons.arrow_drop_down, color: colorScheme.onSurfaceVariant, size: 18),
             ],
           ),
         ),
@@ -3333,72 +3512,136 @@ Widget buildCustomListTileWidget(
   final isSwitch = widgetType == 2;
   final showLeading = leading is! SizedBox;
 
-  final Widget body = isSwitch
-      ? Container(
-    width: fullWidth,
-    padding: const EdgeInsets.symmetric(vertical: 10),
-    decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: colorScheme.outlineVariant.withOpacity(0.3), width: 0.5))),
-    child: Row(
-      children: [
-        if (showLeading) ...[leading, const SizedBox(width: 10)],
-        Expanded(
+  final Widget body = LayoutBuilder(
+    builder: (context, constraints) {
+      final isCompact = constraints.maxWidth < 360;
+
+      if (isSwitch) {
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+          child: Row(
+            children: [
+              if (showLeading) ...[leading, const SizedBox(width: 10)],
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      title,
+                      style: TextStyle(
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w600,
+                        color: colorScheme.onSurface,
+                      ),
+                    ),
+                    if (description != null) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        description,
+                        style: TextStyle(
+                          color: colorScheme.onSurfaceVariant,
+                          fontSize: 11.5,
+                        ),
+                      ),
+                    ],
+                    if (subTitle != null) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        subTitle,
+                        style: TextStyle(
+                          color: colorScheme.onSurfaceVariant,
+                          fontSize: 11,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              if (showTrailing) customWidget,
+            ],
+          ),
+        );
+      }
+
+      // Non-switch inputs (Numeric input, Time picker, Popup menu)
+      if (isCompact) {
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(title,
+              Row(
+                children: [
+                  if (showLeading) ...[leading, const SizedBox(width: 8)],
+                  Expanded(
+                    child: Text(
+                      title,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: colorScheme.onSurface,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              if (subTitle != null) ...[
+                const SizedBox(height: 2),
+                Text(
+                  subTitle,
                   style: TextStyle(
-                      fontSize: 14, fontWeight: FontWeight.w600, color: colorScheme.onSurface)),
-              if (description != null)
-                Text(description,
-                    style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 12)),
-              if (subTitle != null)
-                Text(subTitle,
-                    style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 11.5)),
+                    color: colorScheme.onSurfaceVariant,
+                    fontSize: 11,
+                  ),
+                ),
+              ],
+              const SizedBox(height: 6),
+              if (showTrailing) SizedBox(width: double.infinity, child: customWidget),
             ],
           ),
-        ),
-        const SizedBox(width: 8),
-        if (showTrailing) customWidget,
-      ],
-    ),
-  )
-      : SizedBox(
-    width: halfWidth,
-    child: Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Row(
-            children: [
-              if (showLeading) ...[leading, const SizedBox(width: 8)],
-              Expanded(
-                child: Text(
-                  title,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
+        );
+      }
+
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+        child: Row(
+          children: [
+            if (showLeading) ...[leading, const SizedBox(width: 10)],
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
-                      color: colorScheme.onSurface),
-                ),
+                      color: colorScheme.onSurface,
+                    ),
+                  ),
+                  if (subTitle != null) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      subTitle,
+                      style: TextStyle(
+                        color: colorScheme.onSurfaceVariant,
+                        fontSize: 11,
+                      ),
+                    ),
+                  ],
+                ],
               ),
-            ],
-          ),
-          const SizedBox(height: 6),
-          if (showTrailing) customWidget,
-          if (subTitle != null)
-            Padding(
-              padding: const EdgeInsets.only(top: 4),
-              child: Text(subTitle,
-                  style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 11.5)),
             ),
-        ],
-      ),
-    ),
+            const SizedBox(width: 12),
+            if (showTrailing) SizedBox(width: 120, child: customWidget),
+          ],
+        ),
+      );
+    },
   );
 
   return Visibility(

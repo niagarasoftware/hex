@@ -126,7 +126,7 @@ class _ToggleTextFormFieldForConnectionState extends State<ToggleTextFormFieldFo
         for(var object in widget.configPvd.listOfGeneratedObject){
 
           if(object.objectId == AppConstants.pressureSwitchObjectId && object.controllerId == widget.selectedDevice.controllerId){
-            pressureSwitchConfigureToNode = true;;
+            pressureSwitchConfigureToNode = true;
           }
         }
         if(!pressureSwitchConfigureToNode){

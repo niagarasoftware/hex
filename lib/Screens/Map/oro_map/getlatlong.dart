@@ -33,7 +33,7 @@ Future<LatLng?> getLatLngFromInput(String input) async {
     }
 
     final dmsRegExp = RegExp(
-      r"(\d+)[°\s]+(\d+)['\s]+(\d+(?:\.\d+)?)[""'\s]*([NSEW])",
+      r"(\d+)[°\s]+(\d+)['\s]+(\d+(?:\.\d+)?)[""'s]*([NSEW])",
       caseSensitive: false,
     );
 
@@ -63,7 +63,7 @@ Future<LatLng?> getLatLngFromInput(String input) async {
 
     // 3️⃣ Area name → Google Geocoding API
     // final apiKey = dotenv.env['GOOGLE_MAPS_API_KEY'] ?? '';
-    final apiKey = 'AIzaSyCVcK18rhs06E0rP7QAyOY8J_35CbZpBlw';
+    const apiKey = 'AIzaSyD_dS_LaY67kRC4q4_7lDgK4Ak-U5SUeaU';
     AppLog.log("apiKey $apiKey");
     final url =
         "https://maps.googleapis.com/maps/api/geocode/json?address=$input&key=$apiKey";

@@ -5,214 +5,302 @@ class ReportScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: colorScheme.surfaceContainerLowest,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: colorScheme.surface,
         elevation: 0,
         centerTitle: true,
-        title: const Text(
-          'Report',
-          style: TextStyle(
-            color: Colors.black,
+        title: Text(
+          'Advisory Reports',
+          style: textTheme.titleMedium?.copyWith(
+            color: colorScheme.onSurface,
             fontSize: 18,
-            fontWeight: FontWeight.w600,
+            fontWeight: FontWeight.bold,
           ),
         ),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // --- Irrigation Section ---
-            const Text(
-              'Irrigation',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-                color: Colors.black,
-              ),
-            ),
-            const SizedBox(height: 10),
-            Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Color(0xFFE0E0E0)),
-              ),
-              padding: const EdgeInsets.all(16),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 1200),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Header row
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
-                        children: [
-                          Container(
-                            width: 32,
-                            height: 32,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFE8F4F8),
-                              borderRadius: BorderRadius.circular(8),
+                  Text(
+                    'Irrigation Activity',
+                    style: TextStyle(
+                      fontSize: 16.5,
+                      fontWeight: FontWeight.bold,
+                      color: colorScheme.onSurface,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: colorScheme.surface,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: colorScheme.outlineVariant.withOpacity(0.4),
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.025),
+                          blurRadius: 8,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    padding: const EdgeInsets.all(18),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Row(
+                              children: [
+                                Container(
+                                  width: 36,
+                                  height: 36,
+                                  decoration: BoxDecoration(
+                                    color: colorScheme.primaryContainer,
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Icon(
+                                    Icons.water_drop_outlined,
+                                    color: colorScheme.primary,
+                                    size: 20,
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                                Text(
+                                  'Jan 7 – Jan 13',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                    color: colorScheme.onSurface,
+                                  ),
+                                ),
+                              ],
                             ),
-                            child: const Icon(
-                              Icons.water_drop_outlined,
-                              color: Color(0xFF3D9BA5),
-                              size: 18,
+                            OutlinedButton.icon(
+                              style: OutlinedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 12, vertical: 8),
+                                side: BorderSide(
+                                    color: colorScheme.outlineVariant),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                              onPressed: () {},
+                              icon: Icon(Icons.picture_as_pdf_outlined,
+                                  size: 16, color: colorScheme.primary),
+                              label: Text(
+                                'Export PDF',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                  color: colorScheme.onSurface,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 20),
+                        const _IrrigationBarChart(),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  Text(
+                    'Fertigation Summary',
+                    style: TextStyle(
+                      fontSize: 16.5,
+                      fontWeight: FontWeight.bold,
+                      color: colorScheme.onSurface,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      final width = constraints.maxWidth;
+                      const spacing = 12.0;
+                      int columns = 1;
+                      if (width >= 700) {
+                        columns = 2;
+                      }
+
+                      final itemWidth =
+                          (width - (spacing * (columns - 1))) / columns;
+
+                      return Wrap(
+                        spacing: spacing,
+                        runSpacing: spacing,
+                        children: [
+                          SizedBox(
+                            width: itemWidth,
+                            child: _buildInfoCard(
+                              context,
+                              icon: Icons.science_outlined,
+                              title: 'Fertilizer Applied',
+                              description: RichText(
+                                text: TextSpan(
+                                  style: TextStyle(
+                                      fontSize: 12.5,
+                                      color: colorScheme.onSurfaceVariant),
+                                  children: [
+                                    const TextSpan(text: 'A total of '),
+                                    TextSpan(
+                                      text: '50 kg',
+                                      style: TextStyle(
+                                        color: colorScheme.primary,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    const TextSpan(
+                                      text:
+                                      ' of fertilizer was applied during the fertigation process.',
+                                    ),
+                                  ],
+                                ),
+                              ),
                             ),
                           ),
-                          const SizedBox(width: 8),
-                          const Text(
-                            'Jan 7 – Jan 13',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
-                              color: Colors.black87,
+                          SizedBox(
+                            width: itemWidth,
+                            child: _buildInfoCard(
+                              context,
+                              icon: Icons.timer_outlined,
+                              title: 'Mixing Duration',
+                              description: RichText(
+                                text: TextSpan(
+                                  style: TextStyle(
+                                      fontSize: 12.5,
+                                      color: colorScheme.onSurfaceVariant),
+                                  children: [
+                                    const TextSpan(
+                                        text:
+                                        'Mixing operation completed in '),
+                                    TextSpan(
+                                      text: '30 minutes,',
+                                      style: TextStyle(
+                                        color: colorScheme.primary,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    const TextSpan(
+                                      text:
+                                      ' ensuring proper nutrient preparation for the irrigation cycle.',
+                                    ),
+                                  ],
+                                ),
+                              ),
                             ),
                           ),
                         ],
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 5),
-                        decoration: BoxDecoration(
-                          border: Border.all(color: Color(0xFFDDDDDD)),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Row(
-                          children: const [
-                            Text(
-                              'Export As Pdf',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.black87,
-                              ),
-                            ),
-                            SizedBox(width: 4),
-                            Icon(Icons.keyboard_arrow_down,
-                                size: 16, color: Colors.black54),
-                          ],
-                        ),
-                      ),
-                    ],
+                      );
+                    },
                   ),
-                  const SizedBox(height: 20),
-                  // Bar Chart
-                  const _IrrigationBarChart(),
+                  const SizedBox(height: 40),
                 ],
               ),
             ),
-
-            const SizedBox(height: 24),
-
-            // --- Fertigation Section ---
-            const Text(
-              'Fertigation',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-                color: Colors.black,
-              ),
-            ),
-            const SizedBox(height: 10),
-
-            // Fertilizer applied card
-            _InfoCard(
-              icon: Icons.science_outlined,
-              title: 'Fertilizer applied',
-              description: RichText(
-                text: const TextSpan(
-                  style: TextStyle(fontSize: 13, color: Colors.black54),
-                  children: [
-                    TextSpan(text: 'A total of '),
-                    TextSpan(
-                      text: '50 kg',
-                      style: TextStyle(
-                        color: Colors.orange,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    TextSpan(
-                      text:
-                      ' of fertilizer was successfully applied during the fertigation process.',
-                    ),
-                  ],
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 12),
-
-            // Mixing time card
-            _InfoCard(
-              icon: Icons.timer_outlined,
-              title: 'Mixing time',
-              description: RichText(
-                text: const TextSpan(
-                  style: TextStyle(fontSize: 13, color: Colors.black54),
-                  children: [
-                    TextSpan(
-                        text:
-                        'The fertilizer mixing operation was completed in '),
-                    TextSpan(
-                      text: '30 minutes,',
-                      style: TextStyle(
-                        color: Colors.orange,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    TextSpan(
-                      text:
-                      ' ensuring proper nutrient preparation and distribution for the irrigation cycle.',
-                    ),
-                  ],
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 24),
-          ],
+          ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildInfoCard(
+      BuildContext context, {
+        required IconData icon,
+        required String title,
+        required Widget description,
+      }) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: colorScheme.outlineVariant.withOpacity(0.4),
+        ),
+      ),
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: colorScheme.primaryContainer,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(icon, size: 18, color: colorScheme.primary),
+              ),
+              const SizedBox(width: 10),
+              Text(
+                title,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: colorScheme.onSurface,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          description,
+        ],
       ),
     );
   }
 }
 
-// ── Bar Chart Widget ─────────────────────────────────────────────────────────
-
 class _IrrigationBarChart extends StatelessWidget {
   const _IrrigationBarChart();
 
-  // Hours for days 1–7
   static const List<double> _data = [10, 15, 16, 16, 15, 15, 15];
   static const double _maxY = 20;
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return SizedBox(
       height: 160,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          // Y-axis labels
           Column(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.end,
-            children: const [
+            children: [
               Text('15h',
-                  style: TextStyle(fontSize: 11, color: Colors.black38)),
+                  style: TextStyle(
+                      fontSize: 11, color: colorScheme.onSurfaceVariant)),
               Text('10h',
-                  style: TextStyle(fontSize: 11, color: Colors.black38)),
+                  style: TextStyle(
+                      fontSize: 11, color: colorScheme.onSurfaceVariant)),
               Text('5h',
-                  style: TextStyle(fontSize: 11, color: Colors.black38)),
-              Text('0', style: TextStyle(fontSize: 11, color: Colors.black38)),
+                  style: TextStyle(
+                      fontSize: 11, color: colorScheme.onSurfaceVariant)),
+              Text('0',
+                  style: TextStyle(
+                      fontSize: 11, color: colorScheme.onSurfaceVariant)),
             ],
           ),
           const SizedBox(width: 8),
-          // Bars + x-labels
           Expanded(
             child: Column(
               children: [
@@ -224,15 +312,15 @@ class _IrrigationBarChart extends StatelessWidget {
                       final fraction = _data[i] / _maxY;
                       return Expanded(
                         child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 3),
+                          padding: const EdgeInsets.symmetric(horizontal: 4),
                           child: FractionallySizedBox(
                             heightFactor: fraction,
                             alignment: Alignment.bottomCenter,
                             child: Container(
-                              decoration: const BoxDecoration(
-                                color: Color(0xFF3D9BA5),
-                                borderRadius: BorderRadius.vertical(
-                                  top: Radius.circular(5),
+                              decoration: BoxDecoration(
+                                color: colorScheme.primary,
+                                borderRadius: const BorderRadius.vertical(
+                                  top: Radius.circular(6),
                                 ),
                               ),
                             ),
@@ -243,21 +331,22 @@ class _IrrigationBarChart extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 6),
-                // X-axis labels
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    const Text('Days',
-                        style:
-                        TextStyle(fontSize: 11, color: Colors.black38)),
+                    Text('Days',
+                        style: TextStyle(
+                            fontSize: 11,
+                            color: colorScheme.onSurfaceVariant)),
                     ...List.generate(
                       _data.length,
                           (i) => Expanded(
                         child: Center(
                           child: Text(
                             '${i + 1}',
-                            style: const TextStyle(
-                                fontSize: 11, color: Colors.black38),
+                            style: TextStyle(
+                                fontSize: 11,
+                                color: colorScheme.onSurfaceVariant),
                           ),
                         ),
                       ),
@@ -272,51 +361,3 @@ class _IrrigationBarChart extends StatelessWidget {
     );
   }
 }
-
-// ── Info Card Widget ──────────────────────────────────────────────────────────
-
-class _InfoCard extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final Widget description;
-
-  const _InfoCard({
-    required this.icon,
-    required this.title,
-    required this.description,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE0E0E0)),
-      ),
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(icon, size: 20, color: Colors.black54),
-              const SizedBox(width: 8),
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black87,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          description,
-        ],
-      ),
-    );
-  }
-}
-

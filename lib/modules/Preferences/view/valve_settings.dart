@@ -178,7 +178,8 @@ class _ValveSettingsState extends State<ValveSettings> {
               : settingItem.widgetTypeId == 2
               ? Switch(
             value: settingItem.value,
-            activeColor: colorScheme.primary,
+            activeThumbColor: colorScheme.onPrimary,
+            activeTrackColor: colorScheme.primary,
             onChanged: (newValue) {
               provider.updateSwitchValue(settingItem.title, newValue);
             },
@@ -249,7 +250,8 @@ class _ValveSettingsState extends State<ValveSettings> {
             value: settingItem.serialNumber != 5
                 ? provider.getSwitchState(settingItem.value)
                 : settingItem.value,
-            activeColor: colorScheme.primary,
+            activeThumbColor: colorScheme.onPrimary,
+            activeTrackColor: colorScheme.primary,
             onChanged: (newValue) {
               if (settingItem.serialNumber != 5) {
                 provider.updateSwitchValue(settingItem.title, newValue);

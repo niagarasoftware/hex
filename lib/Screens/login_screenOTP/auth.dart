@@ -81,9 +81,9 @@ class AuthService{
         codeAutoRetrievalTimeout: (String verificationId) async{
           print('TimeOut');
         },
-        timeout: await Duration(seconds: 60),
+        timeout: const Duration(seconds: 60),
       );
-      print(await 'verificationIdReceived : ${verificationIdReceived}.............');
+      print('verificationIdReceived : $verificationIdReceived.............');
       return completer.future;
     }on FirebaseAuthException catch(e) {
       print('Error verifying phone number: ${e.message}');

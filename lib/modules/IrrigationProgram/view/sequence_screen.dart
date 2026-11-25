@@ -1,21 +1,10 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_svg/svg.dart';
-import 'package:hex/Constants/properties.dart';
-import 'package:hex/modules/IrrigationProgram/model/LineDataModel.dart';
-import 'package:hex/modules/IrrigationProgram/view/schedule_screen.dart';
-import 'package:hex/modules/IrrigationProgram/view/selection_screen.dart';
-import 'package:hex/modules/IrrigationProgram/widgets/custom_section_title.dart';
 import 'package:hex/utils/constants.dart';
 import 'package:provider/provider.dart';
 import '../../../Screens/planning/valve_group_screen.dart';
-import '../../config_maker/model/device_object_model.dart';
 import '../state_management/irrigation_program_provider.dart';
-import '../widgets/custom_animated_switcher.dart';
 import '../../SystemDefinitions/widgets/custom_snack_bar.dart';
-import 'irrigation_program_main.dart';
 
 class SequenceScreen extends StatefulWidget {
   final int userId;
@@ -37,9 +26,27 @@ class SequenceScreen extends StatefulWidget {
   State<SequenceScreen> createState() => _SequenceScreenState();
 }
 
+class PlotData {
+  final String id;
+  final String title;
+  final List<dynamic> items;
+  final bool isGroup;
+  final bool isMainValve;
+  final int lineIndex;
+
+  PlotData({
+    required this.id,
+    required this.title,
+    required this.items,
+    this.isGroup = false,
+    this.isMainValve = false,
+    this.lineIndex = 0,
+  });
+}
+
 class _SequenceScreenState extends State<SequenceScreen> {
   final ScrollController _scrollController = ScrollController();
-  final TextEditingController _textEditingController = TextEditingController();
+  final Set<String> _expandedPlotKeys = {};
   late IrrigationProgramMainProvider _provider;
 
   @override
@@ -53,17 +60,11 @@ class _SequenceScreenState extends State<SequenceScreen> {
           modelId: widget.modelId,
         );
         if (_provider.irrigationLine != null &&
-            (_provider.currentIndex < 0 || _provider.currentIndex >= _provider.irrigationLine!.sequence.length)) {
+            (_provider.currentIndex < 0 ||
+                _provider.currentIndex >= _provider.irrigationLine!.sequence.length)) {
           _provider.assigningCurrentIndex(0);
         }
         _provider.addNext = false;
-        if (_scrollController.hasClients && _provider.currentIndex > 0) {
-          _scrollController.animateTo(
-            (_provider.currentIndex * 100).toDouble(),
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeInOut,
-          );
-        }
       });
     }
   }
@@ -71,15 +72,41 @@ class _SequenceScreenState extends State<SequenceScreen> {
   @override
   void dispose() {
     _scrollController.dispose();
-    _textEditingController.dispose();
     super.dispose();
   }
+
+  String get _irrProgram => "Irrigation Program";
+  String get _agiProgram => "Agitator Program";
+  String get _othProgram => "Other Programs";
+  String get _aeratorProgram => "Aerator Program";
+
+  bool get _isIrrigationProgram =>
+      _provider.programDetails!.programType == _irrProgram ||
+      _provider.selectedProgramType == _irrProgram;
+
+  bool get _isAgitatorProgram =>
+      _provider.programDetails!.programType == _agiProgram ||
+      _provider.selectedProgramType == _agiProgram;
+
+  bool get _isOtherProgram =>
+      _provider.programDetails!.programType == _othProgram ||
+      _provider.selectedProgramType == _othProgram;
+
+  bool get _isAeratorProgram =>
+      _provider.programDetails!.programType == _aeratorProgram ||
+      _provider.selectedProgramType == _aeratorProgram;
+
+  int get _getIndexToShow => _provider.addNew
+      ? _provider.irrigationLine!.sequence.length - 1
+      : _provider.addNext
+          ? _provider.currentIndex + 1
+          : _provider.currentIndex;
 
   @override
   Widget build(BuildContext context) {
     _provider = Provider.of<IrrigationProgramMainProvider>(context);
 
-    if (_provider.sampleIrrigationLine == null) {
+    if (_provider.sampleIrrigationLine == null || _provider.irrigationLine == null) {
       return const Center(child: CircularProgressIndicator());
     }
 
@@ -88,187 +115,868 @@ class _SequenceScreenState extends State<SequenceScreen> {
       modelId: widget.modelId,
     );
 
-    return LayoutBuilder(
-      builder: (context, constraints) => Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildSequenceHeader(),
-          _buildButtonRow(),
-          Expanded(
-            child: SingleChildScrollView(
-              child: Container(
-                margin: _getResponsiveMargin(context),
-                child: Column(
-                  children: [
-                    ..._buildIrrigationSections(context),
-                    const SizedBox(height: 60),
-                  ],
+    final sequence = _provider.irrigationLine!.sequence;
+    if (sequence.isEmpty) {
+      return const Center(child: Text("No segments configured"));
+    }
+
+    final indexToShow = _getIndexToShow.clamp(0, sequence.length - 1);
+    final isWide = MediaQuery.of(context).size.width >= 800;
+
+    return SingleChildScrollView(
+      padding: EdgeInsets.symmetric(
+        horizontal: isWide ? MediaQuery.of(context).size.width * 0.04 : 16,
+        vertical: 16,
+      ),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFFE2E8F0)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.03),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        padding: const EdgeInsets.all(20),
+        child: isWide
+            ? Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(
+                    width: 260,
+                    child: _buildSegmentsSidebar(sequence, indexToShow),
+                  ),
+                  const SizedBox(width: 20),
+                  const SizedBox(
+                    height: 600,
+                    child: VerticalDivider(width: 1, color: Color(0xFFF1F5F9)),
+                  ),
+                  const SizedBox(width: 20),
+                  Expanded(
+                    child: _buildSegmentDetailsPanel(sequence, indexToShow),
+                  ),
+                ],
+              )
+            : Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildSegmentsHorizontalBar(sequence, indexToShow),
+                  const SizedBox(height: 20),
+                  const Divider(color: Color(0xFFF1F5F9)),
+                  const SizedBox(height: 16),
+                  _buildSegmentDetailsPanel(sequence, indexToShow),
+                ],
+              ),
+      ),
+    );
+  }
+
+  Widget _buildSegmentsSidebar(List<dynamic> sequence, int indexToShow) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          "SEGMENTS",
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF64748B),
+            letterSpacing: 0.8,
+          ),
+        ),
+        const SizedBox(height: 14),
+        ListView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: sequence.length,
+          itemBuilder: (context, index) {
+            final isSelected = index == indexToShow;
+            final item = sequence[index];
+            final assignedValves = ((item['valve'] as List? ?? []).length +
+                (item['mainValve'] as List? ?? []).length);
+            final plots = _getPlotsList();
+            final plotCount = plots.where((p) => _getAssignedValvesInPlot(p, index).isNotEmpty).length;
+            final displayName = item['name'] ?? 'Segment ${index + 1}';
+
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 8.0),
+              child: InkWell(
+                onTap: () {
+                  _provider.addNext = false;
+                  _provider.assigningCurrentIndex(index);
+                },
+                borderRadius: BorderRadius.circular(12),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  decoration: BoxDecoration(
+                    color: isSelected ? Colors.white : const Color(0xFFF8FAFC),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: isSelected ? const Color(0xFFE2E8F0) : Colors.transparent,
+                    ),
+                    boxShadow: isSelected
+                        ? [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.04),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ]
+                        : null,
+                  ),
+                  child: IntrinsicHeight(
+                    child: Row(
+                      children: [
+                        if (isSelected)
+                          Container(
+                            width: 4,
+                            decoration: const BoxDecoration(
+                              color: Color(0xFF5B21B6),
+                              borderRadius: BorderRadius.only(
+                                topLeft: Radius.circular(12),
+                                bottomLeft: Radius.circular(12),
+                              ),
+                            ),
+                          ),
+                        Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        displayName,
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                                          color: const Color(0xFF0F172A),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        "$plotCount plots · $assignedValves valves",
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          color: Color(0xFF64748B),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Container(
+                                  width: 26,
+                                  height: 26,
+                                  decoration: BoxDecoration(
+                                    color: isSelected
+                                        ? const Color(0xFFEDE9FE)
+                                        : const Color(0xFFF1F5F9),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      '${index + 1}',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                        color: isSelected
+                                            ? const Color(0xFF5B21B6)
+                                            : const Color(0xFF64748B),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
+              ),
+            );
+          },
+        ),
+        const SizedBox(height: 12),
+        SizedBox(
+          width: double.infinity,
+          child: OutlinedButton.icon(
+            onPressed: () {
+              _provider.addNextSequence(
+                serialNumber: widget.serialNumber,
+                zoneSno: sequence.length + 1,
+                indexToInsert: sequence.length - 1,
+                modelId: widget.modelId,
+              );
+            },
+            style: OutlinedButton.styleFrom(
+              side: const BorderSide(color: Color(0xFFE2E8F0)),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              padding: const EdgeInsets.symmetric(vertical: 12),
+            ),
+            icon: const Icon(Icons.add, size: 18, color: Color(0xFF5B21B6)),
+            label: const Text(
+              "+ New segment",
+              style: TextStyle(
+                color: Color(0xFF5B21B6),
+                fontWeight: FontWeight.bold,
+                fontSize: 13,
               ),
             ),
           ),
-        ],
-      ),
-    );
-  }
-
-  String get _irrProgram => "Irrigation Program";
-  String get _agiProgram => "Agitator Program";
-  String get _othProgram => "Other Programs";
-  String get _aeratorProgram => "Aerator Program";
-
-  bool get _isIrrigationProgram => _provider.programDetails!.programType == _irrProgram ||
-      _provider.selectedProgramType == _irrProgram;
-
-  bool get _isAgitatorProgram => _provider.programDetails!.programType == _agiProgram ||
-      _provider.selectedProgramType == _agiProgram;
-
-  bool get _isOtherProgram => _provider.programDetails!.programType == _othProgram ||
-      _provider.selectedProgramType == _othProgram;
-
-  bool get _isAeratorProgram => _provider.programDetails!.programType == _aeratorProgram ||
-      _provider.selectedProgramType == _aeratorProgram;
-
-  Widget _buildSequenceHeader() {
-    final sequence = _provider.irrigationLine!.sequence;
-    final margin = MediaQuery.of(context).size.width >= 700
-        ? EdgeInsets.symmetric(
-      horizontal: MediaQuery.of(context).size.width * 0.05,
-      vertical: MediaQuery.of(context).size.width * 0.025,
-    )
-        : const EdgeInsets.symmetric(horizontal: 15, vertical: 15);
-
-    return Container(
-      margin: margin,
-      decoration: _boxDecoration(color: Colors.white, border: false),
-      height: 60,
-      width: double.infinity,
-      child: sequence.isNotEmpty
-          ? GestureDetector(
-        onHorizontalDragUpdate: (details) => _scrollController.jumpTo(_scrollController.offset - details.primaryDelta! / 2),
-        child: Center(
-          child: ReorderableListView.builder(
-            scrollController: sequence.isNotEmpty ? _scrollController : null,
-            autoScrollerVelocityScalar: 0.5,
-            buildDefaultDragHandles: MediaQuery.of(context).size.width > 600 ? false : true,
-            scrollDirection: Axis.horizontal,
-            shrinkWrap: true,
-            onReorder: _provider.reorderSelectedValves,
-            proxyDecorator: (widget, animation, index) => Transform.scale(scale: 1.05, child: widget),
-            itemCount: sequence.length,
-            itemBuilder: (context, index) => _buildSequenceItem(index),
-          ),
         ),
-      )
-          : const Center(child: Text('Select desired sequence')),
-    );
-  }
-
-  Widget _buildSequenceItem(int index) {
-    final sequence = _provider.irrigationLine!.sequence;
-    return Material(
-      key: ValueKey('sequence_$index'),
-      color: Colors.transparent,
-      child: Padding(
-        padding: EdgeInsets.only(
-          left: index == 0 ? 10 : 0,
-          right: index == sequence.length - 1 ? 5 : 0,
-        ),
-        child: MediaQuery.of(context).size.width > 600
-            ? ReorderableDragStartListener(
-          index: index,
-          child: _buildSequence(context, index),
-        )
-            : _buildSequence(context, index),
-      ),
-    );
-  }
-
-  Widget _buildSequence(BuildContext context, int index) {
-    final indexToShow = _getIndexToShow;
-    return Row(
-      children: [
-        _buildSequenceItemContainer(context, index, indexToShow),
-        CustomAnimatedSwitcher(
-          condition: _provider.selectedOption != _provider.deleteSelection[2],
-          child: Checkbox(
-            value: _provider.irrigationLine!.sequence[index]['selected'] ?? false,
-            onChanged: (newValue) => _provider.updateCheckBoxSelection(index: index, newValue: newValue),
-          ),
-        ),
-        const SizedBox(width: 5),
       ],
     );
   }
 
-  Widget _buildSequenceItemContainer(BuildContext context, int index, int indexToShow) {
-    return buildListOfContainer(
-      context: context,
-      onTap: () {
-        if (_provider.irrigationLine!.sequence[indexToShow]['valve'].isEmpty) {
-          _showValveSelectionAlert();
-        } else {
-          _provider.addNext = false;
-          _provider.assigningCurrentIndex(index);
-        }
-      },
-      selected: index == indexToShow,
-      darkColor: Theme.of(context).primaryColorLight,
-      textColor: index == indexToShow ? Colors.white : Colors.black,
-      padding: const EdgeInsets.symmetric(vertical: 7, horizontal: 8),
-      itemName: _provider.irrigationLine!.sequence[index]['name'],
+  Widget _buildSegmentsHorizontalBar(List<dynamic> sequence, int indexToShow) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              "SEGMENTS",
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF64748B),
+                letterSpacing: 0.8,
+              ),
+            ),
+            TextButton.icon(
+              onPressed: () {
+                _provider.addNextSequence(
+                  serialNumber: widget.serialNumber,
+                  zoneSno: sequence.length + 1,
+                  indexToInsert: sequence.length - 1,
+                  modelId: widget.modelId,
+                );
+              },
+              icon: const Icon(Icons.add, size: 16, color: Color(0xFF5B21B6)),
+              label: const Text(
+                "+ New segment",
+                style: TextStyle(
+                  color: Color(0xFF5B21B6),
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: List.generate(sequence.length, (index) {
+              final isSelected = index == indexToShow;
+              final item = sequence[index];
+              final displayName = item['name'] ?? 'Segment ${index + 1}';
+
+              return Padding(
+                padding: const EdgeInsets.only(right: 8.0),
+                child: ChoiceChip(
+                  label: Text(displayName),
+                  selected: isSelected,
+                  onSelected: (_) {
+                    _provider.addNext = false;
+                    _provider.assigningCurrentIndex(index);
+                  },
+                  selectedColor: const Color(0xFF5B21B6),
+                  backgroundColor: const Color(0xFFF1F5F9),
+                  labelStyle: TextStyle(
+                    color: isSelected ? Colors.white : const Color(0xFF1E293B),
+                    fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    side: BorderSide(
+                      color: isSelected ? const Color(0xFF5B21B6) : const Color(0xFFE2E8F0),
+                    ),
+                  ),
+                  showCheckmark: false,
+                ),
+              );
+            }),
+          ),
+        ),
+      ],
     );
   }
 
-  int get _getIndexToShow => _provider.addNew
-      ? _provider.irrigationLine!.sequence.length - 1
-      : _provider.addNext
-      ? _provider.currentIndex + 1
-      : _provider.currentIndex;
+  Widget _buildSegmentDetailsPanel(List<dynamic> sequence, int indexToShow) {
+    final currentSeq = sequence[indexToShow];
+    final segmentName = currentSeq['name'] ?? 'Segment ${indexToShow + 1}';
+    final plots = _getPlotsList();
 
-  Widget _buildButtonRow() {
-    final margin = MediaQuery.of(context).size.width >= 700
-        ? EdgeInsets.symmetric(horizontal: MediaQuery.of(context).size.width * 0.05)
-        : const EdgeInsets.symmetric(horizontal: 15);
+    final assignedValves = ((currentSeq['valve'] as List? ?? []).length +
+        (currentSeq['mainValve'] as List? ?? []).length);
+    final totalValvesCount = _provider.sampleIrrigationLine
+            ?.expand((e) => e.valve ?? [])
+            .length ??
+        0;
+
+    int plotsWithoutValves = 0;
+
+    for (var plot in plots) {
+      if (_getAssignedValvesInPlot(plot, indexToShow).isEmpty) {
+        plotsWithoutValves++;
+      }
+    }
+
+    if (_expandedPlotKeys.isEmpty && plots.isNotEmpty) {
+      _expandedPlotKeys.add(plots.first.id);
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Top Row of Detail Panel
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    segmentName,
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF0F172A),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Wrap(
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      Text(
+                        "${plots.length} plots · $assignedValves of $totalValvesCount valves assigned",
+                        style: const TextStyle(fontSize: 13, color: Color(0xFF64748B)),
+                      ),
+                      if (plotsWithoutValves > 0) ...[
+                        const Text(
+                          " · ",
+                          style: TextStyle(fontSize: 13, color: Color(0xFF64748B)),
+                        ),
+                        Text(
+                          "$plotsWithoutValves plot${plotsWithoutValves > 1 ? 's' : ''} without valves",
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                            color: Color(0xFFD97706),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                OutlinedButton(
+                  onPressed: () => _showEditSequencesSheet(context),
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: Color(0xFFE2E8F0)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  ),
+                  child: const Text(
+                    "Select",
+                    style: TextStyle(color: Color(0xFF1E293B), fontWeight: FontWeight.w600, fontSize: 13),
+                  ),
+                ),
+                FilledButton.icon(
+                  onPressed: () => _showAddPlotDialog(),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: const Color(0xFF5B21B6),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  ),
+                  icon: const Icon(Icons.add, size: 16, color: Colors.white),
+                  label: const Text(
+                    "Add plot",
+                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                  ),
+                ),
+                OutlinedButton(
+                  onPressed: () => _showDeleteConfirmationDialog(indexToShow),
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: Color(0xFFFEE2E8)),
+                    backgroundColor: const Color(0xFFFEF2F2),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  ),
+                  child: const Text(
+                    "Delete segment",
+                    style: TextStyle(color: Color(0xFFDC2626), fontWeight: FontWeight.w600, fontSize: 13),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+        const SizedBox(height: 20),
+
+        // Plot Cards List
+        ListView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: plots.length,
+          itemBuilder: (context, index) {
+            final plot = plots[index];
+            return _buildPlotCard(plot, indexToShow);
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPlotCard(PlotData plot, int sequenceIndex) {
+    final isExpanded = _expandedPlotKeys.contains(plot.id);
+    final assignedValves = _getAssignedValvesInPlot(plot, sequenceIndex);
+    final badgeText = _getPlotBadge(assignedValves);
 
     return Container(
-      margin: margin,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Column(
         children: [
-          _buildEditButton(),
-          buildButtonBar(context: context),
+          // Accordion Header
+          InkWell(
+            onTap: () {
+              setState(() {
+                if (isExpanded) {
+                  _expandedPlotKeys.remove(plot.id);
+                } else {
+                  _expandedPlotKeys.add(plot.id);
+                }
+              });
+            },
+            borderRadius: BorderRadius.circular(12),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              child: Row(
+                children: [
+                  Icon(
+                    isExpanded ? Icons.arrow_drop_down : Icons.arrow_right,
+                    color: const Color(0xFF64748B),
+                    size: 24,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    plot.title,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF0F172A),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  if (assignedValves.isNotEmpty)
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFEDE9FE),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        badgeText,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF6D28D9),
+                        ),
+                      ),
+                    )
+                  else
+                    const Text(
+                      "No valves assigned",
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        color: Color(0xFFD97706),
+                      ),
+                    ),
+                  const Spacer(),
+                  Text(
+                    "${assignedValves.length} valves",
+                    style: const TextStyle(fontSize: 13, color: Color(0xFF64748B)),
+                  ),
+                  const SizedBox(width: 12),
+                  InkWell(
+                    onTap: () => _deletePlotFromSequence(plot, sequenceIndex),
+                    child: const Text(
+                      "Delete",
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        color: Color(0xFF64748B),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          // Accordion Body
+          if (isExpanded) ...[
+            const Divider(height: 1, color: Color(0xFFF1F5F9)),
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    "Valve map",
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF64748B),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: plot.items.map((item) {
+                      final isSelected = _isValveSelected(item, plot, sequenceIndex);
+                      final itemName = item.name ?? 'Valve';
+
+                      return InkWell(
+                        onTap: () => _handleValveTap(
+                          item,
+                          plot.isGroup,
+                          plot.isGroup ? plot.items : null,
+                          plot.lineIndex,
+                          plot.isMainValve,
+                          sequenceIndex,
+                        ),
+                        borderRadius: BorderRadius.circular(8),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 150),
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                          decoration: BoxDecoration(
+                            color: isSelected ? const Color(0xFF5B21B6) : const Color(0xFFF1F5F9),
+                            borderRadius: BorderRadius.circular(8),
+                            border: isSelected ? null : Border.all(color: const Color(0xFFE2E8F0)),
+                            boxShadow: isSelected
+                                ? [
+                                    BoxShadow(
+                                      color: const Color(0xFF5B21B6).withValues(alpha: 0.25),
+                                      blurRadius: 4,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ]
+                                : null,
+                          ),
+                          child: Text(
+                            itemName,
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                              color: isSelected ? Colors.white : const Color(0xFF1E293B),
+                            ),
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ],
       ),
     );
   }
 
-  Widget _buildEditButton() {
-    return FilledButton(
-      onPressed: () => _showEditSequencesSheet(context),
-      style: ElevatedButton.styleFrom(
-        backgroundColor: Theme.of(context).primaryColorLight,
-        elevation: 2,
-        shadowColor: Theme.of(context).primaryColorLight.withAlpha(30),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-        minimumSize: const Size(0, 40),
+  List<PlotData> _getPlotsList() {
+    final plots = <PlotData>[];
+    final sampleIrrigationLine = _provider.sampleIrrigationLine;
+
+    if (_isIrrigationProgram && sampleIrrigationLine != null) {
+      // 1. Main Valves
+      final mainValves = sampleIrrigationLine.expand((e) => e.mainValve ?? []).toList();
+      if (mainValves.isNotEmpty) {
+        final items = AppConstants.omsGemList.contains(widget.modelId)
+            ? mainValves.take(1).toList()
+            : mainValves;
+        plots.add(PlotData(
+          id: 'main_valves',
+          title: 'Main valves',
+          items: items,
+          isMainValve: true,
+        ));
+      }
+
+      // 2. Valve Groups
+      final groups = _provider.irrigationLine?.defaultData.group ?? [];
+      for (var group in groups) {
+        plots.add(PlotData(
+          id: group.id,
+          title: group.name,
+          items: group.valve,
+          isGroup: true,
+        ));
+      }
+
+      // 3. Irrigation Lines (Plots)
+      for (int i = 0; i < sampleIrrigationLine.length; i++) {
+        final line = sampleIrrigationLine[i];
+        final lineValves = AppConstants.omsGemList.contains(widget.modelId)
+            ? (line.valve ?? []).take(6).toList()
+            : (line.valve ?? []);
+        plots.add(PlotData(
+          id: 'line_$i',
+          title: line.irrigationLine.name ?? 'Unnamed Plot',
+          items: lineValves,
+          lineIndex: i,
+        ));
+      }
+    }
+
+    // Agitators
+    if (_isAgitatorProgram && _provider.agitators != null && _provider.agitators!.isNotEmpty) {
+      plots.add(PlotData(
+        id: 'agitators',
+        title: 'Agitators',
+        items: _provider.agitators!,
+      ));
+    }
+
+    // Aerators
+    if (_isAeratorProgram && _provider.aerators != null && _provider.aerators!.isNotEmpty) {
+      plots.add(PlotData(
+        id: 'aerators',
+        title: 'Aerators',
+        items: _provider.aerators!,
+      ));
+    }
+
+    // Other programs
+    if (_isOtherProgram && sampleIrrigationLine != null) {
+      final fans = sampleIrrigationLine.expand((e) => e.fan ?? []).toList();
+      if (fans.isNotEmpty) {
+        plots.add(PlotData(id: 'fans', title: 'Fans', items: fans));
+      }
+      final foggers = sampleIrrigationLine.expand((e) => e.fogger ?? []).toList();
+      if (foggers.isNotEmpty) {
+        plots.add(PlotData(id: 'foggers', title: 'Foggers', items: foggers));
+      }
+      final lights = sampleIrrigationLine.expand((e) => e.light ?? []).toList();
+      if (lights.isNotEmpty) {
+        plots.add(PlotData(id: 'lights', title: 'Lights', items: lights));
+      }
+    }
+
+    return plots;
+  }
+
+  List<dynamic> _getAssignedValvesInPlot(PlotData plot, int sequenceIndex) {
+    final sequence = _provider.irrigationLine!.sequence;
+    if (sequence.isEmpty || sequenceIndex >= sequence.length) return [];
+    final currentSeq = sequence[sequenceIndex];
+
+    if (plot.isGroup) {
+      final selectedGroups = currentSeq['selectedGroup'] as List? ?? [];
+      if (selectedGroups.contains(plot.id)) {
+        return plot.items;
+      }
+      return [];
+    } else if (plot.isMainValve) {
+      final mainValves = currentSeq['mainValve'] as List? ?? [];
+      return plot.items.where((item) => mainValves.any((e) => e['sNo'] == item.sNo)).toList();
+    } else {
+      final valves = currentSeq['valve'] as List? ?? [];
+      return plot.items.where((item) => valves.any((e) => e['sNo'] == item.sNo)).toList();
+    }
+  }
+
+  bool _isValveSelected(dynamic item, PlotData plot, int sequenceIndex) {
+    final sequence = _provider.irrigationLine!.sequence;
+    if (sequence.isEmpty || sequenceIndex >= sequence.length) return false;
+    final currentSeq = sequence[sequenceIndex];
+
+    if (plot.isGroup) {
+      return (currentSeq['selectedGroup'] as List?)?.contains(plot.id) ?? false;
+    } else if (plot.isMainValve) {
+      final mainValves = currentSeq['mainValve'] as List? ?? [];
+      return mainValves.any((e) => e['sNo'] == item.sNo);
+    } else {
+      final valves = currentSeq['valve'] as List? ?? [];
+      return valves.any((e) => e['sNo'] == item.sNo);
+    }
+  }
+
+  String _getPlotBadge(List<dynamic> assignedValvesInPlot) {
+    if (assignedValvesInPlot.isEmpty) {
+      return "No valves assigned";
+    }
+    List<int> numbers = [];
+    for (var v in assignedValvesInPlot) {
+      var sno = v.sNo ?? v.id ?? v.objectId;
+      if (sno != null) {
+        var numStr = sno.toString().replaceAll(RegExp(r'[^\d]'), '');
+        if (numStr.isNotEmpty) {
+          var parsed = int.tryParse(numStr);
+          if (parsed != null) numbers.add(parsed);
+        }
+      }
+    }
+    numbers.sort();
+    if (numbers.isNotEmpty) {
+      if (numbers.length == 1) {
+        return "V${numbers.first}";
+      } else if (numbers.last - numbers.first == numbers.length - 1) {
+        return "V${numbers.first}-${numbers.last}";
+      } else {
+        return "V${numbers.join(', ')}";
+      }
+    }
+    return "${assignedValvesInPlot.length} valves";
+  }
+
+  void _handleValveTap(
+    dynamic item,
+    bool isGroup,
+    List<dynamic>? dataList,
+    int lineIndex,
+    bool isMainValve,
+    int indexToShow,
+  ) {
+    final sequence = _provider.irrigationLine!.sequence;
+    final groupId = isGroup ? item.id : '';
+
+    void onConfirm() {
+      sequence[indexToShow]['modified'] = true;
+      _addValvesToSequence(isGroup, dataList, lineIndex, isMainValve, indexToShow, groupId, item);
+    }
+
+    if (sequence[indexToShow]['modified'] ?? false) {
+      _showModifySequenceDialog(onConfirm);
+    } else {
+      if (!sequence[indexToShow].containsKey('selectedGroup')) {
+        sequence[indexToShow]['selectedGroup'] = [];
+      }
+      _addValvesToSequence(isGroup, dataList, lineIndex, isMainValve, indexToShow, groupId, item);
+    }
+  }
+
+  void _showModifySequenceDialog(VoidCallback onConfirm) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Warning!"),
+        content: const Text(
+          "The fertilizer settings will be erased while adding or removing valve in the existing sequence! \n Are you sure modify the sequence?",
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              onConfirm();
+              Navigator.pop(context);
+            },
+            child: const Text("Yes", style: TextStyle(color: Colors.green)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("No", style: TextStyle(color: Colors.red)),
+          ),
+        ],
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(Icons.edit_note_rounded, size: 20, color: Colors.white),
-          if (MediaQuery.of(context).size.width > 900) ...[
-            const SizedBox(width: 6),
-            const Flexible(
-              child: Text(
-                "Edit",
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.white),
-                overflow: TextOverflow.ellipsis,
-                maxLines: 1,
-              ),
-            ),
-          ],
+    );
+  }
+
+  void _addValvesToSequence(
+    bool isGroup,
+    List<dynamic>? dataList,
+    int lineIndex,
+    bool isMainValve,
+    int sequenceIndex,
+    String groupId,
+    dynamic item,
+  ) {
+    _provider.addValvesInSequence(
+      valves: isGroup ? dataList!.map((e) => e.toJson()).toList() : [item.toJson()],
+      lineIndex: lineIndex,
+      isMainValve: isMainValve,
+      sequenceIndex: sequenceIndex,
+      isGroup: isGroup,
+      serialNumber: widget.serialNumber == 0 ? _provider.serialNumberCreation : widget.serialNumber,
+      sNo: _provider.irrigationLine!.sequence.length + 1,
+      groupId: groupId,
+      context: context,
+      modelId: widget.modelId,
+    );
+  }
+
+  void _deletePlotFromSequence(PlotData plot, int sequenceIndex) {
+    final sequence = _provider.irrigationLine!.sequence[sequenceIndex];
+    for (var item in plot.items) {
+      if (plot.isMainValve) {
+        (sequence['mainValve'] as List).removeWhere((e) => e['sNo'] == item.sNo);
+      } else if (plot.isGroup) {
+        (sequence['selectedGroup'] as List).remove(plot.id);
+        for (var v in plot.items) {
+          (sequence['valve'] as List).removeWhere((e) => e['sNo'] == v.sNo);
+        }
+      } else {
+        (sequence['valve'] as List).removeWhere((e) => e['sNo'] == item.sNo);
+      }
+    }
+    _provider.notifyUI();
+  }
+
+  void _showAddPlotDialog() {
+    showAdaptiveDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Add Plot / Group"),
+        content: const Text("Select or create a valve group/plot to add to this segment."),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Cancel"),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => GroupListScreen(
+                    userId: widget.userId,
+                    customerId: widget.userId,
+                    controllerId: widget.controllerId,
+                    deviceId: widget.deviceId,
+                  ),
+                ),
+              );
+            },
+            child: const Text("Create Group"),
+          ),
         ],
       ),
     );
@@ -279,7 +987,9 @@ class _SequenceScreenState extends State<SequenceScreen> {
       context: context,
       backgroundColor: Colors.white,
       showDragHandle: true,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
       builder: (context) => StatefulBuilder(
         builder: (context, setModalState) => Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -289,13 +999,17 @@ class _SequenceScreenState extends State<SequenceScreen> {
             children: [
               const Padding(
                 padding: EdgeInsets.only(left: 8, bottom: 8),
-                child: Text('Edit Sequences', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                child: Text(
+                  'Edit Sequences',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
               ),
               Flexible(
                 child: ListView.builder(
                   shrinkWrap: true,
                   itemCount: _provider.irrigationLine!.sequence.length,
-                  itemBuilder: (context, index) => _buildSequenceListTile(index, setModalState),
+                  itemBuilder: (context, index) =>
+                      _buildSequenceListTile(index, setModalState),
                 ),
               ),
             ],
@@ -307,12 +1021,13 @@ class _SequenceScreenState extends State<SequenceScreen> {
 
   Widget _buildSequenceListTile(int index, StateSetter setModalState) {
     final sequence = _provider.irrigationLine!.sequence[index];
+    final valves = (sequence['valve'] as List? ?? []);
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       leading: Text('${index + 1}'),
       title: Text(sequence['name']),
       subtitle: Text(
-        sequence['valve'].map((e) => e['name']).join(', '),
+        valves.map((e) => e['name']).join(', '),
         maxLines: 2,
         overflow: TextOverflow.ellipsis,
       ),
@@ -363,6 +1078,7 @@ class _SequenceScreenState extends State<SequenceScreen> {
             onPressed: () {
               if (formKey.currentState!.validate()) {
                 setModalState(() => sequence[index]['name'] = controller.text);
+                _provider.notifyUI();
                 Navigator.pop(ctx);
               }
             },
@@ -371,77 +1087,6 @@ class _SequenceScreenState extends State<SequenceScreen> {
           ),
         ],
       ),
-    );
-  }
-
-  void _showValveSelectionAlert() {
-    showAdaptiveDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        content: const Text('At least one valve should be selected!', style: TextStyle(color: Colors.red)),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text("OK"),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget buildButtonBar({required BuildContext context}) {
-    final sequence = _provider.irrigationLine!.sequence;
-    final indexToShow = _getIndexToShow;
-
-    return ButtonBar(
-      alignment: MainAxisAlignment.end,
-      layoutBehavior: ButtonBarLayoutBehavior.constrained,
-      children: [
-        _buildAddNextButton(context, sequence, indexToShow),
-        _buildDeleteButton(context, indexToShow),
-        _buildPopupMenuButton(context),
-      ],
-    );
-  }
-
-  Widget _buildAddNextButton(BuildContext context, List sequence, int indexToShow) {
-    final icon = indexToShow == sequence.length - 1 ? Icons.add : Icons.skip_next;
-    final label = indexToShow == sequence.length - 1 ? "Add new" : "Add next";
-
-    return buildActionButton(
-      context: context,
-      key: 'addNext',
-      labelColor: Theme.of(context).primaryColor,
-      icon: icon,
-      label: label,
-      onPressed: sequence[indexToShow]['valve'].isEmpty
-          ? () => _showValveSelectionAlert()
-          : () {
-        _provider.updateAddNext(
-          serialNumber: widget.serialNumber,
-          indexToShow: indexToShow,
-          modelId: widget.modelId,
-        );
-        _provider.updateNextButton(indexToShow);
-        _scrollController.animateTo(
-          indexToShow * 150,
-          duration: const Duration(milliseconds: 500),
-          curve: Curves.easeInOut,
-        );
-      },
-    );
-  }
-
-  Widget _buildDeleteButton(BuildContext context, int indexToShow) {
-    return buildActionButton(
-      context: context,
-      key: 'delete',
-      icon: Icons.delete,
-      label: "Delete",
-      labelColor: Colors.red,
-      onPressed: _provider.irrigationLine!.sequence.any((element) => element['selected'] == true)
-          ? () => _showDeleteConfirmationDialog(indexToShow)
-          : null,
     );
   }
 
@@ -465,7 +1110,8 @@ class _SequenceScreenState extends State<SequenceScreen> {
               );
               Navigator.of(context).pop();
               if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(CustomSnackBar(message: 'The sequence is erased!'));
+                ScaffoldMessenger.of(context)
+                    .showSnackBar(CustomSnackBar(message: 'The sequence is erased!'));
               }
             },
           ),
@@ -473,501 +1119,4 @@ class _SequenceScreenState extends State<SequenceScreen> {
       ),
     );
   }
-
-  Widget _buildPopupMenuButton(BuildContext context) {
-    return sequenceBuildPopUpMenuButton(
-      context: context,
-      dataList: _provider.deleteSelection,
-      onSelected: (selected) {
-        _provider.updateDeleteSelection(newOption: selected);
-      },
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 5.0, horizontal: 10),
-        child: Row(
-          children: [
-            Checkbox(
-              value: _provider.selectedOption == _provider.deleteSelection[1],
-              visualDensity: const VisualDensity(horizontal: -4, vertical: -4),
-              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              onChanged: (selected) {
-                final newValue = selected! ? _provider.deleteSelection[1] : _provider.deleteSelection[2];
-                _provider.updateDeleteSelection(newOption: newValue);
-              },
-            ),
-            const Icon(Icons.arrow_drop_down),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget buildActionButton({
-    required BuildContext context,
-    required String key,
-    required IconData icon,
-    required String label,
-    VoidCallback? onPressed,
-    Color? buttonColor,
-    Color? labelColor,
-  }) {
-    final isEnabled = onPressed != null;
-    final effectiveButtonColor = buttonColor ?? Colors.white;
-    final effectiveLabelColor = labelColor ?? Theme.of(context).primaryColor;
-    final isWideScreen = MediaQuery.of(context).size.width > 900;
-
-    return AnimatedScale(
-      scale: isEnabled ? 1.0 : 0.95,
-      duration: const Duration(milliseconds: 150),
-      child: ElevatedButton(
-        key: Key(key),
-        onPressed: onPressed,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: effectiveButtonColor,
-          foregroundColor: isEnabled ? effectiveLabelColor : Colors.grey.shade50,
-          elevation: isEnabled ? 2 : 0,
-          shadowColor: effectiveButtonColor.withAlpha(30),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(15),
-            side: BorderSide(
-              color: isEnabled ? effectiveLabelColor.withAlpha(100) : Colors.grey.withAlpha(10),
-              width: 0.8,
-            ),
-          ),
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-          minimumSize: const Size(0, 40),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 20, color: isEnabled ? effectiveLabelColor : Colors.grey),
-            if (isWideScreen) ...[
-              const SizedBox(width: 6),
-              Flexible(
-                child: Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: isEnabled ? effectiveLabelColor : Colors.grey,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                  maxLines: 1,
-                ),
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-
-  EdgeInsets _getResponsiveMargin(BuildContext context) {
-    return MediaQuery.of(context).size.width >= 700
-        ? EdgeInsets.symmetric(horizontal: MediaQuery.of(context).size.width * 0.05)
-        : const EdgeInsets.symmetric(horizontal: 15);
-  }
-
-  List<Widget> _buildIrrigationSections(BuildContext context) {
-    final sections = <Widget>[];
-    final sampleIrrigationLine = _provider.sampleIrrigationLine;
-
-    if (_isIrrigationProgram && sampleIrrigationLine != null) {
-      // Main Valves
-      final mainValves = sampleIrrigationLine.expand((e) => e.mainValve ?? []).toList();
-      // final List<DeviceObjectModel> mainValves =
-      // sampleIrrigationLine
-      //     .expand<DeviceObjectModel>((e) => e.mainValve ?? [])
-      //     .toList();
-       if (mainValves.isNotEmpty) {
-        sections.add(_buildIrrigationSection(
-          context: context,
-          title: 'Main valves',
-          items: AppConstants.omsGemList.contains(widget.modelId)? mainValves.take(1).toList() : mainValves,
-          isMainValve: true,
-          leading: _buildLeadingIcon('assets/Images/m_valve.png'),
-        ));
-      }
-
-      // Valve Groups
-      final groups = _provider.irrigationLine?.defaultData.group ?? [];
-      if (groups.isNotEmpty) {
-        sections.add(_buildIrrigationSection(
-          context: context,
-          title: 'Valve Groups',
-          items: groups,
-          isGroup: true,
-          trailing: _buildCreateGroupButton(context),
-        ));
-      }
-
-      // Irrigation Lines
-      if (sampleIrrigationLine.isNotEmpty) {
-        sections.addAll(sampleIrrigationLine.asMap().entries.map((entry) {
-          final index = entry.key;
-          final line = entry.value;
-
-          return _buildIrrigationSection(
-            context: context,
-            title: line.irrigationLine.name ?? 'Unnamed Line',
-            items: AppConstants.omsGemList.contains(widget.modelId)? line.valve!.take(6).toList() :  line.valve ?? [],
-            lineIndex: index,
-          );
-        }));
-      }
-    }
-
-    // Agitators
-    if (_isAgitatorProgram && _provider.agitators != null) {
-      sections.add(_buildIrrigationSection(
-        context: context,
-        title: 'Agitators',
-        items: _provider.agitators!,
-        leading: _buildLeadingIcon('assets/png/dp_agitator_right.png'),
-      ));
-    }
-
-    // Aerators
-    if (_isAeratorProgram && _provider.aerators != null) {
-      sections.add(_buildIrrigationSection(
-        context: context,
-        title: 'Aerators',
-        items: _provider.aerators!,
-        leading: _buildLeadingIcon('assets/png/dp_agitator_right.png'),
-      ));
-    }
-
-    // Others
-    if(_isOtherProgram && sampleIrrigationLine != null) {
-      final fans = sampleIrrigationLine.expand((e) => e.fan ?? []).toList();
-      if (fans.isNotEmpty) {
-        sections.add(_buildIrrigationSection(
-          context: context,
-          title: 'Fans',
-          items: fans,
-          leading: _buildLeadingIcon('assets/Images/Png/objectId_15.png'),
-        ));
-      }
-
-      final fogger = sampleIrrigationLine.expand((e) => e.fogger ?? []).toList();
-      if (fogger.isNotEmpty) {
-        sections.add(_buildIrrigationSection(
-          context: context,
-          title: 'Foggers',
-          items: fogger,
-          leading: _buildLeadingIcon('assets/Images/Png/objectId_16.png'),
-        ));
-      }
-
-      final lights = sampleIrrigationLine.expand((e) => e.light ?? []).toList();
-      if (lights.isNotEmpty) {
-        sections.add(_buildIrrigationSection(
-          context: context,
-          title: 'Lights',
-          items: lights,
-          leading: _buildLeadingIcon('assets/Images/Png/objectId_19.png'),
-        ));
-      }
-    }
-
-    return sections;
-  }
-
-  Widget _buildIrrigationSection({
-    required BuildContext context,
-    required String title,
-    required List<dynamic> items,
-    bool isGroup = false,
-    bool isMainValve = false,
-    int lineIndex = 0,
-    Widget? leading,
-    Widget? trailing,
-  }) {
-     return Column(
-      children: [
-        buildLineAndValveContainerUpdated(
-          context: context,
-          title: title,
-          leading: leading,
-          trailing: trailing,
-          children: items.map((item) => buildValveContainer(
-            context: context,
-            item: item,
-            isGroup: isGroup,
-            isMainValve: isMainValve,
-            dataList: isGroup ? items : null,
-            lineIndex: lineIndex,
-          )).toList(),
-        ),
-        const SizedBox(height: 20),
-      ],
-    );
-  }
-
-  Widget _buildLeadingIcon(String assetPath) {
-    return Container(
-      padding: const EdgeInsets.all(5),
-      decoration: const BoxDecoration(color: cardColor, shape: BoxShape.circle),
-      child: Image.asset(assetPath),
-    );
-  }
-
-  Widget _buildCreateGroupButton(BuildContext context) {
-    return SizedBox(
-      height: 30,
-      child: OutlinedButton(
-        onPressed: () => Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => GroupListScreen(
-              userId: widget.userId,
-              customerId: widget.userId,
-              controllerId: widget.controllerId,
-              deviceId: widget.deviceId,
-            ),
-          ),
-        ),
-        style: const ButtonStyle(padding: WidgetStatePropertyAll(EdgeInsets.symmetric(horizontal: 12, vertical: 0))),
-        child: const Text('Create'),
-      ),
-    );
-  }
-
-  Widget buildValveContainer({
-    required BuildContext context,
-    required dynamic item,
-    bool isGroup = false,
-    List<dynamic>? dataList,
-    int lineIndex = 0,
-    bool isMainValve = false,
-  })
-  {
-    final sequence = _provider.irrigationLine!.sequence;
-    final indexToShow = _getIndexToShow;
-    final isSelected = sequence.isEmpty || indexToShow >= sequence.length
-        ? false
-        : isGroup
-        ? sequence[indexToShow]['selectedGroup']?.any((e) => e == item.id) ?? false
-        : isMainValve
-        ? sequence[indexToShow]['mainValve']?.any((e) => e['sNo'] == item.sNo) ?? false
-        : sequence[indexToShow]['valve']?.any((e) => e['sNo'] == item.sNo) ?? false;
-    for(var i in sequence[indexToShow]['mainValve']){
-      print('flow valve => ${i}');
-    }
-    print("sequence[indexToShow]['selectedGroup'] : ${sequence[indexToShow]['selectedGroup']}");
-
-    print("isSelected:$isSelected");
-    print("mainValve:$isMainValve");
-
-    return buildListOfContainer(
-      context: context,
-      selected: isSelected,
-      onTap: () => _handleValveTap(item, isGroup, dataList, lineIndex, isMainValve, indexToShow),
-      darkColor: (!isGroup && !isMainValve) ? greenDark : const Color(0xfffdce7f),
-      itemName: item.name,
-    );
-  }
-
-  void _handleValveTap(dynamic item, bool isGroup, List<dynamic>? dataList, int lineIndex, bool isMainValve, int indexToShow) {
-    final sequence = _provider.irrigationLine!.sequence;
-
-    final groupId = isGroup ? item.id : '';
-    void onConfirm() {
-      sequence[indexToShow]['modified'] = true;
-      _addValvesToSequence(isGroup, dataList, lineIndex, isMainValve, indexToShow, groupId, item);
-    }
-
-    if (sequence[indexToShow]['modified'] ?? false) {
-      _showModifySequenceDialog(onConfirm);
-    } else {
-      if (!sequence[indexToShow].containsKey('selectedGroup')) {
-        sequence[indexToShow]['selectedGroup'] = [];
-      }
-      _addValvesToSequence(isGroup, dataList, lineIndex, isMainValve, indexToShow, groupId, item);
-    }
-  }
-
-  void _showModifySequenceDialog(VoidCallback onConfirm) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text("Warning!"),
-        content: const Text(
-          "The fertilizer settings will be erased while adding or removing valve in the existing sequence! \n Are you sure modify the sequence?",
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              onConfirm();
-              Navigator.pop(context);
-            },
-            child: const Text("Yes", style: TextStyle(color: Colors.green)),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text("No", style: TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _addValvesToSequence(bool isGroup, List<dynamic>? dataList, int lineIndex, bool isMainValve, int sequenceIndex, String groupId, dynamic item) {
-    _provider.addValvesInSequence(
-      valves: isGroup ? dataList!.map((e) => e.toJson()).toList() : [item.toJson()],
-      lineIndex: lineIndex,
-      isMainValve: isMainValve,
-      sequenceIndex: sequenceIndex,
-      isGroup: isGroup,
-      serialNumber: widget.serialNumber == 0 ? _provider.serialNumberCreation : widget.serialNumber,
-      sNo: _provider.irrigationLine!.sequence.length + 1,
-      groupId: groupId,
-      context: context,
-      modelId: widget.modelId,
-    );
-  }
-
-  BoxDecoration _boxDecoration({Color? color, bool border = true}) {
-    return BoxDecoration(
-      color: color,
-      border: border ? Border.all(width: 0.3, color: Theme.of(context).primaryColor) : null,
-      borderRadius: BorderRadius.circular(15),
-      boxShadow: AppProperties.customBoxShadowLiteTheme,
-    );
-  }
-}
-
-// Helper Widgets
-Widget buildListOfContainer({
-  required BuildContext context,
-  required VoidCallback onTap,
-  required bool selected,
-  required Color? darkColor,
-  Color? textColor,
-  required String itemName,
-  EdgeInsets padding = const EdgeInsets.symmetric(vertical: 0, horizontal: 10),
-}) {
-  Color getDarkerColor(Color? color) {
-    if (color == null) return Colors.black;
-    return Color.fromRGBO(
-      (color.red * 0.8).round(),
-      (color.green * 0.8).round(),
-      (color.blue * 0.8).round(),
-      1.0,
-    );
-  }
-
-  return ChoiceChip(
-    label: Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        if (selected) Icon(Icons.radio_button_checked, color: textColor ?? getDarkerColor(darkColor), size: 20),
-        const SizedBox(width: 4),
-        Text(itemName, style: TextStyle(color: textColor ?? Colors.black)),
-      ],
-    ),
-    selected: selected,
-    showCheckmark: false,
-    onSelected: (_) => onTap(),
-    selectedColor: darkColor,
-    backgroundColor: selected ? darkColor : darkColor!.withAlpha(20),
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(20),
-      side: BorderSide(color: darkColor!, width: 0.8),
-    ),
-    elevation: 4,
-    shadowColor: darkColor.withAlpha(50),
-    labelPadding: EdgeInsets.zero,
-    padding: padding,
-    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-  );
-}
-
-Widget buildLineAndValveContainerUpdated({
-  required BuildContext context,
-  required String title,
-  required List<Widget> children,
-  Widget? leading,
-  Widget? trailing,
-  bool isRowLayout = true,
-  bool isTitle = false,
-}) {
-  return Container(
-    padding: const EdgeInsets.all(10),
-    decoration: BoxDecoration(
-      borderRadius: BorderRadius.only(
-        bottomLeft: const Radius.circular(10),
-        bottomRight: const Radius.circular(10),
-        topRight: const Radius.circular(10),
-        topLeft: isTitle ? const Radius.circular(0) : const Radius.circular(10),
-      ),
-      color: Colors.white,
-      boxShadow: AppProperties.customBoxShadowLiteTheme,
-    ),
-    child: isRowLayout && MediaQuery.of(context).size.width > 800
-        ? Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      child: Row(
-        children: [
-          buildLeadingTitle(context, title, leading, 40, 22),
-          const SizedBox(width: 10),
-          const SizedBox(height: 50, child: VerticalDivider(color: Colors.grey)),
-          const SizedBox(width: 10),
-          Expanded(flex: 5, child: Wrap(spacing: 5, runSpacing: 10, children: children)),
-          if (trailing != null) Align(alignment: Alignment.centerRight, child: trailing),
-        ],
-      ),
-    )
-        : Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              buildLeadingTitle(context, title, leading, 30, 16),
-              if (trailing != null) Expanded(child: Align(alignment: Alignment.centerRight, child: trailing)),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Wrap(spacing: 5, runSpacing: 10, children: children),
-        ],
-      ),
-    ),
-  );
-}
-
-Widget buildLeadingTitle(BuildContext context, String title, Widget? leading, double size, double fontSize) {
-  return Expanded(
-    child: Row(
-      children: [
-        Container(
-          width: size,
-          height: size,
-          decoration: BoxDecoration(borderRadius: BorderRadius.circular(15)),
-          child: leading ?? Image.asset('assets/Images/irrigation_line1.png', color: Theme.of(context).primaryColorDark),
-        ),
-        const SizedBox(width: 20),
-        Expanded(
-          child: Text(
-            title,
-            style: TextStyle(fontSize: fontSize, fontWeight: FontWeight.bold, overflow: TextOverflow.ellipsis),
-            maxLines: 2,
-          ),
-        ),
-      ],
-    ),
-  );
-}
-
-Widget sequenceBuildPopUpMenuButton({
-  required BuildContext context,
-  required List<String> dataList,
-  required void Function(String) onSelected,
-  required Widget child,
-}) {
-  return PopupMenuButton<String>(
-    onSelected: onSelected,
-    itemBuilder: (context) => dataList.map((item) => PopupMenuItem(value: item, child: Text(item))).toList(),
-    child: child,
-  );
 }

@@ -42,7 +42,7 @@ class SensorPeriodCard extends StatelessWidget {
               _value('Average', averageValue),
               // _value('Max', maxValue),
               // _value('Min', minValue),
-              SizedBox(),
+              const SizedBox(),
 
                Container(
                   width: 60,

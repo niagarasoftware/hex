@@ -12,6 +12,8 @@ class IrrigationLineSelectorWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final master = vm.mySiteList.data[vm.sIndex].master[vm.mIndex];
     if (master.categoryId != 1 || master.irrigationLine.length <= 1) {
       return const SizedBox();
@@ -24,19 +26,30 @@ class IrrigationLineSelectorWidget extends StatelessWidget {
           value: index,
           child: Text(
             line.name,
-            style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+            style: TextStyle(color: colorScheme.onSurface, fontSize: 16, fontWeight: FontWeight.bold),
           ),
         );
       }),
+      selectedItemBuilder: (context) {
+        return List.generate(master.irrigationLine.length, (index) {
+          final line = master.irrigationLine[index];
+          return Center(
+            child: Text(
+              line.name,
+              style: TextStyle(color: colorScheme.onPrimary, fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+          );
+        });
+      },
       onChanged: (selectedIndex) {
         if (selectedIndex != null) {
           vm.lineOnChanged(selectedIndex);
         }
       },
       value: vm.lIndex,
-      dropdownColor: Theme.of(context).primaryColorLight,
-      iconEnabledColor: Colors.white,
-      iconDisabledColor: Colors.white,
+      dropdownColor: colorScheme.surface,
+      iconEnabledColor: colorScheme.onPrimary,
+      iconDisabledColor: colorScheme.onPrimary.withOpacity(0.5),
       focusColor: Colors.transparent,
     );
   }

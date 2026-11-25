@@ -11,7 +11,8 @@ class DiseaseScreen extends StatefulWidget {
   State<DiseaseScreen> createState() => _DiseaseScreenState();
 }
 
-class _DiseaseScreenState extends State<DiseaseScreen> with SingleTickerProviderStateMixin {
+class _DiseaseScreenState extends State<DiseaseScreen>
+    with SingleTickerProviderStateMixin {
   XFile? _image;
   final ImagePicker _picker = ImagePicker();
   late AnimationController _animationController;
@@ -32,7 +33,6 @@ class _DiseaseScreenState extends State<DiseaseScreen> with SingleTickerProvider
     super.dispose();
   }
 
-  // Opens camera, captures photo, and then starts scanning animation
   Future<void> _takePhoto() async {
     try {
       final XFile? photo = await _picker.pickImage(source: ImageSource.camera);
@@ -44,21 +44,19 @@ class _DiseaseScreenState extends State<DiseaseScreen> with SingleTickerProvider
       }
     } catch (e) {
       if (kDebugMode) {
-        print("Error capturing image: $e");
+        debugPrint("Error capturing image: $e");
       }
     }
   }
 
-  // Runs ONLY the scanning animation and simulates analysis results
   Future<void> _runScanningEffect() async {
     setState(() {
       _isScanning = true;
     });
     _animationController.repeat(reverse: true);
-    
-    // Simulate scanning/analysis for 4 seconds
+
     await Future.delayed(const Duration(seconds: 4));
-    
+
     if (mounted) {
       setState(() {
         _isScanning = false;
@@ -69,298 +67,272 @@ class _DiseaseScreenState extends State<DiseaseScreen> with SingleTickerProvider
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
     return Scaffold(
-      backgroundColor: Colors.white,
-      body: Center(
-        child: ConstrainedBox(
-          constraints: BoxConstraints(
-            maxWidth: kIsWeb ? 800 : double.infinity,
-          ),
-          child: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // --- Top Image Section ---
-                Stack(
-                  children: [
-                    Container(
-                      height: kIsWeb ? 400 : 300,
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                        color: Colors.grey[200],
-                        image: DecorationImage(
-                          image: _image == null
-                              ? const NetworkImage(
-                                  'https://images.unsplash.com/photo-1625246333195-78d9c38ad449?q=80&w=2070&auto=format&fit=crop',
-                                )
-                              : (kIsWeb 
-                                  ? NetworkImage(_image!.path) 
-                                  : FileImage(File(_image!.path))) as ImageProvider,
-                          fit: BoxFit.cover,
-                        ),
-                      ),
+      backgroundColor: colorScheme.surfaceContainerLowest,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 1200),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildScanningBanner(context),
+                  const SizedBox(height: 20),
+                  Text(
+                    _image == null ? 'Crop Management' : 'Analysis Results',
+                    style: textTheme.titleMedium?.copyWith(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: colorScheme.onSurface,
                     ),
-                    
-                    // Scanning Animation Overlay
-                    if (_isScanning)
-                      AnimatedBuilder(
-                        animation:  _animationController,
-                        builder: (context, child) {
-                          return Positioned(
-                            top: _animationController.value * (kIsWeb ? 400 : 300),
-                            left: 0,
-                            right: 0,
-                            child: Container(
-                              height: 3,
-                              decoration: BoxDecoration(
-                                color: Colors.lightGreen,
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Color(0xFF1B7F8A).withOpacity(0.8),
-                                    blurRadius: 15,
-                                    spreadRadius: 15,
-                                  ),
-                                ],
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                    
-                    if (_isScanning)
-                      Positioned.fill(
-                        child: Container(
-                          color: Colors.black.withOpacity(0.2),
-                          child: Center(
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const CircularProgressIndicator(color: Colors.white),
-                                const SizedBox(height: 10),
-                                Text(
-                                  "Scanning for Health Issues...",
-                                  style: GoogleFonts.poppins(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-
-                    // Satellite Overlay / Mask (only show when no image or not scanning)
-                    if (_image == null && !_isScanning)
-                      Positioned.fill(
-                        child: Container(
-                          color: Colors.black.withOpacity(0.1),
-                        ),
-                      ),
-                    
-                    if (_image == null && !_isScanning)
-                      Center(
-                        child: Container(
-                          width: 200,
-                          height: 150,
-                          decoration: BoxDecoration(
-                            border: Border.all(color: Colors.white, width: 2),
-                            gradient: LinearGradient(
-                              colors: [
-                                Colors.orange.withOpacity(0.5),
-                                Colors.green.withOpacity(0.5),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    
-                    // Overlay text
-                    Positioned(
-                      bottom: 12,
-                      left: 12,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.9),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Text(
-                          _image == null 
-                            ? 'Generated by Satellite imagery services'
-                            : 'Field Analysis: Captured Image',
-                          style: GoogleFonts.poppins(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.black87,
-                          ),
-                        ),
-                      ),
-                    ),
-                    
-                    // Fullscreen Icon (Trigger SCAN ONLY, no camera)
-                    Positioned(
-                      bottom: 12,
-                      right: 12,
-                      child: GestureDetector(
-                        onTap: () {
-                           _image == null ? _takePhoto  : _runScanningEffect();
-                           // _runScanningEffect();
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: const Icon(
-                            Icons.fullscreen,
-                            size: 20,
-                            color: Colors.black87,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 20),
-
-                // --- Content Section ---
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        _image == null ? 'Crop Management' : 'Analysis Results',
-                        style: GoogleFonts.poppins(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.black,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      
-                      // 1. Fertigation Card
-                      _InfoCard(
-                        icon: Icons.science_outlined,
-                        title: 'Fertigation',
-                        description: Text(
-                          (_isScanning || _image == null) ? 'Analyzing fertilizer levels...' : 'A total of 50 kg of fertilizer was successfully applied. Nitrogen levels are currently optimal for crop growth.',
-                          style: GoogleFonts.poppins(fontSize: 13, color: Colors.black54, height: 1.5),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-
-                      // 2. Water Management Card
-                      _InfoCard(
-                        icon: Icons.water_drop_outlined,
-                        title: 'Water Management',
-                        description: Text(
-                          (_isScanning || _image == null) ? 'Calculating soil moisture...' : 'Irrigation cycle efficient. Soil moisture is at 68%. Next watering scheduled for 6:00 PM.',
-                          style: GoogleFonts.poppins(fontSize: 13, color: Colors.black54, height: 1.5),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-
-                      // 3. Disease Details Card
-                      _InfoCard(
-                        icon: Icons.bug_report_outlined,
-                        title: 'Disease Details',
-                        description: Text(
-                          (_isScanning || _image == null) ? 'Detecting pathogens...' : (_image == null ? 'No data from satellite yet.' : 'Possible Early Blight detected in lower leaves. Risk level: Low. Action: Monitor closely.'),
-                          style: GoogleFonts.poppins(fontSize: 13, color: Colors.black54, height: 1.5),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-
-                      // 4. Prestige / Pest Management Card
-                      _InfoCard(
-                        icon: Icons.health_and_safety_outlined,
-                        title: 'Pest Management (Prestige)',
-                        description: Text(
-                          (_isScanning || _image == null) ? 'Analyzing pest activity...' : 'Prestige status: Safe. Natural predators observed. No chemical pesticides required currently.',
-                          style: GoogleFonts.poppins(fontSize: 13, color: Colors.black54, height: 1.5),
-                        ),
-                      ),
-                      
-                      const SizedBox(height: 100), // Space for FAB
-                    ],
                   ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-      // FAB Opens CAMERA
-      floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 20.0),
-        child: InkWell(
-          onTap: _isScanning ? null : _takePhoto,
-          child: Container(
-            width: 70,
-            height: 70,
-            decoration: BoxDecoration(
-              color: _isScanning ? Colors.grey : const Color(0xFF1B7F8A),
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(35),
-                topRight: Radius.circular(35),
-                bottomLeft: Radius.circular(35),
-                bottomRight: Radius.circular(0),
-              ),
-              boxShadow: const [
-                BoxShadow(
-                  color: Colors.black26,
-                  blurRadius: 10,
-                  offset: Offset(0, 4),
-                ),
-              ],
-            ),
-            child: const Padding(
-              padding: EdgeInsets.all(15.0),
-              child: Icon(
-                Icons.photo_camera,
-                size: 30,
-                color: Colors.white,
-               ),
+                  const SizedBox(height: 14),
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      final width = constraints.maxWidth;
+                      const spacing = 12.0;
+                      int columns = 1;
+                      if (width >= 900) {
+                        columns = 2;
+                      }
 
+                      final itemWidth =
+                          (width - (spacing * (columns - 1))) / columns;
+
+                      final cards = [
+                        _buildInfoCard(
+                          context,
+                          icon: Icons.science_outlined,
+                          title: 'Fertigation Health',
+                          description: (_isScanning || _image == null)
+                              ? 'Analyzing fertilizer levels...'
+                              : 'A total of 50 kg of fertilizer was successfully applied. Nitrogen levels are optimal for crop growth.',
+                        ),
+                        _buildInfoCard(
+                          context,
+                          icon: Icons.water_drop_outlined,
+                          title: 'Water Management',
+                          description: (_isScanning || _image == null)
+                              ? 'Calculating soil moisture...'
+                              : 'Irrigation cycle efficient. Soil moisture is at 68%. Next watering scheduled for 6:00 PM.',
+                        ),
+                        _buildInfoCard(
+                          context,
+                          icon: Icons.bug_report_outlined,
+                          title: 'Disease & Pathogen Risks',
+                          description: (_isScanning || _image == null)
+                              ? 'Detecting pathogens...'
+                              : (_image == null
+                              ? 'No data from satellite yet.'
+                              : 'Possible Early Blight detected in lower leaves. Risk level: Low. Action: Monitor closely.'),
+                        ),
+                        _buildInfoCard(
+                          context,
+                          icon: Icons.health_and_safety_outlined,
+                          title: 'Pest Management',
+                          description: (_isScanning || _image == null)
+                              ? 'Analyzing pest activity...'
+                              : 'Prestige status: Safe. Natural predators observed. No chemical pesticides required currently.',
+                        ),
+                      ];
+
+                      return Wrap(
+                        spacing: spacing,
+                        runSpacing: spacing,
+                        children: cards.map((card) {
+                          return SizedBox(width: itemWidth, child: card);
+                        }).toList(),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 80),
+                ],
+              ),
             ),
           ),
         ),
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 12.0),
+        child: FloatingActionButton.extended(
+          onPressed: _isScanning ? null : _takePhoto,
+          backgroundColor:
+          _isScanning ? colorScheme.outline : colorScheme.primary,
+          foregroundColor: colorScheme.onPrimary,
+          icon: const Icon(Icons.photo_camera_rounded),
+          label: Text(
+            _isScanning ? "Scanning..." : "Scan Crop Health",
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
+        ),
+      ),
     );
   }
-}
 
-class _InfoCard extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final Widget description;
+  Widget _buildScanningBanner(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
 
-  const _InfoCard({
-    required this.icon,
-    required this.title,
-    required this.description,
-  });
-
-  @override
-  Widget build(BuildContext context) {
     return Container(
+      height: kIsWeb ? 320 : 240,
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFEEEEEE)),
+        color: colorScheme.surface,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: colorScheme.outlineVariant.withOpacity(0.4),
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.02),
+            color: Colors.black.withOpacity(0.025),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(18),
+        child: Stack(
+          children: [
+            Container(
+              width: double.infinity,
+              height: double.infinity,
+              decoration: BoxDecoration(
+                image: DecorationImage(
+                  image: _image == null
+                      ? const NetworkImage(
+                    'https://images.unsplash.com/photo-1625246333195-78d9c38ad449?q=80&w=2070&auto=format&fit=crop',
+                  )
+                      : (kIsWeb
+                      ? NetworkImage(_image!.path)
+                      : FileImage(File(_image!.path))) as ImageProvider,
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ),
+            if (_isScanning)
+              AnimatedBuilder(
+                animation: _animationController,
+                builder: (context, child) {
+                  return Positioned(
+                    top: _animationController.value *
+                        (kIsWeb ? 320 : 240),
+                    left: 0,
+                    right: 0,
+                    child: Container(
+                      height: 3,
+                      decoration: BoxDecoration(
+                        color: colorScheme.primary,
+                        boxShadow: [
+                          BoxShadow(
+                            color: colorScheme.primary.withOpacity(0.8),
+                            blurRadius: 15,
+                            spreadRadius: 15,
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            if (_isScanning)
+              Positioned.fill(
+                child: Container(
+                  color: Colors.black.withOpacity(0.3),
+                  child: Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        CircularProgressIndicator(color: colorScheme.primary),
+                        const SizedBox(height: 12),
+                        Text(
+                          "Scanning for Health Issues...",
+                          style: GoogleFonts.poppins(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 15,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            Positioned(
+              bottom: 12,
+              left: 12,
+              child: Container(
+                padding:
+                const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: colorScheme.surface.withOpacity(0.9),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  _image == null
+                      ? 'Generated by Satellite Imagery Services'
+                      : 'Field Analysis: Captured Image',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    color: colorScheme.onSurface,
+                  ),
+                ),
+              ),
+            ),
+            Positioned(
+              bottom: 12,
+              right: 12,
+              child: InkWell(
+                onTap: () {
+                  _image == null ? _takePhoto() : _runScanningEffect();
+                },
+                borderRadius: BorderRadius.circular(8),
+                child: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: colorScheme.surface,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(
+                    Icons.fullscreen,
+                    size: 20,
+                    color: colorScheme.onSurface,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInfoCard(
+      BuildContext context, {
+        required IconData icon,
+        required String title,
+        required String description,
+      }) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: colorScheme.outlineVariant.withOpacity(0.4),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.025),
             blurRadius: 8,
-            offset: const Offset(0, 2),
+            offset: const Offset(0, 3),
           ),
         ],
       ),
@@ -372,28 +344,37 @@ class _InfoCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  border: Border.all(color: const Color(0xFFEEEEEE)),
+                  color: colorScheme.primaryContainer,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(
                   icon,
                   size: 20,
-                  color: Colors.black87,
+                  color: colorScheme.primary,
                 ),
               ),
               const SizedBox(width: 12),
-              Text(
-                title,
-                style: GoogleFonts.poppins(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black87,
+              Expanded(
+                child: Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                    color: colorScheme.onSurface,
+                  ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 16),
-          description,
+          const SizedBox(height: 12),
+          Text(
+            description,
+            style: TextStyle(
+              fontSize: 12.5,
+              height: 1.4,
+              color: colorScheme.onSurfaceVariant,
+            ),
+          ),
         ],
       ),
     );

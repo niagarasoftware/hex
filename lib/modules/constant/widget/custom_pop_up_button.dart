@@ -44,6 +44,7 @@ class CustomPopUpButton extends StatelessWidget {
     );
 
     return PopupMenuButton(
+      color: colorScheme.surface,
       tooltip: '',
       initialValue: selectedPopUpItemModel.sNo,
       onSelected: onSelected,

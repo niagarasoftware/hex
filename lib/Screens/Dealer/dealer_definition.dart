@@ -9,12 +9,11 @@ import '../../utils/snack_bar.dart';
 
 class DealerDefinitionInConfig extends StatefulWidget {
   const DealerDefinitionInConfig(
-      {Key? key,
+      {super.key,
         required this.userId,
         required this.customerId,
         required this.controllerId,
-        required this.imeiNo})
-      : super(key: key);
+        required this.imeiNo});
   final int userId, customerId, controllerId;
   final String imeiNo;
 

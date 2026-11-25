@@ -7,23 +7,56 @@ class OroLoginHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Container(
       width: double.infinity,
-      height: (MediaQuery.of(context).size.height / 2) - 100,
-      child: const Column(
+      padding: const EdgeInsets.fromLTRB(24, 40, 24, 32),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            colorScheme.primary,
+            colorScheme.primary.withValues(alpha: 0.85),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      ),
+      child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Spacer(),
-          Image(
-            image: AssetImage('assets/png/oro_logo_white.png'),
-            height: 70,
+
+           const Text(
+            AppConstants.appShortContent,
+            style: TextStyle(
+              color: Colors.white70,
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+              height: 1.4,
+            ),
+            textAlign: TextAlign.center,
           ),
-          Padding(
-            padding: EdgeInsets.all(20),
-            child: Text(
-              AppConstants.appShortContent,
-              style: TextStyle(color: Colors.white70, fontSize: 13),
-              textAlign: TextAlign.center,
+          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: const Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.hub_outlined, size: 14, color: Colors.white),
+                SizedBox(width: 6),
+                Text(
+                  'Smart Irrigation ',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -37,23 +70,57 @@ class ATelLoginHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Container(
       width: double.infinity,
-      height: (MediaQuery.of(context).size.height / 2) - 100,
-      child: const Column(
+      padding: const EdgeInsets.fromLTRB(24, 40, 24, 32),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            colorScheme.primary,
+            colorScheme.primary.withValues(alpha: 0.85),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      ),
+      child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Spacer(),
-          Image(
-            image: AssetImage('assets/png/agritel_logo_white.png'),
-            height: 70,
+
+          const SizedBox(height: 16),
+          const Text(
+            AppConstants.appShortContent,
+            style: TextStyle(
+              color: Colors.white70,
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+              height: 1.4,
+            ),
+            textAlign: TextAlign.center,
           ),
-          Padding(
-            padding: EdgeInsets.all(20),
-            child: Text(
-              AppConstants.appShortContent,
-              style: TextStyle(color: Colors.white70, fontSize: 13),
-              textAlign: TextAlign.center,
+          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: const Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.cell_tower_rounded, size: 14, color: Colors.white),
+                SizedBox(width: 6),
+                Text(
+                  'Agricultural Telemetry & Control',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -67,37 +134,60 @@ class LkLoginHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Stack(
       children: [
-        SizedBox(
-          height: MediaQuery.of(context).size.height / 2,
+
+        Container(
+          height: 260,
           width: double.infinity,
-          child: const Image(
-            image: AssetImage('assets/png/lk_login_left_picture.png'),
-            fit: BoxFit.fill,
-          ),
-        ),
-        Positioned(
-          top: 5,
-          right: 1,
-          width: 210,
-          height: 130,
-          child: SvgPicture.asset(
-            'assets/svg_images/lk_login_top_corner.svg',
-            fit: BoxFit.contain,
-          ),
-        ),
-        const Positioned(
-          bottom: 10,
-          left: 25,
-          right: 25,
-          child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 5, vertical: 5),
-            child: Text(
-              AppConstants.appShortContent,
-              style: TextStyle(color: Colors.white70, fontSize: 11),
-              textAlign: TextAlign.center,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                colorScheme.primary.withValues(alpha: 0.85),
+                Colors.black.withValues(alpha: 0.6),
+              ],
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
             ),
+          ),
+        ),
+
+        Positioned(
+          bottom: 20,
+          left: 20,
+          right: 20,
+          child: Column(
+            children: [
+              const Text(
+                AppConstants.appShortContent,
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  height: 1.3,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+              Container(
+                padding:
+                const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: const Text(
+                  'Smart Irrigation Suite',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 10.5,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ],

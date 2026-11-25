@@ -268,7 +268,7 @@ class VoucherPainter extends CustomPainter {
         radius: const Radius.circular(biteRadius), clockwise: false);
         
     path.lineTo(0, radius);
-    path.arcToPoint(Offset(radius, 0), radius: const Radius.circular(radius));
+    path.arcToPoint(const Offset(radius, 0), radius: const Radius.circular(radius));
 
     // Shadow
     canvas.drawShadow(path.shift(const Offset(0, 6)), Colors.black.withOpacity(0.2), 16.0, false);

@@ -119,7 +119,7 @@ class WeatherViewModel extends ChangeNotifier {
         'userId': userId,
         'controllerId': controllerId,
       });
-      if (response != null && response.statusCode == 200) {
+      if (response.statusCode == 200) {
         final decoded = jsonDecode(response.body);
         if (decoded is Map && decoded['code'] == 200 && decoded['data'] is Map) {
           weatherModel = WeatherModelNew.fromJson(
@@ -249,7 +249,9 @@ class WeatherViewModel extends ChangeNotifier {
 
   WeatherDeviceList? get selectedDevice {
     if (weatherModel == null || weatherModel!.deviceList.isEmpty ||
-        selectedSerialNumber == null) return null;
+        selectedSerialNumber == null) {
+      return null;
+    }
     for (final device in weatherModel!.deviceList) {
       if (device.serialNumber == selectedSerialNumber) return device;
     }

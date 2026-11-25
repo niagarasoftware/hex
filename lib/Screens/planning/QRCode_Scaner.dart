@@ -24,8 +24,8 @@ class _QRCodeScanState extends State<QRCodeScan> {
           children: <Widget>[
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                foregroundColor: Colors.white,
-                backgroundColor: Colors.blue,
+                foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                backgroundColor: Theme.of(context).colorScheme.primary,
               ),
               onPressed: () {
                 Navigator.of(context)
@@ -210,8 +210,8 @@ class _QRViewExampleState extends State<QRViewExample> {
                   children: [
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        foregroundColor: Colors.white,
-                        backgroundColor: Colors.red,
+                        foregroundColor: Theme.of(context).colorScheme.onError,
+                        backgroundColor: Theme.of(context).colorScheme.error,
                       ),
                       onPressed: () => controller.stop(),
                       child: const Text('Pause'),
@@ -219,8 +219,8 @@ class _QRViewExampleState extends State<QRViewExample> {
                     const SizedBox(width: 10),
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        foregroundColor: Colors.white,
-                        backgroundColor: Colors.blue,
+                        foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                        backgroundColor: Theme.of(context).colorScheme.primary,
                       ),
                       onPressed: () => controller.start(),
                       child: const Text('Resume'),

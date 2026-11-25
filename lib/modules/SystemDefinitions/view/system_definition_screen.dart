@@ -707,7 +707,8 @@ class _SystemDefinitionState extends State<SystemDefinition> {
           ),
           Switch(
             value: value,
-            activeColor: primaryColor,
+            activeThumbColor: colorScheme.onPrimary,
+            activeTrackColor: colorScheme.primary,
             onChanged: onChanged,
           ),
         ],

@@ -163,7 +163,7 @@ class _ProductLimitState extends State<ProductLimit> {
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(width: 1, color: Theme.of(context).primaryColorDark.withOpacity(0.2)),
+          border: Border.all(width: 1, color: Theme.of(context).primaryColorDark.withValues(alpha: 0.2)),
         ),
         child: Wrap(
           runSpacing: 10,

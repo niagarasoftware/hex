@@ -30,6 +30,10 @@ class ArrowTab extends StatelessWidget {
   }
 
   Widget getAvatarAndName(BuildContext context){
+    final colorScheme = Theme.of(context).colorScheme;
+    final isProgress = arrowTabState == ArrowTabState.onProgress;
+    final textColor = isProgress ? colorScheme.onPrimary : colorScheme.onSurface;
+
     return Positioned(
       top: 10,
       left: 20,
@@ -42,11 +46,11 @@ class ArrowTab extends StatelessWidget {
               radius: 13,
               backgroundColor: getAvatarColor(context),
               child: Center(
-                child: Text('${index+1}', style: TextStyle(fontWeight: FontWeight.bold,fontSize: 14 ,overflow: TextOverflow.ellipsis, color: arrowTabState == ArrowTabState.onProgress ? Colors.white : Colors.black)),
+                child: Text('${index+1}', style: TextStyle(fontWeight: FontWeight.bold,fontSize: 14 ,overflow: TextOverflow.ellipsis, color: isProgress ? colorScheme.onPrimaryContainer : colorScheme.onSurface)),
               ),
             ),
             Expanded(
-                child: Text(title, style: TextStyle(fontWeight: FontWeight.bold,fontSize: 14 ,overflow: TextOverflow.ellipsis, color: arrowTabState == ArrowTabState.onProgress ? Colors.white : Colors.black),)
+                child: Text(title, style: TextStyle(fontWeight: FontWeight.bold,fontSize: 14 ,overflow: TextOverflow.ellipsis, color: textColor),)
             )
           ],
         ),
@@ -55,16 +59,18 @@ class ArrowTab extends StatelessWidget {
   }
 
   Color getImageColor(BuildContext context){
+    final colorScheme = Theme.of(context).colorScheme;
     return arrowTabState == ArrowTabState.complete
-        ? const Color(0xffD1D1D1)
+        ? colorScheme.outlineVariant
         : arrowTabState == ArrowTabState.onProgress
-        ? Theme.of(context).primaryColor : Colors.white;
+        ? colorScheme.primary : colorScheme.surface;
   }
 
   Color getAvatarColor(BuildContext context){
+    final colorScheme = Theme.of(context).colorScheme;
     return arrowTabState == ArrowTabState.complete
-        ? Colors.white
+        ? colorScheme.surface
         : arrowTabState == ArrowTabState.onProgress
-        ? Theme.of(context).primaryColorLight : const Color(0xffD1D1D1);
+        ? colorScheme.primaryContainer : colorScheme.outlineVariant;
   }
 }

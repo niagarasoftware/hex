@@ -653,7 +653,7 @@ class _ConfigWebViewState extends State<ConfigWebView> {
                                           onPressed: () {
                                             Navigator.of(context).pop();
                                           },
-                                          child: Text('Cancel')),
+                                          child: const Text('Cancel')),
                                       CustomMaterialButton(
                                         onPressed: () {
                                           if (formKey.currentState!
@@ -665,7 +665,7 @@ class _ConfigWebViewState extends State<ConfigWebView> {
                                             Navigator.of(context).pop();
                                           }
                                         },
-                                        child: Text(
+                                        child: const Text(
                                           'Ok',
                                           style: TextStyle(color: Colors.white),
                                         ),
@@ -947,7 +947,7 @@ class _ConfigWebViewState extends State<ConfigWebView> {
                     onPressed: () async {
                       payloadLoop:
                       for (var payload in listOfPayload) {
-                        print("payload : ${payload}");
+                        print("payload : $payload");
                         if (!payload['selected']) {
                           continue payloadLoop;
                         }

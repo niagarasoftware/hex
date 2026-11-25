@@ -16,6 +16,8 @@ class MainMenuSegmentWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
 
     return ConstrainedBox(
       constraints: const BoxConstraints(maxWidth: 500),
@@ -23,23 +25,23 @@ class MainMenuSegmentWidget extends StatelessWidget {
         style: ButtonStyle(
           foregroundColor: WidgetStateProperty.resolveWith<Color>((states) {
             if (states.contains(WidgetState.selected)) {
-              return Colors.white;
+              return colorScheme.onPrimaryContainer;
             } else {
-              return Colors.white60;
+              return colorScheme.onPrimary;
             }
           }),
           backgroundColor: WidgetStateProperty.resolveWith<Color>((states) {
             if (states.contains(WidgetState.selected)) {
-              return Theme.of(context).primaryColorLight;
+              return colorScheme.primaryContainer;
             } else {
-              return Colors.white10;
+              return Colors.transparent;
             }
           }),
           iconColor: WidgetStateProperty.resolveWith<Color>((states) {
             if (states.contains(WidgetState.selected)) {
-              return Colors.white;
+              return colorScheme.onPrimaryContainer;
             } else {
-              return Colors.white70;
+              return colorScheme.onPrimary;
             }
           }),
           textStyle: WidgetStateProperty.all(

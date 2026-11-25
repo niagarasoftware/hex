@@ -389,7 +389,7 @@ class _CropDetailsScreenState extends State<CropDetailsScreen> {
     Widget content = SafeArea(
       child: Center(
         child: Container(
-          constraints: BoxConstraints(maxWidth: kIsWeb ? 600 : double.infinity),
+          constraints: const BoxConstraints(maxWidth: kIsWeb ? 600 : double.infinity),
           padding: const EdgeInsets.all(16),
           child: SingleChildScrollView(
             child: Column(

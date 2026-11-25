@@ -6,7 +6,6 @@ import 'package:flutter/material.dart';
 import 'package:hex/views/customer/widgets/password_field.dart';
 import 'package:provider/provider.dart';
 import '../../../Screens/Map/oro_map/map_oro.dart';
-import '../../../Screens/Map/testmap.dart';
 import '../../../models/customer/site_model.dart';
 import '../../../Screens/Dealer/ble_mobile_screen.dart';
 import '../../../StateManagement/customer_provider.dart';
@@ -18,6 +17,7 @@ import '../../../modules/bluetooth_low_energy/view/node_connection_page.dart';
 import '../../../services/bluetooth/bluetooth_ble_service.dart';
 import '../../../services/communication_service.dart';
 import '../../../utils/constants.dart';
+import '../../../utils/Theme/oro_theme.dart';
 import '../../../view_models/customer/customer_screen_controller_view_model.dart';
 import '../input_output_connection_details.dart';
 import '../node_list/node_list.dart';
@@ -54,6 +54,9 @@ class CustomerFabMenu extends StatelessWidget {
 
     final commMode = Provider.of<CustomerProvider>(context).controllerCommMode;
 
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.end,
@@ -62,12 +65,13 @@ class CustomerFabMenu extends StatelessWidget {
           FloatingActionButton(
             heroTag: null,
             onPressed: null,
+            backgroundColor: colorScheme.surface,
             child: PopupMenuButton<String>(
               offset: const Offset(0, -180),
-              color: Colors.white,
+              color: colorScheme.surface,
               onSelected: (value) => _handleMenuSelection(value, context),
-              icon: const Icon(Icons.menu, color: Colors.black),
-              surfaceTintColor: Theme.of(context).primaryColorLight,
+              icon: Icon(Icons.menu, color: colorScheme.onSurface),
+              surfaceTintColor: Colors.transparent,
               itemBuilder: (context) => [
                 _buildPopupItem(
                     context, 'Node Status', Icons.format_list_numbered, 'Node Status'),
@@ -104,8 +108,8 @@ class CustomerFabMenu extends StatelessWidget {
               backgroundColor: (commMode == 2 &&
                   !(vm.bluetoothClassicService.isConnected ||
                       vm.bluetoothBleService.isConnected))
-                  ? Colors.redAccent
-                  : null,
+                  ? colorScheme.errorContainer
+                  : colorScheme.surface,
               onPressed: () => _showBottomSheet(context, currentMaster, vm,
                   vm.mySiteList.data[vm.sIndex].customerId, loggedInUser.id),
               tooltip: 'Connectivity',
@@ -119,11 +123,11 @@ class CustomerFabMenu extends StatelessWidget {
                     vm.wifiStrength <= 40 ? Icons.network_wifi_2_bar_outlined :
                     vm.wifiStrength <= 80 ? Icons.network_wifi_3_bar_outlined :
                     Icons.wifi,
-                    color: Colors.black,
+                    color: colorScheme.onSurface,
                   ),
                   Text(
                     '${vm.wifiStrength} %',
-                    style: const TextStyle(fontSize: 11.0, color: Colors.black54),
+                    style: TextStyle(fontSize: 11.0, color: colorScheme.onSurfaceVariant),
                   ),
                 ],
               )
@@ -133,7 +137,7 @@ class CustomerFabMenu extends StatelessWidget {
                         vm.bluetoothBleService.isConnected))
                     ? Icons.bluetooth
                     : Icons.bluetooth_disabled,
-                color: Colors.black,
+                color: colorScheme.onSurface,
               ),
             ),
           ],
@@ -244,8 +248,7 @@ class CustomerFabMenu extends StatelessWidget {
         Navigator.push(
           context,
           MaterialPageRoute(
-              builder: (context) => MapTestPage()
-                  // MapScreenOro(userId: loggedInUser.id, customerId: vm.mySiteList.data[vm.sIndex].customerId, controllerId: currentMaster.controllerId, imeiNo: currentMaster.deviceId, modelId: currentMaster.modelId,)
+              builder: (context) => MapScreenOro(userId: loggedInUser.id, customerId: vm.mySiteList.data[vm.sIndex].customerId, controllerId: currentMaster.controllerId, imeiNo: currentMaster.deviceId, modelId: currentMaster.modelId,)
           ),
         );
         break;
@@ -254,13 +257,14 @@ class CustomerFabMenu extends StatelessWidget {
 
   PopupMenuItem<String> _buildPopupItem(
       BuildContext context, String value, IconData icon, String text) {
+    final colorScheme = Theme.of(context).colorScheme;
     return PopupMenuItem<String>(
       value: value,
       child: Row(
         children: [
-          Icon(icon, color: Theme.of(context).primaryColor, size: 20),
+          Icon(icon, color: colorScheme.primary, size: 20),
           const SizedBox(width: 10),
-          Text(text),
+          Text(text, style: TextStyle(color: colorScheme.onSurface)),
         ],
       ),
     );
@@ -268,6 +272,10 @@ class CustomerFabMenu extends StatelessWidget {
 
   void _showBottomSheet(BuildContext context, MasterControllerModel currentMaster,
       CustomerScreenControllerViewModel vm, int customerId, int userId) {
+
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final oroColors = theme.extension<OroThemeColors>() ?? OroTheme.lightCustomColors;
 
     // Read the providers now: the sheet's own context may be gone by the
     // time the sheet has closed.
@@ -280,7 +288,7 @@ class CustomerFabMenu extends StatelessWidget {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      backgroundColor: Colors.white,
+      backgroundColor: colorScheme.surface,
       builder: (_) {
         return StatefulBuilder(
           builder: (context, setModalState) {
@@ -291,16 +299,16 @@ class CustomerFabMenu extends StatelessWidget {
               padding: const EdgeInsets.all(16.0),
               child: Wrap(
                 children: [
-                  const Text(
+                  Text(
                     "Controller Communication Mode",
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: colorScheme.onSurface),
                   ),
                   const SizedBox(height: 10),
                   ListTile(
                     leading: const Icon(Icons.wifi),
                     title: const Text("Wi-Fi / MQTT"),
                     trailing: commMode == 1 ?
-                    Icon(Icons.check, color: Theme.of(context).primaryColorLight) : null,
+                    Icon(Icons.check, color: colorScheme.primary) : null,
                     onTap: () async {
                       await _stopBluetoothAndUseMqtt(
                         mqttProvider: mqttProvider,
@@ -313,7 +321,7 @@ class CustomerFabMenu extends StatelessWidget {
                     leading: const Icon(Icons.bluetooth),
                     title: const Text("Bluetooth"),
                     trailing: commMode == 2 ?
-                    Icon(Icons.check, color: Theme.of(context).primaryColorLight) : null,
+                    Icon(Icons.check, color: colorScheme.primary) : null,
                     onTap: () {
                       vm.updateCommunicationMode(2, customerId);
                     },
@@ -324,8 +332,8 @@ class CustomerFabMenu extends StatelessWidget {
                       ListTile(
                         title: const Text('Scan & Connect the controller via Bluetooth',
                             style: TextStyle(fontWeight: FontWeight.bold)),
-                        subtitle: const Text('Stay close to the controller near by 10 meters',
-                            style: TextStyle(color: Colors.black45)),
+                        subtitle: Text('Stay close to the controller near by 10 meters',
+                            style: TextStyle(color: colorScheme.onSurfaceVariant)),
                         trailing: const Icon(CupertinoIcons.arrow_right_circle),
                         onTap: (){
                           final Map<String, dynamic> data = {
@@ -376,7 +384,7 @@ class CustomerFabMenu extends StatelessWidget {
                                     trailing: d.isConnected ? Row(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
-                                        const Icon(Icons.check_circle, color: Colors.green),
+                                        Icon(Icons.check_circle, color: oroColors.successGreen),
                                         const SizedBox(width: 8),
                                         IconButton(
                                           onPressed: () {
@@ -410,10 +418,10 @@ class CustomerFabMenu extends StatelessWidget {
                                 }).toList(),
                               );
                             } else {
-                              return const Center(
+                              return Center(
                                 child: Text(
                                   'Stay close to the controller and tap refresh to try scanning again.',
-                                  style: TextStyle(fontSize: 12, color: Colors.black38),
+                                  style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant),
                                 ),
                               );
                             }
@@ -438,7 +446,7 @@ class CustomerFabMenu extends StatelessWidget {
                                     trailing: d.isConnected ? Row(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
-                                        const Icon(Icons.check_circle, color: Colors.green),
+                                        Icon(Icons.check_circle, color: oroColors.successGreen),
                                         const SizedBox(width: 8),
                                         IconButton(
                                           onPressed: () {
@@ -473,10 +481,10 @@ class CustomerFabMenu extends StatelessWidget {
                                 }).toList(),
                               );
                             } else {
-                              return const Center(
+                              return Center(
                                 child: Text(
                                   'Stay close to the controller and tap refresh to try scanning again.',
-                                  style: TextStyle(fontSize: 12, color: Colors.black38),
+                                  style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant),
                                 ),
                               );
                             }
@@ -553,25 +561,29 @@ class CustomerFabMenu extends StatelessWidget {
 
         return StatefulBuilder(
           builder: (context, setState) {
+            final theme = Theme.of(context);
+            final colorScheme = theme.colorScheme;
+            final oroColors = theme.extension<OroThemeColors>() ?? OroTheme.lightCustomColors;
+
             return AlertDialog(
-              backgroundColor: Colors.white,
+              backgroundColor: colorScheme.surface,
               title: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   ListTile(
                     contentPadding: EdgeInsets.zero,
-                    leading: const Icon(Icons.wifi),
-                    title: const Text("Wi-Fi"),
+                    leading: Icon(Icons.wifi, color: colorScheme.onSurface),
+                    title: Text("Wi-Fi", style: TextStyle(color: colorScheme.onSurface, fontWeight: FontWeight.bold)),
                     subtitle: wifiStatus == '2'
-                        ? const Text(
+                        ? Text(
                       'Wi-Fi is enabled on the controller \n But No Internet connection',
-                      style: TextStyle(fontSize: 12, color: Colors.red),
+                      style: TextStyle(fontSize: 12, color: colorScheme.error),
                     )
                         : Text(
                       wifiStatus == '1'
                           ? 'Wi-Fi is enabled on the controller'
                           : 'Wi-Fi is disabled on the controller',
-                      style: const TextStyle(fontSize: 12, color: Colors.black45),
+                      style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant),
                     ),
                     trailing: Transform.scale(
                       scale: 0.8,
@@ -581,7 +593,7 @@ class CustomerFabMenu extends StatelessWidget {
                         child: CircularProgressIndicator(strokeWidth: 3),
                       ) : Switch(
                         value: wifiStatus == '1' || wifiStatus == '2',
-                        activeColor: Colors.blue,
+                        activeColor: colorScheme.primary,
                         onChanged: (bool value) async {
                           provider.updateWifiStatus('0', true);
                           final communicationService = context.read<CommunicationService>();
@@ -600,10 +612,10 @@ class CustomerFabMenu extends StatelessWidget {
                   const Divider(height: 0),
                   (wifiStatus=='1'||wifiStatus=='2')? ListTile(
                     contentPadding: EdgeInsets.zero,
-                    title: const Text("Available Networks"),
-                    subtitle: const Text(
+                    title: Text("Available Networks", style: TextStyle(color: colorScheme.onSurface, fontWeight: FontWeight.bold)),
+                    subtitle: Text(
                       "Select a Wi-Fi network to change the controller's connection.",
-                      style: TextStyle(fontSize: 11, color: Colors.grey),
+                      style: TextStyle(fontSize: 11, color: colorScheme.onSurfaceVariant),
                     ),
                     trailing: IconButton(
                       onPressed: () {
@@ -641,11 +653,11 @@ class CustomerFabMenu extends StatelessWidget {
                           leading: Icon(
                             Icons.wifi,
                             color: net["SIGNAL"] >= 75
-                                ? Colors.green
-                                : (net["SIGNAL"] >= 50 ? Colors.orange : Colors.red),
+                                ? oroColors.successGreen
+                                : (net["SIGNAL"] >= 50 ? oroColors.warningOrange : oroColors.dangerRed),
                           ),
-                          title: Text(ssid),
-                          subtitle: Text("Signal: ${net["SIGNAL"]}%"),
+                          title: Text(ssid, style: TextStyle(color: colorScheme.onSurface)),
+                          subtitle: Text("Signal: ${net["SIGNAL"]}%", style: TextStyle(color: colorScheme.onSurfaceVariant)),
                           trailing: connectingSsid == ssid
                               ? const SizedBox(
                             width: 20,
@@ -653,7 +665,7 @@ class CustomerFabMenu extends StatelessWidget {
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
                               : (net["IN-USE"] == "1"
-                              ? const Icon(Icons.check_circle, color: Colors.blue)
+                              ? Icon(Icons.check_circle, color: colorScheme.primary)
                               : null),
                           onTap: () async {
                             connectingNetwork.value = ssid;

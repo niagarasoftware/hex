@@ -9,13 +9,20 @@ class CustomerBottomNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return BottomNavigationBar(
       type: BottomNavigationBarType.fixed,
       currentIndex: index,
       onTap: onTap,
-      backgroundColor: Theme.of(context).primaryColor,
-      selectedItemColor: Colors.white,
-      unselectedItemColor: Colors.white70,
+      backgroundColor: colorScheme.primary,
+      selectedItemColor: colorScheme.onPrimaryContainer,
+      unselectedItemColor: colorScheme.onPrimary,
+      selectedIconTheme: IconThemeData(color: colorScheme.onPrimaryContainer),
+      unselectedIconTheme: IconThemeData(color: colorScheme.onPrimary),
+      selectedLabelStyle: TextStyle(color: colorScheme.onPrimaryContainer, fontWeight: FontWeight.bold),
+      unselectedLabelStyle: TextStyle(color: colorScheme.onPrimary),
       items: [
         const BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
         const BottomNavigationBarItem(icon: Icon(Icons.list), label: 'Scheduled Program'),

@@ -16,12 +16,11 @@ class ConfigureMqtt extends StatefulWidget {
   final deviceID, userId, controllerId,communicationType;
 
   const ConfigureMqtt(
-      {Key? key,
+      {super.key,
         required this.deviceID,
         required this.userId,
         required this.communicationType,
-        required this.controllerId})
-      : super(key: key);
+        required this.controllerId});
 
   @override
   _ConfigureMqttState createState() => _ConfigureMqttState();
@@ -44,7 +43,7 @@ class _ConfigureMqttState extends State<ConfigureMqtt> {
   final List<String> platforms = ['AWS', 'Azure'];
   final List<String> dealers = ['ORO', 'LK'];
   final List<String> versions = ['Version 1.0', 'Version 1.1'];
-  TextEditingController _macController = TextEditingController();
+  final TextEditingController _macController = TextEditingController();
   final Repository repository = Repository(HttpService());
   String _lastPayload = '';
 
@@ -77,7 +76,7 @@ class _ConfigureMqttState extends State<ConfigureMqtt> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text("${!payload.contains("6801") ? payload : ""}"),
+          content: Text(!payload.contains("6801") ? payload : ""),
           duration: const Duration(seconds: 2),
         ),
       );
@@ -106,7 +105,7 @@ class _ConfigureMqttState extends State<ConfigureMqtt> {
           isLoading = false;
         });
       }
-    } catch (e, stacktrace) {
+    } catch (e) {
       setState(() {
         errorMessage = 'Error fetching data: $e,';
         isLoading = false;
@@ -255,10 +254,11 @@ class _ConfigureMqttState extends State<ConfigureMqtt> {
           return ['AgritelAppToFirmware/', '0'];
         }
 
-        if (selectedVersion == 'Version 1.0')
+        if (selectedVersion == 'Version 1.0') {
           return ['AppToFirmware/', '1'];
-        else
+        } else {
           return ['OroAppToFirmware/', '0'];
+        }
       }
     } else {
       if (selectedPlatform == 'AWS') {
@@ -266,10 +266,11 @@ class _ConfigureMqttState extends State<ConfigureMqtt> {
         if (selectedVersion == 'Version 1.0') return ['AppsToFirmware/', '1'];
       } else {
         AppLog.log('return LK azure');
-        if (selectedVersion == 'Version 1.0')
+        if (selectedVersion == 'Version 1.0') {
           return ['AppsToFirmware/', '1'];
-        else
+        } else {
           return ['AppToFirmware/', '0'];
+        }
       }
     }
     AppLog.log('return else');
@@ -717,7 +718,7 @@ class _ConfigureMqttState extends State<ConfigureMqtt> {
                                     title: 'Current Dealer',
                                     icon: Icons.business,
                                     child: DropdownButtonFormField<String>(
-                                      value: selectedDealer,
+                                      initialValue: selectedDealer,
                                       isExpanded: true,
                                       style: const TextStyle(
                                         color: Color(0xFF1E293B),
@@ -739,7 +740,7 @@ class _ConfigureMqttState extends State<ConfigureMqtt> {
                                     title: 'Current Platform',
                                     icon: Icons.cloud_outlined,
                                     child: DropdownButtonFormField<String>(
-                                      value: selectedPlatform,
+                                      initialValue: selectedPlatform,
                                       isExpanded: true,
                                       style: const TextStyle(
                                         color: Color(0xFF1E293B),
@@ -753,7 +754,7 @@ class _ConfigureMqttState extends State<ConfigureMqtt> {
                                       )).toList(),
                                       onChanged: (value) => setState(() {
                                         AppLog.log('flaVOR ${F.appFlavor}');
-                                        AppLog.log('${AppConstants.mqttUrl}');
+                                        AppLog.log(AppConstants.mqttUrl);
                                         selectedPlatform = value;
                                       }),
                                     ),
@@ -765,7 +766,7 @@ class _ConfigureMqttState extends State<ConfigureMqtt> {
                                     title: 'Current Version',
                                     icon: Icons.system_update_alt,
                                     child: DropdownButtonFormField<String>(
-                                      value: selectedVersion,
+                                      initialValue: selectedVersion,
                                       isExpanded: true,
                                       style: const TextStyle(
                                         color: Color(0xFF1E293B),
@@ -787,7 +788,7 @@ class _ConfigureMqttState extends State<ConfigureMqtt> {
                                     title: 'Update Project',
                                     icon: Icons.folder_outlined,
                                     child: DropdownButtonFormField<int>(
-                                      value: selectedIndex,
+                                      initialValue: selectedIndex,
                                       isExpanded: true,
                                       style: const TextStyle(
                                         color: Color(0xFF1E293B),

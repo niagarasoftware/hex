@@ -156,13 +156,13 @@ class SensorValueButton extends StatelessWidget {
               }
             },
             style: ButtonStyle(
-              backgroundColor: MaterialStateProperty.all(
+              backgroundColor: WidgetStateProperty.all(
                 operator == 'C' ? Colors.redAccent : Theme.of(context).primaryColor,
               ),
             ),
             child: operator == 'cl'
                 ? const Icon(Icons.backspace_outlined, color: Colors.white)
-                : Text(operator, style: TextStyle(fontSize: 15, color: Colors.white)),
+                : Text(operator, style: const TextStyle(fontSize: 15, color: Colors.white)),
           );
         }).toList(),
       ),

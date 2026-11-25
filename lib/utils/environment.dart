@@ -8,11 +8,11 @@ class Environment {
   static Map<String, Map<String, dynamic>> config =
       <String, Map<String, dynamic>>{
     'oroDevelopment': {
-      'apiUrl': 'http://192.168.1.85:5000/api/v1',
-      'userManualBaseUrl': 'http://192.168.1.85:5000',
+      'apiUrl': 'http://20.193.232.190:5000/api/v1',
+      'userManualBaseUrl': 'http://20.193.232.190:5000',
       'apiKey': 'dev-api-key',
-      'mqttWebUrl': 'ws://192.168.68.141',
-      'mqttMobileUrl': '192.168.68.141',
+      'mqttWebUrl': 'ws://20.193.232.190',
+      'mqttMobileUrl': '20.193.232.190',
       'publishTopic': 'AppToFirmware',
       'subscribeTopic': 'FirmwareToApp',
       'mqttWebPort': 9001,

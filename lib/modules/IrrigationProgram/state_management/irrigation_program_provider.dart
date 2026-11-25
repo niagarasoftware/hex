@@ -17,6 +17,8 @@ class IrrigationProgramMainProvider extends ChangeNotifier {
   int get selectedTabIndex => _selectedTabIndex;
   bool ignoreValidation = false;
 
+  void notifyUI() => notifyListeners();
+
   void updateTabIndex(int newIndex) {
     _selectedTabIndex = newIndex;
     notifyListeners();

@@ -177,13 +177,13 @@ class _FertilizerSetScreenState extends State<FertilizerSetScreen> {
                                                         ),
                                                         tableRowCell(
                                                             width: 50,
-                                                            widget: Text('Ch ${recipe.channel.indexOf(channel) + 1}', style: TextStyle(color: Colors.black54),)
+                                                            widget: Text('Ch ${recipe.channel.indexOf(channel) + 1}', style: const TextStyle(color: Colors.black54),)
                                                         ),
                                                         tableRowCell(
                                                             width: 120,
                                                             widget : CustomDropDownButton(
                                                               value: channel.method,
-                                                              list: ['Time', 'Pro.time', 'Quantity', 'Pro.quantity', 'Pro.quant per 1000L'],
+                                                              list: const ['Time', 'Pro.time', 'Quantity', 'Pro.quantity', 'Pro.quant per 1000L'],
                                                               onChanged: (value) {
                                                                 setState(() {
                                                                   channel.method = value!;
