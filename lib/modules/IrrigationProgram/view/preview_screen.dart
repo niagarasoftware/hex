@@ -278,7 +278,11 @@ class _PreviewScreenState extends State<PreviewScreen> {
                       xValueMapper: (SegmentChartData data, _) => data.name,
                       yValueMapper: (SegmentChartData data, _) => data.minutes,
                       pointColorMapper: (SegmentChartData data, _) => data.color,
-                      innerRadius: '65%',
+                      innerRadius: '60%',
+                      radius: '95%',
+                      strokeColor: Colors.white,
+                      strokeWidth: 4,
+                      cornerStyle: CornerStyle.bothCurve,
                     )
                   ],
                 ),
@@ -436,10 +440,11 @@ class _PreviewScreenState extends State<PreviewScreen> {
 
   List<SegmentChartData> _generateChartData() {
     final colors = [
-      const Color(0xFF7C3AED),
-      const Color(0xFF6366F1),
-      const Color(0xFF06B6D4),
-      const Color(0xFFF59E0B),
+      const Color(0xFFF95738), // Orange
+      const Color(0xFF7C3AED), // Purple
+      const Color(0xFF0EA5E9), // Cyan / Blue
+      const Color(0xFFF59E0B), // Amber / Yellow
+      const Color(0xFF8B5CF6), // Violet
     ];
 
     final seqList = irrigationProvider.sequenceData;
