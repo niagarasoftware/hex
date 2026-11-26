@@ -110,11 +110,6 @@ class _CustomerScreenMiddleState
               ],
             ),
           ),
-          if (isGemRNova)
-            SideActionMenu(
-              screenHeight: MediaQuery.sizeOf(context).height,
-              callbackFunction: callbackFunction,
-            ),
         ],
       ),
     );
