@@ -63,7 +63,6 @@ class _CustomerScreenMiddleState
 
     return Scaffold(
       key: _scaffoldKey,
-      appBar: buildCustomerAppBar(context, vm, cMaster, _scaffoldKey, showMenu: false, isNarrow: false),
       body: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [

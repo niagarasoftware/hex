@@ -8,6 +8,7 @@ import '../../../../StateManagement/mqtt_payload_provider.dart';
 import '../../../../models/customer/extensions/program_extensions.dart';
 import '../../../../models/customer/site_model.dart';
 import 'package:hex/providers/user_provider.dart';
+import 'package:hex/utils/enums.dart';
 import '../../../../services/communication_service.dart';
 import '../../../../utils/constants.dart';
 import '../../../../utils/formatters.dart';
@@ -1000,6 +1001,15 @@ class _IrrigationLineDashboardState extends State<IrrigationLineDashboard> {
   // -------------------------------------------------------------
   Widget _buildTopBar(bool isMiddle) {
     final mqttProvider = context.watch<MqttPayloadProvider>();
+    final userProvider = context.watch<UserProvider>();
+    final loggedInUser = userProvider.loggedInUser;
+    final viewedCustomer = userProvider.viewedCustomer;
+
+    // Display Back button when Dealer or Admin is viewing a customer dashboard
+    final bool showBackButton =
+        (loggedInUser.role == UserRole.admin || loggedInUser.role == UserRole.dealer) &&
+        viewedCustomer != null;
+
     final vm = widget.viewModel;
     final siteList = vm.mySiteList.data;
     final currentSite = vm.myCurrentSite.isNotEmpty
@@ -1024,6 +1034,7 @@ class _IrrigationLineDashboardState extends State<IrrigationLineDashboard> {
       }
     }
 
+    final backButtonWidget = showBackButton ? _buildBackButton(context, userProvider) : null;
     final siteWidget = _buildSiteDropdownPill(siteList, currentSite, vm);
     final lineWidget = _buildLineDropdownPill(lineList, vm);
     final searchWidget = _buildSearchPill();
@@ -1036,6 +1047,10 @@ class _IrrigationLineDashboardState extends State<IrrigationLineDashboard> {
         children: [
           Row(
             children: [
+              if (backButtonWidget != null) ...[
+                backButtonWidget,
+                const SizedBox(width: 10),
+              ],
               siteWidget,
               const SizedBox(width: 10),
               lineWidget,
@@ -1058,6 +1073,10 @@ class _IrrigationLineDashboardState extends State<IrrigationLineDashboard> {
 
     return Row(
       children: [
+        if (backButtonWidget != null) ...[
+          backButtonWidget,
+          const SizedBox(width: 10),
+        ],
         siteWidget,
         const SizedBox(width: 10),
         lineWidget,
@@ -1068,6 +1087,40 @@ class _IrrigationLineDashboardState extends State<IrrigationLineDashboard> {
         const SizedBox(width: 10),
         statusWidget,
       ],
+    );
+  }
+
+  Widget _buildBackButton(BuildContext context, UserProvider userProvider) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Container(
+      width: 38,
+      height: 38,
+      decoration: BoxDecoration(
+        color: colorScheme.primary,
+        shape: BoxShape.circle,
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x1A000000),
+            blurRadius: 4,
+            offset: Offset(0, 1),
+          ),
+        ],
+      ),
+      child: IconButton(
+        padding: EdgeInsets.zero,
+        tooltip: 'Back to customer list',
+        onPressed: () {
+          if (userProvider.viewedCustomer != null) {
+            userProvider.popViewedCustomer();
+          }
+          Navigator.maybePop(context);
+        },
+        icon: Icon(
+          Icons.arrow_back_rounded,
+          size: 20,
+          color: colorScheme.onPrimary,
+        ),
+      ),
     );
   }
 
