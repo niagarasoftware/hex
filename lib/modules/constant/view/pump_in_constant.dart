@@ -21,6 +21,7 @@ class _PumpInConstantState extends State<PumpInConstant> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     double screenWidth = MediaQuery.of(context).size.width;
     int settingLength = widget.constPvd.defaultPumpSetting.where((setting) {
       if(AppConstants.gemModelList.contains(widget.constPvd.userData['modelId'])){
@@ -30,82 +31,138 @@ class _PumpInConstantState extends State<PumpInConstant> {
       }
     }).length;
     double minWidth = (cellWidth * 4) + (settingLength * cellWidth) + 50;
-    Color borderColor = const Color(0xffE1E2E3);
-    return DataTable2(
-      border: TableBorder(
-        top: BorderSide(color: borderColor, width: 1),
-        bottom: BorderSide(color: borderColor, width: 1),
-        left: BorderSide(color: borderColor, width: 1),
-        right: BorderSide(color: borderColor, width: 1),
-      ),
-        minWidth: minWidth,
-        fixedLeftColumns: minWidth < screenWidth ? 0 : 1,
-        columns: [
-          ...['Pump', 'Location', 'Device', 'Connection No'].map((title) {
-            return DataColumn2(
-              headingRowAlignment: MainAxisAlignment.center,
-                fixedWidth: cellWidth,
-                label: Text(title, style: Theme.of(context).textTheme.labelLarge, softWrap: true)
-            );
-          }),
-          ...widget.constPvd.defaultPumpSetting
-              .where((defaultSetting) => AppConstants.gemModelList.contains(widget.constPvd.userData['modelId']) ? defaultSetting.gemDisplay : defaultSetting.ecoGemDisplay)
-              .map((defaultSetting) {
-            return DataColumn2(
-                headingRowAlignment: MainAxisAlignment.center,
-                fixedWidth: cellWidth,
-                label: Text(defaultSetting.title, style: Theme.of(context).textTheme.labelLarge, softWrap: true)
-            );
-          }),
-        ],
-        rows: List.generate(widget.constPvd.pump.length, (row){
-          ObjectInConstantModel pump = widget.constPvd.pump[row];
-          return DataRow2(
-              color: WidgetStatePropertyAll(
-                row.isOdd ? Colors.white : const Color(0xffF8F8F8),
-              ),
-              cells: [
-                DataCell(
-                    Center(child: Text(pump.name.toString(), textAlign: TextAlign.center, style: TextStyle(color: Theme.of(context).primaryColorLight), softWrap: true))
-                ),
-                DataCell(
-                    Center(child: Text(widget.constPvd.getName(pump.location),textAlign: TextAlign.center, softWrap: true))
-                ),
-                DataCell(
-                    Center(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: [
-                          if(AppConstants.gemModelList.contains(widget.constPvd.userData['modelId']))
-                            ...[
-                              Text(widget.constPvd.getDeviceDetails(key: 'deviceName', controllerId: pump.controllerId),textAlign: TextAlign.center, softWrap: true, style: TextStyle(color: Theme.of(context).primaryColorLight),),
-                              Text(widget.constPvd.getDeviceDetails(key: 'deviceId', controllerId: pump.controllerId), style: TextStyle(fontWeight: FontWeight.w100, color: Colors.grey.shade700) ),
-                            ]
-                          else
-                            ...[
-                              Text(widget.constPvd.userData['deviceName'],textAlign: TextAlign.center, softWrap: true, style: TextStyle(color: Theme.of(context).primaryColorLight),),
-                              Text(widget.constPvd.userData['deviceId'], style: TextStyle(fontWeight: FontWeight.w100, color: Colors.grey.shade700) ),
-                            ]
 
-                        ],
+    return DataTable2(
+      dataRowHeight: 64.0,
+      headingRowHeight: 44.0,
+      headingRowColor: WidgetStatePropertyAll(colorScheme.surfaceContainerLow),
+      border: TableBorder.all(
+        color: colorScheme.outlineVariant,
+        width: 1,
+      ),
+      minWidth: minWidth,
+      fixedLeftColumns: minWidth < screenWidth ? 0 : 1,
+      columns: [
+        ...['Pump', 'Location', 'Device', 'Connection No'].map((title) {
+          return DataColumn2(
+            headingRowAlignment: MainAxisAlignment.center,
+            fixedWidth: cellWidth,
+            label: Text(
+              title,
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 13,
+                color: colorScheme.onSurface,
+              ),
+              textAlign: TextAlign.center,
+              softWrap: true,
+            ),
+          );
+        }),
+        ...widget.constPvd.defaultPumpSetting
+            .where((defaultSetting) => AppConstants.gemModelList.contains(widget.constPvd.userData['modelId']) ? defaultSetting.gemDisplay : defaultSetting.ecoGemDisplay)
+            .map((defaultSetting) {
+          return DataColumn2(
+            headingRowAlignment: MainAxisAlignment.center,
+            fixedWidth: cellWidth,
+            label: Text(
+              defaultSetting.title,
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 13,
+                color: colorScheme.onSurface,
+              ),
+              textAlign: TextAlign.center,
+              softWrap: true,
+            ),
+          );
+        }),
+      ],
+      rows: List.generate(widget.constPvd.pump.length, (row){
+        ObjectInConstantModel pump = widget.constPvd.pump[row];
+        final isGem = AppConstants.gemModelList.contains(widget.constPvd.userData['modelId']);
+        final devName = isGem
+            ? widget.constPvd.getDeviceDetails(key: 'deviceName', controllerId: pump.controllerId)
+            : widget.constPvd.userData['deviceName'] ?? '';
+        final devId = isGem
+            ? widget.constPvd.getDeviceDetails(key: 'deviceId', controllerId: pump.controllerId)
+            : widget.constPvd.userData['deviceId'] ?? '';
+
+        return DataRow2(
+            color: WidgetStatePropertyAll(
+              row.isOdd ? colorScheme.surface : colorScheme.surfaceContainerLow,
+            ),
+            cells: [
+              DataCell(
+                Center(
+                  child: Text(
+                    pump.name.toString(),
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                      color: colorScheme.onSurface,
+                    ),
+                    softWrap: true,
+                  ),
+                ),
+              ),
+              DataCell(
+                Center(
+                  child: Text(
+                    widget.constPvd.getName(pump.location),
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 12.5, color: colorScheme.onSurfaceVariant),
+                    softWrap: true,
+                  ),
+                ),
+              ),
+              DataCell(
+                Center(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        devName,
+                        textAlign: TextAlign.center,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 12,
+                          color: colorScheme.onSurface,
+                        ),
                       ),
-                    )
+                      const SizedBox(height: 2),
+                      Text(
+                        devId,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-                DataCell(
-                    Center(
-                      child: Text(
-                        AppConstants.ecoGemModelList.contains(widget.constPvd.userData['modelId'])
-                            ?
-                        'M ${row + 1}'
-                            :
-                        '${pump.connectionNo}',textAlign: TextAlign.center, softWrap: true, ),
-                    )
+              ),
+              DataCell(
+                Center(
+                  child: Text(
+                    AppConstants.ecoGemModelList.contains(widget.constPvd.userData['modelId'])
+                        ? 'M ${row + 1}'
+                        : '${pump.connectionNo}',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 12.5, color: colorScheme.onSurface),
+                    softWrap: true,
+                  ),
                 ),
-                ...pump.setting
-                    .where((defaultSetting) => AppConstants.gemModelList.contains(widget.constPvd.userData['modelId']) ? defaultSetting.gemDisplay : defaultSetting.ecoGemDisplay)
-                    .map((setting) {
-                  return DataCell(
+              ),
+              ...pump.setting
+                  .where((defaultSetting) => AppConstants.gemModelList.contains(widget.constPvd.userData['modelId']) ? defaultSetting.gemDisplay : defaultSetting.ecoGemDisplay)
+                  .map((setting) {
+                return DataCell(
                     AnimatedBuilder(
                       animation: setting.value,
                       builder: (context, child){
@@ -123,11 +180,11 @@ class _PumpInConstantState extends State<PumpInConstant> {
                       },
                     )
 
-                  );
-                }),
-              ]
-          );
-        }),
+                );
+              }),
+            ]
+        );
+      }),
     );
   }
 }

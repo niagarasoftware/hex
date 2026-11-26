@@ -7,9 +7,11 @@ class CustomCheckBox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Center(
       child: Checkbox(
-          activeColor: Theme.of(context).primaryColorLight,
+          activeColor: colorScheme.primary,
+          checkColor: colorScheme.onPrimary,
           value: value,
           onChanged: onChanged
       ),

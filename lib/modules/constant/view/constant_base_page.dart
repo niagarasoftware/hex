@@ -209,6 +209,14 @@ class _ConstantBasePageState extends State<ConstantBasePage>
                     color:
                     isSelected ? colorScheme.primary : Colors.transparent,
                     borderRadius: BorderRadius.circular(10),
+                    border: Border(
+                      bottom: BorderSide(
+                        color: isSelected
+                            ? colorScheme.secondary
+                            : Colors.transparent,
+                        width: 4.0,
+                      ),
+                    ),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
