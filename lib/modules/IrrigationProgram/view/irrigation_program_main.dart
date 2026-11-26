@@ -179,11 +179,13 @@ class _IrrigationProgramState extends State<IrrigationProgram> with SingleTicker
         });
         _hideLoadingDialog();
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
+      debugPrint("Error fetching irrigation program data: $e");
+      debugPrint(stackTrace.toString());
       if (mounted) {
         _hideLoadingDialog();
         setState(() {
-          _errorMessage = "Failed to load irrigation program data.";
+          _errorMessage = "Failed to load irrigation program data: $e";
         });
         _showErrorDialog();
       }
@@ -253,10 +255,9 @@ class _IrrigationProgramState extends State<IrrigationProgram> with SingleTicker
 
     if (!mainProvider.isPumpStationMode && mainProvider.pump!.isNotEmpty && !mainProvider.selectedObjects!.any((element) => element.objectId == 5) && !AppConstants.ecoGemFlowControlValveModel.contains(widget.modelId)) {
       if (!mainProvider.ignoreValidation) {
-        final hasMultiplePumps = mainProvider.pump!.length > 1;
         _showValidationAlert(
           content: "Are you sure to proceed without pump selection?",
-          showConfirm: hasMultiplePumps,
+          showConfirm: true,
           onConfirm: () {
             mainProvider.ignoreValidation = true;
             _navigateToTab(targetIndex);
