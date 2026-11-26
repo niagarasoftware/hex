@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
+import 'package:hex/utils/Theme/oro_theme.dart';
 import 'package:hex/utils/constants.dart';
 import 'package:provider/provider.dart';
 import '../state_management/irrigation_program_provider.dart';
@@ -236,28 +237,28 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   "ACTIVE PLANNING METHOD STRATEGY",
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF5B21B6),
+                    color: primaryPurple,
                     letterSpacing: 0.8,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   "PLANNING METHOD ${currentScheduleType.toUpperCase()}",
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF0F172A),
+                    color: textDark,
                   ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   _getPlanningSubtitle(currentScheduleType),
-                  style: const TextStyle(fontSize: 13, color: Color(0xFF64748B)),
+                  style: TextStyle(fontSize: 13, color: textMuted),
                 ),
               ],
             ),
@@ -269,22 +270,22 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               decoration: BoxDecoration(
-                color: const Color(0xFFF3E8FF),
+                color: activeBgLavender,
                 borderRadius: BorderRadius.circular(20),
               ),
-              child: const Row(
+              child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
                     "Change Planning Method",
                     style: TextStyle(
-                      color: Color(0xFF5B21B6),
+                      color: primaryPurple,
                       fontWeight: FontWeight.bold,
                       fontSize: 13,
                     ),
                   ),
-                  SizedBox(width: 6),
-                  Icon(Icons.keyboard_arrow_down, color: Color(0xFF5B21B6), size: 18),
+                  const SizedBox(width: 6),
+                  Icon(Icons.keyboard_arrow_down, color: primaryPurple, size: 18),
                 ],
               ),
             ),
@@ -327,9 +328,9 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
       context: context,
       builder: (BuildContext ctx) {
         return SimpleDialog(
-          title: const Text(
+          title: Text(
             'Schedule types',
-            style: TextStyle(color: Color(0xFF5B21B6), fontWeight: FontWeight.bold),
+            style: TextStyle(color: primaryPurple, fontWeight: FontWeight.bold),
           ),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           children: List.generate(types.length, (i) {
@@ -348,16 +349,16 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                       types[i],
                       style: TextStyle(
                         fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                        color: isSelected ? const Color(0xFF5B21B6) : const Color(0xFF0F172A),
+                        color: isSelected ? primaryPurple : textDark,
                       ),
                     ),
                     subtitle: Text(
                       descriptions[i],
-                      style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                      style: TextStyle(fontSize: 12, color: textMuted),
                     ),
                     trailing: Icon(
                       isSelected ? Icons.radio_button_checked : Icons.radio_button_off,
-                      color: isSelected ? const Color(0xFF5B21B6) : const Color(0xFF94A3B8),
+                      color: isSelected ? primaryPurple : const Color(0xFF94A3B8),
                     ),
                   ),
                 ),
@@ -411,7 +412,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
       mainValue: "$currentDaysVal Day${(int.tryParse(currentDaysVal) ?? 1) > 1 ? 's' : ''}",
       statusText: "Daily recurring execution",
       statusIcon: Icons.sync,
-      statusColor: const Color(0xFF5B21B6),
+      statusColor: primaryPurple,
       trailingStepper: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -450,7 +451,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
       trailingSwitch: Switch(
         value: isForceToEndDate,
         activeThumbColor: Colors.white,
-        activeTrackColor: const Color(0xFF5B21B6),
+        activeTrackColor: primaryPurple,
         onChanged: (val) => irrigationProgramProvider.updateForceToEndDate2(newValue: val),
       ),
     );
@@ -538,15 +539,15 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFEDE9FE),
+                  color: activeBgLavender,
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: Icon(icon, color: const Color(0xFF5B21B6), size: 18),
+                child: Icon(icon, color: primaryPurple, size: 18),
               ),
               if (trailingSwitch != null)
                 trailingSwitch
               else if (trailingIcon != null)
-                Icon(trailingIcon, color: const Color(0xFF64748B), size: 20)
+                Icon(trailingIcon, color: textMuted, size: 20)
               else
                 Text(
                   topLabel,
@@ -723,13 +724,13 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                     Container(
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFEDE9FE),
+                        color: activeBgLavender,
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: const Icon(Icons.alarm_rounded, color: Color(0xFF5B21B6), size: 22),
+                      child: Icon(Icons.alarm_rounded, color: primaryPurple, size: 22),
                     ),
                     const SizedBox(width: 14),
-                    const Expanded(
+                    Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -738,13 +739,13 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
-                              color: Color(0xFF0F172A),
+                              color: textDark,
                             ),
                           ),
-                          SizedBox(height: 2),
+                          const SizedBox(height: 2),
                           Text(
                             "Program hardware time-synchronized trigger channels and recurring execution sequences.",
-                            style: TextStyle(fontSize: 13, color: Color(0xFF64748B)),
+                            style: TextStyle(fontSize: 13, color: textMuted),
                           ),
                         ],
                       ),
@@ -762,9 +763,9 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                     ),
-                    child: const Text(
+                    child: Text(
                       "Select",
-                      style: TextStyle(color: Color(0xFF1E293B), fontWeight: FontWeight.w600, fontSize: 13),
+                      style: TextStyle(color: textDark, fontWeight: FontWeight.w600, fontSize: 13),
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -786,7 +787,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                   FilledButton.icon(
                     onPressed: () => addTab(functionCondition),
                     style: FilledButton.styleFrom(
-                      backgroundColor: const Color(0xFF5B21B6),
+                      backgroundColor: primaryPurple,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                     ),

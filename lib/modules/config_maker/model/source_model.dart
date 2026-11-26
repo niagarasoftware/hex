@@ -1,5 +1,5 @@
-import 'package:hex/modules/config_maker/model/irrigation_line_model.dart';
 import 'device_object_model.dart';
+import 'irrigation_line_model.dart';
 
 class SourceModel {
   DeviceObjectModel commonDetails;
@@ -10,7 +10,6 @@ class SourceModel {
   double bottomFloatForInletPump;
   double topFloatForOutletPump;
   double bottomFloatForOutletPump;
-  double nutrient;
   List<double> inletPump;
   List<double> outletPump;
   List<double> aerator;
@@ -19,6 +18,13 @@ class SourceModel {
   List<double> inletTankValve;
   List<double> outletTankValve;
   List<double> agitator;
+  double nutrient;
+
+  bool get isMultiInletTankValve => inletTankValve.length > 1;
+  int get inletTankValvePortCount => inletTankValve.isEmpty ? 1 : inletTankValve.length;
+
+  bool get isMultiOutletTankValve => outletTankValve.length > 1;
+  int get outletTankValvePortCount => outletTankValve.isEmpty ? 1 : outletTankValve.length;
 
   SourceModel({
     required this.commonDetails,
@@ -29,7 +35,6 @@ class SourceModel {
     this.bottomFloatForInletPump = 0.0,
     this.topFloatForOutletPump = 0.0,
     this.bottomFloatForOutletPump = 0.0,
-    this.nutrient = 0.0,
     required this.inletPump,
     required this.outletPump,
     required this.aerator,
@@ -38,6 +43,7 @@ class SourceModel {
     required this.inletTankValve,
     required this.outletTankValve,
     required this.agitator,
+    this.nutrient = 0.0,
   });
 
   void updateObjectIdIfDeletedInProductLimit(List<double> objectIdToBeDeleted){
@@ -68,7 +74,6 @@ class SourceModel {
         bottomFloatForInletPump: intOrDoubleValidate(data['bottomFloatForInletPump'] ?? 0.0),
         topFloatForOutletPump: intOrDoubleValidate(data['topFloatForOutletPump'] ?? 0.0),
         bottomFloatForOutletPump: intOrDoubleValidate(data['bottomFloatForOutletPump'] ?? 0.0),
-        nutrient: intOrDoubleValidate(data['nutrient'] ?? 0.0),
         inletPump: (data['inletPump'] as List<dynamic>).map((sNo) => sNo as double).toList(),
         outletPump: (data['outletPump'] as List<dynamic>).map((sNo) => sNo as double).toList(),
         aerator: data['aerator'] != null ?  (data['aerator'] as List<dynamic>).map((sNo) => sNo as double).toList() : [],
@@ -77,6 +82,7 @@ class SourceModel {
         inletTankValve: data['inletTankValve'] != null ? (data['inletTankValve'] as List<dynamic>).map((sNo) => sNo as double).toList() : [],
         outletTankValve: data['outletTankValve'] != null ? (data['outletTankValve'] as List<dynamic>).map((sNo) => sNo as double).toList() : [],
         agitator: data['agitator'] != null ? (data['agitator'] as List<dynamic>).map((sNo) => sNo as double).toList() : [],
+        nutrient: intOrDoubleValidate(data['nutrient'] ?? 0.0),
     );
   }
 
@@ -90,7 +96,6 @@ class SourceModel {
       'bottomFloatForInletPump' : bottomFloatForInletPump,
       'topFloatForOutletPump' : topFloatForOutletPump,
       'bottomFloatForOutletPump' : bottomFloatForOutletPump,
-      'nutrient' : nutrient,
       'inletPump' : inletPump,
       'outletPump' : outletPump,
       'aerator' : aerator,
@@ -99,6 +104,7 @@ class SourceModel {
       'inletTankValve' : inletTankValve,
       'outletTankValve' : outletTankValve,
       'agitator' : agitator,
+      'nutrient' : nutrient,
     });
     return commonInfo;
   }

@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:hex/services/mqtt_service.dart';
+import 'package:hex/utils/Theme/oro_theme.dart';
 import 'package:hex/utils/constants.dart';
 import 'package:provider/provider.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
@@ -132,9 +133,9 @@ class _PreviewScreenState extends State<PreviewScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFFF5F3FF),
+        color: activeBgLavender,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFDDD6FE)),
+        border: Border.all(color: primaryPurple.withOpacity(0.3)),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -145,14 +146,14 @@ class _PreviewScreenState extends State<PreviewScreen> {
                 Container(
                   width: 40,
                   height: 40,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFF5B21B6),
+                  decoration: BoxDecoration(
+                    color: primaryPurple,
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(Icons.check_rounded, color: Colors.white, size: 22),
                 ),
                 const SizedBox(width: 14),
-                const Expanded(
+                Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -161,13 +162,13 @@ class _PreviewScreenState extends State<PreviewScreen> {
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF0F172A),
+                          color: textDark,
                         ),
                       ),
-                      SizedBox(height: 2),
+                      const SizedBox(height: 2),
                       Text(
                         "Audit Segment flow quotas, hardware allocations, and fail-safes below before saving.",
-                        style: TextStyle(fontSize: 13, color: Color(0xFF64748B)),
+                        style: TextStyle(fontSize: 13, color: textMuted),
                       ),
                     ],
                   ),
@@ -179,22 +180,22 @@ class _PreviewScreenState extends State<PreviewScreen> {
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              const Text(
+              Text(
                 "ESTIMATED CYCLE VOLUME",
                 style: TextStyle(
                   fontSize: 10,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF64748B),
+                  color: textMuted,
                   letterSpacing: 0.8,
                 ),
               ),
               const SizedBox(height: 2),
               Text(
                 "$estimatedLitres Litres",
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF5B21B6),
+                  color: primaryPurple,
                 ),
               ),
             ],
@@ -235,18 +236,18 @@ class _PreviewScreenState extends State<PreviewScreen> {
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF5F3FF),
+                      color: activeBgLavender,
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: const Icon(Icons.access_time_rounded, color: Color(0xFF7C3AED), size: 18),
+                    child: Icon(Icons.access_time_rounded, color: primaryPurple, size: 18),
                   ),
                   const SizedBox(width: 10),
-                  const Text(
+                  Text(
                     "RUNTIME DISTRIBUTION BY SEGMENT",
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF0F172A),
+                      color: textDark,
                       letterSpacing: 0.8,
                     ),
                   ),
@@ -254,10 +255,10 @@ class _PreviewScreenState extends State<PreviewScreen> {
               ),
               Text(
                 "${totalMins > 0 ? totalMins : 160} total mins",
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF0F172A),
+                  color: textDark,
                 ),
               ),
             ],
@@ -303,19 +304,19 @@ class _PreviewScreenState extends State<PreviewScreen> {
                           Expanded(
                             child: Text(
                               data.name,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.bold,
-                                color: Color(0xFF0F172A),
+                                color: textDark,
                               ),
                             ),
                           ),
                           Text(
                             "${data.minutes.toInt()}m (${data.percentage.toInt()}%)",
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 12,
                               fontFamily: 'monospace',
-                              color: Color(0xFF64748B),
+                              color: textMuted,
                             ),
                           ),
                         ],
@@ -358,18 +359,18 @@ class _PreviewScreenState extends State<PreviewScreen> {
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF5F3FF),
+                      color: activeBgLavender,
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: const Icon(Icons.calendar_today_rounded, color: Color(0xFF7C3AED), size: 18),
+                    child: Icon(Icons.calendar_today_rounded, color: primaryPurple, size: 18),
                   ),
                   const SizedBox(width: 10),
-                  const Text(
+                  Text(
                     "PROGRAM PLANNING PLANNING METHOD",
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF0F172A),
+                      color: textDark,
                       letterSpacing: 0.8,
                     ),
                   ),
@@ -378,15 +379,15 @@ class _PreviewScreenState extends State<PreviewScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF1F5F9),
+                  color: primaryBackground,
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Text(
                   selectedMethod.toUpperCase(),
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF64748B),
+                    color: textMuted,
                   ),
                 ),
               ),
@@ -399,7 +400,7 @@ class _PreviewScreenState extends State<PreviewScreen> {
             width: double.infinity,
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: const Color(0xFFF8FAFC),
+              color: primaryBackground,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: const Color(0xFFE2E8F0)),
             ),
@@ -407,7 +408,7 @@ class _PreviewScreenState extends State<PreviewScreen> {
               selectedMethod == "No Planning Method"
                   ? "No calendar Planning Method configured. Program will execute only when triggered manually by operator or controller dispatch."
                   : "Program configured with $selectedMethod execution strategy.",
-              style: const TextStyle(fontSize: 13, color: Color(0xFF64748B), height: 1.4),
+              style: TextStyle(fontSize: 13, color: textMuted, height: 1.4),
             ),
           ),
         ],
@@ -436,10 +437,10 @@ class _PreviewScreenState extends State<PreviewScreen> {
 
   List<SegmentChartData> _generateChartData() {
     final colors = [
-      const Color(0xFF7C3AED),
-      const Color(0xFF6366F1),
-      const Color(0xFF06B6D4),
-      const Color(0xFFF59E0B),
+      primaryPurple,
+      const Color(0xFF2563EB),
+      avatarGreen,
+      brandOrange,
     ];
 
     final seqList = irrigationProvider.sequenceData;
@@ -601,19 +602,19 @@ class _PreviewScreenState extends State<PreviewScreen> {
               Container(
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF5F3FF),
+                  color: activeBgLavender,
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Icon(icon, color: const Color(0xFF7C3AED), size: 16),
+                child: Icon(icon, color: primaryPurple, size: 16),
               ),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   label,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF64748B),
+                    color: textMuted,
                     letterSpacing: 0.8,
                   ),
                   overflow: TextOverflow.ellipsis,
@@ -624,10 +625,10 @@ class _PreviewScreenState extends State<PreviewScreen> {
           const SizedBox(height: 8),
           Text(
             value,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.bold,
-              color: Color(0xFF0F172A),
+              color: textDark,
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
@@ -668,13 +669,13 @@ class _PreviewScreenState extends State<PreviewScreen> {
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF5F3FF),
+                      color: activeBgLavender,
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: const Icon(Icons.layers_outlined, color: Color(0xFF7C3AED), size: 18),
+                    child: Icon(Icons.layers_outlined, color: primaryPurple, size: 18),
                   ),
                   const SizedBox(width: 10),
-                  const Text(
+                  Text(
                     "SEGMENT PLOT & VALVE DISTRIBUTION",
                     style: TextStyle(
                       fontSize: 11,

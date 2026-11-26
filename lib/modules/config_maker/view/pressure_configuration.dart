@@ -1,12 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:hex/modules/config_maker/view/site_configure.dart';
-import 'package:responsive_grid_list/responsive_grid_list.dart';
+
 import '../../../Constants/dialog_boxes.dart';
-import '../../../Constants/properties.dart';
+import '../../../utils/constants.dart';
 import '../model/pressure_model.dart';
 import '../state_management/config_maker_provider.dart';
-import '../../../Widgets/sized_image.dart';
-import '../../../utils/constants.dart';
+import '../widget/config_template_widgets.dart';
+import '../widget/painter/pressure_sensor_painter.dart';
+import 'utils/config_maker_colors.dart';
+
+/// Simple holder for progress metrics.
+class _Progress {
+  final int filled;
+  final int total;
+  final int sensorFilled;
+  const _Progress(this.filled, this.total, this.sensorFilled);
+
+  bool get complete => total > 0 && filled == total;
+  double get fraction => total == 0 ? 0 : filled / total;
+}
 
 class PressureConfiguration extends StatefulWidget {
   final ConfigMakerProvider configPvd;
@@ -17,110 +29,195 @@ class PressureConfiguration extends StatefulWidget {
 }
 
 class _PressureConfigurationState extends State<PressureConfiguration> {
+  // ── Design tokens (Matching valve_configuration.dart) ──
+  static const Color _mainValveColor = Color(0xFF0284C7); // ocean sky blue
+  static const Color _doneColor = Color(0xFF059669); // emerald green
+
+  // ───────────────────────────────────────────────────────────
+  //  PROGRESS CALCULATION
+  // ───────────────────────────────────────────────────────────
+  _Progress _calcProgress(PressureModel pressureSensor) {
+    int total = 1;
+    int filled = 0;
+    if (pressureSensor.mainValve.isNotEmpty) filled++;
+
+    return _Progress(filled, total, filled);
+  }
+
+  // ───────────────────────────────────────────────────────────
+  //  BUILD
+  // ───────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(8),
-      child: LayoutBuilder(builder: (context, constraint){
-        return SizedBox(
-          width: constraint.maxWidth,
-          height: constraint.maxHeight,
-          child:  SingleChildScrollView(
-            child: Column(
-              children: [
-                ResponsiveGridList(
-                  horizontalGridMargin: 0,
-                  verticalGridMargin: 10,
-                  minItemWidth: 500,
+    final colors = ConfigMakerColors.of(context);
+    final primaryColor = Theme.of(context).primaryColor;
+    final pressureSensors = widget.configPvd.pressureSensor;
+
+    return Container(
+      color: colors.canvasBg,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+        child: SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          child: Column(
+            children: [
+              if (pressureSensors.isEmpty)
+                ConfigEmptyState(
+                  title: 'No Pressure Sensors Configured',
+                  subtitle: 'No pressure sensors found in current configuration.',
+                  icon: Icons.speed_rounded,
+                  primaryColor: primaryColor,
+                )
+              else
+                GridView.builder(
                   shrinkWrap: true,
-                  listViewBuilderOptions: ListViewBuilderOptions(
-                    physics: const NeverScrollableScrollPhysics(),
+                  physics: const NeverScrollableScrollPhysics(),
+                  gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                    maxCrossAxisExtent: 460,
+                    mainAxisSpacing: 12,
+                    crossAxisSpacing: 12,
+                    mainAxisExtent: 225,
                   ),
-                  children: [
-                    for(var ps in widget.configPvd.pressureSensor)
-                      Container(
-                        decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(8),
-                            color: Colors.white,
-                            boxShadow: AppProperties.customBoxShadowLiteTheme
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            IntrinsicWidth(
-                              stepWidth: 300,
-                              child: ListTile(
-                                leading: SizedImage(
-                                  imagePath: '${AppConstants.svgObjectPath}objectId_25.svg',
-                                  color: Colors.black,
-                                ),
-                                title: Text(ps.commonDetails.name!),
-                              ),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: getObject(pressureSensor: ps, objectList: ps.mainValve, objectId: AppConstants.mainValveObjectId),
-                            ),
-                          ],
-                        ),
-                      )
-                  ],
+                  itemCount: pressureSensors.length,
+                  itemBuilder: (context, index) {
+                    final pressureSensor = pressureSensors[index];
+                    return _buildPressureCard(pressureSensor, primaryColor, colors);
+                  },
                 ),
-              ],
-            ),
+              const SizedBox(height: 16),
+            ],
           ),
-        );
-      }),
+        ),
+      ),
     );
   }
 
-  Widget getObject({
-    required PressureModel pressureSensor,
-    required List<double> objectList,
-    required int objectId
-  }){
-    String objectName = AppConstants.valveObjectId == objectId ? 'Valves' : 'Main Valves';
+  // ───────────────────────────────────────────────────────────
+  //  PRESSURE PAINTER LEADING & HEADER BLOCK
+  // ───────────────────────────────────────────────────────────
+  Widget _buildPressurePainterBlock(PressureModel pressureSensor, ConfigMakerColors colors) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      width: 90,
+      height: 64,
+      padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(8),
-        color: Theme.of(context).primaryColorLight.withOpacity(0.1),
+        color: colors.innerSurface,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Center(
+        child: RepaintBoundary(
+          child: FittedBox(
+            fit: BoxFit.contain,
+            child: PressureSensorView(
+              isOn: pressureSensor.mainValve.isNotEmpty,
+              size: const Size(110, 80),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPressureHeaderBlock({
+    required PressureModel pressureSensor,
+    required Color primaryColor,
+    required ConfigMakerColors colors,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      decoration: BoxDecoration(
+        color: colors.innerSurface,
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
-        mainAxisSize: MainAxisSize.min,
         children: [
-          SizedImage(
-            imagePath: '${AppConstants.svgObjectPath}objectId_$objectId.svg',
-            color: Colors.black,
+          _buildPressurePainterBlock(pressureSensor, colors),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              pressureSensor.commonDetails.name ?? 'Pressure Sensor',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: colors.textPrimary,
+              ),
+            ),
           ),
-          const SizedBox(width: 20,),
-          Text('$objectName : ', style: AppProperties.listTileBlackBoldStyle,),
-          Center(
-            child: Text(objectList.isEmpty ? '-' : objectList.map((sNo) => getObjectName(sNo, widget.configPvd).name!).join(', '), style: const TextStyle(color: Colors.teal, fontSize: 12, fontWeight: FontWeight.bold),),
-          ),
-          IconButton(
-              onPressed: (){
-                setState(() {
-                  widget.configPvd.listOfSelectedSno.clear();
-                  widget.configPvd.listOfSelectedSno.addAll(objectList);
-                });
-                selectionDialogBox(
-                    context: context,
-                    title: 'Select $objectName',
-                    singleSelection: false,
-                    listOfObject: widget.configPvd.listOfGeneratedObject.where((object) => object.objectId == objectId).toList(),
-                    onPressed: (){
-                      setState(() {
-                        widget.configPvd.updateSelectionInPressure(pressureSensor.commonDetails.sNo!, objectId);
-                      });
-                      Navigator.pop(context);
-                    }
-                );
-              },
-              icon: Icon(Icons.touch_app, color: Theme.of(context).primaryColor, size: 20,)
-          )
         ],
       ),
+    );
+  }
+
+  // ───────────────────────────────────────────────────────────
+  //  PRESSURE CARD
+  // ───────────────────────────────────────────────────────────
+  Widget _buildPressureCard(PressureModel pressureSensor, Color primaryColor, ConfigMakerColors colors) {
+    final progress = _calcProgress(pressureSensor);
+
+    return ConfigCardShell(
+      headerBlock: _buildPressureHeaderBlock(
+        pressureSensor: pressureSensor,
+        primaryColor: primaryColor,
+        colors: colors,
+      ),
+      isComplete: progress.complete,
+      completeColor: _doneColor,
+      body: [
+        ConfigFlowSection(
+          title: 'Main Valves',
+          icon: Icons.vibration_rounded,
+          accent: _mainValveColor,
+          children: [
+            _buildMainValveTile(pressureSensor, _mainValveColor),
+          ],
+        ),
+      ],
+    );
+  }
+
+  // ───────────────────────────────────────────────────────────
+  //  COMPONENT TILES
+  // ───────────────────────────────────────────────────────────
+  Widget _buildMainValveTile(PressureModel pressureSensor, Color accent) {
+    int objectId = AppConstants.mainValveObjectId;
+    bool isAssigned = pressureSensor.mainValve.isNotEmpty;
+    List<String> assignedNames = isAssigned
+        ? pressureSensor.mainValve
+            .map((sNo) => getObjectName(sNo, widget.configPvd).name ?? '-')
+            .toList()
+        : const [];
+
+    return ConfigComponentTile(
+      title: 'Main Valve',
+      imagePath: '${AppConstants.svgObjectPath}objectId_$objectId.svg',
+      names: assignedNames,
+      isAssigned: isAssigned,
+      accent: accent,
+      onTap: () {
+        setState(() {
+          widget.configPvd.listOfSelectedSno.clear();
+          widget.configPvd.listOfSelectedSno.addAll(pressureSensor.mainValve);
+        });
+        selectionDialogBox(
+          context: context,
+          title: 'Select Main Valve',
+          singleSelection: false,
+          listOfObject: widget.configPvd.listOfGeneratedObject
+              .where((object) => object.objectId == AppConstants.mainValveObjectId)
+              .toList(),
+          onPressed: () {
+            setState(() {
+              widget.configPvd.updateSelectionInPressure(
+                pressureSensor.commonDetails.sNo!,
+                AppConstants.mainValveObjectId,
+              );
+            });
+            Navigator.pop(context);
+          },
+        );
+      },
     );
   }
 }

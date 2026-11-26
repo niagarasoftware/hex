@@ -1,12 +1,14 @@
 import 'dart:convert';
+import 'dart:io';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
-import 'package:hex/modules/config_maker/model/ec_model.dart';
-import 'package:hex/modules/config_maker/repository/config_maker_repository.dart';
-import 'package:hex/utils/constants.dart';
-import 'package:hex/view_models/create_account_view_model.dart';
+
+import '../../../utils/constants.dart';
+import '../../../view_models/create_account_view_model.dart';
 import '../model/channel_config_model.dart';
 import '../model/device_model.dart';
 import '../model/device_object_model.dart';
+import '../model/ec_model.dart';
 import '../model/fertigation_model.dart';
 import '../model/filtration_model.dart';
 import '../model/irrigation_line_model.dart';
@@ -17,13 +19,14 @@ import '../model/pressure_model.dart';
 import '../model/pump_model.dart';
 import '../model/source_model.dart';
 import '../model/valve_configuration.dart';
+import '../repository/config_maker_repository.dart';
 import '../view/config_base_page.dart';
 import '../view/config_web_view.dart';
 import '../view/connection.dart';
 
 class ConfigMakerProvider extends ChangeNotifier{
   double ratio = 1.0;
-  ConfigMakerTabs selectedTab = ConfigMakerTabs.deviceList;
+  ConfigMakerTabs selectedTab = ConfigMakerTabs.siteDiagram;
   Map<String, dynamic> configMakerDataFromHttp = {};
   Map<String, dynamic> defaultDataFromHttp = {};
   Map<int, String> configurationTab = {
@@ -82,8 +85,20 @@ class ConfigMakerProvider extends ChangeNotifier{
   List<EcModel> ec = [];
   List<PhModel> ph = [];
   List<IrrigationLineModel> line = [];
-  List<NutrientCategoryModel> nutrients = [];
+  List<NutrientCategoryModel> nutrientList = [];
   List<dynamic> productStock = [];
+
+  String getNutrientName(double sNo) {
+    if (sNo == 0.0) return '';
+    for (var category in nutrientList) {
+      for (var item in category.list) {
+        if (item.sNo == sNo) {
+          return item.name;
+        }
+      }
+    }
+    return '';
+  }
 
   void updateRangeMode(bool value){
     rangeMode = value;
@@ -93,6 +108,13 @@ class ConfigMakerProvider extends ChangeNotifier{
   void clearData(){
     listOfSampleObjectModel = (defaultDataFromHttp['objectType'] as List<dynamic>).map(mapToDeviceObject).toList();
     listOfObjectModelConnection = (defaultDataFromHttp['objectType'] as List<dynamic>).map(mapToDeviceObject).toList();
+    if (defaultDataFromHttp['nutrients'] != null) {
+      nutrientList = (defaultDataFromHttp['nutrients'] as List<dynamic>)
+          .map((e) => NutrientCategoryModel.fromJson(e))
+          .toList();
+    } else {
+      nutrientList = [];
+    }
     print("clear called............");
     for(var i in listOfDeviceModel){
       if(AppConstants.ecoGemModelList.contains(masterData['modelId'])){
@@ -122,7 +144,6 @@ class ConfigMakerProvider extends ChangeNotifier{
     ec.clear();
     ph.clear();
     line.clear();
-    nutrients.clear();
     selectedSelectionMode = SelectionMode.auto;
     selectedConnectionNo = 0;
     selectedType = '';
@@ -153,7 +174,6 @@ class ConfigMakerProvider extends ChangeNotifier{
     ec.clear();
     ph.clear();
     line.clear();
-    nutrients.clear();
     selectedSelectionMode = SelectionMode.auto;
     selectedConnectionNo = 0;
     selectedType = '';
@@ -196,8 +216,101 @@ class ConfigMakerProvider extends ChangeNotifier{
     );
   }
 
+  void updateSmartDefaults() {
+    // 1. Auto-select controlledBySource for Pumps based on inletPump
+    for (var currentPump in pump) {
+      var matchingSources = source.where((s) => s.inletPump.contains(currentPump.commonDetails.sNo)).toList();
+      if (matchingSources.isEmpty) {
+        currentPump.controlledBySource = 0.0;
+      } else if (matchingSources.length == 1) {
+        currentPump.controlledBySource = matchingSources.first.commonDetails.sNo ?? 0.0;
+      } else {
+        if (!matchingSources.any((s) => s.commonDetails.sNo == currentPump.controlledBySource)) {
+          currentPump.controlledBySource = matchingSources.first.commonDetails.sNo ?? 0.0;
+        }
+      }
+    }
+
+    // 2. Auto-assign single Water Source to Lines
+    if (source.length == 1) {
+      double singleSourceSno = source.first.commonDetails.sNo ?? 0.0;
+      for (var currentLine in line) {
+        if (currentLine.waterSource.isEmpty && singleSourceSno != 0.0) {
+          currentLine.waterSource.add(singleSourceSno);
+        }
+      }
+    }
+
+    // 3. Auto-associate line.waterSource when line pumps are linked to a Source
+    for (var currentLine in line) {
+      if (currentLine.waterSource.isEmpty) {
+        List<double> linePumps = [...currentLine.sourcePump, ...currentLine.irrigationPump];
+        for (var pumpSno in linePumps) {
+          for (var src in source) {
+            if ((src.inletPump.contains(pumpSno) || src.outletPump.contains(pumpSno)) && src.commonDetails.sNo != null) {
+              if (!currentLine.waterSource.contains(src.commonDetails.sNo!)) {
+                currentLine.waterSource.add(src.commonDetails.sNo!);
+              }
+            }
+          }
+        }
+      }
+    }
+
+    // 4. Auto-assign single Source Pump / Irrigation Pump / Aerator to Lines
+    var sourcePumps = pump.where((p) => p.pumpType == 1).toList();
+    if (sourcePumps.length == 1) {
+      double singlePumpSno = sourcePumps.first.commonDetails.sNo ?? 0.0;
+      for (var currentLine in line) {
+        if (currentLine.sourcePump.isEmpty && singlePumpSno != 0.0) {
+          currentLine.sourcePump.add(singlePumpSno);
+        }
+      }
+    }
+
+    var irrigationPumps = pump.where((p) => p.pumpType == 2).toList();
+    if (irrigationPumps.length == 1) {
+      double singlePumpSno = irrigationPumps.first.commonDetails.sNo ?? 0.0;
+      for (var currentLine in line) {
+        if (currentLine.irrigationPump.isEmpty && singlePumpSno != 0.0) {
+          currentLine.irrigationPump.add(singlePumpSno);
+        }
+      }
+    }
+
+    var aeratorPumps = pump.where((p) => p.pumpType == 3).toList();
+    if (aeratorPumps.length == 1) {
+      double singlePumpSno = aeratorPumps.first.commonDetails.sNo ?? 0.0;
+      for (var currentLine in line) {
+        if (currentLine.aerator.isEmpty && singlePumpSno != 0.0) {
+          currentLine.aerator.add(singlePumpSno);
+        }
+      }
+    }
+
+    // 5. Auto-assign single Central Filtration / Central Fertilization
+    if (filtration.length == 1) {
+      double singleFiltrationSno = filtration.first.commonDetails.sNo ?? 0.0;
+      for (var currentLine in line) {
+        if (currentLine.centralFiltration == 0.0 && singleFiltrationSno != 0.0) {
+          currentLine.centralFiltration = singleFiltrationSno;
+        }
+      }
+    }
+
+    if (fertilization.length == 1) {
+      double singleFertilizationSno = fertilization.first.commonDetails.sNo ?? 0.0;
+      for (var currentLine in line) {
+        if (currentLine.centralFertilization == 0.0 && singleFertilizationSno != 0.0) {
+          currentLine.centralFertilization = singleFertilizationSno;
+        }
+      }
+    }
+  }
+
   void updateFloatForPump()async{
     await Future.delayed(const Duration(seconds: 0));
+    updateSmartDefaults();
     for(var currentPump in pump){
       if(currentPump.automateFloatSelection == false){
         for(var mode in [1,2,3,4]){
@@ -300,10 +413,12 @@ class ConfigMakerProvider extends ChangeNotifier{
       defaultDataFromHttp = defaultData;
       masterData = masterDataFromSiteConfigure;
 
-      if (defaultData.containsKey('nutrients') && defaultData['nutrients'] != null) {
-        nutrients = (defaultData['nutrients'] as List<dynamic>)
-            .map((e) => NutrientCategoryModel.fromJson(e as Map<String, dynamic>))
+      if (defaultData['nutrients'] != null) {
+        nutrientList = (defaultData['nutrients'] as List<dynamic>)
+            .map((e) => NutrientCategoryModel.fromJson(e))
             .toList();
+      } else {
+        nutrientList = [];
       }
 
       /* hardcoded for pushing master to deviceList*/
@@ -680,6 +795,57 @@ class ConfigMakerProvider extends ChangeNotifier{
       }
     }
 
+  }
+
+  void deleteGeneratedObject(double sNo, int objectId) {
+    for (var object in listOfSampleObjectModel) {
+      if (object.objectId == objectId) {
+        int count = object.count == null || object.count == '' ? 0 : int.tryParse(object.count!) ?? 0;
+        if (count > 0) {
+          object.count = '${count - 1}';
+        }
+      }
+    }
+    listOfGeneratedObject.removeWhere((e) => e.sNo == sNo);
+    filtration.removeWhere((e) => e.commonDetails.sNo == sNo);
+    fertilization.removeWhere((e) => e.commonDetails.sNo == sNo);
+    source.removeWhere((e) => e.commonDetails.sNo == sNo);
+    moisture.removeWhere((e) => e.commonDetails.sNo == sNo);
+    valveConfig.removeWhere((e) => e.commonDetails.sNo == sNo);
+    channelConfig.removeWhere((e) => e.commonDetails.sNo == sNo);
+    pressureSensor.removeWhere((e) => e.commonDetails.sNo == sNo);
+    line.removeWhere((e) => e.commonDetails.sNo == sNo);
+    pump.removeWhere((e) => e.commonDetails.sNo == sNo);
+
+    final filteredList = [sNo];
+    for (var p in pump) {
+      p.updateObjectIdIfDeletedInProductLimit(filteredList);
+    }
+    for (var filterSite in filtration) {
+      filterSite.updateObjectIdIfDeletedInProductLimit(filteredList);
+    }
+    for (var fertilizerSite in fertilization) {
+      fertilizerSite.updateObjectIdIfDeletedInProductLimit(filteredList);
+    }
+    for (var src in source) {
+      src.updateObjectIdIfDeletedInProductLimit(filteredList);
+    }
+    for (var ms in moisture) {
+      ms.updateObjectIdIfDeletedInProductLimit(filteredList);
+    }
+    for (var v in valveConfig) {
+      v.updateObjectIdIfDeletedInProductLimit(filteredList);
+    }
+    for (var v in channelConfig) {
+      v.updateObjectIdIfDeletedInProductLimit(filteredList);
+    }
+    for (var ps in pressureSensor) {
+      ps.updateObjectIdIfDeletedInProductLimit(filteredList);
+    }
+    for (var l in line) {
+      l.updateObjectIdIfDeletedInProductLimit(filteredList);
+    }
+    notifyListeners();
   }
 
   void updateObjectConnection(DeviceObjectModel selectedConnectionObject,int newCount){
@@ -1192,6 +1358,20 @@ class ConfigMakerProvider extends ChangeNotifier{
     notifyListeners();
   }
 
+  DeviceObjectModel getObjectName(double sNo) {
+    return listOfGeneratedObject.firstWhere(
+      (object) => object.sNo == sNo,
+      orElse: () => DeviceObjectModel(
+        objectId: 0,
+        sNo: sNo,
+        name: '-',
+        objectName: '',
+        type: '',
+        assignObject: [],
+      ),
+    );
+  }
+
   String serialNoOrEmpty(double sNo){
     return sNo == 0.0 ? '' : sNo.toString();
   }
@@ -1216,6 +1396,7 @@ class ConfigMakerProvider extends ChangeNotifier{
           "TopTankFloatLow" : serialNoOrEmpty(pumpModelObject.bottomTankFloat),
           "SumpTankFloatHigh" : serialNoOrEmpty(pumpModelObject.topSumpFloat),
           "SumpTankFloatLow" : serialNoOrEmpty(pumpModelObject.bottomSumpFloat),
+          "ControlledBySource" : serialNoOrEmpty(pumpModelObject.controlledBySource),
           "IrrigationLine" : line.where((line) => (line.sourcePump.contains(pumpModelObject.commonDetails.sNo) || line.irrigationPump.contains(pumpModelObject.commonDetails.sNo))).map((line) => line.commonDetails.sNo).join('_'),
         };
         pumpPayload.add(payload.entries.map((e) => e.value).join(","));
@@ -1933,21 +2114,7 @@ class ConfigMakerProvider extends ChangeNotifier{
     );
   }
 
-  NutrientModel? getNutrientBySNo(double sNo) {
-    for (var category in nutrients) {
-      for (var nutrient in category.list) {
-        if (nutrient.sNo == sNo) {
-          return nutrient;
-        }
-      }
-    }
-    return null;
-  }
-
   String? validateGemConfiguration() {
-    if (isAllProductLimitCountEmpty) {
-      return 'At least one object count must be provided in Product Limit.';
-    }
 
     if (!AppConstants.gemModelList.contains(masterData['modelId'])) {
       return null;

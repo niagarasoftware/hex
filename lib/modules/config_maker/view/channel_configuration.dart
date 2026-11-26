@@ -1,14 +1,25 @@
 import 'package:flutter/material.dart';
-import 'package:hex/modules/config_maker/model/channel_config_model.dart';
 import 'package:hex/modules/config_maker/view/site_configure.dart';
-import 'package:responsive_grid_list/responsive_grid_list.dart';
 
 import '../../../Constants/dialog_boxes.dart';
-import '../../../Constants/properties.dart';
+import '../../../utils/constants.dart';
+import '../model/channel_config_model.dart';
 import '../model/device_object_model.dart';
 import '../state_management/config_maker_provider.dart';
-import '../../../Widgets/sized_image.dart';
-import '../../../utils/constants.dart';
+import '../widget/config_template_widgets.dart';
+import '../widget/painter/single_injector_channel_painter.dart';
+import 'utils/config_maker_colors.dart';
+
+/// Simple holder for progress metrics.
+class _Progress {
+  final int filled;
+  final int total;
+  final int sensorFilled;
+  const _Progress(this.filled, this.total, this.sensorFilled);
+
+  bool get complete => total > 0 && filled == total;
+  double get fraction => total == 0 ? 0 : filled / total;
+}
 
 class ChannelConfiguration extends StatefulWidget {
   final ConfigMakerProvider configPvd;
@@ -19,194 +30,253 @@ class ChannelConfiguration extends StatefulWidget {
 }
 
 class _ChannelConfigurationState extends State<ChannelConfiguration> {
+  // ── Design tokens (Matching pump_configuration.dart) ──
+  static const Color _inletColor = Color(0xFF0284C7); // ocean sky blue
+  static const Color _outletColor = Color(0xFF059669); // emerald green
+  static const Color _doneColor = Color(0xFF059669); // emerald green
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
     widget.configPvd.updateFloatForPump();
   }
 
+  // ───────────────────────────────────────────────────────────
+  //  PROGRESS CALCULATION
+  // ───────────────────────────────────────────────────────────
+  _Progress _calcProgress(ChannelConfigModel channel) {
+    int total = 2;
+    int filled = 0;
+    if (channel.dosingMeter != 0.0) filled++;
+    if (channel.outletTankValve.isNotEmpty) filled++;
+
+    return _Progress(filled, total, filled);
+  }
+
+  // ───────────────────────────────────────────────────────────
+  //  BUILD
+  // ───────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(8),
-      child: LayoutBuilder(builder: (context, constraint){
-        double ratio = constraint.maxWidth < 500 ? 0.6 : 1.0;
-        return SizedBox(
-          width: constraint.maxWidth,
-          height: constraint.maxHeight,
-          child:  SingleChildScrollView(
-            child: Column(
-              children: [
-                ResponsiveGridList(
-                  horizontalGridMargin: 0,
-                  verticalGridMargin: 10,
-                  minItemWidth: 500,
+    final colors = ConfigMakerColors.of(context);
+    final primaryColor = Theme.of(context).primaryColor;
+    final channels = widget.configPvd.channelConfig;
+
+    return Container(
+      color: colors.canvasBg,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+        child: SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          child: Column(
+            children: [
+              if (channels.isEmpty)
+                ConfigEmptyState(
+                  title: 'No Channels Configured',
+                  subtitle: 'No channels found in current configuration.',
+                  icon: Icons.alt_route_rounded,
+                  primaryColor: primaryColor,
+                )
+              else
+                ListView.separated(
                   shrinkWrap: true,
-                  listViewBuilderOptions: ListViewBuilderOptions(
-                    physics: const NeverScrollableScrollPhysics(),
-                  ),
-                  children: [
-                    for(var channel in widget.configPvd.channelConfig)
-                      Container(
-                        decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(8),
-                            color: Colors.white,
-                            boxShadow: AppProperties.customBoxShadowLiteTheme
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            IntrinsicWidth(
-                              stepWidth: 300,
-                              child: ListTile(
-                                leading: SizedImage(
-                                  imagePath: '${AppConstants.svgObjectPath}objectId_${AppConstants.channelObjectId}.svg',
-                                  color: Colors.black,
-                                ),
-                                title: Text(channel.commonDetails.name!),
-                              ),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: Wrap(
-                                spacing: 30,
-                                runSpacing: 20,
-                                children: [
-                                  getDosingMeterSelection(channel),
-                                  // getObject(
-                                  //     channel: channel,
-                                  //     list: channel.source,
-                                  //     objectId: AppConstants.sourceObjectId,
-                                  //     listOfObject: widget.configPvd.source.where((src) => ([6,7].contains(src.sourceType))).map((e) => e.commonDetails).toList()
-                                  // ),
-                                  getObject(
-                                      channel: channel,
-                                      list: channel.outletTankValve,
-                                      objectId: AppConstants.tankValveObjectId,
-                                      listOfObject: widget.configPvd.listOfGeneratedObject.where((e) {
-                                        if(e.objectId == AppConstants.tankValveObjectId){
-                                          bool available = widget.configPvd.source.where((src) {
-                                            if(src.sourceType == 7){
-                                              return true;
-                                            }else{
-                                              return false;
-                                            }
-                                          }).any((src) => src.outletTankValve.contains(e.sNo));
-                                          return available;
-                                        }else{
-                                          return false;
-                                        }
-                                      }).toList()
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(height: 40,)
-                          ],
-                        ),
-                      )
-                  ],
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: channels.length,
+                  separatorBuilder: (context, index) => const SizedBox(height: 14),
+                  itemBuilder: (context, index) {
+                    final channel = channels[index];
+                    return _buildChannelCard(channel, primaryColor, colors);
+                  },
                 ),
-              ],
+              const SizedBox(height: 16),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ───────────────────────────────────────────────────────────
+  //  CHANNEL PAINTER LEADING & HEADER BLOCK
+  // ───────────────────────────────────────────────────────────
+  Widget _buildChannelPainterBlock(ConfigMakerColors colors) {
+    return Container(
+      width: double.infinity,
+      height: 155,
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: colors.innerSurface,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: const Center(
+        child: SingleInjectorChannelView(
+          isOn: false,
+          size: Size(75, 140),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildChannelHeaderBlock({
+    required ChannelConfigModel channel,
+    required Color primaryColor,
+    required ConfigMakerColors colors,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: colors.innerSurface,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            dense: true,
+            visualDensity: const VisualDensity(vertical: -2),
+            title: Text(
+              channel.commonDetails.name ?? 'Channel',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: colors.textPrimary,
+              ),
             ),
           ),
+          const SizedBox(height: 8),
+          _buildChannelPainterBlock(colors),
+        ],
+      ),
+    );
+  }
+
+  // ───────────────────────────────────────────────────────────
+  //  CHANNEL CARD
+  // ───────────────────────────────────────────────────────────
+  Widget _buildChannelCard(ChannelConfigModel channel, Color primaryColor, ConfigMakerColors colors) {
+    final progress = _calcProgress(channel);
+
+    return ConfigCardShell(
+      headerBlock: _buildChannelHeaderBlock(
+        channel: channel,
+        primaryColor: primaryColor,
+        colors: colors,
+      ),
+      isComplete: progress.complete,
+      completeColor: _doneColor,
+      body: [
+        ConfigFlowSection(
+          title: 'Dosing Meter',
+          icon: Icons.speed_rounded,
+          accent: _inletColor,
+          children: [
+            _buildDosingMeterTile(channel, _inletColor),
+          ],
+        ),
+        ConfigFlowSection(
+          title: 'Tank Valves',
+          icon: Icons.vibration_rounded,
+          accent: _outletColor,
+          children: [
+            _buildOutletTankValveTile(channel, _outletColor),
+          ],
+        ),
+      ],
+    );
+  }
+
+  // ───────────────────────────────────────────────────────────
+  //  COMPONENT TILES
+  // ───────────────────────────────────────────────────────────
+  Widget _buildDosingMeterTile(ChannelConfigModel channel, Color accent) {
+    int objectId = AppConstants.dosingMeterObjectId;
+    bool isAssigned = channel.dosingMeter != 0.0;
+    String assignedName = isAssigned
+        ? getObjectName(channel.dosingMeter, widget.configPvd).name ?? '-'
+        : '';
+
+    return ConfigComponentTile(
+      title: 'Dosing Meter',
+      imagePath: '${AppConstants.svgObjectPath}objectId_$objectId.svg',
+      names: isAssigned ? [assignedName] : const [],
+      isAssigned: isAssigned,
+      accent: accent,
+      onTap: () {
+        setState(() {
+          widget.configPvd.selectedSno = channel.dosingMeter;
+        });
+        selectionDialogBox(
+          context: context,
+          title: 'Select Dosing Meter',
+          singleSelection: true,
+          listOfObject: widget.configPvd.listOfGeneratedObject
+              .where((object) => (object.objectId == AppConstants.dosingMeterObjectId))
+              .toList(),
+          onPressed: () {
+            setState(() {
+              channel.dosingMeter = widget.configPvd.selectedSno;
+              widget.configPvd.selectedSno = 0.0;
+            });
+            Navigator.pop(context);
+          },
         );
-      }),
+      },
     );
   }
 
-  Widget getDosingMeterSelection(ChannelConfigModel channel){
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(8),
-        color: Theme.of(context).primaryColorLight.withOpacity(0.1),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          SizedImage(imagePath: '${AppConstants.svgObjectPath}objectId_${AppConstants.dosingMeterObjectId}.svg', color: Colors.black,),
-          const SizedBox(width: 20,),
-          const Text('Dosing Meter : ', style: AppProperties.listTileBlackBoldStyle,),
-          Center(
-            child: Text(channel.dosingMeter == 0.0 ? '-' : getObjectName(channel.dosingMeter, widget.configPvd).name!, style: const TextStyle(color: Colors.teal, fontSize: 12, fontWeight: FontWeight.bold),),
-          ),
-          IconButton(
-              onPressed: (){
-                setState(() {
-                  widget.configPvd.selectedSno = channel.dosingMeter;
-                });
-                selectionDialogBox(
-                    context: context,
-                    title: 'Select Dosing Meter',
-                    singleSelection: true,
-                    listOfObject: widget.configPvd.listOfGeneratedObject.where((object) => (object.objectId == AppConstants.dosingMeterObjectId)).toList(),
-                    onPressed: (){
-                      setState(() {
-                        channel.dosingMeter = widget.configPvd.selectedSno;
-                        widget.configPvd.selectedSno = 0.0;
-                      });
-                      Navigator.pop(context);
-                    }
-                );
-              },
-              icon: Icon(Icons.touch_app, color: Theme.of(context).primaryColor, size: 20,)
-          )
-        ],
-      ),
-    );
-  }
+  Widget _buildOutletTankValveTile(ChannelConfigModel channel, Color accent) {
+    int objectId = AppConstants.tankValveObjectId;
+    bool isAssigned = channel.outletTankValve.isNotEmpty;
+    List<String> assignedNames = isAssigned
+        ? channel.outletTankValve
+            .map((sNo) => getObjectName(sNo, widget.configPvd).name ?? '-')
+            .toList()
+        : const [];
 
-  Widget getObject({
-    required ChannelConfigModel channel,
-    required List<double> list,
-    required List<DeviceObjectModel> listOfObject,
-    required int objectId,
-  }){
-    String name = objectId == AppConstants.dosingMeterObjectId ? 'Dosing Meter' : objectId == AppConstants.sourceObjectId ? 'Fertilizer Tank' : 'Outlet Tank Valve';
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(8),
-        color: Theme.of(context).primaryColorLight.withOpacity(0.1),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          SizedImage(
-            imagePath: '${AppConstants.svgObjectPath}objectId_$objectId.svg',
-            color: Colors.black,
-          ),
-          const SizedBox(width: 20,),
-          Text('$name : ', style: AppProperties.listTileBlackBoldStyle,),
-          Center(
-            child: Text(list.isEmpty ? '-' : list.map((sNo) => getObjectName(sNo, widget.configPvd).name!).join(', '), style: const TextStyle(color: Colors.teal, fontSize: 12, fontWeight: FontWeight.bold),),
-          ),
-          IconButton(
-              onPressed: (){
-                setState(() {
-                  widget.configPvd.listOfSelectedSno.clear();
-                  widget.configPvd.listOfSelectedSno.addAll(list);
-                });
-                selectionDialogBox(
-                    context: context,
-                    title: 'Select $name',
-                    singleSelection: false,
-                    listOfObject: listOfObject,
-                    onPressed: (){
-                      setState(() {
-                        widget.configPvd.updateSelectionInChannel(channel.commonDetails.sNo!, objectId);
-                      });
-                      Navigator.pop(context);
-                    }
-                );
-              },
-              icon: Icon(Icons.touch_app, color: Theme.of(context).primaryColor, size: 20,)
-          )
-        ],
-      ),
+    List<DeviceObjectModel> listOfObject =
+        widget.configPvd.listOfGeneratedObject.where((e) {
+      if (e.objectId == AppConstants.tankValveObjectId) {
+        bool available = widget.configPvd.source.where((src) {
+          if (src.sourceType == 7) {
+            return true;
+          } else {
+            return false;
+          }
+        }).any((src) => src.outletTankValve.contains(e.sNo));
+        return available;
+      } else {
+        return false;
+      }
+    }).toList();
+
+    return ConfigComponentTile(
+      title: 'Outlet Tank Valve',
+      imagePath: '${AppConstants.svgObjectPath}objectId_$objectId.svg',
+      names: assignedNames,
+      isAssigned: isAssigned,
+      accent: accent,
+      onTap: () {
+        setState(() {
+          widget.configPvd.listOfSelectedSno.clear();
+          widget.configPvd.listOfSelectedSno.addAll(channel.outletTankValve);
+        });
+        selectionDialogBox(
+          context: context,
+          title: 'Select Outlet Tank Valve',
+          singleSelection: false,
+          listOfObject: listOfObject,
+          onPressed: () {
+            setState(() {
+              widget.configPvd.updateSelectionInChannel(
+                  channel.commonDetails.sNo!, objectId);
+            });
+            Navigator.pop(context);
+          },
+        );
+      },
     );
   }
 }

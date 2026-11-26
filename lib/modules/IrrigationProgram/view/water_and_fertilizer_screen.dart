@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:hex/Constants/properties.dart';
+import 'package:hex/utils/Theme/oro_theme.dart';
 import 'package:hex/utils/constants.dart';
 import 'package:provider/provider.dart';
 import '../../../Constants/constants.dart';
@@ -132,10 +133,10 @@ class _WaterAndFertilizerScreenState extends State<WaterAndFertilizerScreen> {
                 duration: const Duration(milliseconds: 150),
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                 decoration: BoxDecoration(
-                  color: isSelected ? const Color(0xFF0F172A) : Colors.white,
+                  color: isSelected ? textDark : Colors.white,
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
-                    color: isSelected ? const Color(0xFF0F172A) : const Color(0xFFE2E8F0),
+                    color: isSelected ? textDark : const Color(0xFFE2E8F0),
                   ),
                 ),
                 child: Text(
@@ -143,7 +144,7 @@ class _WaterAndFertilizerScreenState extends State<WaterAndFertilizerScreen> {
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.bold,
-                    color: isSelected ? Colors.white : const Color(0xFF1E293B),
+                    color: isSelected ? Colors.white : textDark,
                   ),
                 ),
               ),
@@ -194,12 +195,12 @@ class _WaterAndFertilizerScreenState extends State<WaterAndFertilizerScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       "ACTIVE VALVE SCOPE",
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF64748B),
+                        color: textMuted,
                         letterSpacing: 0.8,
                       ),
                     ),
@@ -215,10 +216,10 @@ class _WaterAndFertilizerScreenState extends State<WaterAndFertilizerScreen> {
                         return Container(
                           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                           decoration: BoxDecoration(
-                            color: isSelected ? const Color(0xFF5B21B6) : const Color(0xFFF1F5F9),
+                            color: isSelected ? primaryPurple : primaryBackground,
                             borderRadius: BorderRadius.circular(8),
                             border: Border.all(
-                              color: isSelected ? const Color(0xFF5B21B6) : const Color(0xFFE2E8F0),
+                              color: isSelected ? primaryPurple : const Color(0xFFE2E8F0),
                             ),
                           ),
                           child: Text(
@@ -226,7 +227,7 @@ class _WaterAndFertilizerScreenState extends State<WaterAndFertilizerScreen> {
                             style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.bold,
-                              color: isSelected ? Colors.white : const Color(0xFF1E293B),
+                              color: isSelected ? Colors.white : textDark,
                             ),
                           ),
                         );
@@ -239,12 +240,12 @@ class _WaterAndFertilizerScreenState extends State<WaterAndFertilizerScreen> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  const Text(
+                  Text(
                     "TOTAL FLOW VOLUME",
                     style: TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF64748B),
+                      color: textMuted,
                       letterSpacing: 0.8,
                     ),
                   ),
@@ -254,16 +255,16 @@ class _WaterAndFertilizerScreenState extends State<WaterAndFertilizerScreen> {
                     children: [
                       Text(
                         "${waterQty != '' && waterQty != '0' ? waterQty : '32'} Litres",
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF0F172A),
+                          color: textDark,
                         ),
                       ),
                       const SizedBox(width: 4),
                       Text(
                         "(${Constants.showHourAndMinuteOnly(waterTime, widget.modelId)})",
-                        style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                        style: TextStyle(fontSize: 12, color: textMuted),
                       ),
                     ],
                   ),
@@ -280,10 +281,10 @@ class _WaterAndFertilizerScreenState extends State<WaterAndFertilizerScreen> {
               height: 12,
               child: Row(
                 children: [
-                  Expanded(flex: 1, child: Container(color: const Color(0xFF3B82F6))),
-                  Expanded(flex: 5, child: Container(color: const Color(0xFFF59E0B))),
-                  Expanded(flex: 4, child: Container(color: const Color(0xFF7C3AED))),
-                  Expanded(flex: 1, child: Container(color: const Color(0xFF10B981))),
+                  Expanded(flex: 1, child: Container(color: const Color(0xFF2563EB))),
+                  Expanded(flex: 5, child: Container(color: brandOrange)),
+                  Expanded(flex: 4, child: Container(color: primaryPurple)),
+                  Expanded(flex: 1, child: Container(color: avatarGreen)),
                 ],
               ),
             ),
@@ -295,10 +296,10 @@ class _WaterAndFertilizerScreenState extends State<WaterAndFertilizerScreen> {
             spacing: 20,
             runSpacing: 8,
             children: [
-              _buildLegendItem(const Color(0xFF3B82F6), "Pre-Flush (${Constants.showHourAndMinuteOnly(preValue, widget.modelId)})"),
-              _buildLegendItem(const Color(0xFFF59E0B), "Nutrient Dosing (00:05:00)"),
-              _buildLegendItem(const Color(0xFF7C3AED), "Balance (00:04:00)"),
-              _buildLegendItem(const Color(0xFF10B981), "Post-Flush (${Constants.showHourAndMinuteOnly(postValue, widget.modelId)})"),
+              _buildLegendItem(const Color(0xFF2563EB), "Pre-Flush (${Constants.showHourAndMinuteOnly(preValue, widget.modelId)})"),
+              _buildLegendItem(brandOrange, "Nutrient Dosing (00:05:00)"),
+              _buildLegendItem(primaryPurple, "Balance (00:04:00)"),
+              _buildLegendItem(avatarGreen, "Post-Flush (${Constants.showHourAndMinuteOnly(postValue, widget.modelId)})"),
             ],
           ),
           const SizedBox(height: 24),
@@ -342,14 +343,14 @@ class _WaterAndFertilizerScreenState extends State<WaterAndFertilizerScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             decoration: BoxDecoration(
-              color: const Color(0xFFF8FAFC),
+              color: primaryBackground,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: const Color(0xFFE2E8F0)),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Expanded(
+                Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -358,13 +359,13 @@ class _WaterAndFertilizerScreenState extends State<WaterAndFertilizerScreen> {
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF0F172A),
+                          color: textDark,
                         ),
                       ),
-                      SizedBox(height: 2),
+                      const SizedBox(height: 2),
                       Text(
                         "Automatically terminate watering cycle if volumetric moisture saturation limit is reached.",
-                        style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                        style: TextStyle(fontSize: 12, color: textMuted),
                       ),
                     ],
                   ),
@@ -373,7 +374,7 @@ class _WaterAndFertilizerScreenState extends State<WaterAndFertilizerScreen> {
                 Switch(
                   value: currentSeq['applyMoisture'] ?? false,
                   activeThumbColor: Colors.white,
-                  activeTrackColor: const Color(0xFF5B21B6),
+                  activeTrackColor: primaryPurple,
                   onChanged: (val) {
                     programPvd.editGroupSiteInjector('applyMoisture', val);
                   },

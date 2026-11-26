@@ -5,6 +5,7 @@ import 'package:hex/modules/IrrigationProgram/view/schedule_screen.dart';
 import 'package:hex/modules/IrrigationProgram/view/selection_screen.dart';
 import 'package:hex/modules/IrrigationProgram/view/sequence_screen.dart';
 import 'package:hex/modules/IrrigationProgram/view/water_and_fertilizer_screen.dart';
+import 'package:hex/utils/Theme/oro_theme.dart';
 import 'package:provider/provider.dart';
 import '../../../models/customer/site_model.dart';
 import '../../../utils/constants.dart';
@@ -457,7 +458,6 @@ class _IrrigationProgramState extends State<IrrigationProgram> with SingleTicker
 
       final sequenceLength = mainProvider.irrigationLine?.sequence.length ?? 0;
       final priority = mainProvider.programDetails?.priority ?? "Low";
-      final primaryPurple = const Color(0xFF5B21B6);
 
       return DefaultTabController(
         length: labels.length,
@@ -726,7 +726,7 @@ class _IrrigationProgramState extends State<IrrigationProgram> with SingleTicker
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-      color: const Color(0xFFF8FAFC),
+      color: primaryBackground,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -735,19 +735,19 @@ class _IrrigationProgramState extends State<IrrigationProgram> with SingleTicker
             children: [
               Text(
                 'STEP ${currentIndex + 1} OF $totalCount · ${label.toUpperCase()}',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF5B21B6),
+                  color: primaryPurple,
                   letterSpacing: 0.8,
                 ),
               ),
               Text(
                 'Progress: $progress%',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w500,
-                  color: Color(0xFF64748B),
+                  color: textMuted,
                 ),
               ),
             ],
@@ -755,18 +755,18 @@ class _IrrigationProgramState extends State<IrrigationProgram> with SingleTicker
           const SizedBox(height: 4),
           Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
-              color: Color(0xFF0F172A),
+              color: textDark,
             ),
           ),
           const SizedBox(height: 2),
           Text(
             getStepDescription(label),
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 12,
-              color: Color(0xFF64748B),
+              color: textMuted,
             ),
           ),
         ],

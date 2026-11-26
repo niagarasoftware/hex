@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hex/modules/config_maker/model/device_object_model.dart';
+import 'package:hex/utils/Theme/oro_theme.dart';
 import 'package:hex/utils/constants.dart';
 import 'package:provider/provider.dart';
 import '../../../models/customer/site_model.dart';
@@ -186,12 +187,12 @@ class _SelectionScreenState extends State<SelectionScreen> {
               title: "Enable pump station mode",
               subtitle: "Automated pump selection based on real-time valve flow rate",
               icon: Icons.cell_tower_rounded,
-              iconBgColor: const Color(0xFFF5F3FF),
-              iconColor: const Color(0xFF5B21B6),
+              iconBgColor: activeBgLavender,
+              iconColor: primaryPurple,
               trailingControl: Switch(
                 value: irrigationProgramProvider.isPumpStationMode,
                 activeThumbColor: Colors.white,
-                activeTrackColor: const Color(0xFF5B21B6),
+                activeTrackColor: primaryPurple,
                 onChanged: (newValue) {
                   irrigationProgramProvider.updatePumpStationMode(newValue, 0);
                 },
@@ -205,12 +206,12 @@ class _SelectionScreenState extends State<SelectionScreen> {
               title: "Change over",
               subtitle: "Automated pump changeover during trip conditions",
               icon: Icons.published_with_changes_rounded,
-              iconBgColor: const Color(0xFFF5F3FF),
-              iconColor: const Color(0xFF5B21B6),
+              iconBgColor: activeBgLavender,
+              iconColor: primaryPurple,
               trailingControl: Switch(
                 value: irrigationProgramProvider.isChangeOverMode,
                 activeThumbColor: Colors.white,
-                activeTrackColor: const Color(0xFF5B21B6),
+                activeTrackColor: primaryPurple,
                 onChanged: (newValue) {
                   irrigationProgramProvider.updatePumpStationMode(newValue, 1);
                 },
@@ -690,7 +691,7 @@ class _SelectionScreenState extends State<SelectionScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
       decoration: BoxDecoration(
-        color: const Color(0xFF5B21B6),
+        color: primaryPurple,
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:hex/utils/Theme/oro_theme.dart';
 import 'package:provider/provider.dart';
 import '../../../Constants/constants.dart';
 import '../../../Constants/properties.dart';
@@ -121,7 +122,7 @@ class _AdditionalDataScreenState extends State<AdditionalDataScreen> {
           ),
         ],
       ),
-      child: const Column(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
@@ -129,25 +130,25 @@ class _AdditionalDataScreenState extends State<AdditionalDataScreen> {
             style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.bold,
-              color: Color(0xFF5B21B6),
+              color: primaryPurple,
               letterSpacing: 0.8,
             ),
           ),
-          SizedBox(height: 6),
+          const SizedBox(height: 6),
           Text(
             "Advanced Program Attributes",
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: Color(0xFF0F172A),
+              color: textDark,
             ),
           ),
-          SizedBox(height: 4),
+          const SizedBox(height: 4),
           Text(
             "Configure hydraulic changeover buffers, water scaling factors, and program dispatch arbitration priorities.",
             style: TextStyle(
               fontSize: 13,
-              color: Color(0xFF64748B),
+              color: textMuted,
               height: 1.4,
             ),
           ),
@@ -237,18 +238,18 @@ class _AdditionalDataScreenState extends State<AdditionalDataScreen> {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF5F3FF),
+                  color: activeBgLavender,
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(Icons.tune_rounded, color: Color(0xFF7C3AED), size: 18),
+                child: Icon(Icons.tune_rounded, color: primaryPurple, size: 18),
               ),
               const SizedBox(width: 10),
-              const Text(
+              Text(
                 "Identification & Priority",
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF0F172A),
+                  color: textDark,
                 ),
               ),
             ],
@@ -256,12 +257,12 @@ class _AdditionalDataScreenState extends State<AdditionalDataScreen> {
           const SizedBox(height: 16),
 
           // Field 1: Program Display Name
-          const Text(
+          Text(
             "PROGRAM DISPLAY NAME",
             style: TextStyle(
               fontSize: 10,
               fontWeight: FontWeight.bold,
-              color: Color(0xFF64748B),
+              color: textMuted,
               letterSpacing: 0.5,
             ),
           ),
@@ -273,7 +274,7 @@ class _AdditionalDataScreenState extends State<AdditionalDataScreen> {
               width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               decoration: BoxDecoration(
-                color: const Color(0xFFF8FAFC),
+                color: primaryBackground,
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(color: const Color(0xFFE2E8F0)),
               ),
@@ -288,13 +289,13 @@ class _AdditionalDataScreenState extends State<AdditionalDataScreen> {
                             : doneProvider.programDetails!.programName.isNotEmpty
                                 ? programName
                                 : doneProvider.programDetails!.defaultProgramName,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF0F172A),
+                      color: textDark,
                     ),
                   ),
-                  const Icon(Icons.edit_outlined, size: 16, color: Color(0xFF5B21B6)),
+                  Icon(Icons.edit_outlined, size: 16, color: primaryPurple),
                 ],
               ),
             ),
@@ -302,19 +303,19 @@ class _AdditionalDataScreenState extends State<AdditionalDataScreen> {
           const SizedBox(height: 16),
 
           // Field 2: Arbitration Priority
-          const Text(
+          Text(
             "ARBITRATION PRIORITY",
             style: TextStyle(
               fontSize: 10,
               fontWeight: FontWeight.bold,
-              color: Color(0xFF64748B),
+              color: textMuted,
               letterSpacing: 0.5,
             ),
           ),
           const SizedBox(height: 4),
-          const Text(
+          Text(
             "Higher priority programs interrupt or defer lower priority programs when water pump capacity is constrained.",
-            style: TextStyle(fontSize: 11, color: Color(0xFF64748B), height: 1.3),
+            style: TextStyle(fontSize: 11, color: textMuted, height: 1.3),
           ),
           const SizedBox(height: 12),
 
@@ -334,10 +335,10 @@ class _AdditionalDataScreenState extends State<AdditionalDataScreen> {
                       duration: const Duration(milliseconds: 150),
                       padding: const EdgeInsets.symmetric(vertical: 10),
                       decoration: BoxDecoration(
-                        color: isSelected ? const Color(0xFF5B21B6) : const Color(0xFFF8FAFC),
+                        color: isSelected ? primaryPurple : primaryBackground,
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(
-                          color: isSelected ? const Color(0xFF5B21B6) : const Color(0xFFE2E8F0),
+                          color: isSelected ? primaryPurple : const Color(0xFFE2E8F0),
                         ),
                       ),
                       child: Center(
@@ -346,7 +347,7 @@ class _AdditionalDataScreenState extends State<AdditionalDataScreen> {
                           style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.bold,
-                            color: isSelected ? Colors.white : const Color(0xFF1E293B),
+                            color: isSelected ? Colors.white : textDark,
                           ),
                         ),
                       ),
@@ -456,36 +457,36 @@ class _AdditionalDataScreenState extends State<AdditionalDataScreen> {
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF5F3FF),
+                      color: activeBgLavender,
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: const Icon(Icons.percent_rounded, color: Color(0xFF7C3AED), size: 18),
+                    child: Icon(Icons.percent_rounded, color: primaryPurple, size: 18),
                   ),
                   const SizedBox(width: 10),
-                  const Text(
+                  Text(
                     "Water Volume Scaling Factor",
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF0F172A),
+                      color: textDark,
                     ),
                   ),
                 ],
               ),
               Text(
                 "$scaleVal%",
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF5B21B6),
+                  color: primaryPurple,
                 ),
               ),
             ],
           ),
           const SizedBox(height: 12),
-          const Text(
+          Text(
             "Dynamically scale all valve irrigation durations up or down across this program for seasonal ET adjustments without re-entering individual valves.",
-            style: TextStyle(fontSize: 12, color: Color(0xFF64748B), height: 1.4),
+            style: TextStyle(fontSize: 12, color: textMuted, height: 1.4),
           ),
           const SizedBox(height: 16),
 
@@ -493,7 +494,7 @@ class _AdditionalDataScreenState extends State<AdditionalDataScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             decoration: BoxDecoration(
-              color: const Color(0xFFF8FAFC),
+              color: primaryBackground,
               borderRadius: BorderRadius.circular(8),
               border: Border.all(color: const Color(0xFFE2E8F0)),
             ),
@@ -513,34 +514,34 @@ class _AdditionalDataScreenState extends State<AdditionalDataScreen> {
                       border: InputBorder.none,
                       hintText: "100",
                     ),
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF0F172A),
+                      color: textDark,
                     ),
                     onChanged: (newValue) {
                       doneProvider.updateProgramName(newValue, 'adjustPercentage');
                     },
                   ),
                 ),
-                const Text(
+                Text(
                   "%",
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF64748B),
+                    color: textMuted,
                   ),
                 ),
               ],
             ),
           ),
           const SizedBox(height: 12),
-          const Row(
+          Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text("10% {Extreme Dry}", style: TextStyle(fontSize: 11, fontFamily: 'monospace', color: Color(0xFF64748B))),
-              Text("100% {Baseline}", style: TextStyle(fontSize: 11, fontFamily: 'monospace', color: Color(0xFF64748B))),
-              Text("200% {High Heat}", style: TextStyle(fontSize: 11, fontFamily: 'monospace', color: Color(0xFF64748B))),
+              Text("10% {Extreme Dry}", style: TextStyle(fontSize: 11, fontFamily: 'monospace', color: textMuted)),
+              Text("100% {Baseline}", style: TextStyle(fontSize: 11, fontFamily: 'monospace', color: textMuted)),
+              Text("200% {High Heat}", style: TextStyle(fontSize: 11, fontFamily: 'monospace', color: textMuted)),
             ],
           ),
         ],
@@ -581,26 +582,26 @@ class _AdditionalDataScreenState extends State<AdditionalDataScreen> {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF5F3FF),
+                  color: activeBgLavender,
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(Icons.alarm_outlined, color: Color(0xFF7C3AED), size: 18),
+                child: Icon(Icons.alarm_outlined, color: primaryPurple, size: 18),
               ),
               const SizedBox(width: 10),
-              const Text(
+              Text(
                 "Inter-Valve Changeover Delay",
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF0F172A),
+                  color: textDark,
                 ),
               ),
             ],
           ),
           const SizedBox(height: 12),
-          const Text(
+          Text(
             "Safety pause duration between closing one valve and opening the next to prevent water hammer and pressure spikes in the main line.",
-            style: TextStyle(fontSize: 12, color: Color(0xFF64748B), height: 1.4),
+            style: TextStyle(fontSize: 12, color: textMuted, height: 1.4),
           ),
           const SizedBox(height: 16),
 
@@ -608,7 +609,7 @@ class _AdditionalDataScreenState extends State<AdditionalDataScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             decoration: BoxDecoration(
-              color: const Color(0xFFF8FAFC),
+              color: primaryBackground,
               borderRadius: BorderRadius.circular(8),
               border: Border.all(color: const Color(0xFFE2E8F0)),
             ),
@@ -619,22 +620,22 @@ class _AdditionalDataScreenState extends State<AdditionalDataScreen> {
                   initialValue: Constants.showHourAndMinuteOnly(delayVal, widget.modelId),
                   is24HourMode: false,
                   modelId: widget.modelId,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF0F172A),
+                    color: textDark,
                   ),
                   onChanged: (newTime) {
                     doneProvider.updateProgramName(newTime, 'delayBetweenZones');
                   },
                 ),
-                const Text(
+                Text(
                   "HH:MM:SS",
                   style: TextStyle(
                     fontSize: 10,
                     fontFamily: 'monospace',
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF64748B),
+                    color: textMuted,
                   ),
                 ),
               ],
@@ -674,26 +675,26 @@ class _AdditionalDataScreenState extends State<AdditionalDataScreen> {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF5F3FF),
+                  color: activeBgLavender,
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(Icons.access_time_rounded, color: Color(0xFF7C3AED), size: 18),
+                child: Icon(Icons.access_time_rounded, color: primaryPurple, size: 18),
               ),
               const SizedBox(width: 10),
-              const Text(
+              Text(
                 "Inter-Cycle Rest Interval",
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF0F172A),
+                  color: textDark,
                 ),
               ),
             ],
           ),
           const SizedBox(height: 12),
-          const Text(
+          Text(
             "Soaking interval pause between multi-cycle runs before beginning the Segment again.",
-            style: TextStyle(fontSize: 12, color: Color(0xFF64748B), height: 1.4),
+            style: TextStyle(fontSize: 12, color: textMuted, height: 1.4),
           ),
           const SizedBox(height: 16),
 
@@ -701,7 +702,7 @@ class _AdditionalDataScreenState extends State<AdditionalDataScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             decoration: BoxDecoration(
-              color: const Color(0xFFF8FAFC),
+              color: primaryBackground,
               borderRadius: BorderRadius.circular(8),
               border: Border.all(color: const Color(0xFFE2E8F0)),
             ),
@@ -712,22 +713,22 @@ class _AdditionalDataScreenState extends State<AdditionalDataScreen> {
                   initialValue: Constants.showHourAndMinuteOnly(restVal, widget.modelId),
                   is24HourMode: false,
                   modelId: widget.modelId,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF0F172A),
+                    color: textDark,
                   ),
                   onChanged: (newTime) {
                     doneProvider.updateProgramName(newTime, 'cyclicOffTime');
                   },
                 ),
-                const Text(
+                Text(
                   "HH:MM:SS",
                   style: TextStyle(
                     fontSize: 10,
                     fontFamily: 'monospace',
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF64748B),
+                    color: textMuted,
                   ),
                 ),
               ],
@@ -766,18 +767,18 @@ class _AdditionalDataScreenState extends State<AdditionalDataScreen> {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFECFDF5),
+                  color: const Color(0xFFD1FAE5),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(Icons.speed_rounded, color: Color(0xFF10B981), size: 18),
+                child: Icon(Icons.speed_rounded, color: avatarGreen, size: 18),
               ),
               const SizedBox(width: 10),
-              const Text(
+              Text(
                 "Pressure & Flow Management",
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF0F172A),
+                  color: textDark,
                 ),
               ),
             ],
@@ -786,14 +787,14 @@ class _AdditionalDataScreenState extends State<AdditionalDataScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
+              Text(
                 "Enable Pressure Sensing",
-                style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: textDark),
               ),
               Switch(
                 value: doneProvider.enablePressure,
                 activeThumbColor: Colors.white,
-                activeTrackColor: const Color(0xFF5B21B6),
+                activeTrackColor: primaryPurple,
                 onChanged: (val) {
                   doneProvider.updateProgramName(val, 'enablePressure');
                 },
@@ -808,15 +809,15 @@ class _AdditionalDataScreenState extends State<AdditionalDataScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         "SET PRESSURE (BAR)",
-                        style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF64748B)),
+                        style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: textMuted),
                       ),
                       const SizedBox(height: 6),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF8FAFC),
+                          color: primaryBackground,
                           borderRadius: BorderRadius.circular(8),
                           border: Border.all(color: const Color(0xFFE2E8F0)),
                         ),
@@ -829,7 +830,7 @@ class _AdditionalDataScreenState extends State<AdditionalDataScreen> {
                             contentPadding: EdgeInsets.zero,
                             border: InputBorder.none,
                           ),
-                          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                          style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: textDark),
                           onChanged: (val) => doneProvider.updateProgramName(val, 'setPressure'),
                         ),
                       ),
@@ -841,15 +842,15 @@ class _AdditionalDataScreenState extends State<AdditionalDataScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         "CONTROL MODE",
-                        style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF64748B)),
+                        style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: textMuted),
                       ),
                       const SizedBox(height: 6),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF8FAFC),
+                          color: primaryBackground,
                           borderRadius: BorderRadius.circular(8),
                           border: Border.all(color: const Color(0xFFE2E8F0)),
                         ),
@@ -860,7 +861,7 @@ class _AdditionalDataScreenState extends State<AdditionalDataScreen> {
                           items: <String>['pressure', 'flow'].map((String value) {
                             return DropdownMenuItem<String>(
                               value: value,
-                              child: Text(value, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
+                              child: Text(value, style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: textDark)),
                             );
                           }).toList(),
                           onChanged: (newValue) {

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hex/modules/IrrigationProgram/model/sequence_model.dart';
+import 'package:hex/utils/Theme/oro_theme.dart';
 import 'package:hex/utils/constants.dart';
 import 'package:provider/provider.dart';
 import '../state_management/irrigation_program_provider.dart';
@@ -97,8 +98,8 @@ class _AlarmScreenState extends State<AlarmScreen> {
       categories.add(AlarmCategory(
         title: "Flow Metrics",
         icon: Icons.show_chart_rounded,
-        iconBgColor: const Color(0xFFF5F3FF),
-        iconColor: const Color(0xFF7C3AED),
+        iconBgColor: activeBgLavender,
+        iconColor: primaryPurple,
         items: flowItems,
       ));
     }
@@ -107,8 +108,8 @@ class _AlarmScreenState extends State<AlarmScreen> {
       categories.add(AlarmCategory(
         title: "Pressure Monitoring",
         icon: Icons.speed_rounded,
-        iconBgColor: const Color(0xFFF5F3FF),
-        iconColor: const Color(0xFF7C3AED),
+        iconBgColor: activeBgLavender,
+        iconColor: primaryPurple,
         items: pressureItems,
       ));
     }
@@ -117,8 +118,8 @@ class _AlarmScreenState extends State<AlarmScreen> {
       categories.add(AlarmCategory(
         title: "Fertigation & Chemical Dosing",
         icon: Icons.science_outlined,
-        iconBgColor: const Color(0xFFF5F3FF),
-        iconColor: const Color(0xFF7C3AED),
+        iconBgColor: activeBgLavender,
+        iconColor: primaryPurple,
         items: fertItems,
       ));
     }
@@ -127,8 +128,8 @@ class _AlarmScreenState extends State<AlarmScreen> {
       categories.add(AlarmCategory(
         title: "Power & Telemetry Comm",
         icon: Icons.bolt_outlined,
-        iconBgColor: const Color(0xFFFFF7ED),
-        iconColor: const Color(0xFFF59E0B),
+        iconBgColor: const Color(0xFFFFE5CC),
+        iconColor: brandOrange,
         items: commItems,
       ));
     }
@@ -137,8 +138,8 @@ class _AlarmScreenState extends State<AlarmScreen> {
       categories.add(AlarmCategory(
         title: "Tanks & Pump Stations",
         icon: Icons.tune_outlined,
-        iconBgColor: const Color(0xFFFEF2F2),
-        iconColor: const Color(0xFFEF4444),
+        iconBgColor: const Color(0xFFFDE8E8),
+        iconColor: const Color(0xFFDC3545),
         items: tankItems,
       ));
     }
@@ -147,8 +148,8 @@ class _AlarmScreenState extends State<AlarmScreen> {
       categories.add(AlarmCategory(
         title: "General Notifications",
         icon: Icons.notifications_none_rounded,
-        iconBgColor: const Color(0xFFF1F5F9),
-        iconColor: const Color(0xFF5B21B6),
+        iconBgColor: primaryBackground,
+        iconColor: primaryPurple,
         items: otherItems,
       ));
     }
@@ -237,7 +238,7 @@ class _AlarmScreenState extends State<AlarmScreen> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          const Expanded(
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -246,25 +247,25 @@ class _AlarmScreenState extends State<AlarmScreen> {
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF5B21B6),
+                    color: primaryPurple,
                     letterSpacing: 0.8,
                   ),
                 ),
-                SizedBox(height: 6),
+                const SizedBox(height: 6),
                 Text(
                   "Alarm & Incident Notifications",
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF0F172A),
+                    color: textDark,
                   ),
                 ),
-                SizedBox(height: 4),
+                const SizedBox(height: 4),
                 Text(
                   "Specify which telemetry anomalies immediately flag alerts, pause Segments, or dispatch SMS/Push notifications to on-duty irrigation managers.",
                   style: TextStyle(
                     fontSize: 13,
-                    color: Color(0xFF64748B),
+                    color: textMuted,
                     height: 1.4,
                   ),
                 ),
@@ -279,13 +280,13 @@ class _AlarmScreenState extends State<AlarmScreen> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF8FAFC),
+                    color: primaryBackground,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: const Color(0xFFE2E8F0)),
                   ),
                   child: Row(
                     children: [
-                      const Column(
+                      Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
@@ -293,13 +294,13 @@ class _AlarmScreenState extends State<AlarmScreen> {
                             style: TextStyle(
                               fontSize: 10,
                               fontWeight: FontWeight.bold,
-                              color: Color(0xFF0F172A),
+                              color: textDark,
                               letterSpacing: 0.5,
                             ),
                           ),
                           Text(
                             "Master emergency interlock",
-                            style: TextStyle(fontSize: 10, color: Color(0xFF64748B)),
+                            style: TextStyle(fontSize: 10, color: textMuted),
                           ),
                         ],
                       ),
@@ -307,7 +308,7 @@ class _AlarmScreenState extends State<AlarmScreen> {
                       Switch(
                         value: isGlobalOverride,
                         activeThumbColor: Colors.white,
-                        activeTrackColor: const Color(0xFF5B21B6),
+                        activeTrackColor: primaryPurple,
                         onChanged: (val) {
                           setState(() {
                             isGlobalOverride = val;
@@ -328,9 +329,9 @@ class _AlarmScreenState extends State<AlarmScreen> {
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                   ),
-                  child: const Text(
+                  child: Text(
                     "Select All",
-                    style: TextStyle(color: Color(0xFF1E293B), fontWeight: FontWeight.bold, fontSize: 12),
+                    style: TextStyle(color: textDark, fontWeight: FontWeight.bold, fontSize: 12),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -341,24 +342,24 @@ class _AlarmScreenState extends State<AlarmScreen> {
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                   ),
-                  child: const Text(
+                  child: Text(
                     "Clear All",
-                    style: TextStyle(color: Color(0xFF1E293B), fontWeight: FontWeight.bold, fontSize: 12),
+                    style: TextStyle(color: textDark, fontWeight: FontWeight.bold, fontSize: 12),
                   ),
                 ),
                 const SizedBox(width: 8),
                 OutlinedButton.icon(
                   onPressed: _resetToDefaults,
                   style: OutlinedButton.styleFrom(
-                    backgroundColor: const Color(0xFFF5F3FF),
-                    side: const BorderSide(color: Color(0xFFDDD6FE)),
+                    backgroundColor: activeBgLavender,
+                    side: BorderSide(color: primaryPurple.withOpacity(0.3)),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                   ),
-                  icon: const Icon(Icons.sync_rounded, size: 16, color: Color(0xFF5B21B6)),
-                  label: const Text(
+                  icon: Icon(Icons.sync_rounded, size: 16, color: primaryPurple),
+                  label: Text(
                     "Defaults",
-                    style: TextStyle(color: Color(0xFF5B21B6), fontWeight: FontWeight.bold, fontSize: 12),
+                    style: TextStyle(color: primaryPurple, fontWeight: FontWeight.bold, fontSize: 12),
                   ),
                 ),
               ],
@@ -384,8 +385,8 @@ class _AlarmScreenState extends State<AlarmScreen> {
                 const SizedBox(height: 6),
                 OutlinedButton.icon(
                   onPressed: _resetToDefaults,
-                  icon: const Icon(Icons.sync_rounded, size: 14, color: Color(0xFF5B21B6)),
-                  label: const Text("Defaults", style: TextStyle(color: Color(0xFF5B21B6), fontSize: 11)),
+                  icon: Icon(Icons.sync_rounded, size: 14, color: primaryPurple),
+                  label: Text("Defaults", style: TextStyle(color: primaryPurple, fontSize: 11)),
                 ),
               ],
             ),
@@ -458,18 +459,18 @@ class _AlarmScreenState extends State<AlarmScreen> {
                   children: [
                     Text(
                       cat.title,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF0F172A),
+                        color: textDark,
                       ),
                     ),
                     const SizedBox(height: 2),
                     Text(
                       "${cat.activeCount} of ${cat.items.length} active",
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 11,
-                        color: Color(0xFF64748B),
+                        color: textMuted,
                         fontFamily: 'monospace',
                         fontWeight: FontWeight.w500,
                       ),
@@ -504,10 +505,10 @@ class _AlarmScreenState extends State<AlarmScreen> {
                     duration: const Duration(milliseconds: 150),
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                     decoration: BoxDecoration(
-                      color: isChecked ? const Color(0xFFF5F3FF) : const Color(0xFFF8FAFC),
+                      color: isChecked ? activeBgLavender : primaryBackground,
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(
-                        color: isChecked ? const Color(0xFFDDD6FE) : const Color(0xFFE2E8F0),
+                        color: isChecked ? primaryPurple.withOpacity(0.3) : const Color(0xFFE2E8F0),
                       ),
                     ),
                     child: Row(
@@ -519,7 +520,7 @@ class _AlarmScreenState extends State<AlarmScreen> {
                             style: TextStyle(
                               fontSize: 13,
                               fontWeight: isChecked ? FontWeight.bold : FontWeight.w500,
-                              color: isChecked ? const Color(0xFF0F172A) : const Color(0xFF334155),
+                              color: textDark,
                             ),
                           ),
                         ),
@@ -528,7 +529,7 @@ class _AlarmScreenState extends State<AlarmScreen> {
                           height: 20,
                           child: Checkbox(
                             value: isChecked,
-                            activeColor: const Color(0xFF5B21B6),
+                            activeColor: primaryPurple,
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
                             onChanged: (val) {
                               setState(() {
