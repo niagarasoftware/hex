@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../../../Screens/Dealer/controllerverssionupdate.dart';
 import '../../../Screens/planning/FactoryReset.dart';
 import '../../../flavors.dart';
@@ -546,49 +547,19 @@ class _HexSidebarState extends State<HexSidebar> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header: Brand Logo & Title
+          // Header: VIOM Automation Brand SVG Logo
           Padding(
             padding: EdgeInsets.symmetric(
-              horizontal: _isExpanded ? 18.0 : 16.0,
-              vertical: 20.0,
+              horizontal: _isExpanded ? 12.0 : 8.0,
+              vertical: 14.0,
             ),
-            child: Row(
-              children: [
-                Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    color: colorScheme.primary,
-                    borderRadius: BorderRadius.circular(10),
-                    boxShadow: [
-                      BoxShadow(
-                        color: colorScheme.primary.withOpacity(0.2),
-                        blurRadius: 6,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: Center(
-                    child: Icon(
-                      Icons.hexagon_rounded,
-                      color: colorScheme.onPrimary,
-                      size: 20,
-                    ),
-                  ),
-                ),
-                if (_isExpanded) ...[
-                  const SizedBox(width: 12),
-                  Text(
-                    'HEX',
-                    style: TextStyle(
-                      fontSize: 19,
-                      fontWeight: FontWeight.w800,
-                      color: colorScheme.onSurface,
-                      letterSpacing: 0.6,
-                    ),
-                  ),
-                ],
-              ],
+            child: Center(
+              child: SvgPicture.asset(
+                'assets/svg_images/oro_logo.svg',
+                width: _isExpanded ? 180.0 : 44.0,
+                height: _isExpanded ? 65.0 : 44.0,
+                fit: BoxFit.contain,
+              ),
             ),
           ),
 
