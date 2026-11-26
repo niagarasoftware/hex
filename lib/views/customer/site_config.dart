@@ -4,6 +4,7 @@ import '../../modules/config_maker/view/config_base_page.dart';
 import '../../providers/user_provider.dart';
 import '../../repository/repository.dart';
 import '../../services/http_service.dart';
+import '../../utils/Theme/oro_theme.dart' as theme;
 import '../../view_models/customer/site_config_view_model.dart';
 
 class SiteConfig extends StatelessWidget {
@@ -96,13 +97,13 @@ class SiteConfig extends StatelessWidget {
                                     );
                                   },
                                   color: Theme.of(context).primaryColorLight,
-                                  child: const Row(
+                                  child:  const Row(
                                     children: [
                                       Icon(Icons.confirmation_number_outlined,
-                                          color: Colors.white),
+                                          color: theme.brandIconBg),
                                       SizedBox(width: 5),
                                       Text('Site Configuration',
-                                          style: TextStyle(color: Colors.white)),
+                                          style: TextStyle(color: theme.textDark)),
                                     ],
                                   ),
                                 ): null,
