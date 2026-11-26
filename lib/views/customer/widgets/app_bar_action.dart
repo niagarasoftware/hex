@@ -6,7 +6,6 @@ import 'package:provider/provider.dart';
 
 import '../../../Screens/Dealer/controllerverssionupdate.dart';
 import '../../../Screens/planning/FactoryReset.dart';
-import '../../../cropAdvisory/view/crop_list_screen.dart';
 import '../../../flavors.dart';
 import '../../../models/customer/site_model.dart';
 import '../../../modules/PumpController/view/node_settings.dart';
@@ -20,7 +19,6 @@ import '../../../user_manual_stub.dart';
 import '../../../utils/Theme/oro_theme.dart';
 import '../../../utils/constants.dart';
 import '../../../utils/enums.dart';
-import '../../../utils/helpers/mqtt_status_indicator.dart';
 import '../../../utils/helpers/screen_helper.dart';
 import '../../../utils/routes.dart';
 import '../../../utils/shared_preferences_helper.dart';
@@ -37,7 +35,6 @@ List<Widget> appBarActions(
   bool isNarrow,
 ) {
   final loggedInUser = Provider.of<UserProvider>(context, listen: false).loggedInUser;
-  final viewedCustomer = Provider.of<UserProvider>(context, listen: false).viewedCustomer;
 
   final isGem = [...AppConstants.gemModelList, ...AppConstants.ecoGemModelList]
       .contains(master.modelId);
@@ -46,8 +43,6 @@ List<Widget> appBarActions(
     return [
       _buildProgramRunningIcon(vm),
       const SizedBox(width: 8),
-      const MqttStatusIndicator(),
-      const SizedBox(width: 10),
       AlarmButton(
         alarmPayload: vm.alarmDL,
         deviceID: master.deviceId,
@@ -56,18 +51,6 @@ List<Widget> appBarActions(
         irrigationLine: master.irrigationLine,
         isNarrow: isNarrow,
         isOMS: false,
-      ),
-      IconButton(
-        onPressed: () {
-        //   Navigator.push(
-        //   context,
-        //   MaterialPageRoute(builder: (context) => AIChatScreen(
-        //     userId: vm.mySiteList.data[vm.sIndex].customerId,
-        //     controllerId: master.controllerId,
-        //   )),
-        // );
-        },
-        icon: const Icon(Icons.assistant),
       ),
     ];
   }
@@ -85,32 +68,14 @@ List<Widget> appBarActions(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
           _buildProgramRunningIcon(vm),
-          const SizedBox(width: 10),
-          const MqttStatusIndicator(),
-          const SizedBox(width: 10),
-          if (vm.lineLiveMessage.isNotEmpty && master.irrigationLine.length > 1)
+          if (vm.lineLiveMessage.isNotEmpty && master.irrigationLine.length > 1) ...[
+            const SizedBox(width: 10),
             _buildPauseResumeButton(context, vm),
-          const SizedBox(width: 10),
-          IconButton(
-            color: Colors.transparent,
-            onPressed: () => Navigator.push(
-              context,
-               MaterialPageRoute(builder: (context) =>  CropListScreen(
-                 userId: vm.mySiteList.data[vm.sIndex].customerId,
-                 controllerId: master.controllerId,
-               )),
-            ),
-            icon: const CircleAvatar(
-              radius: 17,
-              backgroundColor: Colors.black12,
-              child: Icon(Icons.mic, color: Colors.black26),
-            ),
-          ),
-          _buildHelpMenu(context, vm, loggedInUser, viewedCustomer, master),
-          _buildAccountMenu(context, vm, viewedCustomer, isNarrow),
+          ],
           if (master.nodeList.isNotEmpty &&
               master.categoryId == 2 &&
-              [48, 49].contains(master.modelId))
+              [48, 49].contains(master.modelId)) ...[
+            const SizedBox(width: 10),
             IconButton(
               onPressed: () => showModalBottomSheet(
                 context: context,
@@ -124,6 +89,7 @@ List<Widget> appBarActions(
               ),
               icon: const Icon(Icons.settings_remote),
             ),
+          ],
           const SizedBox(width: 8),
         ],
       ),
@@ -539,21 +505,6 @@ Widget _buildNonGemActions(BuildContext context, dynamic master,
               child: Icon(Icons.bluetooth),
             ),
           ),
-        InkWell(
-          onTap: () {
-            // Navigator.push(
-            //   context,
-            //   MaterialPageRoute(builder: (context) =>  AIChatScreen(
-            //     userId: customerId,
-            //     controllerId: master.controllerId,
-            //   )),
-            // );
-          },
-          child: const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 8),
-            child: Icon(Icons.assistant),
-          ),
-        ),
       ],
     ),
   );
