@@ -93,6 +93,7 @@ class MasterControllerModel {
 
   final List<EcSensorModel> ecSensors;
   final List<PhSensorModel> phSensors;
+  final List<WaterSourceModel> waterSources;
 
   MasterControllerModel({
     required this.controllerId,
@@ -126,6 +127,7 @@ class MasterControllerModel {
 
     required this.ecSensors,
     required this.phSensors,
+    this.waterSources = const [],
 
   });
 
@@ -350,6 +352,7 @@ class MasterControllerModel {
       userManualLink: json['userManualLink'] as String?,
       last7Days: json['last7Days']?.toString() ?? '',
       last30Days: json['last30Days']?.toString() ?? '',
+      waterSources: waterSources,
     );
   }
 }
@@ -2161,7 +2164,7 @@ class Level {
 
   factory Level.fromJson(Map<String, dynamic> json) => Level(
     objectId: json['objectId'],
-    sNo: json['sNo'],
+    sNo: (json['sNo'] as num?)?.toDouble(),
     name: json['name'],
     //percentage: json['percentage'],
     connectionNo: json['connectionNo'],
@@ -2179,7 +2182,7 @@ class Item {
 
   factory Item.fromJson(Map<String, dynamic> json) => Item(
     objectId: json['objectId'],
-    sNo: json['sNo'],
+    sNo: (json['sNo'] as num?)?.toDouble(),
     name: json['name'],
   );
 
@@ -2516,8 +2519,8 @@ class Sequence {
 
   factory Sequence.fromJson(Map<String, dynamic> json) {
     return Sequence(
-      sNo: json['sNo'] ?? '',
-      name: json['name'] ?? '',
+      sNo: json['sNo']?.toString() ?? '',
+      name: json['name']?.toString() ?? '',
       isActive: false,
     );
   }
@@ -2548,11 +2551,11 @@ class ConditionModel {
 
   factory ConditionModel.fromJson(Map<String, dynamic> json) {
     return ConditionModel(
-      sNo: json['sNo'],
-      title: json['title'],
+      sNo: (json['sNo'] as num?)?.toInt() ?? 0,
+      title: json['title']?.toString() ?? '',
       value: ConditionValue.fromJson(json['value']),
       selected: json['selected'] ?? false,
-      conditionStatus: json['conditionStatus'] ?? 0,
+      conditionStatus: (json['conditionStatus'] as num?)?.toInt() ?? 0,
     );
   }
 
@@ -2584,11 +2587,11 @@ class ConditionValue {
 
   factory ConditionValue.fromJson(Map<String, dynamic> json) {
     return ConditionValue(
-      sNo: json['sNo'],
-      name: json['name'],
-      rule: json['rule'],
-      conditionStatus: json['conditionStatus'] ?? 0,
-      actualValue: json['actualValue'] ?? "",
+      sNo: (json['sNo'] as num?)?.toInt() ?? 0,
+      name: json['name']?.toString() ?? '',
+      rule: json['rule']?.toString() ?? '',
+      conditionStatus: (json['conditionStatus'] as num?)?.toInt() ?? 0,
+      actualValue: json['actualValue']?.toString() ?? "",
     );
   }
 
@@ -3047,6 +3050,7 @@ class MasterControllerModel {
 
   final List<EcSensorModel> ecSensors;
   final List<PhSensorModel> phSensors;
+  final List<WaterSourceModel> waterSources;
 
   MasterControllerModel({
     required this.controllerId,
@@ -3080,6 +3084,7 @@ class MasterControllerModel {
 
     required this.ecSensors,
     required this.phSensors,
+    this.waterSources = const [],
 
   });
 
@@ -3290,6 +3295,7 @@ class MasterControllerModel {
       userManualLink: json['userManualLink'] as String?,
       last7Days: json['last7Days']?.toString() ?? '',
       last30Days: json['last30Days']?.toString() ?? '',
+      waterSources: waterSources,
     );
   }
 }
@@ -5006,7 +5012,7 @@ class Level {
 
   factory Level.fromJson(Map<String, dynamic> json) => Level(
     objectId: json['objectId'],
-    sNo: json['sNo'],
+    sNo: (json['sNo'] as num?)?.toDouble(),
     name: json['name'],
     //percentage: json['percentage'],
     connectionNo: json['connectionNo'],
@@ -5024,7 +5030,7 @@ class Item {
 
   factory Item.fromJson(Map<String, dynamic> json) => Item(
     objectId: json['objectId'],
-    sNo: json['sNo'],
+    sNo: (json['sNo'] as num?)?.toDouble(),
     name: json['name'],
   );
 
@@ -5361,8 +5367,8 @@ class Sequence {
 
   factory Sequence.fromJson(Map<String, dynamic> json) {
     return Sequence(
-      sNo: json['sNo'] ?? '',
-      name: json['name'] ?? '',
+      sNo: json['sNo']?.toString() ?? '',
+      name: json['name']?.toString() ?? '',
       isActive: false,
     );
   }
@@ -5393,11 +5399,11 @@ class ConditionModel {
 
   factory ConditionModel.fromJson(Map<String, dynamic> json) {
     return ConditionModel(
-      sNo: json['sNo'],
-      title: json['title'],
+      sNo: (json['sNo'] as num?)?.toInt() ?? 0,
+      title: json['title']?.toString() ?? '',
       value: ConditionValue.fromJson(json['value']),
       selected: json['selected'] ?? false,
-      conditionStatus: json['conditionStatus'] ?? 0,
+      conditionStatus: (json['conditionStatus'] as num?)?.toInt() ?? 0,
     );
   }
 
@@ -5429,11 +5435,11 @@ class ConditionValue {
 
   factory ConditionValue.fromJson(Map<String, dynamic> json) {
     return ConditionValue(
-      sNo: json['sNo'],
-      name: json['name'],
-      rule: json['rule'],
-      conditionStatus: json['conditionStatus'] ?? 0,
-      actualValue: json['actualValue'] ?? "",
+      sNo: (json['sNo'] as num?)?.toInt() ?? 0,
+      name: json['name']?.toString() ?? '',
+      rule: json['rule']?.toString() ?? '',
+      conditionStatus: (json['conditionStatus'] as num?)?.toInt() ?? 0,
+      actualValue: json['actualValue']?.toString() ?? "",
     );
   }
 

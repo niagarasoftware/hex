@@ -325,11 +325,11 @@ class Sequence {
 
   factory Sequence.fromJson(Map<String, dynamic> json) {
     return Sequence(
-      sNo: json['sNo'] ?? '',
-      id: json['id'] ?? '',
-      name: json['name'] ?? '',
-      location: json['location'] ?? '',
-      locationName: json['locationName'] ?? '',
+      sNo: json['sNo']?.toString() ?? '',
+      id: json['id']?.toString() ?? '',
+      name: json['name']?.toString() ?? '',
+      location: json['location']?.toString() ?? '',
+      locationName: json['locationName']?.toString() ?? '',
     );
   }
 

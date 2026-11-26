@@ -1,19 +1,14 @@
 import 'dart:convert';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'dart:async';
 import 'package:intl/intl.dart';
 import 'package:hex/Constants/properties.dart';
-import 'package:hex/Widgets/sized_image.dart';
 import 'package:hex/modules/IrrigationProgram/repository/irrigation_program_repo.dart';
-import 'package:hex/modules/PumpController/state_management/pump_controller_provider.dart';
 import 'package:hex/modules/ScheduleView/repository/schedule_view_repo.dart';
 import 'package:provider/provider.dart';
-import 'package:table_calendar/table_calendar.dart';
 import '../../../Constants/constants.dart';
 import '../../../services/mqtt_service.dart';
-import '../../Logs/widgets/custom_calendar_mobile.dart';
 import '../../SystemDefinitions/widgets/custom_snack_bar.dart';
 import '../widgets/custom_timeline_widget.dart';
 import '../../../flavors.dart';
@@ -60,7 +55,6 @@ class _ScheduleViewScreenState extends State<ScheduleViewScreen> {
   @override
   void initState() {
     super.initState();
-    // MqttManager().topicToSubscribe('${Environment.mqttSubscribeTopic}/${widget.deviceId}');
     _requestScheduleData();
   }
 
@@ -74,41 +68,53 @@ class _ScheduleViewScreenState extends State<ScheduleViewScreen> {
       "groupId": widget.groupId,
       "categoryId": widget.groupId
     };
-    print(userData);
     var getUserConfigMaker = await IrrigationProgramRepository(HttpService()).getUserConfigMaker(userData);
     Map<String, dynamic> response = jsonDecode(getUserConfigMaker.body);
     selectedHeadUnits.clear();
     selectedStatusList.clear();
     selectedPrograms.clear();
-    if(mounted) {
+    if (mounted) {
       setState(() {
         configObjects = List.from(response['data']['configObject']);
 
-        if(MqttService().schedulePayload != null && MqttService().schedulePayload!.isNotEmpty && !MqttService().schedulePayload![0].containsKey('message')) {
-          final headUnitSnoList = MqttService().schedulePayload!.map((e) => e['HeadUnit'].toString()).toList().toSet();
-          final programSnoList = MqttService().schedulePayload!.map((e) => e['ProgramS_No'].toString()).toList().toSet();
-          final statusCodeList = MqttService().schedulePayload!.map((e) => e['Status']).toList().toSet();
+        if (MqttService().schedulePayload != null &&
+            MqttService().schedulePayload!.isNotEmpty &&
+            !MqttService().schedulePayload![0].containsKey('message')) {
+          final headUnitSnoList = MqttService().schedulePayload!
+              .map((e) => e['HeadUnit'].toString())
+              .toList()
+              .toSet();
+          final programSnoList = MqttService().schedulePayload!
+              .map((e) => e['ProgramS_No'].toString())
+              .toList()
+              .toSet();
+          final statusCodeList = MqttService().schedulePayload!
+              .map((e) => e['Status'])
+              .toList()
+              .toSet();
 
           statusList = statusCodeList.map((code) => _getStatusInfo(code)).toSet().toList();
-          programs = defaultData['program'].where((program) => programSnoList.contains(program['sNo'].toString())).toSet().toList();
+          programs = defaultData['program']
+              .where((program) => programSnoList.contains(program['sNo'].toString()))
+              .toSet()
+              .toList();
 
-          headUnits = configObjects.where((obj) => headUnitSnoList.contains(obj['sNo'].toString())).map((obj) => {'sNo': obj['sNo'], 'name': obj['name']}).toSet().toList();
-          if(selectedHeadUnits.isEmpty) {
+          headUnits = configObjects
+              .where((obj) => headUnitSnoList.contains(obj['sNo'].toString()))
+              .map((obj) => {'sNo': obj['sNo'], 'name': obj['name']})
+              .toSet()
+              .toList();
+          if (selectedHeadUnits.isEmpty && headUnits.isNotEmpty) {
             selectedHeadUnits.add(headUnits[0]);
           }
         }
-
       });
     }
     Map<String, dynamic> data = {
       "2600": {"2601": "${DateFormat('yyyy-MM-dd').format(date)},${DateFormat('yyyy-MM-dd').format(date)}"}
     };
-    DateTime selectedDateWithoutTime = DateTime(date.year, date.month, date.day);
-    DateTime todayWithoutTime = DateTime(today.year, today.month, today.day);
-    // print(selectedDateWithoutTime.isAfter(todayWithoutTime));
-    // if (selectedDateWithoutTime.isAfter(todayWithoutTime)) {
-    MqttService().topicToPublishAndItsMessage(jsonEncode(data), '${Environment.mqttPublishTopic}/${widget.deviceId}');
-    // }
+    MqttService().topicToPublishAndItsMessage(
+        jsonEncode(data), '${Environment.mqttPublishTopic}/${widget.deviceId}');
   }
 
   /// Function to get user log data
@@ -132,99 +138,77 @@ class _ScheduleViewScreenState extends State<ScheduleViewScreen> {
       if (getUserScheduleLog.statusCode == 200) {
         final responseJson = getUserScheduleLog.body;
         final convertedJson = jsonDecode(responseJson);
-        // print("convertedJson in the getUserScheduleLog :: $convertedJson");
-        if(convertedJson["code"] == 200) {
+        if (convertedJson["code"] == 200) {
           defaultData = convertedJson['data']['default'];
-          // print('convertedJson: ${convertedJson['data'][0]}');
-          MqttService().schedulePayload = Constants.dataConversionForScheduleView(convertedJson['data']['log'][0]['irrigation']);
+          MqttService().schedulePayload = Constants.dataConversionForScheduleView(
+              convertedJson['data']['log'][0]['irrigation']);
         } else {
-          MqttService().schedulePayload = [{"message" : convertedJson['message']}];
+          MqttService().schedulePayload = [
+            {"message": convertedJson['message']}
+          ];
         }
       }
     } catch (e) {
-      // print('Error: $e');
-      // print('stackTrace: $stackTrace');
+      debugPrint("Error fetching schedule log: $e");
     }
   }
 
-  Future<void> sentToServer(String msg, dynamic payLoad, int userId, int controllerId, int customerId) async {
-    Map<String, Object> body = {"userId": customerId, "controllerId": controllerId, "messageStatus": msg.isNotEmpty ? msg : 'Just sent without changes', "data": payLoad, "hardware": payLoad, "createUser": userId};
-    final response = await repository.createUserSentAndReceivedMessageManually(body);
-    if (response.statusCode == 200) {
-      // print(response.body);
-      // print("body ==> $body");
-    } else {
+  Future<void> sentToServer(
+      String msg, dynamic payLoad, int userId, int controllerId, int customerId) async {
+    Map<String, Object> body = {
+      "userId": customerId,
+      "controllerId": controllerId,
+      "messageStatus": msg.isNotEmpty ? msg : 'Just sent without changes',
+      "data": payLoad,
+      "hardware": payLoad,
+      "createUser": userId
+    };
+    final response =
+        await repository.createUserSentAndReceivedMessageManually(body);
+    if (response.statusCode != 200) {
       throw Exception('Failed to load data');
     }
   }
 
-  final BoxDecoration boxDecoration = BoxDecoration(
-    shape: BoxShape.rectangle,
-    borderRadius: BorderRadius.circular(4),
-  );
-
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final colorScheme = Theme.of(context).colorScheme;
     final isLargeScreen = MediaQuery.of(context).size.width >= 700;
+
     return Scaffold(
+      backgroundColor: colorScheme.surfaceContainerLowest,
       appBar: AppBar(
         title: const Text('Schedule View'),
-        leadingWidth: isLargeScreen ? 250 : null,
-        leading: Row(
+        backgroundColor: colorScheme.primary,
+        foregroundColor: colorScheme.onSurface,
+        elevation: 0,
+         leading: Row(
           children: [
             const BackButton(),
-            if(isLargeScreen)
-              Image(
-                image: F.appFlavor!.name.contains('oro')?const AssetImage("assets/png/oro_logo_white.png"):
-                const AssetImage("assets/png/company_logo.png"),
-                width: 110,
-                fit: BoxFit.fitWidth,
-              )
+
           ],
         ),
         actions: [
           Container(
-            height: 35,
-            decoration: BoxDecoration(
-                color: isLargeScreen ? Colors.transparent: Theme.of(context).primaryColorLight,
-                borderRadius: const BorderRadius.only(topLeft: Radius.circular(25), bottomLeft: Radius.circular(25))
-            ),
+            height: 36,
+            margin: const EdgeInsets.only(right: 12),
             child: Row(
               children: [
-                for (int i = 0; i < 3; i++) ...[
-                  if(isLargeScreen)
-                    FilledButton.icon(
-                      onPressed: () {
-                        if (i == 0) {
-                          _showStatusListDialog(context);
-                        } else if (i == 1) {
-                          _requestScheduleData();
-                        } else if (i == 2) {
-                          _showInfoDialog(context);
-                        }
-                      },
-                      icon: Icon([Icons.filter_alt_outlined, Icons.refresh_outlined, Icons.info_outline][i]),
-                      label: Text(['Filter', 'Refresh', 'Info'][i]),
-                    )
-                  else
-                    InkWell(
-                      onTap: () {
-                        if (i == 0) {
-                          _showStatusListDialog(context);
-                        } else if (i == 1) {
-                          _requestScheduleData();
-                        } else if (i == 2) {
-                          _showInfoDialog(context);
-                        }
-                      },
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                        child: Icon([Icons.filter_alt_outlined, Icons.refresh_outlined, Icons.info_outline][i]),
-                      ),
-                    ),
-                  const SizedBox(width: 10),
-                ],
+                IconButton(
+                  tooltip: 'Filter',
+                  icon: const Icon(Icons.filter_alt_outlined),
+                  onPressed: () => _showStatusListDialog(context),
+                ),
+                IconButton(
+                  tooltip: 'Refresh',
+                  icon: const Icon(Icons.refresh_outlined),
+                  onPressed: () => _requestScheduleData(),
+                ),
+                IconButton(
+                  tooltip: 'Info',
+                  icon: const Icon(Icons.info_outline),
+                  onPressed: () => _showInfoDialog(context),
+                ),
               ],
             ),
           )
@@ -232,120 +216,98 @@ class _ScheduleViewScreenState extends State<ScheduleViewScreen> {
       ),
       body: Column(
         children: [
-          if(MediaQuery.of(context).size.width <= 700)
-            MobileCustomCalendar(
-              focusedDay: _focusedDay,
-              calendarFormat: context.read<PumpControllerProvider>().calendarFormat,
-              selectedDate: date,
-              lastDay: DateTime(2100),
-              onDaySelected: (selectedDay, focusedDay) {
-                setState(() {
-                  date = selectedDay;
-                  _focusedDay = focusedDay;
-                });
-                _requestScheduleData();
-              },
-              onFormatChanged: (format) {
-                /* if (pumpControllerProvider.calendarFormat != format) {
-                setState(() {
-                  pumpControllerProvider.calendarFormat = format;
-                });
-              }*/
-              },
-            ),
+          // -------------------------------------------------------------------
+          // 1. Compact Top Date Selector Toolbar
+          // -------------------------------------------------------------------
+          _buildCompactDateSelector(),
+          Divider(height: 1, color: colorScheme.outlineVariant),
+
+          // -------------------------------------------------------------------
+          // 2. Schedule Workspace (Full Width Stream Content)
+          // -------------------------------------------------------------------
           Expanded(
-            child: LayoutBuilder(
-                builder: (BuildContext context, BoxConstraints constraints) {
-                  return Row(
-                    children: [
-                      if(MediaQuery.of(context).size.width >= 700)
-                        Container(
-                            width: 250,
-                            color: theme.primaryColor,
-                            child: Column(
-                              children: [
-                                Expanded(child: Container()),
-                                _buildCalendar(constraints)
-                              ],
-                            )
-                        ),
-                      Expanded(
-                        child: Center(
-                            child: StreamBuilder<List<Map<String, dynamic>>?>(
-                              stream: MqttService().schedulePayloadStream,
-                              initialData: MqttService().schedulePayload,
-                              builder: (context, snapshot) {
-                                // show loading only if still waiting and there is no cached data
-                                if (snapshot.connectionState == ConnectionState.waiting && (snapshot.data == null)) {
-                                  return const CircularProgressIndicator();
-                                }
+            child: StreamBuilder<List<Map<String, dynamic>>?>(
+              stream: MqttService().schedulePayloadStream,
+              initialData: MqttService().schedulePayload,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting &&
+                    (snapshot.data == null)) {
+                  return Center(
+                      child: CircularProgressIndicator(color: colorScheme.primary));
+                }
 
-                                // If no data at all
-                                if (!snapshot.hasData || snapshot.data == null || (snapshot.data is List && snapshot.data!.isEmpty)) {
-                                  return const Text('No data available');
-                                }
+                if (!snapshot.hasData ||
+                    snapshot.data == null ||
+                    (snapshot.data is List && snapshot.data!.isEmpty)) {
+                  return const Center(child: Text('No schedule data available'));
+                }
 
-                                final data = snapshot.data!;
-                                // If the first element is a server message (error/info), show it
-                                if (data.isNotEmpty && data[0].containsKey('message')) {
-                                  return Center(child: Text("${data[0]['message']}"));
-                                }
-
-                                // --- Derive headUnits from incoming MQTT data if not already present ---
-                                // Only run once (guard with headUnits.isEmpty) and only if configObjects is available
-                                if (data.isNotEmpty && headUnits.isEmpty && configObjects.isNotEmpty) {
-                                  final headUnitSnoList = data.map((e) => e['HeadUnit'].toString()).toSet();
-                                  final derivedHeadUnits = configObjects
-                                      .where((obj) => headUnitSnoList.contains(obj['sNo'].toString()))
-                                      .map((obj) => {'sNo': obj['sNo'], 'name': obj['name']})
-                                      .toList();
-
-                                  if (derivedHeadUnits.isNotEmpty) {
-                                    WidgetsBinding.instance.addPostFrameCallback((_) {
-                                      if (!mounted) return;
-                                      setState(() {
-                                        headUnits = derivedHeadUnits;
-                                        if (selectedHeadUnits.isEmpty) {
-                                          selectedHeadUnits.add(headUnits[0]);
-                                        }
-                                      });
-                                    });
-                                  }
-                                }
-
-                                // --- Also derive programs list if empty and defaultData has program list ---
-                                if (data.isNotEmpty && programs.isEmpty && defaultData.isNotEmpty && defaultData['program'] != null) {
-                                  final programSnoList = data.map((e) => e['ProgramS_No'].toString()).toSet();
-                                  final derivedPrograms = List.from(defaultData['program'])
-                                      .where((program) => programSnoList.contains(program['sNo'].toString()))
-                                      .toList();
-                                  if (derivedPrograms.isNotEmpty) {
-                                    WidgetsBinding.instance.addPostFrameCallback((_) {
-                                      if (!mounted) return;
-                                      setState(() {
-                                        programs = derivedPrograms;
-                                        // do not auto-select programs — keep current UX (or uncomment to auto-select)
-                                        if (selectedPrograms.isEmpty) selectedPrograms.add(programs[0]);
-                                      });
-                                    });
-                                  }
-                                }
-
-                                return _buildScheduleView(data, constraints);
-                              },
-                            )
-                        ),
-                      )
-                    ],
+                final data = snapshot.data!;
+                if (data.isNotEmpty && data[0].containsKey('message')) {
+                  return Center(
+                    child: Text(
+                      "${data[0]['message']}",
+                      style: TextStyle(color: colorScheme.onSurfaceVariant),
+                    ),
                   );
                 }
+
+                // Derive headUnits and programs dynamically
+                if (data.isNotEmpty && headUnits.isEmpty && configObjects.isNotEmpty) {
+                  final headUnitSnoList =
+                      data.map((e) => e['HeadUnit'].toString()).toSet();
+                  final derivedHeadUnits = configObjects
+                      .where((obj) => headUnitSnoList.contains(obj['sNo'].toString()))
+                      .map((obj) => {'sNo': obj['sNo'], 'name': obj['name']})
+                      .toList();
+
+                  if (derivedHeadUnits.isNotEmpty) {
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      if (!mounted) return;
+                      setState(() {
+                        headUnits = derivedHeadUnits;
+                        if (selectedHeadUnits.isEmpty) {
+                          selectedHeadUnits.add(headUnits[0]);
+                        }
+                      });
+                    });
+                  }
+                }
+
+                if (data.isNotEmpty &&
+                    programs.isEmpty &&
+                    defaultData.isNotEmpty &&
+                    defaultData['program'] != null) {
+                  final programSnoList =
+                      data.map((e) => e['ProgramS_No'].toString()).toSet();
+                  final derivedPrograms = List.from(defaultData['program'])
+                      .where((program) =>
+                          programSnoList.contains(program['sNo'].toString()))
+                      .toList();
+                  if (derivedPrograms.isNotEmpty) {
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      if (!mounted) return;
+                      setState(() {
+                        programs = derivedPrograms;
+                      });
+                    });
+                  }
+                }
+
+                return _buildScheduleWorkspace(data);
+              },
             ),
           ),
         ],
       ),
       floatingActionButton: FilledButton.icon(
+        style: FilledButton.styleFrom(
+          backgroundColor: colorScheme.secondary,
+          foregroundColor: colorScheme.onSecondary,
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        ),
         onPressed: () async {
-          // var
           final convertedList = MqttService().schedulePayload!;
           var listToMqtt = [];
           for (var i = 0; i < convertedList.length; i++) {
@@ -363,172 +325,459 @@ class _ScheduleViewScreenState extends State<ScheduleViewScreen> {
                 "${convertedList[i]["CentralFertOnOff"]},"
                 "${convertedList[i]["LocalFertOnOff"]},"
                 "${convertedList[i]["CentralFertChannelSelection"]},"
-                "${convertedList[i]["LocalFertChannelSelection"]}"
-                "";
+                "${convertedList[i]["LocalFertChannelSelection"]}";
             listToMqtt.add(scheduleMap);
           }
           var dataToHardware = {
-            "2700": {
-              "2701": "${listToMqtt.join(";").toString()};"
-            }
+            "2700": {"2701": "${listToMqtt.join(";").toString()};"}
           };
           try {
             validatePayloadSent(
                 dialogContext: context,
                 context: context,
-                acknowledgedFunction: () async{
+                acknowledgedFunction: () async {
                   try {
-                    await sentToServer(sentMessage.join('\n'), dataToHardware, widget.userId, widget.controllerId, widget.customerId);
+                    await sentToServer(
+                        sentMessage.join('\n'),
+                        dataToHardware,
+                        widget.userId,
+                        widget.controllerId,
+                        widget.customerId);
                     _requestScheduleData();
-                  } catch(error) {
-                    // print("error ==> $error");
-                    // print("stackTrace ==> $stackTrace");
+                  } catch (error) {
+                    debugPrint("Error sending payload: $error");
                   }
                 },
                 payload: dataToHardware,
                 payloadCode: "2700",
-                deviceId: widget.deviceId
-            );
+                deviceId: widget.deviceId);
           } catch (error) {
-            ScaffoldMessenger.of(context).showSnackBar(CustomSnackBar(message: 'Failed to update because of $error'));
-            // print("Error: $error");
+            ScaffoldMessenger.of(context).showSnackBar(
+                CustomSnackBar(message: 'Failed to update because of $error'));
           }
         },
-        label: const Text('Send'),
-        icon: const Icon(Icons.send),
+        label: const Text('Send Changes', style: TextStyle(fontWeight: FontWeight.bold)),
+        icon: const Icon(Icons.send_rounded),
       ),
     );
   }
 
-  /// Widget for displaying the calendar
-  Widget _buildCalendar(BoxConstraints constraints) {
-    final theme = Theme.of(context);
+  /// Compact Top Date Selector Bar
+  Widget _buildCompactDateSelector() {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isToday = DateFormat('yyyy-MM-dd').format(date) ==
+        DateFormat('yyyy-MM-dd').format(DateTime.now());
+
     return Container(
-      color: Colors.white,
-      child: TableCalendar(
-        rowHeight: 40,
-        headerStyle: const HeaderStyle(
-          formatButtonVisible: false,
-          titleCentered: true,
-        ),
-        focusedDay: _focusedDay,
-        firstDay: DateTime.utc(2020, 10, 16),
-        lastDay: DateTime.utc(2100, 12, 31),
-        calendarFormat: CalendarFormat.month,
-        calendarStyle: CalendarStyle(
-          cellMargin: const EdgeInsets.all(4),
-          markerSize: 10,
-          markerMargin: const EdgeInsets.all(2),
-          markerDecoration: boxDecoration,
-          outsideDecoration: boxDecoration,
-          holidayDecoration: boxDecoration.copyWith(color: Colors.grey.withOpacity(0.1),),
-          weekendDecoration: boxDecoration.copyWith(color: Colors.grey.withOpacity(0.1),),
-          defaultDecoration: boxDecoration.copyWith(color: Colors.grey.withOpacity(0.1),),
-          selectedDecoration: boxDecoration.copyWith(color: theme.primaryColor),
-          todayTextStyle: const TextStyle(color: Colors.black),
-          todayDecoration: boxDecoration.copyWith(color: theme.primaryColor.withOpacity(0.2), border: Border.all(color: theme.primaryColor)),
-        ),
-        selectedDayPredicate: (day) {
-          return isSameDay(date, day);
-        },
-        onDaySelected: (selectedDay, focusedDay) {
-          setState(() {
-            date = selectedDay;
-            _focusedDay = focusedDay;
-          });
-          _requestScheduleData();
-          // scheduleViewProvider.updateSelectedProgramCategory(0);
-        },
-      ),
-    );
-  }
-
-  /// Widget for displaying the schedule view
-  Widget _buildScheduleView(List<Map<String, dynamic>> data, BoxConstraints constraints) {
-    return Column(
-      children: [
-        const SizedBox(height: 16),
-        Container(
-          margin: EdgeInsets.symmetric(horizontal: constraints.maxWidth >= 700 ? 40 : 10),
-          height: 35,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            itemCount: headUnits.length,
-            itemBuilder: (BuildContext context, int index) {
-              return Row(
-                children: [
-                  _buildOutlineButton(headUnits[index], selectedHeadUnits, item: headUnits[index]),
-                  const SizedBox(width: 10,)
-                ],
-              );
-            },
-          ),
-        ),
-        const SizedBox(height: 8),
-        Container(
-          margin: EdgeInsets.symmetric(horizontal: constraints.maxWidth >= 700 ? 20 : 5),
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-          height: 55,
-          decoration: BoxDecoration(
-            boxShadow: AppProperties.customBoxShadowLiteTheme,
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: Colors.grey[300]!, width: 2),
-          ),
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            itemCount: programs.length,
-            itemBuilder: (BuildContext context, int index) {
-              return Row(
-                children: [
-                  _buildOutlineButton(programs[index], selectedPrograms),
-                  const SizedBox(width: 10,)
-                ],
-              );
-            },
-          ),
-        ),
-        const SizedBox(height: 16),
-        /// Timeline and program list
-        Expanded(
-          child: ListView.builder(
-            itemCount: data.length,
-            itemBuilder: (context, index) {
-              // Treat empty selectedHeadUnits as "match all"
-              final bool headUnitMatches = selectedHeadUnits.isNotEmpty
-                  ? selectedHeadUnits.any((element) => element['sNo'].toString() == data[index]['HeadUnit'].toString())
-                  : true;
-
-              final bool programMatches = selectedPrograms.isNotEmpty
-                  ? selectedPrograms.any((element) => element['sNo'].toString() == data[index]['ProgramS_No'].toString())
-                  : true;
-
-              final bool statusMatches = selectedStatusList.isNotEmpty
-                  ? selectedStatusList.contains(data[index]['Status'])
-                  : true;
-
-              return Container(
-                margin: constraints.maxWidth >= 700 ? const EdgeInsets.symmetric(horizontal: 20) : const EdgeInsets.only(left: 5, right: 10),
-                child: Column(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      color: colorScheme.surface,
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: [
+            // Selected Date Picker Trigger Button
+            InkWell(
+              onTap: () async {
+                final pickedDate = await showDatePicker(
+                  context: context,
+                  initialDate: date,
+                  firstDate: DateTime(2020, 1, 1),
+                  lastDate: DateTime(2100, 12, 31),
+                  builder: (context, child) {
+                    return Theme(
+                      data: Theme.of(context).copyWith(colorScheme: colorScheme),
+                      child: child!,
+                    );
+                  },
+                );
+                if (pickedDate != null && pickedDate != date) {
+                  setState(() {
+                    date = pickedDate;
+                    _focusedDay = pickedDate;
+                  });
+                  _requestScheduleData();
+                }
+              },
+              borderRadius: BorderRadius.circular(10),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: colorScheme.primaryContainer,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: colorScheme.primary.withOpacity(0.4)),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    if (headUnitMatches && programMatches && statusMatches)
-                      TimeLine(
-                        itemGap: 0,
-                        padding: const EdgeInsets.symmetric(vertical: 0),
-                        indicators: [
-                          _buildTimeLineIndicators(data[index], index, data.length)
-                        ],
-                        children: [
-                          Container(
-                              margin: constraints.maxWidth <= 700 ? const EdgeInsets.only(bottom: 6) : EdgeInsets.zero,
-                              child: _buildScheduleCard(data[index], index, data.length, constraints)
-                          )
-                        ],
-                      ),
-                    if(index == data.length - 1)
-                      const SizedBox(height: 50,)
+                    Icon(
+                      Icons.calendar_month_rounded,
+                      size: 18,
+                      color: colorScheme.onPrimaryContainer,
+                    ),
+                    const SizedBox(width: 8),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'Selected Date',
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: colorScheme.onPrimaryContainer.withOpacity(0.8),
+                          ),
+                        ),
+                        Text(
+                          DateFormat('dd MMM yyyy').format(date),
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                            color: colorScheme.onPrimaryContainer,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(width: 6),
+                    Icon(
+                      Icons.arrow_drop_down_rounded,
+                      size: 20,
+                      color: colorScheme.onPrimaryContainer,
+                    ),
                   ],
                 ),
+              ),
+            ),
+            const SizedBox(width: 8),
+
+            // Previous & Next Day Buttons
+            Container(
+              decoration: BoxDecoration(
+                color: colorScheme.surfaceContainerLow,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: colorScheme.outlineVariant),
+              ),
+              child: Row(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.chevron_left_rounded, size: 20),
+                    onPressed: () {
+                      setState(() {
+                        date = date.subtract(const Duration(days: 1));
+                        _focusedDay = date;
+                      });
+                      _requestScheduleData();
+                    },
+                    tooltip: 'Previous Day',
+                  ),
+                  Container(
+                    width: 1,
+                    height: 20,
+                    color: colorScheme.outlineVariant,
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.chevron_right_rounded, size: 20),
+                    onPressed: () {
+                      setState(() {
+                        date = date.add(const Duration(days: 1));
+                        _focusedDay = date;
+                      });
+                      _requestScheduleData();
+                    },
+                    tooltip: 'Next Day',
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+
+            // Today Shortcut Chip
+            if (!isToday)
+              ActionChip(
+                avatar: const Icon(Icons.today_rounded, size: 16),
+                label: const Text('Today',
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                backgroundColor: colorScheme.surfaceContainerLow,
+                side: BorderSide(color: colorScheme.outlineVariant),
+                onPressed: () {
+                  setState(() {
+                    date = DateTime.now();
+                    _focusedDay = date;
+                  });
+                  _requestScheduleData();
+                },
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Schedule Overview Counts
+  Widget _buildOverviewCounts(List<Map<String, dynamic>> data) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    int total = data.length;
+    int completed = 0;
+    int running = 0;
+    int pending = 0;
+
+    for (var item in data) {
+      final code = item['Status'];
+      if ([2, 6, 9].contains(code)) {
+        completed++;
+      } else if ([1, 5].contains(code)) {
+        running++;
+      } else {
+        pending++;
+      }
+    }
+
+    Widget buildPill(String label, int count, Color color) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.12),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: color.withOpacity(0.3)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 8,
+              height: 8,
+              decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+            ),
+            const SizedBox(width: 6),
+            Text(
+              '$label: ',
+              style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant),
+            ),
+            Text(
+              '$count',
+              style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: colorScheme.onSurface),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      color: colorScheme.surface,
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: [
+            buildPill('Total', total, colorScheme.primary),
+            const SizedBox(width: 8),
+            buildPill('Completed', completed, Colors.green),
+            const SizedBox(width: 8),
+            buildPill('Running', running, Colors.orange),
+            const SizedBox(width: 8),
+            buildPill('Pending', pending, colorScheme.onSurfaceVariant),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Head Unit Selectable Tabs
+  Widget _buildHeadUnitTabs() {
+    final colorScheme = Theme.of(context).colorScheme;
+    if (headUnits.isEmpty) return const SizedBox.shrink();
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      child: Row(
+        children: [
+          Text(
+            'Head Unit: ',
+            style: TextStyle(
+                fontSize: 12.5,
+                fontWeight: FontWeight.bold,
+                color: colorScheme.onSurfaceVariant),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: headUnits.map((hu) {
+                  final isSelected = selectedHeadUnits
+                      .any((element) => element['sNo'] == hu['sNo']);
+
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 8.0),
+                    child: ChoiceChip(
+                      label: Text(hu['name'] as String? ?? 'Head Unit'),
+                      selected: isSelected,
+                      selectedColor: colorScheme.primary,
+                      backgroundColor: colorScheme.surfaceContainerLow,
+                      labelStyle: TextStyle(
+                        fontSize: 12.5,
+                        fontWeight:
+                            isSelected ? FontWeight.bold : FontWeight.w500,
+                        color: isSelected
+                            ? colorScheme.onPrimary
+                            : colorScheme.onSurface,
+                      ),
+                      onSelected: (selected) {
+                        setState(() {
+                          selectedHeadUnits = [hu];
+                        });
+                      },
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Program Selectable Chips
+  Widget _buildProgramChips() {
+    final colorScheme = Theme.of(context).colorScheme;
+    if (programs.isEmpty) return const SizedBox.shrink();
+
+    final isAllSelected = selectedPrograms.isEmpty;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      child: Row(
+        children: [
+          Text(
+            'Programs: ',
+            style: TextStyle(
+                fontSize: 12.5,
+                fontWeight: FontWeight.bold,
+                color: colorScheme.onSurfaceVariant),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  FilterChip(
+                    label: const Text('All Programs'),
+                    selected: isAllSelected,
+                    selectedColor: colorScheme.primaryContainer,
+                    backgroundColor: colorScheme.surfaceContainerLow,
+                    labelStyle: TextStyle(
+                      fontSize: 12.5,
+                      fontWeight:
+                          isAllSelected ? FontWeight.bold : FontWeight.w500,
+                      color: isAllSelected
+                          ? colorScheme.onPrimaryContainer
+                          : colorScheme.onSurface,
+                    ),
+                    onSelected: (_) {
+                      setState(() {
+                        selectedPrograms.clear();
+                      });
+                    },
+                  ),
+                  const SizedBox(width: 8),
+                  ...programs.map((prog) {
+                    final isSelected =
+                        selectedPrograms.any((p) => p['sNo'] == prog['sNo']);
+
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 8.0),
+                      child: FilterChip(
+                        label: Text(prog['name'] as String? ?? 'Program'),
+                        selected: isSelected,
+                        selectedColor: colorScheme.primaryContainer,
+                        backgroundColor: colorScheme.surfaceContainerLow,
+                        labelStyle: TextStyle(
+                          fontSize: 12.5,
+                          fontWeight:
+                              isSelected ? FontWeight.bold : FontWeight.w500,
+                          color: isSelected
+                              ? colorScheme.onPrimaryContainer
+                              : colorScheme.onSurface,
+                        ),
+                        onSelected: (selected) {
+                          setState(() {
+                            if (selected) {
+                              selectedPrograms.add(prog);
+                            } else {
+                              selectedPrograms.removeWhere(
+                                  (p) => p['sNo'] == prog['sNo']);
+                            }
+                          });
+                        },
+                      ),
+                    );
+                  }),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Full Width Schedule Workspace
+  Widget _buildScheduleWorkspace(List<Map<String, dynamic>> data) {
+    return Column(
+      children: [
+        _buildOverviewCounts(data),
+        _buildHeadUnitTabs(),
+        _buildProgramChips(),
+        const SizedBox(height: 8),
+
+        // Timeline and program list
+        Expanded(
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              return ListView.builder(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                itemCount: data.length,
+                itemBuilder: (context, index) {
+                  final bool headUnitMatches = selectedHeadUnits.isNotEmpty
+                      ? selectedHeadUnits.any((element) =>
+                          element['sNo'].toString() ==
+                          data[index]['HeadUnit'].toString())
+                      : true;
+
+                  final bool programMatches = selectedPrograms.isNotEmpty
+                      ? selectedPrograms.any((element) =>
+                          element['sNo'].toString() ==
+                          data[index]['ProgramS_No'].toString())
+                      : true;
+
+                  final bool statusMatches = selectedStatusList.isNotEmpty
+                      ? selectedStatusList.contains(data[index]['Status'])
+                      : true;
+
+                  if (!headUnitMatches || !programMatches || !statusMatches) {
+                    return const SizedBox.shrink();
+                  }
+
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 12),
+                    child: TimeLine(
+                      itemGap: 0,
+                      padding: const EdgeInsets.symmetric(vertical: 0),
+                      indicators: [
+                        _buildTimeLineIndicators(
+                            data[index], index, data.length)
+                      ],
+                      children: [
+                        _buildScheduleCard(
+                            data[index], index, data.length, constraints)
+                      ],
+                    ),
+                  );
+                },
               );
             },
           ),
@@ -538,23 +787,23 @@ class _ScheduleViewScreenState extends State<ScheduleViewScreen> {
   }
 
   /// Widget for displaying the timeline indicators
-  Widget _buildTimeLineIndicators(Map<String, dynamic> data, int index, int totalItems) {
+  Widget _buildTimeLineIndicators(
+      Map<String, dynamic> data, int index, int totalItems) {
     StatusInfo status = _getStatusInfo(data["Status"]);
-    // print(scheduleViewProvider.programCategories);
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         CustomPaint(
           painter: CheckmarkPainter(color: status.color),
           child: Container(
-              margin: const EdgeInsets.symmetric(vertical: 5),
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: status.color,
-              ),
-              height: 20,
-              width: 20,
-              child: Icon(status.icon, color: Colors.white, size: 16,)
+            margin: const EdgeInsets.symmetric(vertical: 5),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: status.color,
+            ),
+            height: 20,
+            width: 20,
+            child: Icon(status.icon, color: Colors.white, size: 16),
           ),
         ),
         Expanded(
@@ -572,39 +821,22 @@ class _ScheduleViewScreenState extends State<ScheduleViewScreen> {
   }
 
   int parseValue(dynamic value) {
-    if (value == null) {
-      return 0;
-    }
+    if (value == null) return 0;
+    if (value is int) return value;
+    if (value is double) return value.toInt();
 
-    // Already int
-    if (value is int) {
-      return value;
-    }
-
-    // Double
-    if (value is double) {
-      return value.toInt();
-    }
-
-    // String
     if (value is String) {
       final trimmedValue = value.trim();
-
-      // Time format: HH:mm:ss
       if (RegExp(r'^\d{1,2}:\d{2}:\d{2}$').hasMatch(trimmedValue)) {
         return durationToSeconds(trimmedValue);
       }
-
-      // Normal numeric string
       return double.tryParse(trimmedValue)?.toInt() ?? 0;
     }
-
     return 0;
   }
 
   int durationToSeconds(String value) {
     final parts = value.split(':');
-
     final hours = int.tryParse(parts[0]) ?? 0;
     final minutes = int.tryParse(parts[1]) ?? 0;
     final seconds = int.tryParse(parts[2]) ?? 0;
@@ -613,13 +845,16 @@ class _ScheduleViewScreenState extends State<ScheduleViewScreen> {
   }
 
   /// Widget for displaying the schedule card
-  Widget _buildScheduleCard(Map<String, dynamic> data, int index, int totalItems, BoxConstraints constraints) {
+  Widget _buildScheduleCard(Map<String, dynamic> data, int index,
+      int totalItems, BoxConstraints constraints) {
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final scheduleItem = data;
     final screenSize = MediaQuery.of(context).size.width;
 
     final String method = scheduleItem["IrrigationMethod"].toString();
-    final String inputValue = scheduleItem["IrrigationDuration_Quantity"].toString();
+    final String inputValue =
+        scheduleItem["IrrigationDuration_Quantity"].toString();
     final String completedValue = method == "1"
         ? scheduleItem["IrrigationDurationCompleted"].toString()
         : scheduleItem["IrrigationQuantityCompleted"].toString();
@@ -628,24 +863,25 @@ class _ScheduleViewScreenState extends State<ScheduleViewScreen> {
     final String valves = scheduleItem['SequenceData'];
     final String startTime = scheduleItem["ScheduledStartTime"].toString();
     final StatusInfo status = _getStatusInfo(scheduleItem["Status"]);
-    final StatusInfo reason = _getStatusInfo(scheduleItem["ProgramStartStopReason"]);
+    final StatusInfo reason =
+        _getStatusInfo(scheduleItem["ProgramStartStopReason"]);
     DateTime scheduleDate = DateTime.parse(scheduleItem["Date"]);
-    DateTime today = DateTime.now();
+    DateTime todayDate = DateTime.now();
 
-    DateTime scheduleDateWithoutTime = DateTime(scheduleDate.year, scheduleDate.month, scheduleDate.day);
-    DateTime todayWithoutTime = DateTime(today.year, today.month, today.day);
-    // Convert 24-hour format time to 12-hour format
-    final String time12 = DateFormat("hh:mm:ss").format(DateFormat("HH:mm:ss").parse(startTime));
+    DateTime scheduleDateWithoutTime =
+        DateTime(scheduleDate.year, scheduleDate.month, scheduleDate.day);
+    DateTime todayWithoutTime =
+        DateTime(todayDate.year, todayDate.month, todayDate.day);
 
-    // Calculate progress value
-    print("inputValue:$inputValue");
-    print("completedValue:$completedValue");
+    final String time12 = DateFormat("hh:mm:ss")
+        .format(DateFormat("HH:mm:ss").parse(startTime));
+
     final int input = parseValue(inputValue);
     final int completed = parseValue(completedValue);
 
     final double progressValue = method == "1"
         ? _calculateTimeProgress(inputValue, completedValue)
-        : completed / input;
+        : (input > 0 ? completed / input : 0.0);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -657,91 +893,100 @@ class _ScheduleViewScreenState extends State<ScheduleViewScreen> {
               children: [
                 Container(
                   decoration: BoxDecoration(
-                      color: status.color,
-                      borderRadius: BorderRadius.circular(5)
-                  ),
+                      color: status.color, borderRadius: BorderRadius.circular(5)),
                   height: 5,
                   width: 20,
                   margin: const EdgeInsets.only(right: 10),
                 ),
-                Text(time12, style: TextStyle(fontWeight: FontWeight.bold, color: theme.primaryColor)),
+                Text(time12,
+                    style: TextStyle(
+                        fontWeight: FontWeight.bold, color: colorScheme.primary)),
               ],
             ),
-            if(MediaQuery.of(context).size.width <= 700)
+            if (screenSize <= 700)
               Padding(
                 padding: const EdgeInsets.only(right: 8),
-                child: Text("Reason: ${reason.reason}", style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: theme.primaryColor)),
+                child: Text("Reason: ${reason.reason}",
+                    style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: colorScheme.primary)),
               ),
           ],
         ),
         Card(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-          surfaceTintColor: Colors.white,
-          color: Colors.white,
-          elevation: 5,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          surfaceTintColor: colorScheme.surface,
+          color: colorScheme.surface,
+          elevation: 3,
           child: Padding(
-            padding: EdgeInsets.all(screenSize >= 700 ? 10 : 6),
+            padding: EdgeInsets.all(screenSize >= 700 ? 12 : 8),
             child: Row(
-              spacing: screenSize >= 700 ? 20 : 10,
-              mainAxisAlignment: MainAxisAlignment.start,
               children: [
-                if(screenSize >= 700)
-                  const SizedBox(width: 10),
                 _buildScheduleOrderCircle('${scheduleItem["ScheduleOrder"]}', theme),
-                if(screenSize >= 700)
-                  const SizedBox(width: 10),
+                const SizedBox(width: 12),
                 _buildStatusSection(
                     status,
-                    _buildProgressIndicator(completedValue, progressValue, theme),
-                    scheduleItem
-                ),
-                Expanded(flex: screenSize >= 700 ? 2 : 1, child: _buildDetailsSection(completedValue, inputValue, reason, theme)),
-                if(screenSize >= 700)...[
+                    _buildProgressIndicator(
+                        completedValue, progressValue, theme),
+                    scheduleItem),
+                const SizedBox(width: 12),
+                Expanded(
+                    flex: screenSize >= 700 ? 2 : 1,
+                    child: _buildDetailsSection(
+                        completedValue, inputValue, reason, theme)),
+                if (screenSize >= 700) ...[
                   _buildDetailChip("Pumps", _getItemNames(pumps)),
                   _buildDetailChip("Valves", _getItemNames(valves)),
-                  _buildDetailChip("Scale Factor", "${scheduleItem["ScaleFactor"]}"),
+                  _buildDetailChip(
+                      "Scale Factor", "${scheduleItem["ScaleFactor"]}"),
                   _buildRtcCycleInfo(scheduleItem, theme),
                 ],
+                const SizedBox(width: 8),
                 _buildIconButton(
                     Icons.edit_note_outlined,
-                    (
-                        ([0, 1, 4, 5].contains(status.code))
-                            || (scheduleDateWithoutTime.isAfter(todayWithoutTime) || scheduleDateWithoutTime.isAtSameMomentAs(todayWithoutTime)))? () {
-                      _textController.text = scheduleItem["ScaleFactor"].toString();
-                      _showEditSideSheet(scheduleItem, constraints, index);
-                    } : (){
-                      print('status.code:${status.code}');
-                      print('scheduleDateWithoutTime.isAfter(todayWithoutTime):${scheduleDateWithoutTime.isAfter(todayWithoutTime)}');
-                      print('scheduleDateWithoutTime.isAtSameMomentAs(todayWithoutTime):${scheduleDateWithoutTime.isAtSameMomentAs(todayWithoutTime)}');
-                    }),
-                if(screenSize >= 700)
-                  const SizedBox(width: 20),
+                    (([0, 1, 4, 5].contains(status.code)) ||
+                            (scheduleDateWithoutTime.isAfter(todayWithoutTime) ||
+                                scheduleDateWithoutTime
+                                    .isAtSameMomentAs(todayWithoutTime)))
+                        ? () {
+                            _textController.text =
+                                scheduleItem["ScaleFactor"].toString();
+                            _showEditSideSheet(scheduleItem, constraints, index);
+                          }
+                        : null),
+                const SizedBox(width: 8),
                 _buildIconButton(
-                    scheduleItem["SkipFlag"] == 0 ? Icons.skip_next : Icons.undo_sharp,
-                    (
-                        ([0, 1, 4, 5].contains(status.code))
-                            && (scheduleDateWithoutTime.isAfter(todayWithoutTime) || scheduleDateWithoutTime.isAtSameMomentAs(todayWithoutTime))) ? () {
-                      setState(() {
-                        scheduleItem["SkipFlag"] = scheduleItem["SkipFlag"] == 0 ? 1 : 0;
-                        if(scheduleItem["SkipFlag"] == 1) {
-                          if(!sentMessage.contains("${scheduleItem["ProgramName"]} - ${scheduleItem["ZoneName"]} is skipped")) {
-                            sentMessage.add("${scheduleItem["ProgramName"]} - ${scheduleItem["ZoneName"]} is skipped");
-                          } else {
-                            sentMessage.remove("${scheduleItem["ProgramName"]} - ${scheduleItem["ZoneName"]} is skipped");
+                    scheduleItem["SkipFlag"] == 0
+                        ? Icons.skip_next
+                        : Icons.undo_sharp,
+                    (([0, 1, 4, 5].contains(status.code)) &&
+                            (scheduleDateWithoutTime.isAfter(todayWithoutTime) ||
+                                scheduleDateWithoutTime
+                                    .isAtSameMomentAs(todayWithoutTime)))
+                        ? () {
+                            setState(() {
+                              scheduleItem["SkipFlag"] =
+                                  scheduleItem["SkipFlag"] == 0 ? 1 : 0;
+                              if (scheduleItem["SkipFlag"] == 1) {
+                                if (!sentMessage.contains(
+                                    "${scheduleItem["ProgramName"]} - ${scheduleItem["ZoneName"]} is skipped")) {
+                                  sentMessage.add(
+                                      "${scheduleItem["ProgramName"]} - ${scheduleItem["ZoneName"]} is skipped");
+                                }
+                              } else {
+                                if (!sentMessage.contains(
+                                    "${scheduleItem["ProgramName"]} - ${scheduleItem["ZoneName"]} is un skipped")) {
+                                  sentMessage.add(
+                                      "${scheduleItem["ProgramName"]} - ${scheduleItem["ZoneName"]} is un skipped");
+                                }
+                              }
+                            });
                           }
-                        } else {
-                          if(!sentMessage.contains("${scheduleItem["ProgramName"]} - ${scheduleItem["ZoneName"]} is un skipped")) {
-                            sentMessage.add("${scheduleItem["ProgramName"]} - ${scheduleItem["ZoneName"]} is un skipped");
-                          } else {
-                            sentMessage.remove("${scheduleItem["ProgramName"]} - ${scheduleItem["ZoneName"]} is un skipped");
-                          }
-                        }
-                      });
-                    } : null
-                ),
-                if(screenSize <= 700)
+                        : null),
+                if (screenSize < 700)
                   _buildMoreOptions(screenSize, index, scheduleItem),
-                // const SizedBox(width: 20,),
               ],
             ),
           ),
@@ -753,7 +998,6 @@ class _ScheduleViewScreenState extends State<ScheduleViewScreen> {
   /// Helper function to get the names of the pumps and valves
   String _getItemNames(String sNoList) {
     List<String> names = [];
-
     List<String> sNoItems = sNoList.split('_');
 
     for (int i = 0; i < sNoItems.length; i++) {
@@ -770,12 +1014,10 @@ class _ScheduleViewScreenState extends State<ScheduleViewScreen> {
   }
 
   String _getItemNameSingleString(String sNo) {
-    print('call _getItemNameSingleString sNo:-->$sNo');
     final double? valve = double.tryParse(sNo);
     if (valve == null) return 'N/A';
 
     for (final element in configObjects) {
-      print('element-->$element');
       if (element['sNo'] == valve) {
         return element['name'] as String;
       }
@@ -783,15 +1025,16 @@ class _ScheduleViewScreenState extends State<ScheduleViewScreen> {
     return 'N/A';
   }
 
-
   /// Helper function to get the program name
   String _getProgramName(dynamic sNo) {
-    if(sNo is String) {
+    if (sNo is String) {
       sNo = int.parse(sNo);
     }
-    for(int i = 0; i < defaultData['program'].length; i++) {
-      if(defaultData['program'][i]['sNo'] == sNo) {
-        return defaultData['program'][i]['name'];
+    if (defaultData.containsKey('program') && defaultData['program'] != null) {
+      for (int i = 0; i < defaultData['program'].length; i++) {
+        if (defaultData['program'][i]['sNo'] == sNo) {
+          return defaultData['program'][i]['name'];
+        }
       }
     }
     return '';
@@ -799,9 +1042,11 @@ class _ScheduleViewScreenState extends State<ScheduleViewScreen> {
 
   /// Helper function to get the zone name
   String _getZoneName(String sNo) {
-    for(int i = 0; i < defaultData['sequence'].length; i++) {
-      if(defaultData['sequence'][i]['sNo'] == sNo) {
-        return defaultData['sequence'][i]['name'];
+    if (defaultData.containsKey('sequence') && defaultData['sequence'] != null) {
+      for (int i = 0; i < defaultData['sequence'].length; i++) {
+        if (defaultData['sequence'][i]['sNo'] == sNo) {
+          return defaultData['sequence'][i]['name'];
+        }
       }
     }
     return '';
@@ -814,17 +1059,31 @@ class _ScheduleViewScreenState extends State<ScheduleViewScreen> {
     return GestureDetector(
       onTap: onPressed,
       child: PhysicalModel(
-        color: onPressed != null ? colorScheme.primaryContainer : colorScheme.surfaceContainerLow,
+        color: onPressed != null
+            ? colorScheme.primaryContainer
+            : colorScheme.surfaceContainerLow,
         shape: BoxShape.circle,
-        elevation: 5,
-        shadowColor: onPressed != null ? colorScheme.primary.withOpacity(0.3) : colorScheme.outlineVariant,
+        elevation: 3,
+        shadowColor: onPressed != null
+            ? colorScheme.primary.withOpacity(0.3)
+            : colorScheme.outlineVariant,
         child: Container(
           padding: const EdgeInsets.all(5),
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            border: Border.all(color: onPressed != null ? colorScheme.primary : colorScheme.outlineVariant, width: 1),
+            border: Border.all(
+                color: onPressed != null
+                    ? colorScheme.primary
+                    : colorScheme.outlineVariant,
+                width: 1),
           ),
-          child: Icon(icon, color: onPressed != null ? colorScheme.primary : colorScheme.onSurfaceVariant, size: 20,),
+          child: Icon(
+            icon,
+            color: onPressed != null
+                ? colorScheme.primary
+                : colorScheme.onSurfaceVariant,
+            size: 20,
+          ),
         ),
       ),
     );
@@ -832,59 +1091,72 @@ class _ScheduleViewScreenState extends State<ScheduleViewScreen> {
 
   /// Helper function to calculate time-based progress
   double _calculateTimeProgress(String input, String completed) {
-    List<int> parseTime(String time) => time.split(':').map(int.parse).toList();
+    List<int> parseTime(String time) =>
+        time.split(':').map(int.parse).toList();
 
     var inputParts = parseTime(input);
     var completedParts = parseTime(completed);
 
-    var inDuration = Duration(hours: inputParts[0], minutes: inputParts[1], seconds: inputParts[2]);
-    var completedDuration = Duration(hours: completedParts[0], minutes: completedParts[1], seconds: completedParts[2]);
+    var inDuration = Duration(
+        hours: inputParts[0], minutes: inputParts[1], seconds: inputParts[2]);
+    var completedDuration = Duration(
+        hours: completedParts[0],
+        minutes: completedParts[1],
+        seconds: completedParts[2]);
 
+    if (inDuration.inMilliseconds == 0) return 0.0;
     return completedDuration.inMilliseconds / inDuration.inMilliseconds;
   }
 
   /// Widget for displaying the schedule order inside a circle
   Widget _buildScheduleOrderCircle(String order, ThemeData theme) {
+    final colorScheme = theme.colorScheme;
     return Container(
       height: 30,
       width: 30,
-      decoration: BoxDecoration(shape: BoxShape.circle, color: theme.primaryColor),
+      decoration:
+          BoxDecoration(shape: BoxShape.circle, color: colorScheme.primary),
       child: Center(
-        child: Text(order, style: const TextStyle(color: Colors.white)),
+        child: Text(order, style: TextStyle(color: colorScheme.onPrimary, fontWeight: FontWeight.bold)),
       ),
     );
   }
 
   /// Widget for displaying status information
-  Widget _buildStatusSection(StatusInfo status, Widget? childWidget, scheduleItem) {
+  Widget _buildStatusSection(
+      StatusInfo status, Widget? childWidget, scheduleItem) {
     return Expanded(
       flex: 1,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(_getProgramName(scheduleItem['ProgramS_No']), style: const TextStyle(fontSize: 10, fontWeight: FontWeight.normal)),
-          Text(_getZoneName(scheduleItem['ZoneS_No']), style: const TextStyle(fontWeight: FontWeight.bold)),
-          Text(status.statusString, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.normal)),
-          if(childWidget != null) ...[const SizedBox(height: 5), childWidget]
+          Text(_getProgramName(scheduleItem['ProgramS_No']),
+              style: const TextStyle(fontSize: 10, fontWeight: FontWeight.normal)),
+          Text(_getZoneName(scheduleItem['ZoneS_No']),
+              style: const TextStyle(fontWeight: FontWeight.bold)),
+          Text(status.statusString,
+              style: const TextStyle(fontSize: 10, fontWeight: FontWeight.normal)),
+          if (childWidget != null) ...[const SizedBox(height: 5), childWidget]
         ],
       ),
     );
   }
 
   /// Widget for displaying the progress indicator
-  Widget _buildProgressIndicator(String completedValue, double progressValue, ThemeData theme) {
+  Widget _buildProgressIndicator(
+      String completedValue, double progressValue, ThemeData theme) {
     return Tooltip(
       message: completedValue,
       child: Container(
         decoration: BoxDecoration(
-          border: Border.all(width: 0.3, color: Colors.black),
+          border: Border.all(width: 0.3, color: theme.colorScheme.outlineVariant),
           borderRadius: BorderRadius.circular(10),
         ),
         child: LinearProgressIndicator(
           value: progressValue.clamp(0.0, 1.0),
-          backgroundColor: Colors.grey[300],
-          valueColor: AlwaysStoppedAnimation<Color>(theme.primaryColor),
-          minHeight: 10,
+          backgroundColor: theme.colorScheme.surfaceContainerHighest,
+          valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.primary),
+          minHeight: 8,
           borderRadius: BorderRadius.circular(10),
         ),
       ),
@@ -892,20 +1164,27 @@ class _ScheduleViewScreenState extends State<ScheduleViewScreen> {
   }
 
   /// Widget for displaying details (Completed, Actual, Reason, Pumps, Valves, etc.)
-  Widget _buildDetailsSection(String completedValue, String inputValue, StatusInfo reason, ThemeData theme) {
+  Widget _buildDetailsSection(
+      String completedValue, String inputValue, StatusInfo reason, ThemeData theme) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text("Completed: $completedValue", style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.green)),
+        Text("Completed: $completedValue",
+            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.green)),
         Text("Actual: $inputValue", style: const TextStyle(fontSize: 12)),
-        if(MediaQuery.of(context).size.width >= 700)
-          Text("Reason: ${reason.reason}", style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: theme.primaryColor)),
+        if (MediaQuery.of(context).size.width >= 700)
+          Text("Reason: ${reason.reason}",
+              style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: theme.colorScheme.primary)),
       ],
     );
   }
 
   /// Widget for displaying RTC and Cycle information
-  Widget _buildRtcCycleInfo(Map<String, dynamic> scheduleItem, ThemeData theme) {
+  Widget _buildRtcCycleInfo(
+      Map<String, dynamic> scheduleItem, ThemeData theme) {
     return Expanded(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -915,7 +1194,8 @@ class _ScheduleViewScreenState extends State<ScheduleViewScreen> {
               children: [
                 TextSpan(
                   text: "${label.toUpperCase()} : ",
-                  style: theme.textTheme.bodySmall!.copyWith(color: Colors.grey),
+                  style: theme.textTheme.bodySmall!
+                      .copyWith(color: theme.colorScheme.onSurfaceVariant),
                 ),
                 TextSpan(
                   text: '${scheduleItem['${label}Number']}',
@@ -944,12 +1224,14 @@ class _ScheduleViewScreenState extends State<ScheduleViewScreen> {
                   _buildInfoRow(
                     screenSize,
                     'assets/Images/Svg/objectId_5.svg',
-                    _buildDetailChip("Pumps", _getItemNames(scheduleItem['Pump'])),
+                    _buildDetailChip(
+                        "Pumps", _getItemNames(scheduleItem['Pump'])),
                   ),
                   _buildInfoRow(
                     screenSize,
                     'assets/Images/Svg/objectId_13.svg',
-                    _buildDetailChip("Valves", _getItemNames(scheduleItem['SequenceData'])),
+                    _buildDetailChip("Valves",
+                        _getItemNames(scheduleItem['SequenceData'])),
                   ),
                   _buildInfoRow(
                     screenSize,
@@ -967,7 +1249,8 @@ class _ScheduleViewScreenState extends State<ScheduleViewScreen> {
     );
   }
 
-  Widget _buildInfoRow(double width, String? assetPath, Widget content, {IconData? iconData}) {
+  Widget _buildInfoRow(double width, String? assetPath, Widget content,
+      {IconData? iconData}) {
     return Container(
       width: width - 30,
       padding: const EdgeInsets.all(6),
@@ -978,7 +1261,7 @@ class _ScheduleViewScreenState extends State<ScheduleViewScreen> {
             height: 40,
             padding: const EdgeInsets.all(6),
             decoration: BoxDecoration(
-              color: Theme.of(context).primaryColorDark,
+              color: Theme.of(context).colorScheme.primary,
               shape: BoxShape.circle,
             ),
             child: assetPath != null
@@ -1000,7 +1283,7 @@ class _ScheduleViewScreenState extends State<ScheduleViewScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(names),
-          Text(title, style: const TextStyle(color: Colors.grey),)
+          Text(title, style: const TextStyle(color: Colors.grey)),
         ],
       ),
     );
@@ -1008,7 +1291,7 @@ class _ScheduleViewScreenState extends State<ScheduleViewScreen> {
 
   /// Helper function to get the status information
   StatusInfo _getStatusInfo(dynamic code) {
-    if(code is String){
+    if (code is String) {
       code = int.parse(code);
     }
     final Map<int, StatusInfo> statusMap = {
@@ -1048,31 +1331,9 @@ class _ScheduleViewScreenState extends State<ScheduleViewScreen> {
       33: StatusInfo(Colors.amber, "Unknown status", Icons.device_unknown, "Started By Condition And Run As Per Schedule", code),
     };
 
-    return statusMap[code] ?? StatusInfo(Colors.black, "Unknown", Icons.error, "Unsupported status code: $code", code);
-  }
-
-  /// Helper function to build the outline button
-  Widget _buildOutlineButton(Map<String, dynamic> data, List selected, {Map<String, dynamic>? item}) {
-    return OutlinedButton(
-      onPressed: (){
-        setState(() {
-          if(item != null) {
-            selected[0] = data;
-          } else {
-            if(selected.contains(data)) {
-              selected.remove(data);
-            } else {
-              selected.add(data);
-            }
-          }
-        });
-      },
-      style: OutlinedButton.styleFrom(
-        backgroundColor: selected.contains(data) ? Theme.of(context).primaryColor : null,
-        foregroundColor: selected.contains(data) ? Colors.white : Colors.grey,
-      ),
-      child: Text(data['name']),
-    );
+    return statusMap[code] ??
+        StatusInfo(Colors.black, "Unknown", Icons.error,
+            "Unsupported status code: $code", code);
   }
 
   /// Helper function to show the status list dialog
@@ -1109,7 +1370,8 @@ class _ScheduleViewScreenState extends State<ScheduleViewScreen> {
                   onPressed: () {
                     Navigator.of(context).pop();
                   },
-                  child: const Text("Cancel", style: TextStyle(color: Colors.red)),
+                  child:
+                      const Text("Cancel", style: TextStyle(color: Colors.red)),
                 ),
                 OutlinedButton(
                   onPressed: () {
@@ -1135,9 +1397,11 @@ class _ScheduleViewScreenState extends State<ScheduleViewScreen> {
     showAdaptiveDialog(
       context: context,
       builder: (BuildContext context) {
-
         return AlertDialog(
-          title: Text('Color indications', style: TextStyle(color: Theme.of(context).primaryColor),),
+          title: Text(
+            'Color indications',
+            style: TextStyle(color: Theme.of(context).colorScheme.primary),
+          ),
           content: SizedBox(
             height: 320,
             child: SingleChildScrollView(
@@ -1146,26 +1410,26 @@ class _ScheduleViewScreenState extends State<ScheduleViewScreen> {
                 children: [
                   for (var i = 0; i < 12; i++)
                     Container(
-                      margin: const EdgeInsets.symmetric(vertical: 5, horizontal: 5),
+                      margin:
+                          const EdgeInsets.symmetric(vertical: 5, horizontal: 5),
                       child: Row(
                         children: [
                           CircleAvatar(
                             backgroundColor: _getStatusInfo(i).color,
                             radius: 10,
                           ),
-                          const SizedBox(width: 10,),
-                          Text(i != 12 ? _getStatusInfo(i).statusString : "Auto skipped",
-                            style: const TextStyle(fontWeight: FontWeight.w400),)
+                          const SizedBox(
+                            width: 10,
+                          ),
+                          Text(
+                            i != 12
+                                ? _getStatusInfo(i).statusString
+                                : "Auto skipped",
+                            style: const TextStyle(fontWeight: FontWeight.w400),
+                          )
                         ],
                       ),
                     )
-                  // ListTile(
-                  //   title: Text(''),
-                  //   leading: CircleAvatar(
-                  //     backgroundColor: scheduleViewProvider.legend[i],
-                  //     radius: 15,
-                  //   ),
-                  // )
                 ],
               ),
             ),
@@ -1183,163 +1447,45 @@ class _ScheduleViewScreenState extends State<ScheduleViewScreen> {
     );
   }
 
-  void _showEditSiderrreSheet(scheduleItem, constraints, index) {
-    showGeneralDialog(
-      barrierLabel: "Side sheet",
-      barrierDismissible: true,
-      // barrierColor: const Color(0xff6600),
-      transitionDuration: const Duration(milliseconds: 300),
-      context: context,
-      pageBuilder: (context, animation1, animation2) {
-        return Align(
-          alignment: Alignment.centerRight,
-          child: Material(
-            elevation: 15,
-            color: Colors.transparent,
-            borderRadius: BorderRadius.zero,
-            child: StatefulBuilder(
-              builder: (BuildContext context, StateSetter stateSetter) {
-                return Container(
-                  padding: const EdgeInsets.all(15),
-                  // margin: EdgeInsets.all(10),
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.zero,
-                  ),
-                  height: double.infinity,
-                  width: constraints.maxWidth < 600 ? constraints.maxWidth * 0.7 : constraints.maxWidth * 0.2,
-                  child: SingleChildScrollView(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Text("Scale Factor"),
-                            IntrinsicWidth(
-                              child: TextFormField(
-                                style: TextStyle(color: Theme.of(context).primaryColor),
-                                initialValue: scheduleItem["ScaleFactor"].toString(),
-                                // controller: _textController,
-                                decoration: const InputDecoration(
-                                    suffixText: "%"
-                                ),
-                                onChanged: (newValue){},
-                                onSaved: (newValue) {
-                                  setState(() {
-                                    var temp = scheduleItem["ScaleFactor"].toString();
-                                    scheduleItem["ScaleFactor"] = newValue != '' ? newValue : scheduleItem["ScaleFactor"];
-                                    if(scheduleItem["ScaleFactor"] != temp){
-                                      if(!sentMessage.contains("${_getProgramName(scheduleItem['ProgramS_No'])} - ${_getZoneName(scheduleItem["ZoneS_No"])}'s scale factor $newValue changed from $temp")) {
-                                        sentMessage.add("${_getProgramName(scheduleItem["ProgramS_No"])} - ${_getZoneName(scheduleItem["ZoneS_No"])}'s scale factor $newValue changed from $temp");
-                                      } else {
-                                        sentMessage.remove("${_getProgramName(scheduleItem["ProgramS_No"])} - ${_getZoneName(scheduleItem["ZoneS_No"])}'s scale factor $newValue changed from $temp");
-                                      }
-                                    }
-                                  });
-                                },
-                              ),
-                            ),
-                          ],
-                        ),
-                        Divider(thickness: 0.3, color: Theme.of(context).primaryColor,),
-                      ],
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-        );
-      },
-      transitionBuilder: (context, animation1, animation2, child) {
-        return SlideTransition(
-          position: Tween(begin: const Offset(1, 0), end: const Offset(0, 0)).animate(animation1),
-          child: child,
-        );
-      },
-    );
-  }
-
-
-
-
-
   void _showEditSideSheet(
-      dynamic scheduleItem,
-      BoxConstraints constraints,
-      int index,
-      )
-  {
-    print('scheduleItem: $scheduleItem, index: $index');
-
+    dynamic scheduleItem,
+    BoxConstraints constraints,
+    int index,
+  ) {
     String getStringValue(dynamic value) {
       if (value == null) {
         return "";
       }
-
       return value.toString().trim();
     }
 
-    // Your API may contain either:
-    // CentralFertilizerSiteName OR CentralFertilizerSite
-    final String centralFertilizerSiteName =
-    getStringValue(
+    final String centralFertilizerSiteName = getStringValue(
       scheduleItem["CentralFertilizerSiteName"],
     ).isNotEmpty
         ? getStringValue(
-      scheduleItem["CentralFertilizerSiteName"],
-    )
+            scheduleItem["CentralFertilizerSiteName"],
+          )
         : getStringValue(
-      scheduleItem["CentralFertilizerSite"],
-    );
+            scheduleItem["CentralFertilizerSite"],
+          );
 
-    final String localFertilizerSiteName =
-    getStringValue(
+    final String localFertilizerSiteName = getStringValue(
       scheduleItem["LocalFertilizerSiteName"],
     ).isNotEmpty
         ? getStringValue(
-      scheduleItem["LocalFertilizerSiteName"],
-    )
+            scheduleItem["LocalFertilizerSiteName"],
+          )
         : getStringValue(
-      scheduleItem["LocalFertilizerSite"],
-    );
+            scheduleItem["LocalFertilizerSite"],
+          );
 
-    final String centralFertChannelSelection =
-    getStringValue(
+    final String centralFertChannelSelection = getStringValue(
       scheduleItem["CentralFertChannelSelection"],
     );
 
-    final String localFertChannelSelection =
-    getStringValue(
+    final String localFertChannelSelection = getStringValue(
       scheduleItem["LocalFertChannelSelection"],
     );
-
-    print(
-      "centralFertilizerSiteName: $centralFertilizerSiteName",
-    );
-
-    print("centralFertChannelSelection:$centralFertChannelSelection");
-
-    final centralFertilizerSiteNamewe =  _getItemNameSingleString(centralFertilizerSiteName);
-    print("centralFerxcvdfvdfvfdtilizerSiteName:$centralFertilizerSiteNamewe");
-    print(
-      "localFertilizerSiteName: $localFertilizerSiteName",
-    );
-
-    print(
-      "centralFertChannelSelection: "
-          "$centralFertChannelSelection",
-    );
-
-    print(
-      "localFertChannelSelection: "
-          "$localFertChannelSelection",
-    );
-
-    // ============================================================
-    // SHOW SIDE SHEET
-    // ============================================================
 
     showGeneralDialog(
       barrierLabel: "Side sheet",
@@ -1348,90 +1494,61 @@ class _ScheduleViewScreenState extends State<ScheduleViewScreen> {
         milliseconds: 300,
       ),
       context: context,
-
       pageBuilder: (
-          context,
-          animation1,
-          animation2,
-          ) {
+        context,
+        animation1,
+        animation2,
+      ) {
         return Align(
           alignment: Alignment.centerRight,
-
           child: Material(
             elevation: 15,
             color: Colors.transparent,
-
             child: StatefulBuilder(
               builder: (
-                  BuildContext context,
-                  StateSetter stateSetter,
-                  ) {
+                BuildContext context,
+                StateSetter stateSetter,
+              ) {
                 return Container(
                   padding: const EdgeInsets.all(15),
-
                   height: double.infinity,
-
                   width: constraints.maxWidth < 600
                       ? constraints.maxWidth * 0.7
                       : constraints.maxWidth * 0.2,
-
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.surface,
                   ),
-
                   child: SingleChildScrollView(
                     child: Column(
                       children: [
-
-                        // ==================================================
-                        // SCALE FACTOR
-                        // ==================================================
-
                         Row(
-                          mainAxisAlignment:
-                          MainAxisAlignment.spaceBetween,
-
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-
                             const Text(
                               "Scale Factor",
                               style: TextStyle(
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
-
                             SizedBox(
                               width: 100,
-
                               child: TextFormField(
-                                initialValue:
-                                scheduleItem[
-                                "ScaleFactor"]
-                                    ?.toString() ??
+                                initialValue: scheduleItem["ScaleFactor"]
+                                        ?.toString() ??
                                     "0",
-
-                                keyboardType:
-                                TextInputType.number,
-
+                                keyboardType: TextInputType.number,
                                 style: TextStyle(
-                                  color: Theme.of(context)
-                                      .primaryColor,
+                                  color: Theme.of(context).colorScheme.primary,
                                 ),
-
-                                decoration:
-                                const InputDecoration(
+                                decoration: const InputDecoration(
                                   suffixText: "%",
                                 ),
-
                                 onChanged: (
-                                    String newValue,
-                                    ) {
+                                  String newValue,
+                                ) {
                                   stateSetter(() {
-                                    if (newValue
-                                        .trim()
-                                        .isNotEmpty) {
-                                      scheduleItem[
-                                      "ScaleFactor"] =
+                                    if (newValue.trim().isNotEmpty) {
+                                      scheduleItem["ScaleFactor"] =
                                           newValue.trim();
                                     }
                                   });
@@ -1440,165 +1557,94 @@ class _ScheduleViewScreenState extends State<ScheduleViewScreen> {
                             ),
                           ],
                         ),
-
                         Divider(
                           thickness: 0.3,
-                          color:
-                          Theme.of(context).primaryColor,
+                          color: Theme.of(context).colorScheme.primary,
                         ),
-
-                        // ==================================================
-                        // CENTRAL FERTILIZER
-                        // ==================================================
-
-                        if (centralFertilizerSiteName
-                            .isNotEmpty)
+                        if (centralFertilizerSiteName.isNotEmpty)
                           Column(
                             children: [
-
-                              // CENTRAL FERTILIZER TITLE + SWITCH
                               Row(
                                 mainAxisAlignment:
-                                MainAxisAlignment
-                                    .spaceBetween,
-
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Expanded(
-                                    child: Text(_getItemNameSingleString(centralFertilizerSiteName), style:
-                                    const TextStyle(
-                                      fontWeight:
-                                      FontWeight.w500,
-                                    ),
-                                    ),
-                                  ),
-
-                                  Switch(
-                                    value:
-                                    scheduleItem["CentralFertOnOff"] == 1,
-
-                                    onChanged: (
-                                        bool value,
-                                        ) {
-                                      stateSetter(() {
-
-                                        scheduleItem[
-                                        "CentralFertOnOff"] =
-                                        value ? 1 : 0;
-                                      });
-                                    },
-                                  ),
-                                ],
-                              ),
-
-                              // ==================================================
-                              // CENTRAL FERTILIZER CHANNELS
-                              // ==================================================
-
-                              if (scheduleItem[
-                              "CentralFertOnOff"] ==
-                                  1 &&
-                                  centralFertChannelSelection
-                                      .isNotEmpty)
-                                _buildChannelList(
-                                  scheduleItem:
-                                  scheduleItem,
-
-                                  selectionKey:
-                                  "CentralFertChannelSelection",
-
-                                  nameKey:
-                                  "CentralFertChannelName",
-
-                                  stateSetter:
-                                  stateSetter,
-                                ),
-
-                              Divider(
-                                thickness: 0.3,
-                                color:
-                                Theme.of(context)
-                                    .primaryColor,
-                              ),
-                            ],
-                          ),
-
-                        // ==================================================
-                        // LOCAL FERTILIZER
-                        // ==================================================
-
-                        if (localFertilizerSiteName
-                            .isNotEmpty)
-                          Column(
-                            children: [
-
-                              // LOCAL FERTILIZER TITLE + SWITCH
-                              Row(
-                                mainAxisAlignment:
-                                MainAxisAlignment
-                                    .spaceBetween,
-
-                                children: [
-
                                   Expanded(
                                     child: Text(
-                                      localFertilizerSiteName,
-
-                                      style:
-                                      const TextStyle(
-                                        fontWeight:
-                                        FontWeight.w500,
+                                      _getItemNameSingleString(
+                                          centralFertilizerSiteName),
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w500,
                                       ),
                                     ),
                                   ),
-
                                   Switch(
                                     value:
-                                    scheduleItem[
-                                    "LocalFertOnOff"] ==
-                                        1,
-
+                                        scheduleItem["CentralFertOnOff"] == 1,
                                     onChanged: (
-                                        bool value,
-                                        ) {
+                                      bool value,
+                                    ) {
                                       stateSetter(() {
-
-                                        scheduleItem[
-                                        "LocalFertOnOff"] =
-                                        value ? 1 : 0;
+                                        scheduleItem["CentralFertOnOff"] =
+                                            value ? 1 : 0;
                                       });
                                     },
                                   ),
                                 ],
                               ),
-
-                              // ==================================================
-                              // LOCAL FERTILIZER CHANNELS
-                              // ==================================================
-
-                              if (scheduleItem[
-                              "LocalFertOnOff"] ==
-                                  1 &&
-                                  localFertChannelSelection
-                                      .isNotEmpty)
+                              if (scheduleItem["CentralFertOnOff"] == 1 &&
+                                  centralFertChannelSelection.isNotEmpty)
                                 _buildChannelList(
-                                  scheduleItem:
-                                  scheduleItem,
-
-                                  selectionKey:
-                                  "LocalFertChannelSelection",
-
-                                  nameKey:
-                                  "LocalFertChannelName",
-
-                                  stateSetter:
-                                  stateSetter,
+                                  scheduleItem: scheduleItem,
+                                  selectionKey: "CentralFertChannelSelection",
+                                  nameKey: "CentralFertChannelName",
+                                  stateSetter: stateSetter,
                                 ),
-
                               Divider(
                                 thickness: 0.3,
-                                color:
-                                Theme.of(context)
-                                    .primaryColor,
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
+                            ],
+                          ),
+                        if (localFertilizerSiteName.isNotEmpty)
+                          Column(
+                            children: [
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      localFertilizerSiteName,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ),
+                                  Switch(
+                                    value:
+                                        scheduleItem["LocalFertOnOff"] == 1,
+                                    onChanged: (
+                                      bool value,
+                                    ) {
+                                      stateSetter(() {
+                                        scheduleItem["LocalFertOnOff"] =
+                                            value ? 1 : 0;
+                                      });
+                                    },
+                                  ),
+                                ],
+                              ),
+                              if (scheduleItem["LocalFertOnOff"] == 1 &&
+                                  localFertChannelSelection.isNotEmpty)
+                                _buildChannelList(
+                                  scheduleItem: scheduleItem,
+                                  selectionKey: "LocalFertChannelSelection",
+                                  nameKey: "LocalFertChannelName",
+                                  stateSetter: stateSetter,
+                                ),
+                              Divider(
+                                thickness: 0.3,
+                                color: Theme.of(context).colorScheme.primary,
                               ),
                             ],
                           ),
@@ -1611,17 +1657,12 @@ class _ScheduleViewScreenState extends State<ScheduleViewScreen> {
           ),
         );
       },
-
-      // ============================================================
-      // SLIDE ANIMATION
-      // ============================================================
-
       transitionBuilder: (
-          context,
-          animation1,
-          animation2,
-          child,
-          ) {
+        context,
+        animation1,
+        animation2,
+        child,
+      ) {
         return SlideTransition(
           position: Tween<Offset>(
             begin: const Offset(1, 0),
@@ -1632,17 +1673,11 @@ class _ScheduleViewScreenState extends State<ScheduleViewScreen> {
               curve: Curves.easeOut,
             ),
           ),
-
           child: child,
         );
       },
     );
   }
-
-
-// ============================================================================
-// CHANNEL LIST
-// ============================================================================
 
   Widget _buildChannelList({
     required dynamic scheduleItem,
@@ -1650,98 +1685,46 @@ class _ScheduleViewScreenState extends State<ScheduleViewScreen> {
     required String nameKey,
     required StateSetter stateSetter,
   }) {
-    // ============================================================
-    // GET CHANNEL SELECTION
-    // ============================================================
+    final dynamic selectionValue = scheduleItem[selectionKey];
+    if (selectionValue == null) return const SizedBox.shrink();
 
-    final dynamic selectionValue =
-    scheduleItem[selectionKey];
+    final String selectionString = selectionValue.toString().trim();
+    if (selectionString.isEmpty) return const SizedBox.shrink();
 
-    // NULL CHECK
-    if (selectionValue == null) {
-      return const SizedBox.shrink();
-    }
-
-    final String selectionString =
-    selectionValue.toString().trim();
-
-    // EMPTY CHECK
-    if (selectionString.isEmpty) {
-      return const SizedBox.shrink();
-    }
-
-    // ============================================================
-    // GET CHANNEL NAMES
-    // ============================================================
-
-    final dynamic nameValue =
-    scheduleItem[nameKey];
-
+    final dynamic nameValue = scheduleItem[nameKey];
     List<String> channelNames = [];
 
     if (nameValue != null) {
-
       if (nameValue is List) {
         channelNames = nameValue
-            .map(
-              (item) =>
-          item?.toString().trim() ?? "",
-        )
+            .map((item) => item?.toString().trim() ?? "")
             .toList();
       } else {
-        final String nameString =
-        nameValue.toString().trim();
-
+        final String nameString = nameValue.toString().trim();
         if (nameString.isNotEmpty) {
-          channelNames =
-              nameString.split('_');
+          channelNames = nameString.split('_');
         }
       }
     }
 
-    // ============================================================
-    // SELECTION FORMAT
-    //
-    // Example:
-    // 1_1_1_1_1_0_0_0
-    // ============================================================
-
-    final List<String> selections =
-    selectionString.split('_');
-
-    // ============================================================
-    // IF CHANNEL NAMES ARE NOT AVAILABLE
-    // ============================================================
+    final List<String> selections = selectionString.split('_');
 
     if (channelNames.isEmpty) {
       return Column(
         children: List.generate(
           selections.length,
-              (channelIndex) {
-
-            final bool isSelected =
-                selections[channelIndex] == "1";
+          (channelIndex) {
+            final bool isSelected = selections[channelIndex] == "1";
 
             return CheckboxListTile(
               dense: true,
               contentPadding: EdgeInsets.zero,
-
-              title: Text(
-                "Channel ${channelIndex + 1}",
-              ),
-
+              title: Text("Channel ${channelIndex + 1}"),
               value: isSelected,
-
-              onChanged: (
-                  bool? value,
-                  ) {
+              onChanged: (bool? value) {
                 stateSetter(() {
-
-                  selections[channelIndex] =
-                  value == true ? "1" : "0";
-
-                  scheduleItem[selectionKey] =
-                      selections.join('_');
+                  selections[channelIndex] = value == true ? "1" : "0";
+                  scheduleItem[selectionKey] = selections.join('_');
                 });
               },
             );
@@ -1750,60 +1733,29 @@ class _ScheduleViewScreenState extends State<ScheduleViewScreen> {
       );
     }
 
-    // ============================================================
-    // CHANNEL NAME + SELECTION
-    // ============================================================
-
     return Column(
       children: List.generate(
         channelNames.length,
-            (channelIndex) {
+        (channelIndex) {
+          final bool isSelected = channelIndex < selections.length &&
+              selections[channelIndex] == "1";
 
-          final bool isSelected =
-              channelIndex < selections.length &&
-                  selections[channelIndex] == "1";
-
-          final String channelName =
-          channelNames[channelIndex]
-              .trim()
-              .isNotEmpty
+          final String channelName = channelNames[channelIndex].trim().isNotEmpty
               ? channelNames[channelIndex]
               : "Channel ${channelIndex + 1}";
 
           return CheckboxListTile(
             dense: true,
-
-            contentPadding:
-            EdgeInsets.zero,
-
-            title: Text(
-              channelName,
-
-              style: const TextStyle(
-                fontSize: 14,
-              ),
-            ),
-
+            contentPadding: EdgeInsets.zero,
+            title: Text(channelName, style: const TextStyle(fontSize: 14)),
             value: isSelected,
-
-            onChanged: (
-                bool? value,
-                ) {
+            onChanged: (bool? value) {
               stateSetter(() {
-
-                // Make sure selection list
-                // has enough items
-                while (selections.length <=
-                    channelIndex) {
+                while (selections.length <= channelIndex) {
                   selections.add("0");
                 }
-
-                selections[channelIndex] =
-                value == true ? "1" : "0";
-
-                // Update original scheduleItem
-                scheduleItem[selectionKey] =
-                    selections.join('_');
+                selections[channelIndex] = value == true ? "1" : "0";
+                scheduleItem[selectionKey] = selections.join('_');
               });
             },
           );
