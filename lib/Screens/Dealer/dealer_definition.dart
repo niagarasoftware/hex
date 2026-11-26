@@ -316,7 +316,7 @@ class _DealerDefinitionDashboardState
                           color: isSelected
                               ? colorScheme.secondary
                               : Colors.transparent,
-                          width: 3,
+                          width: 7,
                         ),
                       ),
                     ),

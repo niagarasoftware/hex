@@ -20,15 +20,17 @@ class _EcPhInConstantState extends State<EcPhInConstant> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     double screenWidth = MediaQuery.of(context).size.width;
     double minWidth = (cellWidth * 2) + (widget.constPvd.defaultEcPhSetting.length * cellWidth) + 50;
-    Color borderColor = const Color(0xffE1E2E3);
+
     return DataTable2(
-      border: TableBorder(
-        top: BorderSide(color: borderColor, width: 1),
-        bottom: BorderSide(color: borderColor, width: 1),
-        left: BorderSide(color: borderColor, width: 1),
-        right: BorderSide(color: borderColor, width: 1),
+      dataRowHeight: 88.0,
+      headingRowHeight: 44.0,
+      headingRowColor: WidgetStatePropertyAll(colorScheme.surfaceContainerLow),
+      border: TableBorder.all(
+        color: colorScheme.outlineVariant,
+        width: 1,
       ),
       minWidth: minWidth,
       fixedLeftColumns: minWidth < screenWidth ? 0 : 1,
@@ -36,40 +38,76 @@ class _EcPhInConstantState extends State<EcPhInConstant> {
         DataColumn2(
             headingRowAlignment: MainAxisAlignment.center,
             fixedWidth: cellWidth,
-            label: Text('Fertilizer Site', style: Theme.of(context).textTheme.labelLarge,textAlign: TextAlign.center, softWrap: true)
+            label: Text(
+              'Fertilizer Site',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 13,
+                color: colorScheme.onSurface,
+              ),
+              textAlign: TextAlign.center,
+              softWrap: true,
+            )
         ),
         DataColumn2(
             headingRowAlignment: MainAxisAlignment.center,
             fixedWidth: cellWidth,
-            label: Text('Sensor', style: Theme.of(context).textTheme.labelLarge,textAlign: TextAlign.center, softWrap: true)
+            label: Text(
+              'Sensor',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 13,
+                color: colorScheme.onSurface,
+              ),
+              textAlign: TextAlign.center,
+              softWrap: true,
+            )
         ),
         ...widget.constPvd.defaultEcPhSetting.map((defaultSetting) {
           return DataColumn2(
               headingRowAlignment: MainAxisAlignment.center,
               fixedWidth: cellWidth,
-              label: Text(defaultSetting.title, style: Theme.of(context).textTheme.labelLarge,textAlign: TextAlign.center, softWrap: true,)
+              label: Text(
+                defaultSetting.title,
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
+                  color: colorScheme.onSurface,
+                ),
+                textAlign: TextAlign.center,
+                softWrap: true,
+              )
           );
         }),
       ],
       rows: List.generate(widget.constPvd.ecPhSensor.length, (row){
         EcPhInConstantModel fertilizerSite = widget.constPvd.ecPhSensor[row];
         return DataRow2(
-            specificRowHeight: fertilizerSite.setting.length == 2 ? 100 : null,
             color: WidgetStatePropertyAll(
-              row.isOdd ? Colors.white : const Color(0xffF8F8F8),
+              row.isOdd ? colorScheme.surface : colorScheme.surfaceContainerLow,
             ),
             cells: [
               DataCell(
-                  Center(child: Text(fertilizerSite.name.toString(), textAlign: TextAlign.center, style: TextStyle(color: Theme.of(context).primaryColorLight),))
+                Center(
+                  child: Text(
+                    fertilizerSite.name.toString(),
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                      color: colorScheme.onSurface,
+                    ),
+                  ),
+                ),
               ),
               DataCell(
                   Column(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
                       if(fertilizerSite.ecPopup.isNotEmpty)
-                        const Center(child: Text('Ec Sensor', textAlign: TextAlign.center,)),
+                        Center(child: Text('Ec Sensor', textAlign: TextAlign.center, style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant))),
                       if(fertilizerSite.phPopup.isNotEmpty)
-                        const Center(child: Text('Ph Sensor', textAlign: TextAlign.center,)),
+                        Center(child: Text('Ph Sensor', textAlign: TextAlign.center, style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant))),
                     ],
                   )
               ),

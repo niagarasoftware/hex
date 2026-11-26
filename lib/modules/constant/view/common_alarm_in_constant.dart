@@ -125,17 +125,18 @@ class _CommonAlarmInConstantState extends State<CommonAlarmInConstant> {
       return const Center(child: Text('No common alarm settings available.'));
     }
 
+    final colorScheme = Theme.of(context).colorScheme;
     double minWidth =
         (cellWidth * 1) + (visibleSettings.length * cellWidth) + 50;
-    Color borderColor = const Color(0xffE1E2E3);
     final currentLine = widget.constPvd.commonAlarm[0];
 
     return DataTable2(
-      border: TableBorder(
-        top: BorderSide(color: borderColor, width: 1),
-        bottom: BorderSide(color: borderColor, width: 1),
-        left: BorderSide(color: borderColor, width: 1),
-        right: BorderSide(color: borderColor, width: 1),
+      dataRowHeight: 56.0,
+      headingRowHeight: 44.0,
+      headingRowColor: WidgetStatePropertyAll(colorScheme.surfaceContainerLow),
+      border: TableBorder.all(
+        color: colorScheme.outlineVariant,
+        width: 1,
       ),
       minWidth: minWidth,
       fixedLeftColumns: minWidth < screenWidth ? 0 : 1,
@@ -145,7 +146,11 @@ class _CommonAlarmInConstantState extends State<CommonAlarmInConstant> {
           fixedWidth: cellWidth,
           label: Text(
             'Alarm',
-            style: Theme.of(context).textTheme.labelLarge,
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 13,
+              color: colorScheme.onSurface,
+            ),
             textAlign: TextAlign.center,
             softWrap: true,
           ),
@@ -156,7 +161,11 @@ class _CommonAlarmInConstantState extends State<CommonAlarmInConstant> {
             fixedWidth: cellWidth,
             label: Text(
               defaultSetting.title,
-              style: Theme.of(context).textTheme.labelLarge,
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 13,
+                color: colorScheme.onSurface,
+              ),
               textAlign: TextAlign.center,
               softWrap: true,
             ),
@@ -167,9 +176,8 @@ class _CommonAlarmInConstantState extends State<CommonAlarmInConstant> {
         AlarmInConstantModel alarm = currentLine.alarmList[row];
 
         return DataRow2(
-          specificRowHeight: 50,
           color: WidgetStatePropertyAll(
-            row.isOdd ? Colors.white : const Color(0xffF8F8F8),
+            row.isOdd ? colorScheme.surface : colorScheme.surfaceContainerLow,
           ),
           cells: [
             DataCell(
@@ -178,8 +186,9 @@ class _CommonAlarmInConstantState extends State<CommonAlarmInConstant> {
                   alarm.title,
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    color: Colors.orange.shade600,
-                    fontWeight: FontWeight.w500,
+                    color: colorScheme.secondary,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 12.5,
                   ),
                 ),
               ),

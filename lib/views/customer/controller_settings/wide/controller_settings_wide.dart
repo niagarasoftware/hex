@@ -160,14 +160,16 @@ class _CustomWorkspaceTabBarState extends State<_CustomWorkspaceTabBar> {
                     constraints: const BoxConstraints(minWidth: 100),
                     decoration: BoxDecoration(
                       color: isSelected
-                          ? colorScheme.primaryContainer
-                          : colorScheme.surface,
+                          ? colorScheme.primary
+                          : colorScheme.surfaceContainerLow,
                       borderRadius: BorderRadius.circular(10),
-                      border: Border.all(
-                        color: isSelected
-                            ? colorScheme.primary
-                            : colorScheme.outlineVariant,
-                        width: isSelected ? 1.5 : 1.0,
+                      border: Border(
+                        bottom: BorderSide(
+                          color: isSelected
+                              ? colorScheme.secondary
+                              : Colors.transparent,
+                          width: 4.0,
+                        ),
                       ),
                     ),
                     child: Column(
@@ -178,7 +180,7 @@ class _CustomWorkspaceTabBarState extends State<_CustomWorkspaceTabBar> {
                           tab['icon'] as IconData?,
                           size: 20,
                           color: isSelected
-                              ? colorScheme.onPrimaryContainer
+                              ? colorScheme.onPrimary
                               : colorScheme.onSurfaceVariant,
                         ),
                         const SizedBox(height: 6),
@@ -188,7 +190,7 @@ class _CustomWorkspaceTabBarState extends State<_CustomWorkspaceTabBar> {
                             fontSize: 12,
                             fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
                             color: isSelected
-                                ? colorScheme.onPrimaryContainer
+                                ? colorScheme.onPrimary
                                 : colorScheme.onSurfaceVariant,
                           ),
                           textAlign: TextAlign.center,

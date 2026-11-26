@@ -114,7 +114,6 @@ class _CustomerScreenNarrowState extends BaseCustomerScreenState<CustomerScreenN
 
     return BaseCustomerLayout(
       scaffoldKey: scaffoldKey,
-      appBar: buildCustomerAppBar(context, vm, cM, scaffoldKey, showMenu: true, isNarrow: true),
       drawer: CustomerDrawer(
           customerName: vm.mySiteList.data[vm.sIndex].customerName,
           loggedInUser : loggedInUser, vm: vm,

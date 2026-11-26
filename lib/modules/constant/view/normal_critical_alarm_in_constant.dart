@@ -41,8 +41,9 @@ class _NormalCriticalInConstantState extends State<NormalCriticalInConstant> {
       return display;
     }).toList();
 
+    final colorScheme = Theme.of(context).colorScheme;
     double minWidth = (cellWidth * 1) + (visibleSettings.length * cellWidth) + 50;
-    Color borderColor = const Color(0xffE1E2E3);
+
     return Column(
       children: [
         getIrrigationLine(),
@@ -51,11 +52,12 @@ class _NormalCriticalInConstantState extends State<NormalCriticalInConstant> {
               animation: selectedIrrigationLine,
               builder: (context, child){
                 return DataTable2(
-                    border: TableBorder(
-                      top: BorderSide(color: borderColor, width: 1),
-                      bottom: BorderSide(color: borderColor, width: 1),
-                      left: BorderSide(color: borderColor, width: 1),
-                      right: BorderSide(color: borderColor, width: 1),
+                    dataRowHeight: AppConstants.ecoGemModelList.contains(widget.constPvd.userData['modelId']) ? 56.0 : 96.0,
+                    headingRowHeight: 44.0,
+                    headingRowColor: WidgetStatePropertyAll(colorScheme.surfaceContainerLow),
+                    border: TableBorder.all(
+                      color: colorScheme.outlineVariant,
+                      width: 1,
                     ),
                     minWidth: minWidth,
                     fixedLeftColumns: minWidth < screenWidth ? 0 : 1,
@@ -63,13 +65,31 @@ class _NormalCriticalInConstantState extends State<NormalCriticalInConstant> {
                       DataColumn2(
                           headingRowAlignment: MainAxisAlignment.center,
                           fixedWidth: cellWidth,
-                          label: Text('Alarm', style: Theme.of(context).textTheme.labelLarge,textAlign: TextAlign.center, softWrap: true)
+                          label: Text(
+                            'Alarm',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                              color: colorScheme.onSurface,
+                            ),
+                            textAlign: TextAlign.center,
+                            softWrap: true,
+                          )
                       ),
                       ...visibleSettings.map((defaultSetting) {
                         return DataColumn2(
                             headingRowAlignment: MainAxisAlignment.center,
                             fixedWidth: cellWidth,
-                            label: Text(defaultSetting.title, style: Theme.of(context).textTheme.labelLarge,textAlign: TextAlign.center, softWrap: true,)
+                            label: Text(
+                              defaultSetting.title,
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13,
+                                color: colorScheme.onSurface,
+                              ),
+                              textAlign: TextAlign.center,
+                              softWrap: true,
+                            )
                         );
                       }),
                     ],
@@ -77,18 +97,37 @@ class _NormalCriticalInConstantState extends State<NormalCriticalInConstant> {
                       AlarmInConstantModel normalAlarm = widget.constPvd.normalCriticalAlarm[selectedIrrigationLine.value].normal[row];
                       AlarmInConstantModel criticalAlarm = widget.constPvd.normalCriticalAlarm[selectedIrrigationLine.value].critical[row];
                       return DataRow2(
-                          specificRowHeight: AppConstants.ecoGemModelList.contains(widget.constPvd.userData['modelId']) ? 50 : 100,
                           color: WidgetStatePropertyAll(
-                            row.isOdd ? Colors.white : const Color(0xffF8F8F8),
+                            row.isOdd ? colorScheme.surface : colorScheme.surfaceContainerLow,
                           ),
                           cells: [
                             DataCell(
                                 Column(
                                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                                   children: [
-                                    Center(child: Text(normalAlarm.title, textAlign: TextAlign.center, style: TextStyle(color: Colors.orange.shade500),)),
+                                    Center(
+                                      child: Text(
+                                        normalAlarm.title,
+                                        textAlign: TextAlign.center,
+                                        style: TextStyle(
+                                          color: colorScheme.secondary,
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ),
                                     if(!AppConstants.ecoGemModelList.contains(widget.constPvd.userData['modelId']))
-                                      Center(child: Text(normalAlarm.title, textAlign: TextAlign.center, style: TextStyle(color: Colors.red.shade500),)),
+                                      Center(
+                                        child: Text(
+                                          normalAlarm.title,
+                                          textAlign: TextAlign.center,
+                                          style: TextStyle(
+                                            color: colorScheme.error,
+                                            fontWeight: FontWeight.w600,
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                      ),
                                   ],
                                 )
                             ),
@@ -164,6 +203,8 @@ class _NormalCriticalInConstantState extends State<NormalCriticalInConstant> {
   }
 
   Widget getIrrigationLine(){
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       mainAxisAlignment: MainAxisAlignment.start,
@@ -180,19 +221,27 @@ class _NormalCriticalInConstantState extends State<NormalCriticalInConstant> {
                 AnimatedBuilder(
                     animation: selectedIrrigationLine,
                     builder: (context, child){
+                      final isSelected = selectedIrrigationLine.value == line;
                       return InkWell(
                         onTap: (){
                           selectedIrrigationLine.value = line;
                         },
                         child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 500),
-                          padding: EdgeInsets.symmetric(horizontal: 15,vertical: selectedIrrigationLine.value == line ? 12 :10),
+                          duration: const Duration(milliseconds: 200),
+                          padding: EdgeInsets.symmetric(horizontal: 15, vertical: isSelected ? 12 : 10),
                           decoration: BoxDecoration(
-                              border: const Border(top: BorderSide(width: 0.5), left: BorderSide(width: 0.5), right: BorderSide(width: 0.5)),
-                              borderRadius: const BorderRadius.only(topLeft: Radius.circular(5), topRight: Radius.circular(5)),
-                              color: selectedIrrigationLine.value == line ? Theme.of(context).primaryColor : Colors.grey.shade100
+                              border: Border.all(color: colorScheme.outlineVariant, width: 0.5),
+                              borderRadius: const BorderRadius.only(topLeft: Radius.circular(8), topRight: Radius.circular(8)),
+                              color: isSelected ? colorScheme.primary : colorScheme.surfaceContainerLow,
                           ),
-                          child: Text(widget.constPvd.normalCriticalAlarm[line].name, style: TextStyle(color: selectedIrrigationLine.value == line ? Colors.white : Colors.black, fontSize: 13),),
+                          child: Text(
+                            widget.constPvd.normalCriticalAlarm[line].name,
+                            style: TextStyle(
+                              color: isSelected ? colorScheme.onPrimary : colorScheme.onSurfaceVariant,
+                              fontSize: 13,
+                              fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                            ),
+                          ),
                         ),
                       );
                     }
@@ -204,7 +253,7 @@ class _NormalCriticalInConstantState extends State<NormalCriticalInConstant> {
         Container(
           width: double.infinity,
           height: 3,
-          color: Theme.of(context).primaryColor,
+          color: colorScheme.primary,
         ),
         const SizedBox(height: 10,)
       ],

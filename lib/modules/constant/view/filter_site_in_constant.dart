@@ -32,6 +32,7 @@ class _FilterSiteInConstantState extends State<FilterSiteInConstant> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     double screenWidth = MediaQuery.of(context).size.width;
     int settingLength = widget.constPvd.defaultFilterSiteSetting.where((setting) {
       if(AppConstants.gemModelList.contains(widget.constPvd.userData['modelId'])){
@@ -42,13 +43,14 @@ class _FilterSiteInConstantState extends State<FilterSiteInConstant> {
     }).length;
     settingLength = settingLength + 1;
     double minWidth = (cellWidth * 1) + (settingLength * cellWidth) + 50;
-    Color borderColor = const Color(0xffE1E2E3);
+
     return DataTable2(
-      border: TableBorder(
-        top: BorderSide(color: borderColor, width: 1),
-        bottom: BorderSide(color: borderColor, width: 1),
-        left: BorderSide(color: borderColor, width: 1),
-        right: BorderSide(color: borderColor, width: 1),
+      dataRowHeight: 56.0,
+      headingRowHeight: 44.0,
+      headingRowColor: WidgetStatePropertyAll(colorScheme.surfaceContainerLow),
+      border: TableBorder.all(
+        color: colorScheme.outlineVariant,
+        width: 1,
       ),
       minWidth: minWidth,
       fixedLeftColumns: minWidth < screenWidth ? 0 : 1,
@@ -56,7 +58,16 @@ class _FilterSiteInConstantState extends State<FilterSiteInConstant> {
         DataColumn2(
             headingRowAlignment: MainAxisAlignment.center,
             fixedWidth: cellWidth,
-            label: Text('Filter Site', style: Theme.of(context).textTheme.labelLarge,textAlign: TextAlign.center, softWrap: true)
+            label: Text(
+              'Filter Site',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 13,
+                color: colorScheme.onSurface,
+              ),
+              textAlign: TextAlign.center,
+              softWrap: true,
+            )
         ),
         ...widget.constPvd.defaultFilterSiteSetting
             .where((defaultSetting) => AppConstants.gemModelList.contains(widget.constPvd.userData['modelId']) ? defaultSetting.gemDisplay : defaultSetting.ecoGemDisplay)
@@ -64,24 +75,52 @@ class _FilterSiteInConstantState extends State<FilterSiteInConstant> {
           return DataColumn2(
               headingRowAlignment: MainAxisAlignment.center,
               fixedWidth: cellWidth,
-              label: Text(defaultSetting.title, style: Theme.of(context).textTheme.labelLarge,textAlign: TextAlign.center, softWrap: true,)
+              label: Text(
+                defaultSetting.title,
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
+                  color: colorScheme.onSurface,
+                ),
+                textAlign: TextAlign.center,
+                softWrap: true,
+              )
           );
         }),
         DataColumn2(
             headingRowAlignment: MainAxisAlignment.center,
             fixedWidth: cellWidth,
-            label: Text('Backwash Command ono/ff', style: Theme.of(context).textTheme.labelLarge,textAlign: TextAlign.center, softWrap: true)
+            label: Text(
+              'Backwash Command on/off',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 13,
+                color: colorScheme.onSurface,
+              ),
+              textAlign: TextAlign.center,
+              softWrap: true,
+            )
         ),
       ],
       rows: List.generate(widget.constPvd.filterSite.length, (row){
         ObjectInConstantModel filterSite = widget.constPvd.filterSite[row];
         return DataRow2(
             color: WidgetStatePropertyAll(
-              row.isOdd ? Colors.white : const Color(0xffF8F8F8),
+              row.isOdd ? colorScheme.surface : colorScheme.surfaceContainerLow,
             ),
             cells: [
               DataCell(
-                  Center(child: Text(filterSite.name.toString(), textAlign: TextAlign.center, style: TextStyle(color: Theme.of(context).primaryColorLight),))
+                Center(
+                  child: Text(
+                    filterSite.name.toString(),
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                      color: colorScheme.onSurface,
+                    ),
+                  ),
+                ),
               ),
               ...filterSite.setting
                   .where((defaultSetting) => AppConstants.gemModelList.contains(widget.constPvd.userData['modelId']) ? defaultSetting.gemDisplay : defaultSetting.ecoGemDisplay)

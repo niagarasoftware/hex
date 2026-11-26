@@ -645,13 +645,15 @@ class _FertilizerSetScreenState extends State<FertilizerSetScreen> {
   }
 
   Widget addButton(){
+    final colorScheme = Theme.of(context).colorScheme;
     return CustomMaterialButton(
-      color: Colors.green,
-      child: const Row(
-        spacing: 10,
+      color: colorScheme.primary,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.add,color: Colors.white),
-          Text('Add', style: TextStyle(color: Colors.white),)
+          Icon(Icons.add, color: colorScheme.onPrimary),
+          const SizedBox(width: 6),
+          Text('Add', style: TextStyle(color: colorScheme.onPrimary, fontWeight: FontWeight.bold)),
         ],
       ),
       onPressed: (){
