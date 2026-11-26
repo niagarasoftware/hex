@@ -48,7 +48,7 @@ class _TicketHomePageState extends State<TicketHomePage> {
   int _tab = 0; // 0 All, 1 In progress, 2 Closed
   int _selected = 0;
 
-  // ───────────── old logic (no change) ─────────────
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
