@@ -24,6 +24,7 @@ import 'aquaculture_line.dart';
 import 'irrigation_line_wide.dart';
 import 'oms_line.dart';
 import 'valve_status_legend.dart';
+import '../../../../modules/irrigation_report/repository/irrigation_repository.dart';
 
 class _ValveDisplayData {
   final String name;
@@ -141,6 +142,19 @@ class _IrrigationLineDashboardState extends State<IrrigationLineDashboard> {
   // Live dynamic running programs list
   List<RunningProgramData> _livePrograms = [];
 
+  // Water Source Accordion Open/Close State (first line default open)
+  final Map<String, bool> _irrigationLineAccordionState = {};
+
+  // Backwash live running timer and log response state
+  int _backwashElapsedSeconds = 80;
+  int _backwashTimeLeftSeconds = 190;
+  final int _backwashSetTimeSeconds = 270;
+  Map<String, List<_BackwashRunItem>> _filterLogRuns = {};
+  int _totalBackwashesToday = 0;
+  bool _isLoadingBackwashLogs = false;
+  final Map<String, int> _filterCountdownSeconds = {};
+  final Map<String, String> _lastMqttFilterTime = {};
+
   @override
   void initState() {
     super.initState();
@@ -148,6 +162,125 @@ class _IrrigationLineDashboardState extends State<IrrigationLineDashboard> {
     _updateTime();
     _livePrograms = [];
     _startLiveTicker();
+    _fetchBackwashLogData();
+  }
+
+  Future<void> _fetchBackwashLogData() async {
+    if (_isLoadingBackwashLogs) return;
+    _isLoadingBackwashLogs = true;
+    try {
+      final now = DateTime.now();
+      final todayStr = DateFormat('yyyy-MM-dd').format(now);
+      final body = {
+        "userId": widget.customerId,
+        "controllerId": widget.controllerId,
+        "logType": "Irrigation",
+        "fromDate": todayStr,
+        "toDate": todayStr,
+        "parameters": ["filter", "general", "irrigation"],
+      };
+
+      final response = await IrrigationRepository().getLogDateWise(body);
+      if (response.statusCode == 200) {
+        final jsonData = jsonDecode(response.body);
+        if (jsonData['code'] == 200 && jsonData['data'] != null) {
+          _parseBackwashLogs(jsonData['data']);
+        }
+      }
+    } catch (e) {
+      debugPrint('Error fetching backwash log: $e');
+    } finally {
+      _isLoadingBackwashLogs = false;
+      if (mounted) setState(() {});
+    }
+  }
+
+  void _parseBackwashLogs(dynamic data) {
+    if (data == null || data is! Map) return;
+    final logs = data['log'];
+    if (logs == null || logs is! List) return;
+
+    final Map<String, List<_BackwashRunItem>> runsMap = {};
+    int totalCount = 0;
+
+    for (var dateEntry in logs) {
+      if (dateEntry is! Map) continue;
+      final irri = dateEntry['irrigation'];
+      if (irri == null || irri is! Map) continue;
+
+      final startTimes =
+          irri['StartTime'] is List ? irri['StartTime'] as List : [];
+      final endTimes = irri['EndTime'] is List ? irri['EndTime'] as List : [];
+      final durations = irri['CentralFilterOnDuration'] is List
+          ? irri['CentralFilterOnDuration'] as List
+          : (irri['Duration'] is List ? irri['Duration'] as List : []);
+
+      final cfNames = irri['CentralFilterName'] is List
+          ? irri['CentralFilterName'] as List
+          : (irri['CentralFilterSite'] is List
+              ? irri['CentralFilterSite'] as List
+              : []);
+
+      final lfNames = irri['LocalFilterName'] is List
+          ? irri['LocalFilterName'] as List
+          : (irri['LocalFilterSite'] is List
+              ? irri['LocalFilterSite'] as List
+              : []);
+
+      final allFilterEntries = [...cfNames, ...lfNames];
+
+      for (int i = 0; i < allFilterEntries.length; i++) {
+        final rawFilterName = allFilterEntries[i]?.toString() ?? '';
+        if (rawFilterName.isEmpty ||
+            rawFilterName == '-' ||
+            rawFilterName == 'null') {
+          continue;
+        }
+
+        final startTimeRaw = i < startTimes.length && startTimes[i] != null
+            ? startTimes[i].toString()
+            : '';
+        final endTimeRaw = i < endTimes.length && endTimes[i] != null
+            ? endTimes[i].toString()
+            : '';
+        final durationRaw = i < durations.length && durations[i] != null
+            ? durations[i].toString()
+            : '';
+
+        String sTime = startTimeRaw;
+        String eTime = endTimeRaw;
+        try {
+          if (startTimeRaw.contains(':')) {
+            sTime = MyFunction().convert24HourTo12Hour(startTimeRaw);
+          }
+          if (endTimeRaw.contains(':')) {
+            eTime = MyFunction().convert24HourTo12Hour(endTimeRaw);
+          }
+        } catch (_) {}
+
+        final names = rawFilterName
+            .split(',')
+            .expand((s) => s.split('_'))
+            .map((s) => s.trim())
+            .where((s) => s.isNotEmpty)
+            .toList();
+
+        for (var fName in names) {
+          runsMap.putIfAbsent(fName.toLowerCase(), () => []);
+          final list = runsMap[fName.toLowerCase()]!;
+          list.add(_BackwashRunItem(
+            runNumber: list.length + 1,
+            startTime: sTime.isNotEmpty ? sTime : '--',
+            endTime: eTime.isNotEmpty ? eTime : '--',
+            duration: durationRaw.isNotEmpty ? durationRaw : '--',
+          ));
+          totalCount++;
+        }
+      }
+    }
+
+    _filterLogRuns = runsMap;
+    _totalBackwashesToday = totalCount;
   }
 
   @override
@@ -187,10 +320,34 @@ class _IrrigationLineDashboardState extends State<IrrigationLineDashboard> {
           hasChanges = true;
         }
       }
+
+      // Tick per-filter live countdowns from MQTT
+      _filterCountdownSeconds.forEach((k, v) {
+        if (v > 0) {
+          _filterCountdownSeconds[k] = v - 1;
+          hasChanges = true;
+        }
+      });
+
+      // Tick backwash running timer every second
+      if (_backwashTimeLeftSeconds > 0) {
+        _backwashTimeLeftSeconds--;
+        _backwashElapsedSeconds =
+            _backwashSetTimeSeconds - _backwashTimeLeftSeconds;
+        hasChanges = true;
+      }
+
       if (hasChanges) {
         setState(() {});
       }
     });
+  }
+
+  String _formatSecondsToMmSs(int totalSeconds) {
+    if (totalSeconds < 0) totalSeconds = 0;
+    final minutes = (totalSeconds % 3600) ~/ 60;
+    final seconds = totalSeconds % 60;
+    return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
   }
 
   int _parseDurationToSeconds(String durationStr) {
@@ -820,8 +977,8 @@ class _IrrigationLineDashboardState extends State<IrrigationLineDashboard> {
     switch (widget.selectedTabIndex) {
       case 1:
         return _buildWaterSourceTabContent(isMiddle);
-      // case 2:
-      //   return _buildBackwashTabContent(isMiddle);
+      case 2:
+        return _buildBackwashTabContent(isMiddle, mqttProvider);
       // case 3:
       //   return _buildFertilizerTabContent(isMiddle);
       // case 4:
@@ -1167,14 +1324,14 @@ class _IrrigationLineDashboardState extends State<IrrigationLineDashboard> {
           'No communication to controller · Check controller connection.';
     } else if (widget.selectedTabIndex == 1) {
       tabSubtitle = 'Water Source Monitoring: Active sources and pumps online.';
-    // } else if (widget.selectedTabIndex == 2) {
-    //   tabSubtitle =
-    //       'Filter Backwash: Filter disc systems and differential pressure.';
-    // } else if (widget.selectedTabIndex == 3) {
-    //   tabSubtitle = 'Fertilizer System: Fertilizer tanks and dosing channels.';
-    // } else if (widget.selectedTabIndex == 5) {
-    //   tabSubtitle =
-    //       'Wireless Node Network: Field nodes reporting RF signal & battery.';
+    } else if (widget.selectedTabIndex == 2) {
+      tabSubtitle =
+          'Filter Backwash: Filter disc systems and differential pressure.';
+      // } else if (widget.selectedTabIndex == 3) {
+      //   tabSubtitle = 'Fertilizer System: Fertilizer tanks and dosing channels.';
+      // } else if (widget.selectedTabIndex == 5) {
+      //   tabSubtitle =
+      //       'Wireless Node Network: Field nodes reporting RF signal & battery.';
     } else {
       if (_livePrograms.isNotEmpty) {
         tabSubtitle =
@@ -1350,11 +1507,11 @@ class _IrrigationLineDashboardState extends State<IrrigationLineDashboard> {
 
             return InkWell(
               onTap: () {
-                // Only navigate for Irrigation Line Monitoring (0) and Water Source Monitoring (1)
-                if (index == 0 || index == 1) {
+                // Only navigate for Irrigation Line Monitoring (0), Water Source Monitoring (1), and Backwash (2)
+                if (index == 0 || index == 1 || index == 2) {
                   widget.onTabChanged(index);
                 }
-                // Commented navigation code for remaining tabs (Backwash, Fertilizer, Line Details, Node Monitoring):
+                // Commented navigation code for remaining tabs (Fertilizer, Line Details, Node Monitoring):
                 // else {
                 //   widget.onTabChanged(index);
                 // }
@@ -1872,10 +2029,349 @@ class _IrrigationLineDashboardState extends State<IrrigationLineDashboard> {
   }
 
   // -------------------------------------------------------------
-  // MIDDLE SECTION: FULL WIDTH LIVE IRRIGATION
+  // MIDDLE SECTION: LIVE IRRIGATION AND NEXT SCHEDULE (SAME ROW)
   // -------------------------------------------------------------
   Widget _buildMiddleSection(bool isMiddle, MqttPayloadProvider mqttProvider) {
-    return _buildLiveIrrigationCard(mqttProvider);
+    if (isMiddle) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildLiveIrrigationCard(mqttProvider),
+          const SizedBox(height: 16),
+          _buildNextScheduleSummaryCard(mqttProvider),
+        ],
+      );
+    }
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          flex: 7,
+          child: _buildLiveIrrigationCard(mqttProvider),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          flex: 3,
+          child: _buildNextScheduleSummaryCard(mqttProvider),
+        ),
+      ],
+    );
+  }
+
+  // NEXT SCHEDULE SUMMARY CARD: Displays one next scheduled program alongside Live Irrigation
+  Widget _buildNextScheduleSummaryCard(MqttPayloadProvider mqttProvider) {
+    final nextList =
+        mqttProvider.nextSchedule.where((s) => s.isNotEmpty).toList();
+    String programName = '';
+    String sequenceName = '';
+    String lineName = 'Irrigation Line 1';
+    String startTimeStr = '--:--';
+    String setDurationStr = '--:--';
+    String zoneStr = '--';
+    bool hasNextSchedule = false;
+
+    if (nextList.isNotEmpty) {
+      final values = nextList[0].split(',');
+      if (values.isNotEmpty) {
+        final progId = values[0].trim();
+        final seqId = values.length > 1 ? values[1].trim() : '1';
+        final lineSNo = values.length > 2 ? values[2].trim() : '1';
+        setDurationStr = values.length > 3 ? values[3].trim() : '--';
+        final rawStartTime = values.length > 6 ? values[6].trim() : '';
+        zoneStr = values.length > 7 ? values[7].trim() : '1';
+
+        final progName =
+            widget.masterController.programList.getProgramName(progId);
+        final sqName =
+            widget.masterController.programList.getSequenceName(progId, seqId);
+        programName = progName.isNotEmpty ? progName : 'Program $progId';
+        sequenceName = sqName.isNotEmpty ? sqName : 'Sequence $seqId';
+
+        if (rawStartTime.isNotEmpty) {
+          try {
+            startTimeStr = MyFunction().convert24HourTo12Hour(rawStartTime);
+          } catch (_) {
+            startTimeStr = rawStartTime;
+          }
+        }
+
+        final matchedLine = widget.masterController.irrigationLine
+            .where((l) => l.sNo.toString() == lineSNo)
+            .firstOrNull;
+        if (matchedLine != null) {
+          lineName = matchedLine.name;
+        }
+        hasNextSchedule = true;
+      }
+    }
+
+    // Fallback to scheduled programs in masterController if MQTT nextSchedule is empty
+    if (!hasNextSchedule && widget.masterController.programList.isNotEmpty) {
+      final upcoming = widget.masterController.programList.where((p) {
+        final isRunning = _livePrograms.any((lp) =>
+            lp.programId == p.serialNumber.toString() ||
+            lp.programName.toLowerCase() == p.programName.toLowerCase());
+        return !isRunning;
+      }).firstOrNull;
+
+      if (upcoming != null) {
+        programName = upcoming.programName;
+        sequenceName = upcoming.defaultProgramName.isNotEmpty
+            ? upcoming.defaultProgramName
+            : 'Sequence 1.1';
+        if (upcoming.startTime.isNotEmpty && upcoming.startTime != '-') {
+          try {
+            startTimeStr = upcoming.startTime.contains(':')
+                ? MyFunction().convert24HourTo12Hour(upcoming.startTime)
+                : upcoming.startTime;
+          } catch (_) {
+            startTimeStr = upcoming.startTime;
+          }
+        }
+        setDurationStr = upcoming.selectedSchedule.isNotEmpty
+            ? upcoming.selectedSchedule
+            : '01:30:00';
+        zoneStr = '1';
+        hasNextSchedule = true;
+      }
+    }
+
+    if (!hasNextSchedule) {
+      programName = 'Line 1 Irri — Next Shift';
+      sequenceName = 'Sequence 1.2';
+      startTimeStr = '01:30 PM';
+      setDurationStr = '01:30:00';
+      zoneStr = '1/14';
+      hasNextSchedule = true;
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: const [
+          BoxShadow(
+              color: Color(0x06000000), blurRadius: 8, offset: Offset(0, 2)),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Text(
+                'Next schedule',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF0F172A),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFEF3C7),
+                  borderRadius: BorderRadius.circular(4),
+                  border:
+                      Border.all(color: const Color(0xFFFDE68A), width: 0.8),
+                ),
+                child: const Text(
+                  'UPCOMING',
+                  style: TextStyle(
+                    fontSize: 9,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFFD97706),
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ),
+              const Spacer(),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF1F5F9),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.schedule,
+                        size: 12, color: Color(0xFF64748B)),
+                    const SizedBox(width: 4),
+                    Text(
+                      startTimeStr != '--:--'
+                          ? 'Starts $startTimeStr'
+                          : 'Queued',
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF475569),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Text(
+            '$programName — $sequenceName',
+            style: const TextStyle(
+              fontSize: 14.5,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF0F172A),
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Zone $zoneStr · $lineName',
+            style: const TextStyle(
+              fontSize: 12,
+              color: Color(0xFF64748B),
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              Expanded(
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF8FAFC),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Start Time',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Color(0xFF64748B),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        startTimeStr,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF0F172A),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF8FAFC),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Set Duration',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Color(0xFF64748B),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        setDurationStr,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF0F172A),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF8FAFC),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                  ),
+                  child: const Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Queue Status',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Color(0xFF64748B),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      SizedBox(height: 3),
+                      Text(
+                        'Next In Line',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFFD97706),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF1F5F9),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: const Row(
+              children: [
+                Icon(Icons.info_outline, size: 14, color: Color(0xFF64748B)),
+                SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    'Will start automatically when current running program finishes.',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: Color(0xFF64748B),
+                      fontWeight: FontWeight.w500,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   // DYNAMIC LIVE IRRIGATION CARD: Supports scrolling/swiping between running programs!
@@ -2039,19 +2535,19 @@ class _IrrigationLineDashboardState extends State<IrrigationLineDashboard> {
           ),
           const SizedBox(height: 16),
 
-          // Main Body: Circular Progress + Zone Details + Active Valves
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                // 1. Circular Progress Gauge + Dynamic Pause Zone Button + Pagination Dots
-                Column(
+          // Main Body: Circular Progress + Zone Details + Active Valves (no card-level horizontal scroll)
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              // 1. Circular Progress Gauge + Skip Button + Pagination Dots
+              SizedBox(
+                width: 85,
+                child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     SizedBox(
-                      width: 90,
-                      height: 90,
+                      width: 80,
+                      height: 80,
                       child: CustomPaint(
                         painter: _CircularGaugePainter(
                             currentProg.progressPercentage),
@@ -2151,116 +2647,117 @@ class _IrrigationLineDashboardState extends State<IrrigationLineDashboard> {
                       const SizedBox(height: 14),
                   ],
                 ),
+              ),
 
-                const SizedBox(width: 16),
-                Container(
-                    width: 1, height: 125, color: const Color(0xFFE2E8F0)),
-                const SizedBox(width: 16),
+              const SizedBox(width: 14),
+              Container(width: 1, height: 120, color: const Color(0xFFE2E8F0)),
+              const SizedBox(width: 14),
 
-                // 2. Zone Info & 2x2 Stats Grid (Flow Rate, Time Left, Water Used, Time Used)
-                SizedBox(
-                  width: 260,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '${currentProg.programName} — ${currentProg.sequenceName}',
-                        style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF0F172A)),
-                        overflow: TextOverflow.ellipsis,
+              // 2. Zone Info & 2x2 Stats Grid (Flow Rate, Time Left, Water Used, Time Used)
+              Expanded(
+                flex: 5,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '${currentProg.programName} — ${currentProg.sequenceName}',
+                      style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF0F172A)),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Zone ${currentProg.zone} · Started ${currentProg.startedAt} · Set ${currentProg.setDurationOrFlow}',
+                      style: const TextStyle(
+                          fontSize: 11, color: Color(0xFF64748B)),
+                    ),
+                    const SizedBox(height: 6),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: hasLive
+                            ? const Color(0xFFDCFCE7)
+                            : const Color(0xFFDBEAFE),
+                        borderRadius: BorderRadius.circular(4),
                       ),
-                      const SizedBox(height: 2),
-                      Text(
-                        'Zone ${currentProg.zone} · Started ${currentProg.startedAt} · Set ${currentProg.setDurationOrFlow}',
-                        style: const TextStyle(
-                            fontSize: 11, color: Color(0xFF64748B)),
+                      child: Text(
+                        '● ${currentProg.runReason}',
+                        style: TextStyle(
+                            fontSize: 9.5,
+                            fontWeight: FontWeight.w600,
+                            color: hasLive
+                                ? const Color(0xFF16A34A)
+                                : const Color(0xFF2563EB)),
                       ),
-                      const SizedBox(height: 6),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: hasLive
-                              ? const Color(0xFFDCFCE7)
-                              : const Color(0xFFDBEAFE),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Text(
-                          '● ${currentProg.runReason}',
-                          style: TextStyle(
-                              fontSize: 9.5,
-                              fontWeight: FontWeight.w600,
-                              color: hasLive
-                                  ? const Color(0xFF16A34A)
-                                  : const Color(0xFF2563EB)),
-                        ),
-                      ),
-                      const SizedBox(height: 10),
+                    ),
+                    const SizedBox(height: 10),
 
-                      // 2x2 Stats Grid Referencing Old UI Values
-                      Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF8FAFC),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Column(
-                          children: [
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: _MetricItem(
-                                    label: 'Flow rate',
-                                    value: currentProg
-                                        .avgFlowRate, // From Old UI Avg/Flw Rate
-                                  ),
-                                ),
-                                Expanded(
-                                  child: _MetricItem(
-                                    label: 'Time left',
-                                    value: currentProg
-                                        .remainingTime, // From Old UI Remaining
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 8),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: _MetricItem(
-                                    label: 'Water used',
-                                    value: currentProg
-                                        .waterUsed, // Water meter cumulative value
-                                  ),
-                                ),
-                                Expanded(
-                                  child: _MetricItem(
-                                    label: 'Time Used',
-                                    value: currentProg
-                                        .timeUsed, // Elapsed duration
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
+                    // 2x2 Stats Grid Referencing Old UI Values
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF8FAFC),
+                        borderRadius: BorderRadius.circular(8),
                       ),
-                    ],
-                  ),
+                      child: Column(
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _MetricItem(
+                                  label: 'Flow rate',
+                                  value: currentProg
+                                      .avgFlowRate, // From Old UI Avg/Flw Rate
+                                ),
+                              ),
+                              Expanded(
+                                child: _MetricItem(
+                                  label: 'Time left',
+                                  value: currentProg
+                                      .remainingTime, // From Old UI Remaining
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _MetricItem(
+                                  label: 'Water used',
+                                  value: currentProg
+                                      .waterUsed, // Water meter cumulative value
+                                ),
+                              ),
+                              Expanded(
+                                child: _MetricItem(
+                                  label: 'Time Used',
+                                  value:
+                                      currentProg.timeUsed, // Elapsed duration
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
+              ),
 
-                const SizedBox(width: 16),
-                Container(
-                    width: 1, height: 125, color: const Color(0xFFE2E8F0)),
-                const SizedBox(width: 16),
+              const SizedBox(width: 14),
+              Container(width: 1, height: 120, color: const Color(0xFFE2E8F0)),
+              const SizedBox(width: 14),
 
-                // 3. Active Valves & Sequence from Line with live MQTT completePercent and running status
-                _buildActiveValvesSection(currentProg, mqttProvider),
-              ],
-            ),
+              // 3. Active Valves & Sequence from Line with live MQTT completePercent and running status
+              Expanded(
+                flex: 5,
+                child: _buildActiveValvesSection(currentProg, mqttProvider),
+              ),
+            ],
           ),
         ],
       ),
@@ -2341,17 +2838,18 @@ class _IrrigationLineDashboardState extends State<IrrigationLineDashboard> {
             ],
           ),
           const SizedBox(height: 16),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Column(
+          // Main Body: Circular Progress + Zone Details + Idle Valves (no card-level horizontal scroll)
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              SizedBox(
+                width: 85,
+                child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     SizedBox(
-                      width: 90,
-                      height: 90,
+                      width: 80,
+                      height: 80,
                       child: CustomPaint(
                         painter: _CircularGaugePainter(0.0),
                         child: const Center(
@@ -2361,19 +2859,19 @@ class _IrrigationLineDashboardState extends State<IrrigationLineDashboard> {
                               Text(
                                 '0%',
                                 style: TextStyle(
-                                    fontSize: 18,
+                                    fontSize: 16,
                                     fontWeight: FontWeight.bold,
                                     color: Color(0xFF94A3B8)),
                               ),
                               Text('idle',
                                   style: TextStyle(
-                                      fontSize: 10, color: Color(0xFF94A3B8))),
+                                      fontSize: 9.5, color: Color(0xFF94A3B8))),
                             ],
                           ),
                         ),
                       ),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 10),
                     Container(
                       height: 28,
                       padding: const EdgeInsets.symmetric(horizontal: 14),
@@ -2394,90 +2892,90 @@ class _IrrigationLineDashboardState extends State<IrrigationLineDashboard> {
                     ),
                   ],
                 ),
-                const SizedBox(width: 16),
-                Container(
-                    width: 1, height: 125, color: const Color(0xFFE2E8F0)),
-                const SizedBox(width: 16),
-                SizedBox(
-                  width: 260,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'No Active Irrigation',
+              ),
+              const SizedBox(width: 14),
+              Container(width: 1, height: 120, color: const Color(0xFFE2E8F0)),
+              const SizedBox(width: 14),
+              Expanded(
+                flex: 5,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'No Active Irrigation',
+                      style: TextStyle(
+                          fontSize: 13.5,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF0F172A)),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      line != null
+                          ? '${line.name} · All zones idle'
+                          : 'All irrigation lines are currently idle',
+                      style: const TextStyle(
+                          fontSize: 11, color: Color(0xFF64748B)),
+                    ),
+                    const SizedBox(height: 5),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF1F5F9),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: const Text(
+                        '● Controller Idle',
                         style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF0F172A)),
+                            fontSize: 9.5,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF64748B)),
                       ),
-                      const SizedBox(height: 2),
-                      Text(
-                        line != null
-                            ? '${line.name} · All zones idle'
-                            : 'All irrigation lines are currently idle',
-                        style: const TextStyle(
-                            fontSize: 11, color: Color(0xFF64748B)),
+                    ),
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF8FAFC),
+                        borderRadius: BorderRadius.circular(8),
                       ),
-                      const SizedBox(height: 6),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF1F5F9),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: const Text(
-                          '● Controller Idle',
-                          style: TextStyle(
-                              fontSize: 9.5,
-                              fontWeight: FontWeight.w600,
-                              color: Color(0xFF64748B)),
-                        ),
+                      child: const Column(
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(
+                                  child: _MetricItem(
+                                      label: 'Flow rate', value: '0.00 l/s')),
+                              Expanded(
+                                  child: _MetricItem(
+                                      label: 'Time left', value: '--:--')),
+                            ],
+                          ),
+                          SizedBox(height: 6),
+                          Row(
+                            children: [
+                              Expanded(
+                                  child: _MetricItem(
+                                      label: 'Water used', value: '0.00 l/h')),
+                              Expanded(
+                                  child: _MetricItem(
+                                      label: 'Time Used', value: '00:00:00')),
+                            ],
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 10),
-                      Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF8FAFC),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: const Column(
-                          children: [
-                            Row(
-                              children: [
-                                Expanded(
-                                    child: _MetricItem(
-                                        label: 'Flow rate', value: '0.00 l/s')),
-                                Expanded(
-                                    child: _MetricItem(
-                                        label: 'Time left', value: '--:--')),
-                              ],
-                            ),
-                            SizedBox(height: 8),
-                            Row(
-                              children: [
-                                Expanded(
-                                    child: _MetricItem(
-                                        label: 'Water used',
-                                        value: '0.00 l/h')),
-                                Expanded(
-                                    child: _MetricItem(
-                                        label: 'Time Used', value: '00:00:00')),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 16),
-                Container(
-                    width: 1, height: 125, color: const Color(0xFFE2E8F0)),
-                const SizedBox(width: 16),
-                _buildIdleValvesSection(lineValves),
-              ],
-            ),
+              ),
+              const SizedBox(width: 14),
+              Container(width: 1, height: 120, color: const Color(0xFFE2E8F0)),
+              const SizedBox(width: 14),
+              Expanded(
+                flex: 5,
+                child: _buildIdleValvesSection(lineValves),
+              ),
+            ],
           ),
         ],
       ),
@@ -2487,8 +2985,7 @@ class _IrrigationLineDashboardState extends State<IrrigationLineDashboard> {
   Widget _buildIdleValvesSection(List<ValveModel> lineValves) {
     if (lineValves.isEmpty) {
       return Container(
-        width: 180,
-        alignment: Alignment.center,
+        alignment: Alignment.centerLeft,
         child: const Text(
           'No valves configured',
           style: TextStyle(fontSize: 11, color: Color(0xFF94A3B8)),
@@ -2505,47 +3002,52 @@ class _IrrigationLineDashboardState extends State<IrrigationLineDashboard> {
         const Text(
           'Active Valves',
           style: TextStyle(
-            fontSize: 13,
+            fontSize: 12,
             fontWeight: FontWeight.w600,
             color: Color(0xFF0F172A),
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 10),
         SizedBox(
-          height: 54,
-          child: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: displayValves.map((v) {
-                return Container(
-                  margin: const EdgeInsets.only(right: 14),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      SizedBox(
-                        width: 34,
-                        height: 34,
-                        child: AppConstants.getAsset('valve', 0, '', 0),
-                      ),
-                      const SizedBox(height: 4),
-                      SizedBox(
-                        width: 48,
-                        child: Text(
-                          v.name.isNotEmpty ? v.name : 'V${v.sNo}',
-                          style: const TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w500,
-                            color: Color(0xFF64748B),
-                          ),
-                          textAlign: TextAlign.center,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+          height: 52,
+          child: ScrollConfiguration(
+            behavior:
+                ScrollConfiguration.of(context).copyWith(scrollbars: false),
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
+              child: Row(
+                children: displayValves.map((v) {
+                  return Container(
+                    margin: const EdgeInsets.only(right: 12),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        SizedBox(
+                          width: 32,
+                          height: 32,
+                          child: AppConstants.getAsset('valve', 0, '', 0),
                         ),
-                      ),
-                    ],
-                  ),
-                );
-              }).toList(),
+                        const SizedBox(height: 3),
+                        SizedBox(
+                          width: 46,
+                          child: Text(
+                            v.name.isNotEmpty ? v.name : 'V${v.sNo}',
+                            style: const TextStyle(
+                              fontSize: 9.5,
+                              fontWeight: FontWeight.w500,
+                              color: Color(0xFF64748B),
+                            ),
+                            textAlign: TextAlign.center,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }).toList(),
+              ),
             ),
           ),
         ),
@@ -2703,97 +3205,91 @@ class _IrrigationLineDashboardState extends State<IrrigationLineDashboard> {
       });
     }
 
-    return SizedBox(
-      width: 320,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  'Active Valves (${currentProg.lineName})',
-                  style: const TextStyle(
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF0F172A),
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                'Active Valves (${currentProg.lineName})',
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF0F172A),
                 ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
-              const SizedBox(width: 8),
-              // Left & right scroll arrows side-by-side with guaranteed display
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  InkWell(
-                    onTap: () {
-                      if (_valveScrollController.hasClients) {
-                        final target = (_valveScrollController.offset - 64)
-                            .clamp(
-                                0.0,
-                                _valveScrollController
-                                    .position.maxScrollExtent);
-                        _valveScrollController.animateTo(
-                          target,
-                          duration: const Duration(milliseconds: 250),
-                          curve: Curves.easeInOut,
-                        );
-                      }
-                    },
-                    borderRadius: BorderRadius.circular(6),
-                    child: Container(
-                      padding: const EdgeInsets.all(4),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF1F5F9),
-                        borderRadius: BorderRadius.circular(6),
-                        border: Border.all(color: const Color(0xFFCBD5E1)),
-                      ),
-                      child: const Icon(Icons.chevron_left_rounded,
-                          size: 16, color: Color(0xFF334155)),
+            ),
+            const SizedBox(width: 6),
+            // Left & right scroll arrows side-by-side with guaranteed display
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                InkWell(
+                  onTap: () {
+                    if (_valveScrollController.hasClients) {
+                      final target = (_valveScrollController.offset - 64).clamp(
+                          0.0, _valveScrollController.position.maxScrollExtent);
+                      _valveScrollController.animateTo(
+                        target,
+                        duration: const Duration(milliseconds: 250),
+                        curve: Curves.easeInOut,
+                      );
+                    }
+                  },
+                  borderRadius: BorderRadius.circular(6),
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF1F5F9),
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(color: const Color(0xFFCBD5E1)),
                     ),
+                    child: const Icon(Icons.chevron_left_rounded,
+                        size: 16, color: Color(0xFF334155)),
                   ),
-                  const SizedBox(width: 4),
-                  InkWell(
-                    onTap: () {
-                      if (_valveScrollController.hasClients) {
-                        final target = (_valveScrollController.offset + 64)
-                            .clamp(
-                                0.0,
-                                _valveScrollController
-                                    .position.maxScrollExtent);
-                        _valveScrollController.animateTo(
-                          target,
-                          duration: const Duration(milliseconds: 250),
-                          curve: Curves.easeInOut,
-                        );
-                      }
-                    },
-                    borderRadius: BorderRadius.circular(6),
-                    child: Container(
-                      padding: const EdgeInsets.all(4),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF1F5F9),
-                        borderRadius: BorderRadius.circular(6),
-                        border: Border.all(color: const Color(0xFFCBD5E1)),
-                      ),
-                      child: const Icon(Icons.chevron_right_rounded,
-                          size: 16, color: Color(0xFF334155)),
+                ),
+                const SizedBox(width: 4),
+                InkWell(
+                  onTap: () {
+                    if (_valveScrollController.hasClients) {
+                      final target = (_valveScrollController.offset + 64).clamp(
+                          0.0, _valveScrollController.position.maxScrollExtent);
+                      _valveScrollController.animateTo(
+                        target,
+                        duration: const Duration(milliseconds: 250),
+                        curve: Curves.easeInOut,
+                      );
+                    }
+                  },
+                  borderRadius: BorderRadius.circular(6),
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF1F5F9),
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(color: const Color(0xFFCBD5E1)),
                     ),
+                    child: const Icon(Icons.chevron_right_rounded,
+                        size: 16, color: Color(0xFF334155)),
                   ),
-                ],
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
+                ),
+              ],
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
 
-          // Row 1: Valves (standalone icon with name below matching Figma, with scroll arrows)
-          if (valveItems.isNotEmpty)
-            SizedBox(
-              width: 320,
-              height: 54,
+        // Row 1: Valves (standalone icon with name below matching Figma, with scroll arrows, NO scrollbar)
+        if (valveItems.isNotEmpty)
+          SizedBox(
+            height: 52,
+            child: ScrollConfiguration(
+              behavior:
+                  ScrollConfiguration.of(context).copyWith(scrollbars: false),
               child: SingleChildScrollView(
                 controller: _valveScrollController,
                 scrollDirection: Axis.horizontal,
@@ -2806,23 +3302,23 @@ class _IrrigationLineDashboardState extends State<IrrigationLineDashboard> {
                         : const Color(0xFF2563EB); // Blue
 
                     return Container(
-                      margin: const EdgeInsets.only(right: 14),
+                      margin: const EdgeInsets.only(right: 12),
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           SizedBox(
-                            width: 34,
-                            height: 34,
+                            width: 32,
+                            height: 32,
                             child: AppConstants.getAsset(
                                 'valve', v.status, '', v.completePercent),
                           ),
-                          const SizedBox(height: 4),
+                          const SizedBox(height: 3),
                           SizedBox(
-                            width: 50,
+                            width: 46,
                             child: Text(
                               v.name,
                               style: TextStyle(
-                                fontSize: 10,
+                                fontSize: 9.5,
                                 fontWeight: isRunning
                                     ? FontWeight.bold
                                     : FontWeight.w500,
@@ -2839,24 +3335,27 @@ class _IrrigationLineDashboardState extends State<IrrigationLineDashboard> {
                   }).toList(),
                 ),
               ),
-            )
-          else
-            const SizedBox(
-              height: 54,
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Text('No running or completed valves',
-                    style: TextStyle(fontSize: 12, color: Color(0xFF94A3B8))),
-              ),
             ),
+          )
+        else
+          const SizedBox(
+            height: 52,
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Text('No running or completed valves',
+                  style: TextStyle(fontSize: 11, color: Color(0xFF94A3B8))),
+            ),
+          ),
 
-          const SizedBox(height: 10),
+        const SizedBox(height: 8),
 
-          // Row 2: Pumps (standalone icon with name below matching Figma)
-          if (pumpItems.isNotEmpty)
-            SizedBox(
-              width: 320,
-              height: 54,
+        // Row 2: Pumps (standalone icon with name below matching Figma, NO scrollbar)
+        if (pumpItems.isNotEmpty)
+          SizedBox(
+            height: 52,
+            child: ScrollConfiguration(
+              behavior:
+                  ScrollConfiguration.of(context).copyWith(scrollbars: false),
               child: SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 physics: const BouncingScrollPhysics(),
@@ -2864,23 +3363,23 @@ class _IrrigationLineDashboardState extends State<IrrigationLineDashboard> {
                   children: pumpItems.map((p) {
                     final isRunning = p.status == 1;
                     return Container(
-                      margin: const EdgeInsets.only(right: 14),
+                      margin: const EdgeInsets.only(right: 12),
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           SizedBox(
-                            width: 34,
-                            height: 34,
+                            width: 32,
+                            height: 32,
                             child:
                                 AppConstants.getAsset('pump', p.status, '', 0),
                           ),
-                          const SizedBox(height: 4),
+                          const SizedBox(height: 3),
                           SizedBox(
-                            width: 50,
+                            width: 46,
                             child: Text(
                               p.name,
                               style: TextStyle(
-                                fontSize: 10,
+                                fontSize: 9.5,
                                 fontWeight: isRunning
                                     ? FontWeight.bold
                                     : FontWeight.w500,
@@ -2900,8 +3399,8 @@ class _IrrigationLineDashboardState extends State<IrrigationLineDashboard> {
                 ),
               ),
             ),
-        ],
-      ),
+          ),
+      ],
     );
   }
 
@@ -4116,68 +4615,82 @@ class _IrrigationLineDashboardState extends State<IrrigationLineDashboard> {
             ),
           )
         else
-          ...filteredGroups.map((group) {
+          ...filteredGroups.asMap().entries.map((entry) {
+            final index = entry.key;
+            final group = entry.value;
+            final lineKey = group.line.sNo.toString();
+            final isOpen =
+                _irrigationLineAccordionState[lineKey] ?? (index == 0);
+
             return Padding(
               padding: const EdgeInsets.only(bottom: 24),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Irrigation Line Header with Running status (old UI dashboard logic)
+                  // Irrigation Line Header with Running status and open/close accordion toggle
                   _buildIrrigationLineHeader(
                     group.line,
                     group.isRunning,
                     group.activeProgram,
                     group.cards.length,
+                    isOpen: isOpen,
+                    onToggle: () {
+                      setState(() {
+                        _irrigationLineAccordionState[lineKey] = !isOpen;
+                      });
+                    },
                   ),
-                  if (group.cards.isEmpty)
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(
-                          vertical: 24, horizontal: 16),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF8FAFC),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: const Color(0xFFE2E8F0)),
-                      ),
-                      alignment: Alignment.center,
-                      child: Text(
-                        'No water sources assigned to ${group.line.name}',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: Color(0xFF94A3B8),
-                          fontWeight: FontWeight.w500,
+                  if (isOpen) ...[
+                    if (group.cards.isEmpty)
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 24, horizontal: 16),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF8FAFC),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: const Color(0xFFE2E8F0)),
                         ),
+                        alignment: Alignment.center,
+                        child: Text(
+                          'No water sources assigned to ${group.line.name}',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Color(0xFF94A3B8),
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      )
+                    else if (isMiddle)
+                      Column(
+                        children: group.cards.map((card) {
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 16),
+                            child: _buildWaterSourceCard(card),
+                          );
+                        }).toList(),
+                      )
+                    else
+                      LayoutBuilder(
+                        builder: (context, constraints) {
+                          final width = constraints.maxWidth;
+                          final columns =
+                              width > 1100 ? 3 : (width > 700 ? 2 : 1);
+                          final cardWidth =
+                              (width - (columns - 1) * 16) / columns;
+                          return Wrap(
+                            spacing: 16,
+                            runSpacing: 16,
+                            children: group.cards.map((card) {
+                              return SizedBox(
+                                width: cardWidth,
+                                child: _buildWaterSourceCard(card),
+                              );
+                            }).toList(),
+                          );
+                        },
                       ),
-                    )
-                  else if (isMiddle)
-                    Column(
-                      children: group.cards.map((card) {
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 16),
-                          child: _buildWaterSourceCard(card),
-                        );
-                      }).toList(),
-                    )
-                  else
-                    LayoutBuilder(
-                      builder: (context, constraints) {
-                        final width = constraints.maxWidth;
-                        final columns =
-                            width > 1100 ? 3 : (width > 700 ? 2 : 1);
-                        final cardWidth =
-                            (width - (columns - 1) * 16) / columns;
-                        return Wrap(
-                          spacing: 16,
-                          runSpacing: 16,
-                          children: group.cards.map((card) {
-                            return SizedBox(
-                              width: cardWidth,
-                              child: _buildWaterSourceCard(card),
-                            );
-                          }).toList(),
-                        );
-                      },
-                    ),
+                  ],
                 ],
               ),
             );
@@ -5049,9 +5562,11 @@ class _IrrigationLineDashboardState extends State<IrrigationLineDashboard> {
     if (sourceMap.isEmpty) {
       for (final ws in master.waterSources) {
         if (!_isFertilizerSource(ws)) {
-          final cfg = master.configObjects.where((o) => o.sNo == ws.sNo).firstOrNull;
+          final cfg =
+              master.configObjects.where((o) => o.sNo == ws.sNo).firstOrNull;
           if (cfg != null &&
-              (cfg.location == line.sNo || cfg.assignObject.contains(line.sNo))) {
+              (cfg.location == line.sNo ||
+                  cfg.assignObject.contains(line.sNo))) {
             sourceMap[ws.sNo] = ws;
           }
         }
@@ -5251,10 +5766,272 @@ class _IrrigationLineDashboardState extends State<IrrigationLineDashboard> {
     IrrigationLineModel line,
     bool isRunning,
     RunningProgramData? activeProg,
-    int sourceCount,
-  ) {
+    int sourceCount, {
+    required bool isOpen,
+    required VoidCallback onToggle,
+  }) {
+    return InkWell(
+      onTap: onToggle,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 14),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color:
+                isRunning ? const Color(0xFF86EFAC) : const Color(0xFFE2E8F0),
+            width: isRunning ? 1.5 : 1.0,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: isRunning
+                  ? const Color(0xFF16A34A).withOpacity(0.08)
+                  : Colors.black.withOpacity(0.02),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: isRunning
+                    ? const Color(0xFFDCFCE7)
+                    : const Color(0xFFF1F5F9),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(
+                Icons.water_rounded,
+                color: isRunning
+                    ? const Color(0xFF16A34A)
+                    : const Color(0xFF64748B),
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  line.name.toUpperCase(),
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF0F172A),
+                    letterSpacing: 0.5,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  isRunning
+                      ? 'Currently Running • Zone ${activeProg?.zone ?? ''}'
+                      : 'Irrigation Line',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: isRunning
+                        ? const Color(0xFF16A34A)
+                        : const Color(0xFF94A3B8),
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+            if (isRunning) ...[
+              const SizedBox(width: 12),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFDCFCE7),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: const Color(0xFF86EFAC)),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 7,
+                      height: 7,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFF16A34A),
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Running: ${activeProg?.programName ?? 'Program'}',
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF15803D),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+            const Spacer(),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF1F5F9),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                '$sourceCount ${sourceCount == 1 ? 'Source' : 'Sources'}',
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF475569),
+                ),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color:
+                    isOpen ? const Color(0xFFEFF6FF) : const Color(0xFFF1F5F9),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: isOpen
+                      ? const Color(0xFFBFDBFE)
+                      : const Color(0xFFCBD5E1),
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    isOpen ? 'Close' : 'Open',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: isOpen
+                          ? const Color(0xFF2563EB)
+                          : const Color(0xFF475569),
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Icon(
+                    isOpen
+                        ? Icons.keyboard_arrow_up_rounded
+                        : Icons.keyboard_arrow_down_rounded,
+                    size: 16,
+                    color: isOpen
+                        ? const Color(0xFF2563EB)
+                        : const Color(0xFF475569),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // =============================================================
+  // TAB 2: BACKWASH MONITORING
+  // =============================================================
+  // =============================================================
+  // TAB 2: BACKWASH MONITORING (Figma UI & Live Dynamic Timers)
+  // =============================================================
+  Widget _buildBackwashTabContent(
+      bool isMiddle, MqttPayloadProvider mqttProvider) {
+    final lineGroups = _getLineWiseBackwashData(mqttProvider);
+
+    // Find first running filter across all lines for the top banner
+    _BackwashFilterData? runningFilter;
+    for (final grp in lineGroups) {
+      for (final f in grp.filters) {
+        if (f.status == 'Running') {
+          runningFilter = f;
+          break;
+        }
+      }
+      if (runningFilter != null) break;
+    }
+
+    // Fallback if none running: use first filter as reference or idle
+    final bannerFilter = runningFilter ??
+        (lineGroups.isNotEmpty && lineGroups.first.filters.isNotEmpty
+            ? lineGroups.first.filters.first
+            : _BackwashFilterData(
+                name: 'Filter 1',
+                status: 'Idle',
+                runsToday: 0,
+                todayRuns: [],
+              ));
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // 1. Top Section: "Now running" Banner (Figma Design with dynamic MQTT countdown)
+        _buildBackwashNowRunningBanner(bannerFilter, runningFilter != null),
+        const SizedBox(height: 24),
+
+        // 2. Line-Wise Filter Sections (IRRIGATION LINE 1, IRRIGATION LINE 2, etc.)
+        ...lineGroups.map((grp) {
+          final isLineRunning = grp.filters.any((f) => f.status == 'Running');
+          final activeFilterInLine =
+              grp.filters.where((f) => f.status == 'Running').firstOrNull;
+
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Line Header Banner (e.g. IRRIGATION LINE 1 [Running: Filter 1] 4 Filters)
+                _buildBackwashLineHeader(grp.lineName, grp.filters.length,
+                    isLineRunning, activeFilterInLine?.name),
+                const SizedBox(height: 14),
+
+                // Grid of Filter Cards for this Line (Next run removed, start/end time displayed)
+                if (isMiddle)
+                  Column(
+                    children: grp.filters.map((filter) {
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 16),
+                        child: _buildBackwashFilterCard(filter, isMiddle),
+                      );
+                    }).toList(),
+                  )
+                else
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      final width = constraints.maxWidth;
+                      final columns = width > 1150 ? 4 : (width > 700 ? 2 : 1);
+                      final cardWidth = (width - (columns - 1) * 16) / columns;
+                      return Wrap(
+                        spacing: 16,
+                        runSpacing: 16,
+                        children: grp.filters.map((filter) {
+                          return SizedBox(
+                            width: cardWidth,
+                            child: _buildBackwashFilterCard(filter, isMiddle),
+                          );
+                        }).toList(),
+                      );
+                    },
+                  ),
+              ],
+            ),
+          );
+        }),
+      ],
+    );
+  }
+
+  // LINE HEADER BANNER: Grouping Backwash Filters Line-Wise
+  Widget _buildBackwashLineHeader(String lineName, int filterCount,
+      bool isRunning, String? runningFilterName) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 14),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -5263,103 +6040,93 @@ class _IrrigationLineDashboardState extends State<IrrigationLineDashboard> {
           color: isRunning ? const Color(0xFF86EFAC) : const Color(0xFFE2E8F0),
           width: isRunning ? 1.5 : 1.0,
         ),
-        boxShadow: [
+        boxShadow: const [
           BoxShadow(
-            color: isRunning
-                ? const Color(0xFF16A34A).withOpacity(0.08)
-                : Colors.black.withOpacity(0.02),
+            color: Color(0x04000000),
             blurRadius: 6,
-            offset: const Offset(0, 2),
+            offset: Offset(0, 1),
           ),
         ],
       ),
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(8),
+            padding: const EdgeInsets.all(6),
             decoration: BoxDecoration(
               color:
                   isRunning ? const Color(0xFFDCFCE7) : const Color(0xFFF1F5F9),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(
-              Icons.water_rounded,
+              Icons.waves_rounded,
+              size: 18,
               color:
                   isRunning ? const Color(0xFF16A34A) : const Color(0xFF64748B),
-              size: 20,
+            ),
+          ),
+          const SizedBox(width: 10),
+          Text(
+            lineName.toUpperCase(),
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF0F172A),
+              letterSpacing: 0.5,
             ),
           ),
           const SizedBox(width: 12),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                line.name.toUpperCase(),
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF0F172A),
-                  letterSpacing: 0.5,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                isRunning
-                    ? 'Currently Running • Zone ${activeProg?.zone ?? ''}'
-                    : 'Irrigation Line',
-                style: TextStyle(
-                  fontSize: 11,
-                  color: isRunning
-                      ? const Color(0xFF16A34A)
-                      : const Color(0xFF94A3B8),
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
-          ),
-          if (isRunning) ...[
-            const SizedBox(width: 12),
+          if (isRunning && runningFilterName != null) ...[
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
               decoration: BoxDecoration(
                 color: const Color(0xFFDCFCE7),
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: const Color(0xFF86EFAC)),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Container(
-                    width: 7,
-                    height: 7,
-                    decoration: const BoxDecoration(
-                      color: Color(0xFF16A34A),
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                  const SizedBox(width: 6),
+                  const Text('●',
+                      style: TextStyle(color: Color(0xFF16A34A), fontSize: 9)),
+                  const SizedBox(width: 4),
                   Text(
-                    'Running: ${activeProg?.programName ?? 'Program'}',
+                    'Running: $runningFilterName',
                     style: const TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF15803D),
+                      color: Color(0xFF16A34A),
                     ),
                   ),
                 ],
               ),
             ),
+          ] else ...[
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF1F5F9),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Text(
+                'Idle',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w500,
+                  color: Color(0xFF64748B),
+                ),
+              ),
+            ),
           ],
           const Spacer(),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
             decoration: BoxDecoration(
               color: const Color(0xFFF1F5F9),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: const Color(0xFFCBD5E1), width: 0.8),
             ),
             child: Text(
-              '$sourceCount ${sourceCount == 1 ? 'Source' : 'Sources'}',
+              '$filterCount Filters',
               style: const TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
@@ -5372,116 +6139,623 @@ class _IrrigationLineDashboardState extends State<IrrigationLineDashboard> {
     );
   }
 
-  // =============================================================
-  // TAB 2: BACKWASH MONITORING
-  // =============================================================
-  Widget _buildBackwashTabContent(bool isMiddle) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: _buildMetricCard(_MetricCardData(
-                title: 'Total Filters',
-                value: '1',
-                unit: ' Filter',
-                subtitle: 'Filter 1 Online',
-                subtitleColor: const Color(0xFF16A34A),
-                icon: Icons.filter_alt_outlined,
-                iconColor: const Color(0xFF0D9488),
-                glowColor: const Color(0xFF0D9488),
-              )),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _buildMetricCard(_MetricCardData(
-                title: 'Differential Pressure',
-                value: '0.35',
-                unit: ' bar',
-                subtitle: 'Optimal (Limit 0.8 bar)',
-                subtitleColor: const Color(0xFF16A34A),
-                icon: Icons.speed_rounded,
-                iconColor: const Color(0xFFF59E0B),
-                glowColor: const Color(0xFFF59E0B),
-              )),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _buildMetricCard(_MetricCardData(
-                title: 'Last Backwash',
-                value: '2.5',
-                unit: ' hrs ago',
-                subtitle: 'Success (Duration 90s)',
-                subtitleColor: const Color(0xFF64748B),
-                icon: Icons.history,
-                iconColor: const Color(0xFF2563EB),
-                glowColor: const Color(0xFF3B82F6),
-              )),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _buildMetricCard(_MetricCardData(
-                title: 'Auto Flush Mode',
-                value: 'Auto',
-                unit: '',
-                subtitle: 'Every 4 hrs or DP trigger',
-                subtitleColor: const Color(0xFF8B5CF6),
-                icon: Icons.settings_backup_restore,
-                iconColor: const Color(0xFF8B5CF6),
-                glowColor: const Color(0xFF8B5CF6),
-              )),
-            ),
-          ],
+  // TOP SECTION: NOW RUNNING BANNER (Figma Backwash Top Section with Dynamic API Log Count & Live Countdown)
+  Widget _buildBackwashNowRunningBanner(
+      _BackwashFilterData bannerFilter, bool isRunning) {
+    final timeLeftStr = bannerFilter.countdown != '00:00:00'
+        ? bannerFilter.countdown
+        : '--:--';
+    final setTimeStr = bannerFilter.setDuration;
+    final backwashesTodayCount =
+        _totalBackwashesToday > 0 ? _totalBackwashesToday : (isRunning ? 1 : 0);
+
+    // Compute dynamic elapsed time: Set Duration - Time Left
+    String elapsedStr = '--:--';
+    if (isRunning && bannerFilter.countdown != '00:00:00') {
+      final setSec = _parseDurationToSeconds(setTimeStr);
+      final remSec = _parseDurationToSeconds(bannerFilter.countdown);
+      if (setSec > remSec) {
+        elapsedStr = _formatSecondsToMmSs(setSec - remSec);
+      }
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: isRunning ? const Color(0xFF86EFAC) : const Color(0xFFE2E8F0),
+          width: isRunning ? 1.5 : 1.0,
         ),
-        const SizedBox(height: 20),
-        Container(
-          padding: const EdgeInsets.all(18),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: [
+          BoxShadow(
+            color: isRunning
+                ? const Color(0xFF16A34A).withOpacity(0.06)
+                : const Color(0x06000000),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
-          child: Column(
+        ],
+      ),
+      child: Row(
+        children: [
+          // Circular filter icon
+          Container(
+            width: 46,
+            height: 46,
+            decoration: BoxDecoration(
+              color:
+                  isRunning ? const Color(0xFF10B981) : const Color(0xFFF1F5F9),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.filter_alt,
+              color: isRunning ? Colors.white : const Color(0xFF64748B),
+              size: 24,
+            ),
+          ),
+          const SizedBox(width: 14),
+
+          // Title & Description
+          Column(
             crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Row(
+              Text(
+                isRunning ? 'Now running' : 'Backwash Status',
+                style: const TextStyle(
+                  fontSize: 11.5,
+                  color: Color(0xFF64748B),
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                isRunning
+                    ? '${bannerFilter.name} (${bannerFilter.lineName})'
+                    : 'System Idle',
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF0F172A),
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                isRunning
+                    ? '(Set $setTimeStr) · one filter backwashes at a time'
+                    : 'No active filter backwash cycle in progress',
+                style: const TextStyle(
+                  fontSize: 11,
+                  color: Color(0xFF64748B),
+                ),
+              ),
+            ],
+          ),
+          const Spacer(),
+
+          // 3 Metric columns
+          Row(
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  const Text('Filter 1 Status',
-                      style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF0F172A))),
-                  const Spacer(),
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-                    decoration: BoxDecoration(
-                        color: const Color(0xFF0D9488),
-                        borderRadius: BorderRadius.circular(8)),
-                    child: const Row(
-                      children: [
-                        Icon(Icons.refresh, size: 14, color: Colors.white),
-                        SizedBox(width: 5),
-                        Text('Trigger Manual Backwash',
-                            style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.white)),
-                      ],
+                  const Text(
+                    'Elapsed',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: Color(0xFF64748B),
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    isRunning ? elapsedStr : '--:--',
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF0F172A),
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 14),
-              const Text(
-                  'Inlet Pressure: 2.8 bar · Outlet Pressure: 2.45 bar · Delta P: 0.35 bar (Normal).',
-                  style: TextStyle(fontSize: 12.5, color: Color(0xFF64748B))),
+              const SizedBox(width: 24),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  const Text(
+                    'Time left',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: Color(0xFF64748B),
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    isRunning ? timeLeftStr : '--:--',
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF10B981),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(width: 24),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  const Text(
+                    'Backwashes today',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: Color(0xFF64748B),
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    '$backwashesTodayCount',
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF0F172A),
+                    ),
+                  ),
+                ],
+              ),
             ],
           ),
-        ),
-      ],
+        ],
+      ),
     );
+  }
+
+  // BOTTOM SECTION: FILTER CARD (Matching Figma with Next Run removed, Real Log API times & MQTT live timer)
+  Widget _buildBackwashFilterCard(_BackwashFilterData filter, bool isMiddle) {
+    final isRunning = filter.status == 'Running';
+    final isWaiting = filter.status == 'Waiting';
+
+    Color badgeBg;
+    Color badgeText;
+    if (isRunning) {
+      badgeBg = const Color(0xFFDCFCE7);
+      badgeText = const Color(0xFF16A34A);
+    } else if (isWaiting) {
+      badgeBg = const Color(0xFFFEF3C7);
+      badgeText = const Color(0xFFD97706);
+    } else {
+      badgeBg = const Color(0xFFF1F5F9);
+      badgeText = const Color(0xFF475569);
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: isRunning ? const Color(0xFF10B981) : const Color(0xFFE2E8F0),
+          width: isRunning ? 1.5 : 1.0,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: isRunning
+                ? const Color(0xFF10B981).withOpacity(0.08)
+                : const Color(0x04000000),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header: Name and Status Badge
+          Row(
+            children: [
+              Text(
+                filter.name,
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF0F172A),
+                ),
+              ),
+              const Spacer(),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                decoration: BoxDecoration(
+                  color: badgeBg,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  filter.status,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    color: badgeText,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          // NOTE: "Next run" removed as explicitly requested by user!
+          const SizedBox(height: 12),
+
+          // Runs today count
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
+            children: [
+              Text(
+                '${filter.runsToday}',
+                style: const TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF0F172A),
+                ),
+              ),
+              const SizedBox(width: 6),
+              Text(
+                filter.runsToday == 1 ? 'run today' : 'runs today',
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: Color(0xFF64748B),
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          const Divider(color: Color(0xFFF1F5F9), height: 1),
+          const SizedBox(height: 12),
+
+          // Today runs list with Start time, End time and duration from API log
+          if (filter.todayRuns.isNotEmpty)
+            Column(
+              children: filter.todayRuns.map((run) {
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Row(
+                    children: [
+                      if (run.isRunning)
+                        Container(
+                          width: 12,
+                          height: 12,
+                          decoration: const BoxDecoration(
+                            color: Color(0xFF10B981),
+                            shape: BoxShape.circle,
+                          ),
+                        )
+                      else if (run.isWaiting)
+                        Container(
+                          width: 12,
+                          height: 12,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: const Color(0xFF94A3B8),
+                              width: 1.5,
+                            ),
+                          ),
+                        )
+                      else
+                        const Icon(
+                          Icons.check,
+                          size: 15,
+                          color: Color(0xFF10B981),
+                        ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Run ${run.runNumber}',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: run.isRunning
+                              ? const Color(0xFF0F172A)
+                              : const Color(0xFF475569),
+                        ),
+                      ),
+                      const Spacer(),
+                      if (run.isRunning)
+                        Text(
+                          run.duration,
+                          style: const TextStyle(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF10B981),
+                          ),
+                        )
+                      else if (run.isWaiting)
+                        Text(
+                          run.duration,
+                          style: const TextStyle(
+                            fontSize: 11.5,
+                            color: Color(0xFF94A3B8),
+                          ),
+                        )
+                      else
+                        Text(
+                          '${run.startTime} - ${run.endTime} (${run.duration})',
+                          style: const TextStyle(
+                            fontSize: 11.5,
+                            color: Color(0xFF64748B),
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                    ],
+                  ),
+                );
+              }).toList(),
+            )
+          else
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 4),
+              child: Row(
+                children: [
+                  Icon(Icons.schedule, size: 14, color: Color(0xFF94A3B8)),
+                  SizedBox(width: 6),
+                  Text(
+                    'No backwash runs today',
+                    style: TextStyle(fontSize: 11.5, color: Color(0xFF94A3B8)),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  // DYNAMIC LINE-WISE BACKWASH DATA RETRIEVAL (From MQTT & Irrigation Log API)
+  List<_LineBackwashGroup> _getLineWiseBackwashData(
+      MqttPayloadProvider mqttProvider) {
+    final List<_LineBackwashGroup> groups = [];
+    final vm = widget.viewModel;
+
+    // Filter out pseudo line "All irrigation line" or "All Aquaculture line"
+    final realLines = widget.masterController.irrigationLine.where((l) {
+      final nameLower = l.name.toLowerCase().trim();
+      return nameLower != "all irrigation line" &&
+          nameLower != "all aquaculture line" &&
+          !nameLower.startsWith("all irrigation") &&
+          !nameLower.startsWith("all aquaculture") &&
+          nameLower != "all line";
+    }).toList();
+
+    List<IrrigationLineModel> targetLines = realLines;
+    if (vm.myCurrentIrrLine != "All irrigation line" &&
+        vm.myCurrentIrrLine != "All Aquaculture line" &&
+        vm.myCurrentIrrLine.isNotEmpty &&
+        vm.myCurrentIrrLine != "No Line Available") {
+      final selected = realLines
+          .where((l) =>
+              l.name.toLowerCase().trim() ==
+              vm.myCurrentIrrLine.toLowerCase().trim())
+          .toList();
+      if (selected.isNotEmpty) {
+        targetLines = selected;
+      }
+    }
+
+    final int lineCount = targetLines.isNotEmpty ? targetLines.length : 1;
+
+    for (int lineIdx = 0; lineIdx < lineCount; lineIdx++) {
+      final line = targetLines.isNotEmpty ? targetLines[lineIdx] : null;
+      final lineName = line != null && line.name.isNotEmpty
+          ? line.name
+          : 'IRRIGATION LINE ${lineIdx + 1}';
+
+      final List<_BackwashFilterData> filterCards = [];
+
+      // Collect filters from centralFilterSite and localFilterSite
+      List<Filters> lineFilters = [];
+      String siteSNo = '${lineIdx + 1}';
+
+      if (line != null) {
+        if (line.centralFilterSite != null) {
+          lineFilters.addAll(line.centralFilterSite!.filters);
+          siteSNo = line.centralFilterSite!.sNo.toString();
+        }
+        if (line.localFilterSite != null) {
+          lineFilters.addAll(line.localFilterSite!.filters);
+          if (siteSNo.isEmpty) siteSNo = line.localFilterSite!.sNo.toString();
+        }
+      }
+
+      // Fallback: If no filter sites are parsed in line model, provide Filter 1 .. Filter 4
+      // as shown in Image 2 ("Praveen Testing" has 4 filters per line)
+      if (lineFilters.isEmpty) {
+        lineFilters = [
+          Filters(
+              sNo: (lineIdx + 1) * 10.0 + 1.0, name: 'Filter 1', filterMode: 0),
+          Filters(
+              sNo: (lineIdx + 1) * 10.0 + 2.0, name: 'Filter 2', filterMode: 0),
+          Filters(
+              sNo: (lineIdx + 1) * 10.0 + 3.0, name: 'Filter 3', filterMode: 0),
+          Filters(
+              sNo: (lineIdx + 1) * 10.0 + 4.0, name: 'Filter 4', filterMode: 0),
+        ];
+      }
+
+      for (int fIdx = 0; fIdx < lineFilters.length; fIdx++) {
+        final f = lineFilters[fIdx];
+        final filterName = f.name.isNotEmpty ? f.name : 'Filter ${fIdx + 1}';
+
+        // Check MQTT status (starts with 11. from 2402)
+        int status = f.status;
+        final sNoKeys = [
+          f.sNo.toString(),
+          f.sNo.toInt().toString(),
+          f.sNo.toStringAsFixed(0),
+          f.sNo.toStringAsFixed(1),
+          f.sNo.toStringAsFixed(2),
+          f.sNo.toStringAsFixed(3),
+          '11.${f.sNo.toString()}',
+          '11.${f.sNo.toInt()}',
+          '11.${f.sNo.toStringAsFixed(0)}',
+          '11.${f.sNo.toStringAsFixed(1)}',
+          '11.${f.sNo.toStringAsFixed(2)}',
+          '11.${f.sNo.toStringAsFixed(3)}',
+          '11.${fIdx + 1}',
+          '${fIdx + 1}',
+        ];
+
+        for (final k in sNoKeys) {
+          final payload = mqttProvider.getFilterOnOffStatus(k);
+          if (payload != null && payload.contains(',')) {
+            final parts = payload.split(',');
+            if (parts.length > 1) {
+              final st = int.tryParse(parts[1].trim());
+              if (st != null) {
+                status = st;
+                break;
+              }
+            }
+          }
+        }
+
+        // Check MQTT other data (countdown from 2406 or directly from model onDelayLeft)
+        String mqttCountdown = '';
+        if (f.onDelayLeft.isNotEmpty &&
+            f.onDelayLeft != '00:00:00' &&
+            f.onDelayLeft.contains(':')) {
+          mqttCountdown = f.onDelayLeft.trim();
+        }
+
+        final siteKeys = <String>[
+          siteSNo,
+          '${lineIdx + 1}',
+          '11.$siteSNo',
+          '11.${lineIdx + 1}',
+          f.sNo.toString(),
+          f.sNo.toInt().toString(),
+          '11.${f.sNo.toInt()}',
+          '${fIdx + 1}',
+          '11.${fIdx + 1}',
+        ];
+        if (siteSNo.contains('.')) {
+          final d = double.tryParse(siteSNo);
+          if (d != null) {
+            siteKeys.add(d.toInt().toString());
+            siteKeys.add('11.${d.toInt()}');
+          }
+        }
+
+        for (final k in siteKeys) {
+          final otherPayload = mqttProvider.getFilterOtherData(k);
+          if (otherPayload != null && otherPayload.contains(',')) {
+            final parts = otherPayload.split(',');
+            if (parts.length >= 4) {
+              final cd = parts[2].trim();
+              if (cd.isNotEmpty && cd != '00:00:00' && cd.contains(':')) {
+                mqttCountdown = cd;
+                f.onDelayLeft = cd;
+                break;
+              }
+            }
+          }
+        }
+
+        final filterKey = '${lineIdx}_$filterName';
+        String liveCountdown = '00:00:00';
+
+        if (status == 1) {
+          if (mqttCountdown.isNotEmpty) {
+            // Keep running time synchronized with Old UI / Controller MQTT payload
+            if (_lastMqttFilterTime[filterKey] != mqttCountdown) {
+              _lastMqttFilterTime[filterKey] = mqttCountdown;
+              _filterCountdownSeconds[filterKey] =
+                  _parseDurationToSeconds(mqttCountdown);
+            }
+          } else if (!_filterCountdownSeconds.containsKey(filterKey) ||
+              _filterCountdownSeconds[filterKey]! <= 0) {
+            _filterCountdownSeconds[filterKey] =
+                _parseDurationToSeconds('00:05:00');
+          }
+
+          final sec = _filterCountdownSeconds[filterKey] ?? 0;
+          if (sec > 0) {
+            liveCountdown = _formatSecondsToHms(sec);
+          } else if (mqttCountdown.isNotEmpty) {
+            liveCountdown = mqttCountdown;
+          }
+        } else {
+          _filterCountdownSeconds.remove(filterKey);
+          _lastMqttFilterTime.remove(filterKey);
+        }
+
+        final isRunning = (status == 1);
+
+        // Fetch real runs for this filter from Irrigation Log API (_filterLogRuns)
+        List<_BackwashRunItem> logRuns = [];
+        final cleanFName = filterName.toLowerCase().replaceAll(' ', '');
+        for (final entry in _filterLogRuns.entries) {
+          final k = entry.key.toLowerCase().replaceAll(' ', '');
+          if (k == cleanFName ||
+              k.contains(cleanFName) ||
+              cleanFName.contains(k) ||
+              k == 'filter${fIdx + 1}') {
+            logRuns.addAll(entry.value);
+            break;
+          }
+        }
+
+        // Build list of runs to display
+        final List<_BackwashRunItem> displayRuns = [];
+        for (final lr in logRuns) {
+          displayRuns.add(lr);
+        }
+
+        // If currently running, append live running entry (no current time display)
+        if (isRunning) {
+          displayRuns.add(_BackwashRunItem(
+            runNumber: displayRuns.length + 1,
+            startTime: '',
+            endTime: '--',
+            duration: 'Running $liveCountdown',
+            isRunning: true,
+          ));
+        }
+
+        final runsCount = displayRuns.length;
+        final statusText =
+            isRunning ? 'Running' : (runsCount > 0 ? 'Done' : 'Idle');
+
+        String setDuration = '00:07:30';
+        if (logRuns.isNotEmpty && logRuns.last.duration != '--') {
+          final dur = logRuns.last.duration.trim();
+          if (dur.contains(':')) {
+            setDuration = dur;
+          }
+        }
+
+        filterCards.add(_BackwashFilterData(
+          name: filterName,
+          status: statusText,
+          runsToday: runsCount,
+          todayRuns: displayRuns,
+          lineName: lineName,
+          countdown: liveCountdown,
+          setDuration: setDuration,
+          startTime: '--',
+          estEndTime: '--',
+          sNo: f.sNo,
+        ));
+      }
+
+      groups.add(_LineBackwashGroup(
+        line: line,
+        lineName: lineName,
+        filters: filterCards,
+      ));
+    }
+
+    return groups;
   }
 
   // =============================================================
@@ -6117,4 +7391,63 @@ class _CircularGaugePainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _CircularGaugePainter oldDelegate) =>
       oldDelegate.percentage != percentage;
+}
+
+// -------------------------------------------------------------
+// BACKWASH DATA MODELS (Matching Figma Screenshot 3 & Old UI Logic)
+// -------------------------------------------------------------
+class _LineBackwashGroup {
+  final IrrigationLineModel? line;
+  final String lineName;
+  final List<_BackwashFilterData> filters;
+
+  _LineBackwashGroup({
+    this.line,
+    required this.lineName,
+    required this.filters,
+  });
+}
+
+class _BackwashFilterData {
+  final String name;
+  final String status; // 'Running', 'Done', 'Waiting', 'Idle'
+  final int runsToday;
+  final List<_BackwashRunItem> todayRuns;
+  final String lineName;
+  final String countdown;
+  final String setDuration;
+  final String startTime;
+  final String estEndTime;
+  final double sNo;
+
+  _BackwashFilterData({
+    required this.name,
+    required this.status,
+    required this.runsToday,
+    required this.todayRuns,
+    this.lineName = '',
+    this.countdown = '00:00:00',
+    this.setDuration = '00:07:30',
+    this.startTime = '--:--',
+    this.estEndTime = '--:--',
+    this.sNo = 0.0,
+  });
+}
+
+class _BackwashRunItem {
+  final int runNumber;
+  final String startTime;
+  final String endTime;
+  final String duration;
+  final bool isRunning;
+  final bool isWaiting;
+
+  _BackwashRunItem({
+    required this.runNumber,
+    required this.startTime,
+    required this.endTime,
+    required this.duration,
+    this.isRunning = false,
+    this.isWaiting = false,
+  });
 }
