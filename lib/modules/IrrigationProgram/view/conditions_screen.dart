@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hex/utils/Theme/oro_theme.dart';
 import 'package:provider/provider.dart';
 import '../../../views/customer/controller_settings/wide/condition_library_wide.dart';
 import '../state_management/irrigation_program_provider.dart';
@@ -35,30 +36,30 @@ class _ConditionsScreenState extends State<ConditionsScreen> {
   Color _getIconBgColor(int index) {
     switch (index) {
       case 0:
-        return const Color(0xFFECFDF5);
+        return const Color(0xFFD1FAE5);
       case 1:
-        return const Color(0xFFFEF2F2);
+        return const Color(0xFFFDE8E8);
       case 2:
-        return const Color(0xFFF5F3FF);
+        return activeBgLavender;
       case 3:
-        return const Color(0xFFFFF7ED);
+        return const Color(0xFFFFE5CC);
       default:
-        return const Color(0xFFF1F5F9);
+        return primaryBackground;
     }
   }
 
   Color _getIconColor(int index) {
     switch (index) {
       case 0:
-        return const Color(0xFF10B981);
+        return avatarGreen;
       case 1:
-        return const Color(0xFFEF4444);
+        return const Color(0xFFDC3545);
       case 2:
-        return const Color(0xFF7C3AED);
+        return primaryPurple;
       case 3:
-        return const Color(0xFFF59E0B);
+        return brandOrange;
       default:
-        return const Color(0xFF5B21B6);
+        return primaryPurple;
     }
   }
 
@@ -110,7 +111,6 @@ class _ConditionsScreenState extends State<ConditionsScreen> {
   @override
   Widget build(BuildContext context) {
     irrigationProgramProvider = Provider.of<IrrigationProgramMainProvider>(context, listen: true);
-    const primaryPurple = Color(0xFF5B21B6);
 
     if (irrigationProgramProvider.sampleConditions == null) {
       return const Center(child: CircularProgressIndicator());
@@ -149,7 +149,7 @@ class _ConditionsScreenState extends State<ConditionsScreen> {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Expanded(
+                    Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -158,25 +158,25 @@ class _ConditionsScreenState extends State<ConditionsScreen> {
                             style: TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.bold,
-                              color: Color(0xFF5B21B6),
+                              color: primaryPurple,
                               letterSpacing: 0.8,
                             ),
                           ),
-                          SizedBox(height: 6),
+                          const SizedBox(height: 6),
                           Text(
                             "Sensor Trigger Matrix",
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
-                              color: Color(0xFF0F172A),
+                              color: textDark,
                             ),
                           ),
-                          SizedBox(height: 4),
+                          const SizedBox(height: 4),
                           Text(
                             "Attach automated environmental triggers from soil moisture, weather stations, or pressure transducers to control when this program can start, stop, or pause.",
                             style: TextStyle(
                               fontSize: 13,
-                              color: Color(0xFF64748B),
+                              color: textMuted,
                               height: 1.4,
                             ),
                           ),
@@ -187,21 +187,21 @@ class _ConditionsScreenState extends State<ConditionsScreen> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF8FAFC),
+                        color: primaryBackground,
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(color: const Color(0xFFE2E8F0)),
                       ),
-                      child: const Row(
+                      child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(Icons.info_outline, size: 15, color: primaryPurple),
-                          SizedBox(width: 6),
+                          const SizedBox(width: 6),
                           Text(
                             "Real-time polling frequency: 15s",
                             style: TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w500,
-                              color: Color(0xFF475569),
+                              color: textMuted,
                             ),
                           ),
                         ],
@@ -241,7 +241,6 @@ class _ConditionsScreenState extends State<ConditionsScreen> {
   }
 
   Widget _buildTriggerCard(int conditionTypeIndex, dynamic condition) {
-    const primaryPurple = Color(0xFF5B21B6);
     final selected = condition.selected ?? false;
     final title = condition.title ?? '';
     final selectedName = (condition.value != null && condition.value['name'] != null && condition.value['name'].toString().isNotEmpty)
@@ -295,26 +294,26 @@ class _ConditionsScreenState extends State<ConditionsScreen> {
                   children: [
                     Text(
                       title,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF0F172A),
+                        color: textDark,
                       ),
                     ),
                     const SizedBox(height: 2),
                     Row(
                       children: [
-                        const Text(
+                        Text(
                           "Condition key: ",
                           style: TextStyle(
                             fontSize: 12,
-                            color: Color(0xFF64748B),
+                            color: textMuted,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
                         Text(
                           keyName,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 12,
                             fontFamily: 'monospace',
                             color: primaryPurple,
@@ -332,9 +331,9 @@ class _ConditionsScreenState extends State<ConditionsScreen> {
           // Description Text
           Text(
             description,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 13,
-              color: Color(0xFF64748B),
+              color: textMuted,
               height: 1.3,
             ),
             maxLines: 2,
@@ -354,9 +353,9 @@ class _ConditionsScreenState extends State<ConditionsScreen> {
               width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
-                color: const Color(0xFFF5F3FF),
+                color: activeBgLavender,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFFDDD6FE)),
+                border: Border.all(color: primaryPurple.withOpacity(0.3)),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -365,7 +364,7 @@ class _ConditionsScreenState extends State<ConditionsScreen> {
                     child: Row(
                       children: [
                         if (selectedName != null) ...[
-                          const Icon(Icons.check_circle, size: 16, color: primaryPurple),
+                          Icon(Icons.check_circle, size: 16, color: primaryPurple),
                           const SizedBox(width: 8),
                         ],
                         Expanded(
@@ -374,7 +373,7 @@ class _ConditionsScreenState extends State<ConditionsScreen> {
                             style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.bold,
-                              color: selectedName != null ? primaryPurple : const Color(0xFF7C3AED),
+                              color: primaryPurple,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -383,7 +382,7 @@ class _ConditionsScreenState extends State<ConditionsScreen> {
                       ],
                     ),
                   ),
-                  const Icon(
+                  Icon(
                     Icons.keyboard_arrow_down,
                     size: 20,
                     color: primaryPurple,
@@ -411,7 +410,7 @@ class _ConditionsScreenState extends State<ConditionsScreen> {
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             title: Text(
               'Select $title',
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Color(0xFF0F172A)),
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: textDark),
             ),
             content: SizedBox(
               height: 320,
@@ -432,17 +431,17 @@ class _ConditionsScreenState extends State<ConditionsScreen> {
                             return ListTile(
                               leading: Icon(
                                 isSelected ? Icons.radio_button_checked : Icons.radio_button_off,
-                                color: isSelected ? const Color(0xFF5B21B6) : const Color(0xFF94A3B8),
+                                color: isSelected ? primaryPurple : const Color(0xFF94A3B8),
                               ),
                               title: Text(
                                 conditionName,
                                 style: TextStyle(
                                   fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
                                   fontSize: 14,
-                                  color: isSelected ? const Color(0xFF5B21B6) : const Color(0xFF0F172A),
+                                  color: isSelected ? primaryPurple : textDark,
                                 ),
                               ),
-                              subtitle: Text(subTitle, style: const TextStyle(fontSize: 12, color: Color(0xFF64748B))),
+                              subtitle: Text(subTitle, style: TextStyle(fontSize: 12, color: textMuted)),
                               onTap: () {
                                 conditionsProvider.updateConditions(title, conditionSno, conditionName, conditionTypeIndex);
                                 Future.delayed(const Duration(milliseconds: 200), () {
@@ -477,7 +476,7 @@ class _ConditionsScreenState extends State<ConditionsScreen> {
                   );
                 },
                 style: FilledButton.styleFrom(
-                  backgroundColor: const Color(0xFF5B21B6),
+                  backgroundColor: primaryPurple,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 ),
                 child: const Text("Edit Conditions"),

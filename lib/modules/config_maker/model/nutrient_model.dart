@@ -1,3 +1,5 @@
+import 'irrigation_line_model.dart';
+
 class NutrientCategoryModel {
   String category;
   List<NutrientModel> list;
@@ -7,12 +9,12 @@ class NutrientCategoryModel {
     required this.list,
   });
 
-  factory NutrientCategoryModel.fromJson(Map<String, dynamic> json) {
+  factory NutrientCategoryModel.fromJson(dynamic data) {
     return NutrientCategoryModel(
-      category: json['category'] ?? '',
-      list: json['list'] != null
-          ? (json['list'] as List<dynamic>)
-              .map((item) => NutrientModel.fromJson(item as Map<String, dynamic>))
+      category: data['category'] ?? '',
+      list: data['list'] != null
+          ? (data['list'] as List<dynamic>)
+              .map((item) => NutrientModel.fromJson(item))
               .toList()
           : [],
     );
@@ -35,12 +37,10 @@ class NutrientModel {
     required this.name,
   });
 
-  factory NutrientModel.fromJson(Map<String, dynamic> json) {
+  factory NutrientModel.fromJson(dynamic data) {
     return NutrientModel(
-      sNo: (json['sNo'] is num)
-          ? (json['sNo'] as num).toDouble()
-          : (double.tryParse(json['sNo'].toString()) ?? 0.0),
-      name: json['name'] ?? '',
+      sNo: intOrDoubleValidate(data['sNo']),
+      name: data['name'] ?? '',
     );
   }
 

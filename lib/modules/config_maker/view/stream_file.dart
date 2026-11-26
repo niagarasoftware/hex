@@ -2,8 +2,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 class CounterStreamDemo extends StatefulWidget {
-  const CounterStreamDemo({super.key});
-
   @override
   _CounterStreamDemoState createState() => _CounterStreamDemoState();
 }
@@ -28,21 +26,21 @@ class _CounterStreamDemoState extends State<CounterStreamDemo> {
   Widget build(BuildContext context) {
     print('rebuild');
     return Scaffold(
-      appBar: AppBar(title: const Text('StreamBuilder')),
+      appBar: AppBar(title: Text('StreamBuilder')),
       body: Center(
         child: StreamBuilder<List<int>>(
           stream: _streamController.stream,
-          initialData: const [0],
+          initialData: [0],
           builder: (context, snapshot) {
             print('stream rebuild');
             if (snapshot.connectionState == ConnectionState.waiting) {
-              return const CircularProgressIndicator();
+              return CircularProgressIndicator();
             } else if (snapshot.hasError) {
               return Text('Error: ${snapshot.error}');
             } else {
               return Text(
                 'Counter Value: ${snapshot.data}',
-                style: const TextStyle(fontSize: 24),
+                style: TextStyle(fontSize: 24),
               );
             }
           },
@@ -50,7 +48,7 @@ class _CounterStreamDemoState extends State<CounterStreamDemo> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _incrementCounter,
-        child: const Icon(Icons.add),
+        child: Icon(Icons.add),
       ),
     );
   }

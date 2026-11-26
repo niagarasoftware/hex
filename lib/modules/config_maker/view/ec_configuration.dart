@@ -54,7 +54,7 @@ class _EcConfigurationState extends State<EcConfiguration> {
                                   imagePath: '${AppConstants.svgObjectPath}objectId_${AppConstants.ecObjectId}.svg',
                                   color: Colors.black,
                                 ),
-                                title: Text(widget.configPvd.ec[ecSensor].name),
+                                title: Text(widget.configPvd.ec[ecSensor].name!),
                               ),
                             ),
                             ListTile(

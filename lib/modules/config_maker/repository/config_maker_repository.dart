@@ -1,5 +1,6 @@
 import 'package:http/http.dart' as http;
-import 'package:hex/services/http_service.dart';
+
+import '../../../services/http_service.dart';
 
 class ConfigMakerRepository{
   HttpService httpService = HttpService();
