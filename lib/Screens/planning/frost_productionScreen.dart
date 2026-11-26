@@ -20,7 +20,7 @@ import '../../utils/snack_bar.dart';
 enum SegmentController { Frost, Rain, }
 class FrostMobUI extends StatefulWidget {
   const FrostMobUI(
-      {Key? key, required this.userId, required this.controllerId, this.deviceID, required this.menuId});
+      {super.key, required this.userId, required this.controllerId, this.deviceID, required this.menuId});
   final userId, controllerId,deviceID, menuId;
   @override
   State<FrostMobUI> createState() => _ConditionUIState();
@@ -65,7 +65,7 @@ class _ConditionUIState extends State<FrostMobUI>
     }
     catch (e, stackTrace) {
        print(' Error overAll getData => ${e.toString()}');
-      print(' trace overAll getData  => ${stackTrace}');
+      print(' trace overAll getData  => $stackTrace');
     }
 
 
@@ -80,7 +80,7 @@ class _ConditionUIState extends State<FrostMobUI>
           child: Text(
               'Currently No Frost Production & Rain Delay Sets Available'));
     } else {
-      return Scaffold(backgroundColor: Color(0xffE6EDF5),
+      return Scaffold(backgroundColor: const Color(0xffE6EDF5),
          body: Padding(
           padding: const EdgeInsets.all(8.0),
           child: Form(
@@ -94,20 +94,20 @@ class _ConditionUIState extends State<FrostMobUI>
                     const Spacer(),
                     SegmentedButton<SegmentController>(
                       style: ButtonStyle(
-                        backgroundColor: MaterialStateProperty.resolveWith<Color>((states) {
-                          if (states.contains(MaterialState.selected)) {
+                        backgroundColor: WidgetStateProperty.resolveWith<Color>((states) {
+                          if (states.contains(WidgetState.selected)) {
                             return Theme.of(context).primaryColor; // Use primary color for selected segments
                           }
-                          return Color(0xffE6EDF5);
+                          return const Color(0xffE6EDF5);
                         }),
-                        foregroundColor: MaterialStateProperty.resolveWith<Color>((states) {
-                          if (states.contains(MaterialState.selected)) {
+                        foregroundColor: WidgetStateProperty.resolveWith<Color>((states) {
+                          if (states.contains(WidgetState.selected)) {
                             return Colors.white;
                           }
                           return Theme.of(context).primaryColor;
                         }),
-                        iconColor:MaterialStateProperty.resolveWith<Color>((states) {
-                          if (states.contains(MaterialState.selected)) {
+                        iconColor:WidgetStateProperty.resolveWith<Color>((states) {
+                          if (states.contains(WidgetState.selected)) {
                             return Colors.white;
                           }
                           return Theme.of(context).primaryColor;
@@ -172,11 +172,11 @@ class _ConditionUIState extends State<FrostMobUI>
         .size
         .width > 600) {
       return Center(
-        child: Container(
+        child: SizedBox(
             width: 1000,
             height: 400,
             child: DataTable2(
-              headingRowColor: MaterialStateProperty.all<Color>(
+              headingRowColor: WidgetStateProperty.all<Color>(
                   Theme.of(context).primaryColorDark),
               // fixedCornerColor: myTheme.primaryColor,
               columnSpacing: 12,
@@ -199,7 +199,7 @@ class _ConditionUIState extends State<FrostMobUI>
               // border: TableBorder.all(width: 0.5),
               // fixedColumnsColor: Colors.amber,
               headingRowHeight: 50,
-              columns: [
+              columns: const [
                 DataColumn2(
                   fixedWidth: 70,
                   label: Center(
@@ -320,7 +320,7 @@ class _ConditionUIState extends State<FrostMobUI>
                     color: Colors.white,
                     child: ListTile(
                       title: Text(
-                        '${Listofvalue?[index].title}', style: TextStyle(
+                        '${Listofvalue?[index].title}', style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,),
                         softWrap: true,),
@@ -369,7 +369,7 @@ class _ConditionUIState extends State<FrostMobUI>
                 child: Card(
                   color: Colors.white,
                   child: ListTile(
-                    title: Text('${Listofvalue?[index].title}', style: TextStyle(
+                    title: Text('${Listofvalue?[index].title}', style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,),
                       softWrap: true,),
@@ -411,11 +411,11 @@ class _ConditionUIState extends State<FrostMobUI>
         .size
         .width > 600) {
       return Center(
-        child: Container(
+        child: SizedBox(
             width: 1000,
             height: 400,
             child: DataTable2(
-              headingRowColor: MaterialStateProperty.all<Color>(
+              headingRowColor: WidgetStateProperty.all<Color>(
                   Theme.of(context).primaryColorDark),
               // fixedCornerColor: myTheme.primaryColor,
               columnSpacing: 12,
@@ -437,7 +437,7 @@ class _ConditionUIState extends State<FrostMobUI>
               ),
               // fixedColumnsColor: Colors.amber,
               headingRowHeight: 50,
-              columns: [
+              columns: const [
                 DataColumn2(
                   fixedWidth: 70,
                   label: Center(
@@ -557,7 +557,7 @@ class _ConditionUIState extends State<FrostMobUI>
               return Card(
                 color: Colors.white,
                 child: ListTile(
-                  title: Text('${Listofvalue?[index].title}', style: TextStyle(
+                  title: Text('${Listofvalue?[index].title}', style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,),
                     softWrap: true,),
@@ -613,7 +613,7 @@ class _ConditionUIState extends State<FrostMobUI>
                   color: Colors.white,
                   child: ListTile(
                     title: Text(
-                      '${Listofvalue?[index].title}', style: TextStyle(
+                      '${Listofvalue?[index].title}', style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,),
                       softWrap: true,),

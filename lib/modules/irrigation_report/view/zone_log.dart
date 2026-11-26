@@ -1507,7 +1507,7 @@ class _ZoneLogState extends State<ZoneLog> with AutomaticKeepAliveClientMixin {
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    final primaryDark = const Color(0xFF5B21B6);
+    const primaryDark = Color(0xFF5B21B6);
 
     return Scaffold(
       key: _scaffoldKey,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:hex/utils/Theme/oro_theme.dart';
 import 'package:hex/utils/constants.dart';
 import 'package:provider/provider.dart';
 import '../../../Screens/planning/valve_group_screen.dart';
@@ -234,9 +235,9 @@ class _SequenceScreenState extends State<SequenceScreen> {
                         if (isSelected)
                           Container(
                             width: 4,
-                            decoration: const BoxDecoration(
-                              color: Color(0xFF5B21B6),
-                              borderRadius: BorderRadius.only(
+                            decoration: BoxDecoration(
+                              color: primaryPurple,
+                              borderRadius: const BorderRadius.only(
                                 topLeft: Radius.circular(12),
                                 bottomLeft: Radius.circular(12),
                               ),
@@ -257,15 +258,15 @@ class _SequenceScreenState extends State<SequenceScreen> {
                                         style: TextStyle(
                                           fontSize: 14,
                                           fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-                                          color: const Color(0xFF0F172A),
+                                          color: textDark,
                                         ),
                                       ),
                                       const SizedBox(height: 2),
                                       Text(
                                         "$plotCount plots · $assignedValves valves",
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                           fontSize: 12,
-                                          color: Color(0xFF64748B),
+                                          color: textMuted,
                                         ),
                                       ),
                                     ],
@@ -277,8 +278,8 @@ class _SequenceScreenState extends State<SequenceScreen> {
                                   height: 26,
                                   decoration: BoxDecoration(
                                     color: isSelected
-                                        ? const Color(0xFFEDE9FE)
-                                        : const Color(0xFFF1F5F9),
+                                        ? activeBgLavender
+                                        : primaryBackground,
                                     shape: BoxShape.circle,
                                   ),
                                   child: Center(
@@ -288,8 +289,8 @@ class _SequenceScreenState extends State<SequenceScreen> {
                                         fontSize: 12,
                                         fontWeight: FontWeight.bold,
                                         color: isSelected
-                                            ? const Color(0xFF5B21B6)
-                                            : const Color(0xFF64748B),
+                                            ? primaryPurple
+                                            : textMuted,
                                       ),
                                     ),
                                   ),
@@ -323,11 +324,11 @@ class _SequenceScreenState extends State<SequenceScreen> {
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               padding: const EdgeInsets.symmetric(vertical: 12),
             ),
-            icon: const Icon(Icons.add, size: 18, color: Color(0xFF5B21B6)),
-            label: const Text(
+            icon: Icon(Icons.add, size: 18, color: primaryPurple),
+            label: Text(
               "+ New segment",
               style: TextStyle(
-                color: Color(0xFF5B21B6),
+                color: primaryPurple,
                 fontWeight: FontWeight.bold,
                 fontSize: 13,
               ),
@@ -345,12 +346,12 @@ class _SequenceScreenState extends State<SequenceScreen> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text(
+            Text(
               "SEGMENTS",
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF64748B),
+                color: textMuted,
                 letterSpacing: 0.8,
               ),
             ),
@@ -363,11 +364,11 @@ class _SequenceScreenState extends State<SequenceScreen> {
                   modelId: widget.modelId,
                 );
               },
-              icon: const Icon(Icons.add, size: 16, color: Color(0xFF5B21B6)),
-              label: const Text(
+              icon: Icon(Icons.add, size: 16, color: primaryPurple),
+              label: Text(
                 "+ New segment",
                 style: TextStyle(
-                  color: Color(0xFF5B21B6),
+                  color: primaryPurple,
                   fontWeight: FontWeight.bold,
                   fontSize: 12,
                 ),
@@ -393,16 +394,16 @@ class _SequenceScreenState extends State<SequenceScreen> {
                     _provider.addNext = false;
                     _provider.assigningCurrentIndex(index);
                   },
-                  selectedColor: const Color(0xFF5B21B6),
-                  backgroundColor: const Color(0xFFF1F5F9),
+                  selectedColor: primaryPurple,
+                  backgroundColor: primaryBackground,
                   labelStyle: TextStyle(
-                    color: isSelected ? Colors.white : const Color(0xFF1E293B),
+                    color: isSelected ? Colors.white : textDark,
                     fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
                   ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
                     side: BorderSide(
-                      color: isSelected ? const Color(0xFF5B21B6) : const Color(0xFFE2E8F0),
+                      color: isSelected ? primaryPurple : const Color(0xFFE2E8F0),
                     ),
                   ),
                   showCheckmark: false,
@@ -497,15 +498,15 @@ class _SequenceScreenState extends State<SequenceScreen> {
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                   ),
-                  child: const Text(
+                  child: Text(
                     "Select",
-                    style: TextStyle(color: Color(0xFF1E293B), fontWeight: FontWeight.w600, fontSize: 13),
+                    style: TextStyle(color: textDark, fontWeight: FontWeight.w600, fontSize: 13),
                   ),
                 ),
                 FilledButton.icon(
                   onPressed: () => _showAddPlotDialog(),
                   style: FilledButton.styleFrom(
-                    backgroundColor: const Color(0xFF5B21B6),
+                    backgroundColor: primaryPurple,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                   ),
@@ -580,16 +581,16 @@ class _SequenceScreenState extends State<SequenceScreen> {
                 children: [
                   Icon(
                     isExpanded ? Icons.arrow_drop_down : Icons.arrow_right,
-                    color: const Color(0xFF64748B),
+                    color: textMuted,
                     size: 24,
                   ),
                   const SizedBox(width: 8),
                   Text(
                     plot.title,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF0F172A),
+                      color: textDark,
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -597,15 +598,15 @@ class _SequenceScreenState extends State<SequenceScreen> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFEDE9FE),
+                        color: activeBgLavender,
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
                         badgeText,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF6D28D9),
+                          color: primaryPurple,
                         ),
                       ),
                     )
@@ -621,17 +622,17 @@ class _SequenceScreenState extends State<SequenceScreen> {
                   const Spacer(),
                   Text(
                     "${assignedValves.length} valves",
-                    style: const TextStyle(fontSize: 13, color: Color(0xFF64748B)),
+                    style: TextStyle(fontSize: 13, color: textMuted),
                   ),
                   const SizedBox(width: 12),
                   InkWell(
                     onTap: () => _deletePlotFromSequence(plot, sequenceIndex),
-                    child: const Text(
+                    child: Text(
                       "Delete",
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
-                        color: Color(0xFF64748B),
+                        color: textMuted,
                       ),
                     ),
                   ),
@@ -648,12 +649,12 @@ class _SequenceScreenState extends State<SequenceScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     "Valve map",
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
-                      color: Color(0xFF64748B),
+                      color: textMuted,
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -678,13 +679,13 @@ class _SequenceScreenState extends State<SequenceScreen> {
                           duration: const Duration(milliseconds: 150),
                           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                           decoration: BoxDecoration(
-                            color: isSelected ? const Color(0xFF5B21B6) : const Color(0xFFF1F5F9),
+                            color: isSelected ? primaryPurple : primaryBackground,
                             borderRadius: BorderRadius.circular(8),
                             border: isSelected ? null : Border.all(color: const Color(0xFFE2E8F0)),
                             boxShadow: isSelected
                                 ? [
                                     BoxShadow(
-                                      color: const Color(0xFF5B21B6).withValues(alpha: 0.25),
+                                      color: primaryPurple.withValues(alpha: 0.25),
                                       blurRadius: 4,
                                       offset: const Offset(0, 2),
                                     ),
@@ -696,7 +697,7 @@ class _SequenceScreenState extends State<SequenceScreen> {
                             style: TextStyle(
                               fontSize: 13,
                               fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                              color: isSelected ? Colors.white : const Color(0xFF1E293B),
+                              color: isSelected ? Colors.white : textDark,
                             ),
                           ),
                         ),

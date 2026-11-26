@@ -710,9 +710,9 @@ class _FrequencyPageState extends State<FrequencyPage> {
           );
         }),
         if (_isLoading || _isSending)
-          Positioned.fill(child: ColoredBox(
+          const Positioned.fill(child: ColoredBox(
             color: Colors.black38,
-            child: const Center(child: CircularProgressIndicator()),
+            child: Center(child: CircularProgressIndicator()),
           )),
       ]),
     );

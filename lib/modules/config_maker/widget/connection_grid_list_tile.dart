@@ -1,20 +1,23 @@
 import 'package:flutter/material.dart';
-import 'package:hex/Widgets/sized_image.dart';
 import 'package:hex/modules/config_maker/widget/toggle_text_form_field_connection.dart';
+
 import 'package:responsive_grid_list/responsive_grid_list.dart';
 import '../../../Constants/communication_codes.dart';
+import '../../../Widgets/sized_image.dart';
 import '../model/device_model.dart';
 import '../model/device_object_model.dart';
 import '../state_management/config_maker_provider.dart';
+import '../view/utils/connection_colors.dart';
 import '../../../utils/constants.dart';
 
 class ConnectionGridListTile extends StatefulWidget {
   final List<DeviceObjectModel> listOfObjectModel;
   final ConfigMakerProvider configPvd;
   final String title;
-  Color? leadingColor;
+  final Color? leadingColor;
   final DeviceModel selectedDevice;
-  ConnectionGridListTile({
+
+  const ConnectionGridListTile({
     super.key,
     required this.listOfObjectModel,
     required this.title,
@@ -27,144 +30,237 @@ class ConnectionGridListTile extends StatefulWidget {
   State<ConnectionGridListTile> createState() => _ConnectionGridListTileState();
 }
 
-class _ConnectionGridListTileState extends State<ConnectionGridListTile> with SingleTickerProviderStateMixin{
+class _ConnectionGridListTileState extends State<ConnectionGridListTile> with SingleTickerProviderStateMixin {
   late AnimationController _controller;
-  late Animation<Color?> _colorAnimation;
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
-    for(var obj in widget.listOfObjectModel){
-      print("init =>> ${obj.toJson()}");
-    }
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 800), // Total duration of 2 blinks
+      duration: const Duration(milliseconds: 800),
     );
-
-    // Define the color animation
-    _colorAnimation = ColorTween(
-      begin: Colors.white,
-      end: Colors.red,
-    ).animate(_controller);
     _startBlinking();
   }
+
   void _startBlinking() async {
     for (int i = 0; i < 2; i++) {
-      await _controller.forward(); // Blink to red
-      await _controller.reverse(); // Blink back to white
+      await _controller.forward();
+      await _controller.reverse();
     }
   }
 
   @override
   void dispose() {
-    // TODO: implement dispose
-    super.dispose();
     _controller.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    if (widget.listOfObjectModel.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    final colors = ConnectionColors.of(context);
+    Color typeColor = widget.leadingColor ??
+        (widget.listOfObjectModel.isNotEmpty && widget.listOfObjectModel.first.type != '-'
+            ? getObjectTypeCodeToColor(int.parse(widget.listOfObjectModel.first.type))
+            : Theme.of(context).primaryColor);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SizedBox(height: 5,),
+        const SizedBox(height: 14),
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          child: Text(widget.title,style: Theme.of(context).textTheme.headlineLarge,),
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+          child: Row(
+            children: [
+              Container(
+                width: 4,
+                height: 18,
+                decoration: BoxDecoration(
+                  color: typeColor,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                widget.title,
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                  color: colors.textPrimary,
+                  letterSpacing: 0.2,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: typeColor.withValues(alpha: 0.18),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  '${widget.listOfObjectModel.length}',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    color: typeColor,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
+        const SizedBox(height: 6),
         ResponsiveGridList(
-          horizontalGridMargin: 20,
-          verticalGridMargin: 10,
-          minItemWidth: 250,
-          shrinkWrap: true,
+          horizontalGridMargin: 4,
+          verticalGridMargin: 6,
+          minItemWidth: 280,
           listViewBuilderOptions: ListViewBuilderOptions(
+            shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
           ),
           children: [
-            for(var object in widget.listOfObjectModel)
-              objectTile(object)
+            for (var object in widget.listOfObjectModel)
+              objectTile(object, colors),
           ],
         ),
       ],
     );
   }
 
-  Widget objectTile(DeviceObjectModel object){
-    bool themeMode = Theme.of(context).brightness == Brightness.light;
+  Widget objectTile(DeviceObjectModel object, ConnectionColors colors) {
     Color typeColor = widget.leadingColor ?? getObjectTypeCodeToColor(int.parse(object.type));
-    Widget myWidget = ListTile(
-      contentPadding: const EdgeInsets.symmetric(vertical: 5, horizontal: 5),
-    title: Text(object.objectName, style: Theme.of(context).textTheme.labelLarge,overflow: TextOverflow.ellipsis),
-      subtitle: Text('Not Configured : ${getNotConfiguredObjectByObjectId(object.objectId, widget.configPvd)}', style: Theme.of(context).textTheme.labelSmall,),
-    leading: CircleAvatar(
-      radius: 30,
-      backgroundColor: Theme.of(context).colorScheme.primary,
-      child: SizedImage(
-        imagePath: '${AppConstants.svgObjectPath}objectId_${object.objectId}.svg',
-      ),
-    ),
-      trailing: (widget.selectedDevice.categoryId == 4 && object.objectId != 25)
-          ? Checkbox(
-          value: isConnectedToWeather(object),
-          onChanged: (value){
-            widget.configPvd.updateObjectConnection(object, value! ? 1 : 0);
-          }
-      ) : (widget.selectedDevice.categoryId == 6 && object.objectId == AppConstants.powerSupplyObjectId)
-          ? Checkbox(
-          value: powerSupplyConnectedToCategory_6(),
-          onChanged: (value){
-            print('working for powerSupply');
-            widget.configPvd.updateObjectConnectionForPowerSupply(object, value!);
-            print('object : ${object.toJson()}');
-          }
-      ) : SizedBox(
-        width: 80,
-        child: ToggleTextFormFieldForConnection(
-          configPvd: widget.configPvd,
-          initialValue: object.count.toString(),
-          object: object,
-          selectedDevice: widget.selectedDevice,
-        ),
-      ),
-    );
-    return Container(
+    int notConfiguredCount = getNotConfiguredObjectByObjectId(object.objectId, widget.configPvd);
+
+    Widget cardContent = Container(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(5),
-        border: Border(left: BorderSide(width: 3, color: typeColor)),
-        color: Theme.of(context).cardColor,
-        boxShadow: const [
-          BoxShadow(color: Colors.grey, blurRadius: 5)
+        color: colors.innerSurface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: colors.innerBorder,
+          width: 1.2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: colors.isLight ? 0.05 : 0.2),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
         ],
-        // boxShadow: AppProperties.customBoxShadowLiteTheme
       ),
-      width: 300,
-      child: myWidget,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      child: Row(
+        children: [
+          Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: colors.circleBg,
+              border: Border.all(color: typeColor, width: 1.5),
+              boxShadow: [
+                BoxShadow(
+                  color: typeColor.withValues(alpha: 0.25),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            padding: const EdgeInsets.all(9),
+            child: SizedImage(
+              imagePath: '${AppConstants.svgObjectPath}objectId_${object.objectId}.svg',
+              color: typeColor,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  object.objectName,
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13.5,
+                    color: colors.textPrimary,
+                    letterSpacing: 0.1,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                ),
+                const SizedBox(height: 4),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: colors.unassignedBadgeBg,
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(color: colors.unassignedBadgeBorder),
+                  ),
+                  child: Text(
+                    'Unassigned: $notConfiguredCount',
+                    style: TextStyle(
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w600,
+                      color: colors.unassignedBadgeText,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 10),
+          (widget.selectedDevice.categoryId == 4 && object.objectId != 25)
+              ? Checkbox(
+                  value: isConnectedToWeather(object),
+                  activeColor: typeColor,
+                  onChanged: (value) {
+                    widget.configPvd.updateObjectConnection(object, value! ? 1 : 0);
+                  },
+                )
+              : (widget.selectedDevice.categoryId == 6 &&
+                      object.objectId == AppConstants.powerSupplyObjectId)
+                  ? Checkbox(
+                      value: powerSupplyConnectedToCategory_6(),
+                      activeColor: typeColor,
+                      onChanged: (value) {
+                        widget.configPvd
+                            .updateObjectConnectionForPowerSupply(object, value!);
+                      },
+                    )
+                  : ToggleTextFormFieldForConnection(
+                      configPvd: widget.configPvd,
+                      initialValue: object.count.toString(),
+                      object: object,
+                      selectedDevice: widget.selectedDevice,
+                    ),
+        ],
+      ),
     );
+
+    return cardContent;
   }
 
-  bool powerSupplyConnectedToCategory_6(){
-    return widget.configPvd.listOfGeneratedObject.any((object){
-      return object.objectId == AppConstants.powerSupplyObjectId && object.controllerId == widget.selectedDevice.controllerId;
+  bool powerSupplyConnectedToCategory_6() {
+    return widget.configPvd.listOfGeneratedObject.any((object) {
+      return object.objectId == AppConstants.powerSupplyObjectId &&
+          object.controllerId == widget.selectedDevice.controllerId;
     });
   }
 
-  bool isConnectedToWeather(DeviceObjectModel object){
-    return widget.configPvd.listOfGeneratedObject.any((generatedObject) => (generatedObject.objectId == object.objectId && generatedObject.controllerId == widget.selectedDevice.controllerId));
+  bool isConnectedToWeather(DeviceObjectModel object) {
+    return widget.configPvd.listOfGeneratedObject.any((generatedObject) =>
+        (generatedObject.objectId == object.objectId &&
+            generatedObject.controllerId == widget.selectedDevice.controllerId));
   }
-
 }
 
-
-int getNotConfiguredObjectByObjectId(int objectId, ConfigMakerProvider configPvd){
-  List<DeviceObjectModel> notConfigured = configPvd.listOfGeneratedObject.where((object) => (object.objectId == objectId && object.controllerId == null)).toList();
-  for(var obj in notConfigured){
-    print("obj : ${obj.toJson()}");
-  }
+int getNotConfiguredObjectByObjectId(int objectId, ConfigMakerProvider configPvd) {
+  List<DeviceObjectModel> notConfigured = configPvd.listOfGeneratedObject
+      .where((object) => (object.objectId == objectId && object.controllerId == null))
+      .toList();
   return notConfigured.length;
 }
-
-List<int> objectIdDependsOnDosing = [7, 8, 10, 27, 28];
-List<int> objectIdDependsOnFiltration = [11, 12];
-List<int> objectIdDependsOnTank = [5, 26, 39];

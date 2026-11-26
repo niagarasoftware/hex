@@ -44,7 +44,7 @@ class RainfallCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return SizedBox(
       height: 400,
       width: double.infinity,
       child: Column(

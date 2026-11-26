@@ -162,7 +162,7 @@ class _PowerGraphScreenState extends State<PowerGraphScreen> {
           showDialog(context: context, builder: (context){
             return AlertDialog(
               title: Text('$name Download Successfully at'),
-              content: Text('$filePath'),
+              content: Text(filePath),
               actions: [
                 TextButton(
                     onPressed: (){

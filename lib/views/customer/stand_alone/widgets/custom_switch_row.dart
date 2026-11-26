@@ -97,7 +97,7 @@ class CustomSwitchRow extends StatelessWidget {
                 scale: 0.65,
                 child: Switch(
                   value: value,
-                  activeColor: colorScheme.onPrimary,
+                  activeThumbColor: colorScheme.onPrimary,
                   activeTrackColor: colorScheme.primary,
                   inactiveTrackColor: colorScheme.surfaceContainerHighest,
                   onChanged: onChanged,

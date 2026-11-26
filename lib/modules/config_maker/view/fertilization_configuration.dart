@@ -1,217 +1,830 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/svg.dart';
 import 'package:hex/modules/config_maker/view/site_configure.dart';
-import 'package:provider/provider.dart';
-import 'package:responsive_grid_list/responsive_grid_list.dart';
 import '../../../Constants/communication_codes.dart';
 import '../../../Constants/dialog_boxes.dart';
-import '../../../Constants/properties.dart';
 import '../model/device_object_model.dart';
 import '../model/fertigation_model.dart';
 import '../state_management/config_maker_provider.dart';
-import '../../../Widgets/custom_drop_down_button.dart';
+import '../widget/config_template_widgets.dart';
+import '../widget/object_manager_bar.dart';
+import '../widget/painter/multi_injector_painter.dart';
 import '../../../Widgets/sized_image.dart';
 import '../../../utils/constants.dart';
+import 'utils/config_maker_colors.dart';
+
+/// Simple holder for progress metrics.
+class _Progress {
+  final int filled;
+  final int total;
+  final int sensorFilled;
+  const _Progress(this.filled, this.total, this.sensorFilled);
+
+  bool get complete => total > 0 && filled == total;
+  double get fraction => total == 0 ? 0 : filled / total;
+}
 
 class FertilizationConfiguration extends StatefulWidget {
   final ConfigMakerProvider configPvd;
   const FertilizationConfiguration({super.key, required this.configPvd});
 
   @override
-  State<FertilizationConfiguration> createState() => _FertilizationConfigurationState();
+  State<FertilizationConfiguration> createState() => FertilizationConfigurationState();
 }
 
-class _FertilizationConfigurationState extends State<FertilizationConfiguration> {
-  late ThemeData themeData;
-  late bool themeMode;
+class FertilizationConfigurationState extends State<FertilizationConfiguration> {
+  void addFertilizationSite() => _addFertilizationSite();
+  // ── Design tokens (Matching filtration_configuration.dart) ──
+  static const Color _channelColor = Color(0xFF0284C7); // ocean sky blue
+  static const Color _boosterColor = Color(0xFF059669); // emerald green
+  static const Color _sensorColor = Color(0xFF8B5CF6); // violet
+  static const Color _doneColor = Color(0xFF059669); // emerald green
+  static const Color _subTextColor = Color(0xFF8E9BB4); // slate-400 subtle text
 
-  @override
-  void didChangeDependencies() {
-    // TODO: implement didChangeDependencies
-    super.didChangeDependencies();
-    themeData = Theme.of(context);
-    themeMode = themeData.brightness == Brightness.light;
-  }
-
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(8),
-      child: LayoutBuilder(builder: (context, constraint){
-        return SizedBox(
-          width: constraint.maxWidth,
-          height: constraint.maxHeight,
-          child:  SingleChildScrollView(
-            child: Column(
-              children: [
-                ResponsiveGridList(
-                  horizontalGridMargin: 0,
-                  verticalGridMargin: 10,
-                  minItemWidth: 500,
-                  shrinkWrap: true,
-                  listViewBuilderOptions: ListViewBuilderOptions(
-                    physics: const NeverScrollableScrollPhysics(),
-                  ),
-                  children: [
-                    for(var fertilizationSite in widget.configPvd.fertilization)
-                      Container(
-                        decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(8),
-                            color: Colors.white,
-                            boxShadow: AppProperties.customBoxShadowLiteTheme
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            IntrinsicWidth(
-                              stepWidth: 300,
-                              child: ListTile(
-                                leading: SizedImage(imagePath: '${AppConstants.svgObjectPath}objectId_3.svg', color: themeMode ? Colors.black : Colors.white,),
-                                title: Text(fertilizationSite.commonDetails.name!),
-                                trailing: IntrinsicWidth(
-                                  child: CustomDropDownButton(
-                                      value: getCentralLocalCodeToString(fertilizationSite.siteMode),
-                                      list: const ['Central', 'Local'],
-                                      onChanged: (value){
-                                        setState(() {
-                                          fertilizationSite.siteMode = getCentralLocalStringToCode(value!);
-                                        });
-                                      }
-                                  ),
-                                ),
-                              ),
-                            ),
-                            Container(
-                              alignment: Alignment.center,
-                              height: 250 * widget.configPvd.ratio,
-                              child: SingleChildScrollView(
-                                scrollDirection: Axis.horizontal,
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  crossAxisAlignment: CrossAxisAlignment.center,
-                                  children: [
-                                    if(fertilizationSite.channel.length == 1)
-                                      FertilizationDashboardFormation(fertilizationFormation: FertilizationFormation.singleChannel, fertilizationSite: fertilizationSite),
-                                    if(fertilizationSite.channel.length > 1)
-                                      FertilizationDashboardFormation(fertilizationFormation: FertilizationFormation.multipleChannel, fertilizationSite: fertilizationSite),
-                                  ],
-                                ),
-                              ),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: Wrap(
-                                spacing: 30,
-                                runSpacing: 20,
-                                children: [
-                                  if (shouldShowParameter(10, fertilizationSite.channel.map((channel) => channel.sNo).toList()))
-                                    getFertilizerParameter(fertilizationSite: fertilizationSite, currentParameterValue: fertilizationSite.channel.map((channel) => channel.sNo).toList(), parameterType: 1, objectId: 10, objectName: 'Channel'),
-                                  if (shouldShowParameter(7, fertilizationSite.boosterPump))
-                                    getFertilizerParameter(fertilizationSite: fertilizationSite, currentParameterValue: fertilizationSite.boosterPump, parameterType: 2, objectId: 7, objectName: 'Booster'),
-                                  if (shouldShowParameter(9, fertilizationSite.agitator))
-                                    getFertilizerParameter(fertilizationSite: fertilizationSite, currentParameterValue: fertilizationSite.agitator, parameterType: 3, objectId: 9, objectName: 'Agitator'),
-                                  if (shouldShowParameter(8, fertilizationSite.selector))
-                                    getFertilizerParameter(fertilizationSite: fertilizationSite, currentParameterValue: fertilizationSite.selector, parameterType: 4, objectId: 8, objectName: 'Selector'),
-                                  if (shouldShowParameter(27, fertilizationSite.ec))
-                                    getFertilizerParameter(fertilizationSite: fertilizationSite, currentParameterValue: fertilizationSite.ec, parameterType: 5, objectId: 27, objectName: 'Ec'),
-                                  if (shouldShowParameter(28, fertilizationSite.ph))
-                                    getFertilizerParameter(fertilizationSite: fertilizationSite, currentParameterValue: fertilizationSite.ph, parameterType: 6, objectId: 28, objectName: 'Ph'),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      )
-                  ],
-                ),
-              ],
-            ),
-          ),
-        );
-      }),
-    );
-  }
-
-  bool shouldShowParameter(int objectId, List<double> currentParameterValue) {
+  bool _shouldShowParameter(int objectId, List<double> currentParameterValue) {
     return currentParameterValue.isNotEmpty ||
         widget.configPvd.listOfGeneratedObject.any(
           (object) => object.objectId == objectId && object.controllerId != null,
         );
   }
 
-  Widget getFertilizerParameter({
-    required FertilizationModel fertilizationSite,
+  // ───────────────────────────────────────────────────────────
+  //  PROGRESS CALCULATION
+  // ───────────────────────────────────────────────────────────
+  _Progress _calcProgress(FertilizationModel site) {
+    int total = 0;
+    int filled = 0;
+
+    final channelSnoList = site.channel.map((c) => c.sNo).toList();
+    if (_shouldShowParameter(AppConstants.channelObjectId, channelSnoList)) {
+      total++;
+      if (site.channel.isNotEmpty) filled++;
+    }
+    if (_shouldShowParameter(AppConstants.boosterObjectId, site.boosterPump)) {
+      total++;
+      if (site.boosterPump.isNotEmpty) filled++;
+    }
+    if (_shouldShowParameter(AppConstants.agitatorObjectId, site.agitator)) {
+      total++;
+      if (site.agitator.isNotEmpty) filled++;
+    }
+    if (_shouldShowParameter(8, site.selector)) {
+      total++;
+      if (site.selector.isNotEmpty) filled++;
+    }
+    if (_shouldShowParameter(AppConstants.ecObjectId, site.ec)) {
+      total++;
+      if (site.ec.isNotEmpty) filled++;
+    }
+    if (_shouldShowParameter(AppConstants.phObjectId, site.ph)) {
+      total++;
+      if (site.ph.isNotEmpty) filled++;
+    }
+
+    if (total == 0) {
+      total = 1;
+      if (site.channel.isNotEmpty) filled = 1;
+    }
+
+    return _Progress(filled, total, filled);
+  }
+
+  void _showDarkModeAlertDialog({
+    required String title,
+    required String message,
+    IconData icon = Icons.warning_amber_rounded,
+    Color iconColor = const Color(0xFFF59E0B),
+  }) {
+    final colors = ConfigMakerColors.of(context);
+    showDialog(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          backgroundColor: colors.isLight ? Colors.white : const Color(0xFF181C38),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+            side: BorderSide(color: colors.innerBorder),
+          ),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 360),
+            child: Padding(
+              padding: const EdgeInsets.all(22),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 52,
+                    height: 52,
+                    decoration: BoxDecoration(
+                      color: iconColor.withValues(alpha: 0.15),
+                      shape: BoxShape.circle,
+                      border: Border.all(color: iconColor.withValues(alpha: 0.3)),
+                    ),
+                    child: Icon(icon, color: iconColor, size: 28),
+                  ),
+                  const SizedBox(height: 14),
+                  Text(
+                    title,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: colors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    message,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 13.5,
+                      color: Color(0xFF8E9BB4),
+                      height: 1.4,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.pop(context),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF2563EB),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        elevation: 0,
+                      ),
+                      child: const Text(
+                        'OK',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _addFertilizationSite() {
+    final p = widget.configPvd;
+
+    // Check for unassigned injectors (channels)
+    List<double> assignedChannelSnos = [];
+    for (var site in p.fertilization) {
+      for (var ch in site.channel) {
+        assignedChannelSnos.add(ch.sNo);
+      }
+    }
+
+    List<DeviceObjectModel> unassignedChannels = p.listOfGeneratedObject
+        .where((o) =>
+            o.objectId == AppConstants.channelObjectId &&
+            o.controllerId != null &&
+            o.sNo != null &&
+            !assignedChannelSnos.contains(o.sNo!))
+        .toList();
+
+    // Check for unassigned booster pumps
+    List<double> assignedBoosterSnos = [];
+    for (var site in p.fertilization) {
+      assignedBoosterSnos.addAll(site.boosterPump);
+    }
+
+    List<DeviceObjectModel> unassignedBoosters = p.listOfGeneratedObject
+        .where((o) =>
+            o.objectId == AppConstants.boosterObjectId &&
+            o.controllerId != null &&
+            o.sNo != null &&
+            !assignedBoosterSnos.contains(o.sNo!))
+        .toList();
+
+    if (unassignedChannels.isEmpty) {
+      _showDarkModeAlertDialog(
+        title: 'No Unassigned Injectors',
+        message: 'No unassigned injector is available. Please add more injectors before creating a new fertilization site.',
+      );
+      return;
+    }
+
+    if (unassignedBoosters.isEmpty) {
+      _showDarkModeAlertDialog(
+        title: 'No Unassigned Booster Pumps',
+        message: 'No unassigned booster pump is available. Please add more booster pumps before creating a new fertilization site.',
+      );
+      return;
+    }
+
+    DeviceObjectModel? sampleObj;
+    for (var o in p.listOfSampleObjectModel) {
+      if (o.objectId == AppConstants.fertilizerSiteObjectId) {
+        sampleObj = o;
+        break;
+      }
+    }
+    if (sampleObj == null) {
+      sampleObj = DeviceObjectModel(
+        objectId: AppConstants.fertilizerSiteObjectId,
+        objectName: 'Fertilization Site',
+        type: '-',
+        count: '0',
+        assignObject: [],
+      );
+      p.listOfSampleObjectModel.add(sampleObj);
+    }
+
+    int currentCount = 0;
+    if (sampleObj.count != null && sampleObj.count != '') {
+      currentCount = int.tryParse(sampleObj.count!) ?? 0;
+    }
+
+    int? cap = maxCountForObject(p, sampleObj);
+
+    if (cap != null && currentCount + 1 > cap) {
+      _showDarkModeAlertDialog(
+        title: 'Limit Reached',
+        message: 'Only $cap Fertigation Site can be added for this master controller model.',
+      );
+      return;
+    }
+
+    setState(() {
+      p.updateObjectCount(AppConstants.fertilizerSiteObjectId, '${currentCount + 1}');
+      if (p.fertilization.isNotEmpty) {
+        final newSite = p.fertilization.last;
+        final channelToAssign = unassignedChannels.first;
+        newSite.channel.add(Injector(sNo: channelToAssign.sNo!));
+        final boosterToAssign = unassignedBoosters.first;
+        newSite.boosterPump.add(boosterToAssign.sNo!);
+      }
+    });
+  }
+
+  // ───────────────────────────────────────────────────────────
+  //  BUILD
+  // ───────────────────────────────────────────────────────────
+  @override
+  Widget build(BuildContext context) {
+    final colors = ConfigMakerColors.of(context);
+    final primaryColor = Theme.of(context).primaryColor;
+    final fertilizations = widget.configPvd.fertilization;
+
+    return Container(
+      color: colors.canvasBg,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+        child: LayoutBuilder(builder: (context, constraint) {
+          return SizedBox(
+            width: constraint.maxWidth,
+            height: constraint.maxHeight,
+            child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              child: Column(
+                children: [
+                  if (fertilizations.isEmpty)
+                    ConfigEmptyState(
+                      title: 'No Fertigation Sites Added',
+                      subtitle: 'Tap the button below to add a fertigation site to your configuration.',
+                      icon: Icons.science_rounded,
+                      primaryColor: primaryColor,
+                      onAddPressed: _addFertilizationSite,
+                      buttonLabel: 'Add Site',
+                    )
+                  else
+                    ListView.separated(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: fertilizations.length,
+                      separatorBuilder: (context, index) => const SizedBox(height: 14),
+                      itemBuilder: (context, index) {
+                        final site = fertilizations[index];
+                        return _buildFertilizationCard(site, primaryColor, colors);
+                      },
+                    ),
+                  const SizedBox(height: 16),
+                ],
+              ),
+            ),
+          );
+        }),
+      ),
+    );
+  }
+
+  Widget _buildFertilizationPainterBlock(FertilizationModel site, Color primaryColor, ConfigMakerColors colors) {
+    if (site.channel.isNotEmpty) {
+      final int count = site.channel.length;
+      final List<String> names = site.channel
+          .map((c) => getObjectName(c.sNo, widget.configPvd).name ?? '')
+          .toList();
+      const double painterH = 155.0;
+      final double painterW = painterH * DetailedMultiInjectorPainter.aspectRatioFor(count);
+
+      return Container(
+        width: double.infinity,
+        height: painterH + 20,
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+        decoration: BoxDecoration(
+          color: colors.innerSurface,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Center(
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            child: MultiInjectorView(
+              isOn: false,
+              channelCount: count,
+              channelNames: names,
+              size: Size(painterW, painterH),
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Container(
+      width: double.infinity,
+      height: 90,
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: colors.innerSurface,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            SizedImage(
+              imagePath: '${AppConstants.svgObjectPath}objectId_3.svg',
+              color: primaryColor,
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'No Injectors Assigned',
+              style: TextStyle(
+                color: colors.textMuted,
+                fontSize: 11.5,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCancelGradientButton({
+    required VoidCallback onTap,
+    String tooltip = 'Delete',
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: Tooltip(
+        message: tooltip,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(10),
+          child: Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Color(0xFFEF4444),
+                  Color(0xFFB91C1C),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(10),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFFEF4444).withValues(alpha: 0.35),
+                  blurRadius: 6,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: const Icon(
+              Icons.close_rounded,
+              color: Colors.white,
+              size: 18,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _confirmDelete({
+    required BuildContext context,
+    required String itemName,
+    required VoidCallback onDelete,
+  }) {
+    final colors = ConfigMakerColors.of(context);
+    showDialog(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          backgroundColor: colors.isLight ? Colors.white : const Color(0xFF181C38),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+            side: BorderSide(color: colors.innerBorder),
+          ),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 360),
+            child: Padding(
+              padding: const EdgeInsets.all(22),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 52,
+                    height: 52,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFEF4444).withValues(alpha: 0.15),
+                      shape: BoxShape.circle,
+                      border: Border.all(color: const Color(0xFFEF4444).withValues(alpha: 0.3)),
+                    ),
+                    child: const Icon(Icons.delete_outline_rounded, color: Color(0xFFEF4444), size: 28),
+                  ),
+                  const SizedBox(height: 14),
+                  Text(
+                    'Delete $itemName',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: colors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Are you sure you want to delete "$itemName"? This action cannot be undone.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 13.5,
+                      color: colors.textMuted,
+                      height: 1.4,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () => Navigator.pop(context),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: colors.textMuted,
+                            side: BorderSide(color: colors.innerBorder),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: const Text('Cancel', style: TextStyle(fontWeight: FontWeight.bold)),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () {
+                            Navigator.pop(context);
+                            onDelete();
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFFEF4444),
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            elevation: 0,
+                          ),
+                          child: const Text('Delete', style: TextStyle(fontWeight: FontWeight.bold)),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildFertilizationHeaderBlock({
+    required FertilizationModel site,
+    required _Progress progress,
+    required Color primaryColor,
+    required ConfigMakerColors colors,
+    Widget? typeSelector,
+  }) {
+    final itemName = site.commonDetails.name ?? 'Fertilization Site';
+
+    return Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: colors.innerSurface,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      itemName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: colors.textPrimary,
+                      ),
+                    ),
+                    if (typeSelector != null) ...[
+                      const SizedBox(height: 6),
+                      typeSelector,
+                    ],
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              _buildCancelGradientButton(
+                onTap: () {
+                  _confirmDelete(
+                    context: context,
+                    itemName: itemName,
+                    onDelete: () {
+                      setState(() {
+                        widget.configPvd.deleteGeneratedObject(
+                          site.commonDetails.sNo!,
+                          AppConstants.fertilizerSiteObjectId,
+                        );
+                      });
+                    },
+                  );
+                },
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          _buildFertilizationPainterBlock(site, primaryColor, colors),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFertilizationCard(FertilizationModel site, Color primaryColor, ConfigMakerColors colors) {
+    final currentType = getCentralLocalCodeToString(site.siteMode);
+    const modeTypes = ['Central', 'Local'];
+    const modeIcons = {
+      'Central': Icons.hub_rounded,
+      'Local': Icons.location_on_rounded,
+    };
+
+    final typeSelector = ConfigTypeSelector(
+      currentType: currentType,
+      typeList: modeTypes,
+      typeIcons: modeIcons,
+      tooltip: 'Change site mode',
+      onSelected: (value) {
+        setState(() {
+          site.siteMode = getCentralLocalStringToCode(value);
+        });
+      },
+    );
+
+    final progress = _calcProgress(site);
+
+    final channelSnoList = site.channel.map((c) => c.sNo).toList();
+    final showChannels = _shouldShowParameter(AppConstants.channelObjectId, channelSnoList);
+    final showBooster = _shouldShowParameter(AppConstants.boosterObjectId, site.boosterPump);
+    final showAgitator = _shouldShowParameter(AppConstants.agitatorObjectId, site.agitator);
+    final showSelector = _shouldShowParameter(8, site.selector);
+    final showEc = _shouldShowParameter(AppConstants.ecObjectId, site.ec);
+    final showPh = _shouldShowParameter(AppConstants.phObjectId, site.ph);
+
+    final showPumpsAgitators = showBooster || showAgitator;
+    final showSensors = showSelector || showEc || showPh;
+
+    final bodySections = <Widget>[];
+
+    if (showChannels || (!showPumpsAgitators && !showSensors)) {
+      bodySections.add(
+        ConfigFlowSection(
+          title: 'Channels & Injectors',
+          icon: Icons.tune_rounded,
+          accent: _channelColor,
+          children: [
+            _buildChannelsTile(site, _channelColor),
+          ],
+        ),
+      );
+    }
+
+    if (showPumpsAgitators) {
+      bodySections.add(
+        ConfigFlowSection(
+          title: 'Booster & Agitator',
+          icon: Icons.speed_rounded,
+          accent: _boosterColor,
+          children: [
+            if (showBooster)
+              _buildParameterTile(
+                site: site,
+                currentParameterValue: site.boosterPump,
+                parameterType: 2,
+                objectId: AppConstants.boosterObjectId,
+                objectName: 'Booster Pump',
+                accent: _boosterColor,
+              ),
+            if (showAgitator)
+              _buildParameterTile(
+                site: site,
+                currentParameterValue: site.agitator,
+                parameterType: 3,
+                objectId: AppConstants.agitatorObjectId,
+                objectName: 'Agitator',
+                accent: _boosterColor,
+              ),
+          ],
+        ),
+      );
+    }
+
+    if (showSensors) {
+      bodySections.add(
+        ConfigFlowSection(
+          title: 'Control & Monitoring',
+          icon: Icons.sensors_rounded,
+          accent: _sensorColor,
+          children: [
+            if (showSelector)
+              _buildParameterTile(
+                site: site,
+                currentParameterValue: site.selector,
+                parameterType: 4,
+                objectId: 8,
+                objectName: 'Selector',
+                accent: _sensorColor,
+              ),
+            if (showEc)
+              _buildParameterTile(
+                site: site,
+                currentParameterValue: site.ec,
+                parameterType: 5,
+                objectId: AppConstants.ecObjectId,
+                objectName: 'EC Sensor',
+                accent: _sensorColor,
+              ),
+            if (showPh)
+              _buildParameterTile(
+                site: site,
+                currentParameterValue: site.ph,
+                parameterType: 6,
+                objectId: AppConstants.phObjectId,
+                objectName: 'pH Sensor',
+                accent: _sensorColor,
+              ),
+          ],
+        ),
+      );
+    }
+
+    return ConfigCardShell(
+      headerBlock: _buildFertilizationHeaderBlock(
+        site: site,
+        progress: progress,
+        primaryColor: primaryColor,
+        colors: colors,
+        typeSelector: typeSelector,
+      ),
+      isComplete: progress.complete,
+      completeColor: _doneColor,
+      expandHeader: true,
+      rightPanelWidth: 500.0,
+      body: bodySections,
+    );
+  }
+
+  Widget _buildChannelsTile(FertilizationModel site, Color accent) {
+    int objectId = AppConstants.channelObjectId;
+    bool isAssigned = site.channel.isNotEmpty;
+    List<double> channelSnoList = site.channel.map((channel) => channel.sNo).toList();
+    List<String> names = isAssigned
+        ? channelSnoList.map((sNo) => getObjectName(sNo, widget.configPvd).name ?? '-').toList()
+        : [];
+
+    return ConfigComponentTile(
+      title: 'Channels',
+      imagePath: '${AppConstants.svgObjectPath}objectId_$objectId.svg',
+      names: names,
+      isAssigned: isAssigned,
+      accent: accent,
+      onTap: () {
+        setState(() {
+          widget.configPvd.listOfSelectedSno.clear();
+          widget.configPvd.listOfSelectedSno.addAll(channelSnoList);
+        });
+        selectionDialogBox(
+          context: context,
+          title: 'Select Channels',
+          singleSelection: false,
+          listOfObject: getUnselectedFertilizationParameterObject(
+            currentParameterList: channelSnoList,
+            objectId: objectId,
+            parameter: 1,
+          ),
+          onPressed: () {
+            if (widget.configPvd.listOfSelectedSno.length > 20) {
+              _showDarkModeAlertDialog(
+                title: 'Alert',
+                message: 'Only 20 injectors can be selected per site.',
+              );
+            } else {
+              setState(() {
+                widget.configPvd.updateSelectionInFertilization(site.commonDetails.sNo!, 1);
+              });
+              Navigator.pop(context);
+            }
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildParameterTile({
+    required FertilizationModel site,
     required List<double> currentParameterValue,
     required int parameterType,
     required int objectId,
     required String objectName,
-}){
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(8),
-        color: Theme.of(context).primaryColorLight.withOpacity(0.1),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          SizedImage(imagePath: '${AppConstants.svgObjectPath}objectId_$objectId.svg',color: themeMode ? Colors.black : Colors.white),
-          const SizedBox(width: 20,),
-          Text('$objectName : ', style: AppProperties.listTileBlackBoldStyle,),
-          Expanded(
-            child: Text(currentParameterValue.isEmpty ? '-' : currentParameterValue.map((sNo) => getObjectName(sNo, widget.configPvd).name!).join(', '), overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.teal, fontSize: 12, fontWeight: FontWeight.bold),),
+    required Color accent,
+  }) {
+    bool isAssigned = currentParameterValue.isNotEmpty;
+    List<String> names = isAssigned
+        ? currentParameterValue.map((sNo) => getObjectName(sNo, widget.configPvd).name ?? '-').toList()
+        : [];
+
+    return ConfigComponentTile(
+      title: objectName,
+      imagePath: '${AppConstants.svgObjectPath}objectId_$objectId.svg',
+      names: names,
+      isAssigned: isAssigned,
+      accent: accent,
+      onTap: () {
+        setState(() {
+          widget.configPvd.listOfSelectedSno.clear();
+          widget.configPvd.listOfSelectedSno.addAll(currentParameterValue);
+        });
+        selectionDialogBox(
+          context: context,
+          title: 'Select $objectName',
+          singleSelection: false,
+          listOfObject: getUnselectedFertilizationParameterObject(
+            currentParameterList: currentParameterValue,
+            objectId: objectId,
+            parameter: parameterType,
           ),
-          IconButton(
-              onPressed: (){
-                setState(() {
-                  widget.configPvd.listOfSelectedSno.clear();
-                  widget.configPvd.listOfSelectedSno.addAll(currentParameterValue);
-                });
-                selectionDialogBox(
-                    context: context,
-                    title: 'Select $objectName',
-                    singleSelection: false,
-                    listOfObject: getUnselectedFertilizationParameterObject(
-                        currentParameterList: currentParameterValue,
-                        objectId: objectId,
-                        parameter: parameterType
-                    ),
-                    onPressed: (){
-                      if (parameterType == 1 && widget.configPvd.listOfSelectedSno.length > 20) {
-                        simpleDialogBox(
-                          context: context,
-                          title: 'Alert',
-                          message: 'Only 20 injectors can be selected per site.',
-                        );
-                      } else {
-                        setState(() {
-                          widget.configPvd.updateSelectionInFertilization(fertilizationSite.commonDetails.sNo!, parameterType);
-                        });
-                        Navigator.pop(context);
-                      }
-                    }
-                );
-              },
-              icon: Icon(Icons.touch_app, color: Theme.of(context).primaryColor, size: 20,)
-          )
-        ],
-      ),
+          onPressed: () {
+            setState(() {
+              widget.configPvd.updateSelectionInFertilization(site.commonDetails.sNo!, parameterType);
+            });
+            Navigator.pop(context);
+          },
+        );
+      },
     );
   }
 
   List<DeviceObjectModel> getUnselectedFertilizationParameterObject({
     required List<double> currentParameterList,
     required int objectId,
-    required int parameter
-  }){
+    required int parameter,
+  }) {
     List<DeviceObjectModel> listOfObject = widget.configPvd.listOfGeneratedObject
         .where((object) => object.objectId == objectId && object.controllerId != null)
         .toList();
     List<double> assigned = [];
-    List<double> unAssigned = [];
-    if(![AppConstants.ecObjectId, AppConstants.phObjectId, AppConstants.boosterObjectId, AppConstants.agitatorObjectId].contains(objectId)){
-      for(var site in widget.configPvd.fertilization){
+    if (![AppConstants.ecObjectId, AppConstants.phObjectId, AppConstants.boosterObjectId, AppConstants.agitatorObjectId].contains(objectId)) {
+      for (var site in widget.configPvd.fertilization) {
         List<double> siteParameter = parameter == 1
             ? site.channel.map((channel) => channel.sNo).toList()
             : parameter == 2
@@ -221,269 +834,14 @@ class _FertilizationConfigurationState extends State<FertilizationConfiguration>
             : parameter == 4
             ? site.selector
             : parameter == 5
-            ? site.ec : site.ph;
+            ? site.ec
+            : site.ph;
         assigned.addAll(siteParameter);
       }
     }
     listOfObject = listOfObject
-          .where((object) => (!assigned.contains(object.sNo!) || currentParameterList.contains(object.sNo))).toList();
+        .where((object) => (!assigned.contains(object.sNo!) || currentParameterList.contains(object.sNo)))
+        .toList();
     return listOfObject;
   }
-
-
-
 }
-
-
-
-
-
-Widget getImageWithText(String title, String imagePath, ConfigMakerProvider configPvd){
-  return IntrinsicWidth(
-    stepWidth: 150 * configPvd.ratio,
-    child: ListTile(
-      title: Text(title),
-      leading: SizedImage(imagePath: imagePath, color: Colors.black),
-    ),
-  );
-}
-
-enum FertilizationFormation {singleChannel, multipleChannel}
-
-class FertilizationDashboardFormation extends StatefulWidget {
-  FertilizationFormation fertilizationFormation;
-  FertilizationModel fertilizationSite;
-  FertilizationDashboardFormation({
-    super.key,
-    required this.fertilizationFormation,
-    required this.fertilizationSite,
-  });
-  @override
-  State<FertilizationDashboardFormation> createState() => _FertilizationDashboardFormationState();
-}
-
-class _FertilizationDashboardFormationState extends State<FertilizationDashboardFormation> {
-  late ConfigMakerProvider configPvd;
-  @override
-  void initState() {
-    // TODO: implement initState
-    super.initState();
-    configPvd = Provider.of<ConfigMakerProvider>(context, listen: false);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    configPvd = Provider.of<ConfigMakerProvider>(context, listen: true);
-    if(widget.fertilizationFormation == FertilizationFormation.singleChannel){
-      return getSingleChannel();
-    }else{
-      return getMultipleChannel();
-    }
-  }
-  Widget getSingleChannel(){
-    return Row(
-      children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Row(
-              children: [
-                ...getAgitator(),
-                if(widget.fertilizationSite.agitator.isNotEmpty)
-                  SvgPicture.asset(
-                    'assets/Images/Fertilization/agitator_connection_pipe_last_1.svg',
-                    width: 151,
-                    height: 45 * configPvd.ratio,
-                  ),
-              ],
-            ),
-            Row(
-              children: [
-                ...getBooster(),
-                SvgPicture.asset(
-                  'assets/Images/Fertilization/single_channel_1.svg',
-                  width: 150,
-                  height: 150 * configPvd.ratio,
-                ),
-              ],
-            ),
-          ],
-        ),
-        getEcPhSelector()
-      ],
-    );
-  }
-  List<Widget> getAgitator(){
-    return [
-      if(widget.fertilizationSite.agitator.isNotEmpty || widget.fertilizationSite.boosterPump.isNotEmpty)
-        SvgPicture.asset(
-          (widget.fertilizationSite.agitator.isNotEmpty) ? 'assets/Images/Fertilization/agitator_1.svg' : '',
-          width: 150,
-          height: 47 * configPvd.ratio,
-        ),
-    ];
-  }
-  List<Widget> getBooster(){
-    return [
-      if(widget.fertilizationSite.boosterPump.isNotEmpty || widget.fertilizationSite.agitator.isNotEmpty)
-        Stack(
-          children: [
-            SvgPicture.asset(
-              (widget.fertilizationSite.boosterPump.isNotEmpty) ? 'assets/Images/Fertilization/booster_1.svg' : '',
-              width: 150,
-              height: 150 * configPvd.ratio,
-            ),
-            Positioned(
-              left: 0,
-              bottom: 50,
-              child: Text(widget.fertilizationSite.boosterPump.map((sNo) => getObjectName(sNo, configPvd).name!).join(', '), style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold),),
-            )
-          ],
-        ),
-    ];
-  }
-
-  Widget getEcPhSelector(){
-    return Column(
-      children: [
-        if(widget.fertilizationSite.selector.isNotEmpty)
-          getImageWithText('Selector', '${AppConstants.svgObjectPath}objectId_8.svg', configPvd),
-        if(widget.fertilizationSite.ec.isNotEmpty)
-          getImageWithText('Ec', '${AppConstants.svgObjectPath}objectId_27.svg', configPvd),
-        if(widget.fertilizationSite.ph.isNotEmpty)
-          getImageWithText('Ph', '${AppConstants.svgObjectPath}objectId_28.svg', configPvd),
-      ],
-    );
-  }
-  Widget getMultipleChannel(){
-    return Row(
-      children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                ...getAgitator(),
-                if(widget.fertilizationSite.agitator.isNotEmpty)
-                  ...[
-                    if(widget.fertilizationSite.channel.length > 1)
-                      for(var middle = 0;middle < widget.fertilizationSite.channel.length- 1;middle++)
-                        SvgPicture.asset(
-                          'assets/Images/Fertilization/agitator_connection_pipe_first_1.svg',
-                          width: 151,
-                          height: 45 * configPvd.ratio,
-                        ),
-                    SvgPicture.asset(
-                      'assets/Images/Fertilization/agitator_connection_pipe_last_1.svg',
-                      width: 151,
-                      height: 45* configPvd.ratio,
-                    ),
-                  ]
-              ],
-            ),
-            Row(
-              children: [
-                ...getBooster(),
-                mergeInjectorWithLevel(
-                  injector: widget.fertilizationSite.channel[0],
-                    fertilizerSno: widget.fertilizationSite.commonDetails.sNo!,
-                    child: SvgPicture.asset(
-                      'assets/Images/Fertilization/multiple_channel_first_1.svg',
-                      width: 150,
-                      height: 150 * configPvd.ratio,
-                    ),
-                ),
-                if(widget.fertilizationSite.channel.length > 2)
-                  for(var middle = 1;middle < widget.fertilizationSite.channel.length- 1;middle++)
-                    mergeInjectorWithLevel(
-                      fertilizerSno: widget.fertilizationSite.commonDetails.sNo!,
-                      injector: widget.fertilizationSite.channel[middle],
-                        child: SvgPicture.asset(
-                          'assets/Images/Fertilization/multiple_channel_middle_1.svg',
-                          width: 150,
-                          height: 150 * configPvd.ratio,
-                        ),
-                    ),
-                mergeInjectorWithLevel(
-                  fertilizerSno: widget.fertilizationSite.commonDetails.sNo!,
-                  injector: widget.fertilizationSite.channel[widget.fertilizationSite.channel.length - 1],
-                  child: SvgPicture.asset(
-                    'assets/Images/Fertilization/multiple_channel_last_1.svg',
-                    width: 150,
-                    height: 150 * configPvd.ratio,
-                  ),
-                )
-              ],
-            ),
-          ],
-        ),
-        getEcPhSelector()
-      ],
-    );
-  }
-
-  Widget mergeInjectorWithLevel({required Widget child, required Injector injector, required double fertilizerSno}){
-    return Tooltip(
-      verticalOffset: 0,
-      message: '${getObjectName(injector.sNo, configPvd).name} \n level : ${injector.level == 0.0 ? '' : getObjectName(injector.level, configPvd).name}',
-      decoration: const BoxDecoration(
-          color: Colors.black
-      ),
-      textStyle: const TextStyle(fontSize: 10, color: Colors.white),
-      child: GestureDetector(
-        onTap: (){
-          FertilizationModel fertilizerSite = configPvd.fertilization.firstWhere((site) => site.commonDetails.sNo == fertilizerSno);
-          setState(() {
-            configPvd.selectedSno = injector.level;
-          });
-          selectionDialogBox(
-              context: context,
-              title: 'Select Level',
-              singleSelection: true,
-              listOfObject: configPvd.listOfGeneratedObject
-                  .where(
-                      (object)=> (object.objectId == 26 && !configPvd.source.any((src) => src.level == object.sNo) && !fertilizerSite.channel.any((channel)=> channel.level == object.sNo))
-                          ||
-                            (object.sNo == injector.level)
-              ).toList(),
-              onPressed: (){
-                setState(() {
-                  for(var channel in fertilizerSite.channel){
-                    if(channel.sNo == injector.sNo){
-                      injector.level = configPvd.selectedSno;
-                      break;
-                    }
-                  }
-                });
-                Navigator.pop(context);
-              }
-          );
-        },
-        child: Stack(
-          children: [
-            child,
-            Positioned(
-              left: 28 * configPvd.ratio,
-              top: 14 * configPvd.ratio,
-              child: Container(
-                padding: EdgeInsets.all(3 * configPvd.ratio),
-                height: 28 * configPvd.ratio,
-                alignment: Alignment.bottomCenter,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(2)
-                ),
-                child: Container(
-                  width: 5,
-                  height: 15 * configPvd.ratio,
-                  color: injector.level == 0.0 ? Colors.grey.shade400 : Theme.of(context).primaryColorLight,
-                ),
-              ),
-            )
-          ],
-        ),
-      ),
-    );
-  }
-}
-

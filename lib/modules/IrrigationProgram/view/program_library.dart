@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:hex/services/mqtt_service.dart';
+import 'package:hex/utils/Theme/oro_theme.dart';
 import 'package:provider/provider.dart';
 
 import '../../../Constants/constants.dart';
@@ -167,12 +168,11 @@ class _ProgramLibraryScreenNewState extends State<ProgramLibraryScreenNew> {
   Widget build(BuildContext context) {
     irrigationProgramMainProvider = Provider.of<IrrigationProgramMainProvider>(context, listen: true);
     final theme = Theme.of(context);
-    final primaryPurple = const Color(0xFF5B21B6);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: primaryBackground,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFF8FAFC),
+        backgroundColor: primaryBackground,
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: false,
@@ -317,7 +317,6 @@ class _ProgramLibraryScreenNewState extends State<ProgramLibraryScreenNew> {
   Widget _buildMasterListPanel(List<Program> filteredList) {
     final activeCount = _getActiveCount();
     final inactiveCount = _getInactiveCount();
-    final primaryPurple = const Color(0xFF5B21B6);
 
     return Container(
       padding: const EdgeInsets.all(14),
@@ -339,7 +338,7 @@ class _ProgramLibraryScreenNewState extends State<ProgramLibraryScreenNew> {
           Container(
             padding: const EdgeInsets.all(4),
             decoration: BoxDecoration(
-              color: const Color(0xFFF1F5F9),
+              color: primaryBackground,
               borderRadius: BorderRadius.circular(12),
             ),
             child: Row(
@@ -357,7 +356,7 @@ class _ProgramLibraryScreenNewState extends State<ProgramLibraryScreenNew> {
                       padding: const EdgeInsets.symmetric(vertical: 8),
                       decoration: BoxDecoration(
                         color: irrigationProgramMainProvider.selectedFilterType == 0
-                            ? const Color(0xFFEDE9FE)
+                            ? activeBgLavender
                             : Colors.transparent,
                         borderRadius: BorderRadius.circular(8),
                       ),
@@ -373,7 +372,7 @@ class _ProgramLibraryScreenNewState extends State<ProgramLibraryScreenNew> {
                                   : FontWeight.w500,
                               color: irrigationProgramMainProvider.selectedFilterType == 0
                                   ? primaryPurple
-                                  : const Color(0xFF64748B),
+                                  : textMuted,
                             ),
                           ),
                           const SizedBox(width: 6),
@@ -392,7 +391,7 @@ class _ProgramLibraryScreenNewState extends State<ProgramLibraryScreenNew> {
                                 fontWeight: FontWeight.bold,
                                 color: irrigationProgramMainProvider.selectedFilterType == 0
                                     ? primaryPurple
-                                    : const Color(0xFF64748B),
+                                    : textMuted,
                               ),
                             ),
                           ),
@@ -414,7 +413,7 @@ class _ProgramLibraryScreenNewState extends State<ProgramLibraryScreenNew> {
                       padding: const EdgeInsets.symmetric(vertical: 8),
                       decoration: BoxDecoration(
                         color: irrigationProgramMainProvider.selectedFilterType == 1
-                            ? const Color(0xFFEDE9FE)
+                            ? activeBgLavender
                             : Colors.transparent,
                         borderRadius: BorderRadius.circular(8),
                       ),
@@ -430,7 +429,7 @@ class _ProgramLibraryScreenNewState extends State<ProgramLibraryScreenNew> {
                                   : FontWeight.w500,
                               color: irrigationProgramMainProvider.selectedFilterType == 1
                                   ? primaryPurple
-                                  : const Color(0xFF64748B),
+                                  : textMuted,
                             ),
                           ),
                           const SizedBox(width: 6),
@@ -449,7 +448,7 @@ class _ProgramLibraryScreenNewState extends State<ProgramLibraryScreenNew> {
                                 fontWeight: FontWeight.bold,
                                 color: irrigationProgramMainProvider.selectedFilterType == 1
                                     ? primaryPurple
-                                    : const Color(0xFF64748B),
+                                    : textMuted,
                               ),
                             ),
                           ),
@@ -521,10 +520,10 @@ class _ProgramLibraryScreenNewState extends State<ProgramLibraryScreenNew> {
                           duration: const Duration(milliseconds: 150),
                           padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
-                            color: isSelected ? const Color(0xFFF5F3FF) : Colors.white,
+                            color: isSelected ? activeBgLavender : Colors.white,
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
-                              color: isSelected ? const Color(0xFF7C3AED) : const Color(0xFFE2E8F0),
+                              color: isSelected ? primaryPurple : const Color(0xFFE2E8F0),
                               width: isSelected ? 1.5 : 1,
                             ),
                           ),
@@ -534,7 +533,7 @@ class _ProgramLibraryScreenNewState extends State<ProgramLibraryScreenNew> {
                                 width: 38,
                                 height: 38,
                                 decoration: BoxDecoration(
-                                  color: isSelected ? const Color(0xFFDDD6FE) : const Color(0xFFECFDF5),
+                                  color: isSelected ? primaryPurple.withOpacity(0.2) : const Color(0xFFD1FAE5),
                                   borderRadius: BorderRadius.circular(10),
                                 ),
                                 child: Center(
@@ -543,7 +542,7 @@ class _ProgramLibraryScreenNewState extends State<ProgramLibraryScreenNew> {
                                     style: TextStyle(
                                       fontWeight: FontWeight.bold,
                                       fontSize: 13,
-                                      color: isSelected ? primaryPurple : const Color(0xFF047857),
+                                      color: isSelected ? primaryPurple : avatarGreen,
                                     ),
                                   ),
                                 ),
@@ -646,8 +645,6 @@ class _ProgramLibraryScreenNewState extends State<ProgramLibraryScreenNew> {
   }
 
   Widget _buildPlanningMethodCard(Program programItem) {
-    const primaryPurple = Color(0xFF5B21B6);
-
     final scheduleByDays = programItem.schedule['selected'] == irrigationProgramMainProvider.scheduleTypes[1];
     final scheduleAsRunList = programItem.schedule['selected'] == irrigationProgramMainProvider.scheduleTypes[2];
 
@@ -930,7 +927,6 @@ class _ProgramLibraryScreenNewState extends State<ProgramLibraryScreenNew> {
       );
     }
 
-    final primaryPurple = const Color(0xFF5B21B6);
     final name = program.programName.isNotEmpty ? program.programName : program.defaultProgramName;
     final zoneCount = program.sequence.length;
 
@@ -972,15 +968,15 @@ class _ProgramLibraryScreenNewState extends State<ProgramLibraryScreenNew> {
                         Flexible(
                           child: Text(
                             name,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 24,
                               fontWeight: FontWeight.bold,
-                              color: Color(0xFF0F172A),
+                              color: textDark,
                             ),
                           ),
                         ),
                         const SizedBox(width: 8),
-                        const Icon(Icons.edit_note, color: Color(0xFF5B21B6), size: 22),
+                        Icon(Icons.edit_note, color: primaryPurple, size: 22),
                       ],
                     ),
                   ),
@@ -992,15 +988,15 @@ class _ProgramLibraryScreenNewState extends State<ProgramLibraryScreenNew> {
                   OutlinedButton.icon(
                     onPressed: () => navigateToIrrigationProgram(program),
                     style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: Color(0xFF7C3AED), width: 1.5),
-                      backgroundColor: const Color(0xFFF5F3FF),
+                      side: BorderSide(color: primaryPurple, width: 1.5),
+                      backgroundColor: activeBgLavender,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                     ),
-                    icon: const Icon(Icons.tune, size: 16, color: Color(0xFF5B21B6)),
-                    label: const Text(
+                    icon: Icon(Icons.tune, size: 16, color: primaryPurple),
+                    label: Text(
                       "Configure Steps",
-                      style: TextStyle(color: Color(0xFF5B21B6), fontWeight: FontWeight.bold, fontSize: 13),
+                      style: TextStyle(color: primaryPurple, fontWeight: FontWeight.bold, fontSize: 13),
                     ),
                   ),
                   const SizedBox(width: 8),

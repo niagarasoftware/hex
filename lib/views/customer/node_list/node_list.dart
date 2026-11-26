@@ -4,8 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:hex/models/customer/site_model.dart';
 import 'package:hex/modules/bluetooth_low_energy/view/node_connection_page.dart';
 import 'package:hex/services/http_service.dart';
-import 'package:hex/utils/Theme/agritel_theme.dart';
-import 'package:hex/utils/helpers/mc_permission_helper.dart';
 import 'package:hex/views/customer/widgets/relay_status_avatar.dart';
 import 'package:provider/provider.dart';
 import '../../../StateManagement/mqtt_payload_provider.dart';

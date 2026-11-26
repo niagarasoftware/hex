@@ -1,11 +1,21 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import '../../../Screens/Dealer/controllerverssionupdate.dart';
+import '../../../Screens/planning/FactoryReset.dart';
+import '../../../flavors.dart';
 import '../../../models/customer/site_model.dart';
 import '../../../models/user_model.dart';
+import '../../../modules/UserChat/view/user_chat.dart';
+import '../../../user_manual_stub.dart';
 import '../../../utils/constants.dart';
 import '../../../utils/enums.dart';
+import '../../../utils/routes.dart';
+import '../../../utils/shared_preferences_helper.dart';
 import '../../common/user_profile/user_profile.dart';
+import '../app_info.dart';
 import '../help_support.dart';
+import 'app_bar_action.dart';
 
 class HexSidebarItem {
   final int index;
@@ -136,6 +146,7 @@ class HexSidebar extends StatefulWidget {
 
 class _HexSidebarState extends State<HexSidebar> {
   late bool _isExpanded;
+  bool _isHelpExpanded = false;
 
   @override
   void initState() {
@@ -153,18 +164,7 @@ class _HexSidebarState extends State<HexSidebar> {
     return trimmed.isNotEmpty ? trimmed[0].toUpperCase() : 'U';
   }
 
-  void _defaultHelpAction() {
-    if (widget.onHelpTap != null) {
-      widget.onHelpTap!();
-      return;
-    }
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => const DashboardHelpPage()),
-    );
-  }
-
-  void _defaultProfileAction() {
+  void _defaultProfileAction(BuildContext context) {
     if (widget.onProfileTap != null) {
       widget.onProfileTap!();
       return;
@@ -186,18 +186,316 @@ class _HexSidebarState extends State<HexSidebar> {
     );
   }
 
+  void _handleLogout(BuildContext context) async {
+    final colorScheme = Theme.of(context).colorScheme;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Logout'),
+        content: const Text('Are you sure you want to log out of your account?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: colorScheme.error,
+              foregroundColor: colorScheme.onError,
+            ),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Logout'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      await PreferenceHelper.clearAll();
+      const route = kIsWeb ? Routes.login : Routes.loginOtp;
+      if (context.mounted) {
+        Navigator.pushNamedAndRemoveUntil(
+          context,
+          route,
+          (route) => false,
+        );
+      }
+    }
+  }
+
+  Widget _buildHelpAndSupportMenu(
+      BuildContext context,
+      String displayName,
+      String displayMobile,
+      bool showControllerInfo,
+      bool showFactoryReset) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Material(
+          color: Colors.transparent,
+          borderRadius: BorderRadius.circular(10),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(10),
+            onTap: () {
+              setState(() {
+                if (!_isExpanded) _isExpanded = true;
+                _isHelpExpanded = !_isHelpExpanded;
+              });
+            },
+            hoverColor: colorScheme.surfaceContainerLow,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 180),
+              padding: EdgeInsets.symmetric(
+                horizontal: _isExpanded ? 12.0 : 0.0,
+                vertical: 10.0,
+              ),
+              decoration: BoxDecoration(
+                color: _isHelpExpanded
+                    ? colorScheme.primaryContainer
+                    : Colors.transparent,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Row(
+                mainAxisAlignment: _isExpanded
+                    ? MainAxisAlignment.start
+                    : MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.live_help_outlined,
+                    size: 20,
+                    color: _isHelpExpanded
+                        ? colorScheme.onPrimaryContainer
+                        : colorScheme.outline,
+                  ),
+                  if (_isExpanded) ...[
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'Help & Support',
+                        style: TextStyle(
+                          fontSize: 13.5,
+                          fontWeight: _isHelpExpanded
+                              ? FontWeight.bold
+                              : FontWeight.w500,
+                          color: _isHelpExpanded
+                              ? colorScheme.onPrimaryContainer
+                              : colorScheme.onSurfaceVariant,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    Icon(
+                      _isHelpExpanded
+                          ? Icons.keyboard_arrow_up_rounded
+                          : Icons.keyboard_arrow_down_rounded,
+                      size: 18,
+                      color: _isHelpExpanded
+                          ? colorScheme.onPrimaryContainer
+                          : colorScheme.outline,
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+        ),
+        if (_isHelpExpanded && _isExpanded) ...[
+          const SizedBox(height: 4),
+          Container(
+            margin: const EdgeInsets.only(left: 6),
+            decoration: BoxDecoration(
+              color: colorScheme.surfaceContainerLow,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _buildSubMenuItem(
+                  context: context,
+                  icon: Icons.info_outline,
+                  title: 'App info',
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const AppInfo()),
+                    );
+                  },
+                ),
+                _buildSubMenuItem(
+                  context: context,
+                  icon: Icons.help_outline_rounded,
+                  title: 'Help & support',
+                  onTap: () {
+                    if (widget.master.userManualLink?.isNotEmpty == true) {
+                      final pdfUrl = AppConstants.buildUserManualUrl(widget.master.userManualLink);
+                      if (pdfUrl.isNotEmpty) {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => UserManualWeb(pdfUrl: pdfUrl),
+                          ),
+                        );
+                        return;
+                      }
+                    }
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const DashboardHelpPage(),
+                      ),
+                    );
+                  },
+                ),
+                if (showControllerInfo)
+                  _buildSubMenuItem(
+                    context: context,
+                    icon: Icons.info_outline,
+                    title: 'Controller info',
+                    onTap: () async {
+                      final loggedUser = widget.loggedInUser;
+                      if (loggedUser != null && loggedUser.role == UserRole.admin) {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => ResetVerssion(
+                              userId: widget.viewedCustomer?.id ?? loggedUser.id,
+                              controllerId: widget.master.controllerId,
+                              deviceID: widget.master.deviceId,
+                              modeID: widget.master.modelId,
+                              createUser: loggedUser.id,
+                            ),
+                          ),
+                        );
+                      } else {
+                        showPasswordDialog(
+                          context,
+                          F.name.toLowerCase().contains('oro')
+                              ? 'Oro@321'
+                              : F.name.toLowerCase().contains('smart')
+                              ? 'LK@321'
+                              : F.name.toLowerCase().contains('agritel')
+                              ? 'Agritel@321'
+                              : 'Oro@321',
+                          widget.viewedCustomer?.id ?? loggedUser?.id ?? 0,
+                          widget.master.controllerId,
+                          widget.master.deviceId,
+                          widget.master.modelId,
+                          1,
+                        );
+                      }
+                    },
+                  ),
+                if (showFactoryReset)
+                  _buildSubMenuItem(
+                    context: context,
+                    icon: Icons.restore,
+                    title: 'Factory Reset',
+                    onTap: () async {
+                      final loggedUser = widget.loggedInUser;
+                      if (loggedUser != null && loggedUser.role == UserRole.admin) {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => ResetAccumalationScreen(
+                              userId: widget.viewedCustomer?.id ?? loggedUser.id,
+                              controllerId: widget.master.controllerId,
+                              deviceID: widget.master.deviceId,
+                              createUser: loggedUser.id,
+                            ),
+                          ),
+                        );
+                      } else {
+                        showPasswordDialog(
+                          context,
+                          'Oro@321',
+                          widget.viewedCustomer?.id ?? loggedUser?.id ?? 0,
+                          widget.master.controllerId,
+                          widget.master.deviceId,
+                          widget.master.modelId,
+                          2,
+                        );
+                      }
+                    },
+                  ),
+                _buildSubMenuItem(
+                  context: context,
+                  icon: Icons.feedback_outlined,
+                  title: 'Send feedback',
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => UserChatScreen(
+                          userId: widget.viewedCustomer?.id ?? widget.loggedInUser?.id ?? 0,
+                          userName: displayName,
+                          phoneNumber: displayMobile,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildSubMenuItem({
+    required BuildContext context,
+    required IconData icon,
+    required String title,
+    required VoidCallback onTap,
+  }) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(8),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        hoverColor: colorScheme.surfaceContainerHighest,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+          child: Row(
+            children: [
+              Icon(
+                icon,
+                size: 16,
+                color: colorScheme.onSurfaceVariant,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w500,
+                    color: colorScheme.onSurface,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final items = HexSidebar.buildItems(widget.master);
-
-    final primaryPurple = colorScheme.primary;
-    final activeBgLavender = colorScheme.primaryContainer;
-    final brandIconBg = colorScheme.secondary;
-    final textDark = colorScheme.onSurface;
-    final textMuted = colorScheme.onSurfaceVariant;
-    final iconMuted = colorScheme.outline;
-    final avatarGreen = colorScheme.tertiary;
 
     final String displayName = (widget.userName != null && widget.userName!.trim().isNotEmpty)
         ? widget.userName!.trim()
@@ -216,8 +514,14 @@ class _HexSidebarState extends State<HexSidebar> {
                 : '';
 
     final initials = _getUserInitials(displayName);
-
     final sidebarWidth = _isExpanded ? 240.0 : 72.0;
+
+    final hasConfigPermission = widget.loggedInUser?.configPermission ?? false;
+    final isExcludedModel = [...AppConstants.shine2V, ...AppConstants.shine4V, ...AppConstants.elite10V, ...AppConstants.pumpList]
+        .contains(widget.master.modelId);
+
+    final showControllerInfo = !hasConfigPermission && !isExcludedModel;
+    final showFactoryReset = !hasConfigPermission;
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
@@ -243,57 +547,23 @@ class _HexSidebarState extends State<HexSidebar> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // -------------------------------------------------------------------
-          // Header: Brand Logo & Title
-          // -------------------------------------------------------------------
+          // Header: VIOM Automation Brand SVG Logo
           Padding(
             padding: EdgeInsets.symmetric(
-              horizontal: _isExpanded ? 18.0 : 16.0,
-              vertical: 20.0,
+              horizontal: _isExpanded ? 12.0 : 8.0,
+              vertical: 14.0,
             ),
-            child: Row(
-              children: [
-                Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    color: brandIconBg,
-                    borderRadius: BorderRadius.circular(10),
-                    boxShadow: [
-                      BoxShadow(
-                        color: brandIconBg.withOpacity(0.3),
-                        blurRadius: 6,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: const Center(
-                    child: Icon(
-                      Icons.hexagon_rounded,
-                      color: Colors.white,
-                      size: 20,
-                    ),
-                  ),
-                ),
-                if (_isExpanded) ...[
-                  const SizedBox(width: 12),
-                  Text(
-                    'HEX',
-                    style: TextStyle(
-                      fontSize: 19,
-                      fontWeight: FontWeight.w800,
-                      color: textDark,
-                      letterSpacing: 0.6,
-                    ),
-                  ),
-                ],
-              ],
+            child: Center(
+              child: SvgPicture.asset(
+                'assets/svg_images/oro_logo.svg',
+                width: _isExpanded ? 180.0 : 44.0,
+                height: _isExpanded ? 65.0 : 44.0,
+                fit: BoxFit.contain,
+              ),
             ),
           ),
 
-          // -------------------------------------------------------------------
           // Nav Items List
-          // -------------------------------------------------------------------
           Expanded(
             child: ListView.separated(
               padding: EdgeInsets.symmetric(
@@ -313,7 +583,7 @@ class _HexSidebarState extends State<HexSidebar> {
                     borderRadius: BorderRadius.circular(10),
                     onTap: () => widget.onDestinationSelected(item.index),
                     hoverColor: isSelected
-                        ? activeBgLavender
+                        ? colorScheme.primaryContainer
                         : colorScheme.surfaceContainerLow,
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 150),
@@ -322,7 +592,7 @@ class _HexSidebarState extends State<HexSidebar> {
                         vertical: 10.5,
                       ),
                       decoration: BoxDecoration(
-                        color: isSelected ? activeBgLavender : Colors.transparent,
+                        color: isSelected ? colorScheme.primaryContainer : Colors.transparent,
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Row(
@@ -333,7 +603,7 @@ class _HexSidebarState extends State<HexSidebar> {
                           Icon(
                             item.icon,
                             size: 20,
-                            color: isSelected ? primaryPurple : iconMuted,
+                            color: isSelected ? colorScheme.onPrimaryContainer : colorScheme.outline,
                           ),
                           if (_isExpanded) ...[
                             const SizedBox(width: 14),
@@ -345,7 +615,7 @@ class _HexSidebarState extends State<HexSidebar> {
                                   fontWeight: isSelected
                                       ? FontWeight.w600
                                       : FontWeight.w500,
-                                  color: isSelected ? primaryPurple : textMuted,
+                                  color: isSelected ? colorScheme.onPrimaryContainer : colorScheme.onSurfaceVariant,
                                 ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
@@ -371,138 +641,138 @@ class _HexSidebarState extends State<HexSidebar> {
             ),
           ),
 
-          // -------------------------------------------------------------------
-          // Bottom Section: Help + Divider + User Profile
-          // -------------------------------------------------------------------
-          Padding(
-            padding: EdgeInsets.symmetric(
-              horizontal: _isExpanded ? 14.0 : 10.0,
-              vertical: 8.0,
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Help button
-                Material(
-                  color: Colors.transparent,
-                  borderRadius: BorderRadius.circular(10),
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(10),
-                    onTap: _defaultHelpAction,
-                    hoverColor: colorScheme.surfaceContainerLow,
-                    child: Padding(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: _isExpanded ? 14.0 : 0.0,
-                        vertical: 10.0,
-                      ),
-                      child: Row(
-                        mainAxisAlignment: _isExpanded
-                            ? MainAxisAlignment.start
-                            : MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.help_outline_rounded,
-                            size: 20,
-                            color: iconMuted,
-                          ),
-                          if (_isExpanded) ...[
-                            const SizedBox(width: 14),
-                            Expanded(
-                              child: Text(
-                                'Help',
-                                style: TextStyle(
-                                  fontSize: 13.5,
-                                  fontWeight: FontWeight.w500,
-                                  color: textMuted,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
+          // Bottom Section: Help & Support (Expandable) + Divider + User Profile
+          SingleChildScrollView(
+            child: Padding(
+              padding: EdgeInsets.symmetric(
+                horizontal: _isExpanded ? 14.0 : 10.0,
+                vertical: 8.0,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _buildHelpAndSupportMenu(
+                    context,
+                    displayName,
+                    displayMobile,
+                    showControllerInfo,
+                    showFactoryReset,
+                  ),
+
+                  // Divider
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8.0),
+                    child: Divider(
+                      height: 1,
+                      thickness: 1,
+                      color: colorScheme.outlineVariant,
                     ),
                   ),
-                ),
 
-                // Divider
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8.0),
-                  child: Divider(
-                    height: 1,
-                    thickness: 1,
-                    color: colorScheme.outlineVariant,
-                  ),
-                ),
-
-                // User Profile Tile
-                Material(
-                  color: Colors.transparent,
-                  borderRadius: BorderRadius.circular(10),
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(10),
-                    onTap: _defaultProfileAction,
-                    hoverColor: colorScheme.surfaceContainerLow,
-                    child: Padding(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: _isExpanded ? 8.0 : 0.0,
-                        vertical: 6.0,
-                      ),
-                      child: Row(
-                        mainAxisAlignment: _isExpanded
-                            ? MainAxisAlignment.start
-                            : MainAxisAlignment.center,
-                        children: [
-                          CircleAvatar(
-                            radius: 17,
-                            backgroundColor: avatarGreen,
-                            child: Text(
-                              initials,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 12.5,
-                                fontWeight: FontWeight.bold,
+                  // User Profile Tile Row
+                  Row(
+                    children: [
+                      // Clickable Profile Section (Avatar + Name + Mobile)
+                      Expanded(
+                        child: Material(
+                          color: Colors.transparent,
+                          borderRadius: BorderRadius.circular(10),
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(10),
+                            onTap: () => _defaultProfileAction(context),
+                            hoverColor: colorScheme.surfaceContainerLow,
+                            child: Padding(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: _isExpanded ? 6.0 : 0.0,
+                                vertical: 6.0,
                               ),
-                            ),
-                          ),
-                          if (_isExpanded) ...[
-                            const SizedBox(width: 11),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisSize: MainAxisSize.min,
+                              child: Row(
+                                mainAxisAlignment: _isExpanded
+                                    ? MainAxisAlignment.start
+                                    : MainAxisAlignment.center,
                                 children: [
-                                  Text(
-                                    displayName,
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w600,
-                                      color: textDark,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                  if (displayMobile.isNotEmpty) ...[
-                                    const SizedBox(height: 1.5),
-                                    Text(
-                                      displayMobile,
+                                  CircleAvatar(
+                                    radius: 17,
+                                    backgroundColor: colorScheme.tertiary,
+                                    child: Text(
+                                      initials,
                                       style: TextStyle(
-                                        fontSize: 11,
-                                        color: iconMuted,
+                                        color: colorScheme.onTertiary,
+                                        fontSize: 12.5,
+                                        fontWeight: FontWeight.bold,
                                       ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                  if (_isExpanded) ...[
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Text(
+                                            displayName,
+                                            style: TextStyle(
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w600,
+                                              color: colorScheme.onSurface,
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                          if (displayMobile.isNotEmpty) ...[
+                                            const SizedBox(height: 1.5),
+                                            Text(
+                                              displayMobile,
+                                              style: TextStyle(
+                                                fontSize: 11,
+                                                color: colorScheme.onSurfaceVariant,
+                                              ),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ],
+                                        ],
+                                      ),
                                     ),
                                   ],
                                 ],
                               ),
                             ),
-                          ],
-                        ],
+                          ),
+                        ),
                       ),
-                    ),
+                      if (_isExpanded) const SizedBox(width: 6),
+                      // Permanent Logout Action Button
+                      if (_isExpanded)
+                        Tooltip(
+                          message: 'Logout',
+                          child: Material(
+                            color: Colors.transparent,
+                            borderRadius: BorderRadius.circular(20),
+                            child: InkWell(
+                              onTap: () => _handleLogout(context),
+                              borderRadius: BorderRadius.circular(20),
+                              child: Container(
+                                width: 32,
+                                height: 32,
+                                decoration: BoxDecoration(
+                                  color: colorScheme.errorContainer,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Icon(
+                                  Icons.logout_rounded,
+                                  size: 16,
+                                  color: colorScheme.onErrorContainer,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ],

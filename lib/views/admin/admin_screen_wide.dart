@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hex/utils/enums.dart';
 import 'package:provider/provider.dart';
-import '../../Widgets/app_logo.dart';
 import '../../Widgets/user_account_menu.dart';
 import '../../flavors.dart';
 import '../../layouts/layout_selector.dart';
@@ -26,10 +25,12 @@ class AdminScreenWide extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        leading: const Padding(
-          padding: EdgeInsets.only(left: 15),
-          child: AppLogo(),
-        ),
+        leading: Navigator.of(context).canPop()
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: () => Navigator.pop(context),
+              )
+            : null,
         title: Row(
           children: [
             MainMenu(viewModel: viewModel),
@@ -85,7 +86,7 @@ class AdminScreenWide extends StatelessWidget {
         ],
         centerTitle: false,
         elevation: 10,
-        leadingWidth: F.appFlavor!.name.contains('oro') ? 75:110,
+        leadingWidth: Navigator.of(context).canPop() ? 50 : 0,
       ),
       body: IndexedStack(
         index: viewModel.selectedIndex,

@@ -1,9 +1,7 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:persistent_bottom_nav_bar/persistent_bottom_nav_bar.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
 import '../model/cropadvisory_model.dart';
-import 'package:intl/intl.dart';
 import 'crop_list_screen.dart';
 
 class DashboardScreen extends StatefulWidget {

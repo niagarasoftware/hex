@@ -97,7 +97,7 @@ class _StandaloneLogState extends State<StandaloneLog> {
   int noOfRowsPerPage = 20;
   int totalPages = 0;
   int selectedPages = 1;
-  String _range = '';
+  final String _range = '';
   String _rangeCount = '';
   String _dateCount = '';
 
@@ -128,7 +128,7 @@ class _StandaloneLogState extends State<StandaloneLog> {
       };
       var response = await IrrigationRepository().getUserNames(body);
       Map<String, dynamic> configData = jsonDecode(response.body);
-      print("jsonData : ${configData}");
+      print("jsonData : $configData");
       if (mounted) {
         setState(() {
           configObject = configData['data']['configObject'] ?? [];
@@ -733,7 +733,7 @@ class _StandaloneLogState extends State<StandaloneLog> {
                 onPressed: (){
                   showDialog(context: context, builder: (context){
                     return AlertDialog(
-                      title: Text('Date Picker'),
+                      title: const Text('Date Picker'),
                       content: StatefulBuilder(
                         builder: (BuildContext context, StateSetter stateSetter) {
                           return SizedBox(
@@ -928,7 +928,7 @@ class _StandaloneLogState extends State<StandaloneLog> {
       } else {
         _rangeCount = args.value.length.toString();
       }
-      print("range: ${_range},rangecount:${_rangeCount},Select date:${_selectedDate}");
+      print("range: $_range,rangecount:$_rangeCount,Select date:$_selectedDate");
     });
   }
 }

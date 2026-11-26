@@ -8,13 +8,14 @@ import '../../services/http_service.dart';
 import '../../utils/snack_bar.dart';
 
 class DealerDefinitionInConfig extends StatefulWidget {
-  const DealerDefinitionInConfig(
-      {Key? key,
-        required this.userId,
-        required this.customerId,
-        required this.controllerId,
-        required this.imeiNo})
-      : super(key: key);
+  const DealerDefinitionInConfig({
+    super.key,
+    required this.userId,
+    required this.customerId,
+    required this.controllerId,
+    required this.imeiNo,
+  });
+
   final int userId, customerId, controllerId;
   final String imeiNo;
 
@@ -25,7 +26,7 @@ class DealerDefinitionInConfig extends StatefulWidget {
 
 class DealerDefinitionInConfigState extends State<DealerDefinitionInConfig> {
   DataModelDDConfig data =
-  DataModelDDConfig(categories: [], dealerDefinition: {});
+      DataModelDDConfig(categories: [], dealerDefinition: {});
   bool visibleLoading = false;
 
   @override
@@ -64,6 +65,7 @@ class DealerDefinitionInConfigState extends State<DealerDefinitionInConfig> {
     return Scaffold(
       backgroundColor: colorScheme.surfaceContainerLowest,
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         title: Text(
           'Dealer Definition',
           style: textTheme.titleMedium?.copyWith(
@@ -77,22 +79,22 @@ class DealerDefinitionInConfigState extends State<DealerDefinitionInConfig> {
       ),
       body: visibleLoading
           ? Center(
-        child: SizedBox(
-          width: 80,
-          height: 80,
-          child: LoadingIndicator(
-            indicatorType: Indicator.ballPulse,
-            colors: [colorScheme.primary],
-          ),
-        ),
-      )
+              child: SizedBox(
+                width: 80,
+                height: 80,
+                child: LoadingIndicator(
+                  indicatorType: Indicator.ballPulse,
+                  colors: [colorScheme.primary],
+                ),
+              ),
+            )
           : DealerDefinitionDashboard(
-        data: data,
-        userId: widget.userId,
-        customerId: widget.customerId,
-        controllerId: widget.controllerId,
-        onStateChanged: () => setState(() {}),
-      ),
+              data: data,
+              userId: widget.userId,
+              customerId: widget.customerId,
+              controllerId: widget.controllerId,
+              onStateChanged: () => setState(() {}),
+            ),
     );
   }
 
@@ -121,7 +123,6 @@ class DealerDefinitionInConfigState extends State<DealerDefinitionInConfig> {
     );
   }
 
-  // Delegated builders for backward compatibility
   Widget buildCategoryContainer(Category category, DataModelDDConfig data,
       {bool isSingleCategoryView = false, BoxConstraints? constraints}) {
     return _DealerDefinitionDashboardState.buildCategoryContainerStatic(
@@ -181,12 +182,14 @@ class DealerDefinitionInConfigState extends State<DealerDefinitionInConfig> {
 }
 
 class MyContainerWithTabs extends StatefulWidget {
-  const MyContainerWithTabs(
-      {super.key,
-        required this.data,
-        required this.userID,
-        required this.customerID,
-        required this.controllerId});
+  const MyContainerWithTabs({
+    super.key,
+    required this.data,
+    required this.userID,
+    required this.customerID,
+    required this.controllerId,
+  });
+
   final DataModelDDConfig data;
   final int userID, customerID, controllerId;
 
@@ -237,6 +240,12 @@ class _DealerDefinitionDashboardState
     extends State<DealerDefinitionDashboard> {
   int selectedCategoryFilter = -1; // -1 means "All"
 
+  static bool _shouldShowDescription(String? parameter, String? description) {
+    if (description == null || description.trim().isEmpty) return false;
+    if (parameter == null || parameter.trim().isEmpty) return true;
+    return parameter.trim().toLowerCase() != description.trim().toLowerCase();
+  }
+
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
@@ -249,7 +258,7 @@ class _DealerDefinitionDashboardState
 
     return Column(
       children: [
-        _buildCategoryFilterChips(context),
+        _buildCategoryTabs(context),
         Expanded(
           child: _buildMainDashboardBody(context),
         ),
@@ -258,76 +267,76 @@ class _DealerDefinitionDashboardState
     );
   }
 
-  Widget _buildCategoryFilterChips(BuildContext context) {
+  Widget _buildCategoryTabs(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     if (widget.data.categories.isEmpty) return const SizedBox.shrink();
+
+    final allTabs = [
+      {'id': -1, 'name': 'All'},
+      ...widget.data.categories
+          .map((c) => {'id': c.categoryId, 'name': c.categoryName}),
+    ];
 
     return Container(
       width: double.infinity,
       color: colorScheme.surface,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 980),
-          child: Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            alignment: WrapAlignment.center,
-            children: [
-              _buildFilterChip(
-                context: context,
-                title: 'All',
-                isSelected: selectedCategoryFilter == -1,
-                onTap: () {
-                  setState(() {
-                    selectedCategoryFilter = -1;
-                  });
-                },
-              ),
-              for (var category in widget.data.categories)
-                _buildFilterChip(
-                  context: context,
-                  title: category.categoryName,
-                  isSelected: selectedCategoryFilter == category.categoryId,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: allTabs.map((tab) {
+            final id = tab['id'] as int;
+            final name = tab['name'] as String;
+            final isSelected = selectedCategoryFilter == id;
+
+            return Padding(
+              padding: const EdgeInsets.only(right: 8.0),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
                   onTap: () {
                     setState(() {
-                      selectedCategoryFilter = category.categoryId;
+                      selectedCategoryFilter = id;
                     });
                   },
+                  borderRadius: BorderRadius.circular(8),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 180),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: isSelected
+                          ? colorScheme.primary
+                          : colorScheme.surfaceContainerLow,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border(
+                        bottom: BorderSide(
+                          color: isSelected
+                              ? colorScheme.secondary
+                              : Colors.transparent,
+                          width: 3,
+                        ),
+                      ),
+                    ),
+                    child: Text(
+                      name,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight:
+                            isSelected ? FontWeight.bold : FontWeight.w500,
+                        color: isSelected
+                            ? colorScheme.onPrimary
+                            : colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
                 ),
-            ],
-          ),
+              ),
+            );
+          }).toList(),
         ),
-      ),
-    );
-  }
-
-  Widget _buildFilterChip({
-    required BuildContext context,
-    required String title,
-    required bool isSelected,
-    required VoidCallback onTap,
-  }) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-
-    return ChoiceChip(
-      label: Text(title),
-      selected: isSelected,
-      onSelected: (_) => onTap(),
-      selectedColor: colorScheme.primary,
-      backgroundColor: colorScheme.surface,
-      side: BorderSide(
-        color: isSelected
-            ? colorScheme.primary
-            : colorScheme.outlineVariant,
-      ),
-      labelStyle: textTheme.bodyMedium?.copyWith(
-        color: isSelected
-            ? colorScheme.onPrimary
-            : colorScheme.onSurfaceVariant,
-        fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-        fontSize: 13,
       ),
     );
   }
@@ -343,106 +352,29 @@ class _DealerDefinitionDashboardState
     final isSingleCategory = selectedCategoryFilter != -1;
     final filteredCategories = isSingleCategory
         ? widget.data.categories
-        .where((c) => c.categoryId == selectedCategoryFilter)
-        .toList()
+            .where((c) => c.categoryId == selectedCategoryFilter)
+            .toList()
         : widget.data.categories;
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        const marginHorizontal = 16.0 * 2;
-        const contentMaxWidth = 980.0;
-        final parentWidth = constraints.maxWidth;
-        final effectiveWidth =
-        parentWidth > contentMaxWidth ? contentMaxWidth : parentWidth;
-        final availableWidth = effectiveWidth - marginHorizontal;
-        const spacing = 16.0;
-        final isMobile = availableWidth < 640;
-
-        return Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: contentMaxWidth),
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.only(
-                  left: 16, right: 16, top: 16, bottom: 80),
-              child: (isSingleCategory || isMobile)
-                  ? Column(
-                children: [
-                  for (final category in filteredCategories) ...[
-                    buildCategoryContainerStatic(
-                      context: context,
-                      category: category,
-                      data: widget.data,
-                      isSingleCategoryView: isSingleCategory,
-                      onStateChanged: () {
-                        setState(() {});
-                        widget.onStateChanged();
-                      },
-                    ),
-                    const SizedBox(height: spacing),
-                  ],
-                ],
-              )
-                  : _buildMasonryGrid(
-                  filteredCategories, availableWidth, spacing),
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        children: [
+          for (final category in filteredCategories) ...[
+            buildCategoryContainerStatic(
+              context: context,
+              category: category,
+              data: widget.data,
+              isSingleCategoryView: isSingleCategory,
+              onStateChanged: () {
+                setState(() {});
+                widget.onStateChanged();
+              },
             ),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildMasonryGrid(
-      List<Category> categories, double availableWidth, double spacing) {
-    final leftColumn = <Widget>[];
-    final rightColumn = <Widget>[];
-
-    for (int i = 0; i < categories.length; i++) {
-      final cardWidget = buildCategoryContainerStatic(
-        context: context,
-        category: categories[i],
-        data: widget.data,
-        onStateChanged: () {
-          setState(() {});
-          widget.onStateChanged();
-        },
-      );
-      if (leftColumn.length <= rightColumn.length) {
-        leftColumn.add(cardWidget);
-      } else {
-        rightColumn.add(cardWidget);
-      }
-    }
-
-    final colWidth =
-        ((availableWidth - spacing) / 2).floorToDouble() - 0.5;
-
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SizedBox(
-          width: colWidth,
-          child: Column(
-            children: [
-              for (int i = 0; i < leftColumn.length; i++) ...[
-                leftColumn[i],
-                if (i < leftColumn.length - 1) SizedBox(height: spacing),
-              ],
-            ],
-          ),
-        ),
-        SizedBox(width: spacing),
-        SizedBox(
-          width: colWidth,
-          child: Column(
-            children: [
-              for (int i = 0; i < rightColumn.length; i++) ...[
-                rightColumn[i],
-                if (i < rightColumn.length - 1) SizedBox(height: spacing),
-              ],
-            ],
-          ),
-        ),
-      ],
+            const SizedBox(height: 16),
+          ],
+        ],
+      ),
     );
   }
 
@@ -461,9 +393,16 @@ class _DealerDefinitionDashboardState
         color: colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: colorScheme.outlineVariant,
+          color: colorScheme.outlineVariant.withOpacity(0.5),
           width: 1,
         ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.02),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -497,7 +436,7 @@ class _DealerDefinitionDashboardState
         ),
         border: Border(
           bottom: BorderSide(
-            color: colorScheme.outlineVariant,
+            color: colorScheme.outlineVariant.withOpacity(0.4),
           ),
         ),
       ),
@@ -533,13 +472,12 @@ class _DealerDefinitionDashboardState
 
     return LayoutBuilder(
       builder: (context, cardConstraints) {
-        final useTwoColumns =
-            isSingleCategoryView && cardConstraints.maxWidth >= 580;
+        final useTwoColumns = cardConstraints.maxWidth >= 700;
+        const spacing = 12.0;
 
         if (useTwoColumns) {
-          const spacing = 12.0;
           final colWidth =
-              ((cardConstraints.maxWidth - spacing) / 2).floorToDouble() - 0.5;
+              ((cardConstraints.maxWidth - 24.0 - spacing) / 2).floorToDouble() - 1.0;
 
           final leftItems = <Widget>[];
           final rightItems = <Widget>[];
@@ -559,11 +497,8 @@ class _DealerDefinitionDashboardState
             }
           }
 
-          return ClipRRect(
-            borderRadius: const BorderRadius.only(
-              bottomLeft: Radius.circular(16),
-              bottomRight: Radius.circular(16),
-            ),
+          return Padding(
+            padding: const EdgeInsets.all(12),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -577,18 +512,19 @@ class _DealerDefinitionDashboardState
                           Divider(
                             height: 1,
                             thickness: 0.5,
-                            color: colorScheme.outlineVariant,
+                            color: colorScheme.outlineVariant.withOpacity(0.5),
                           ),
                       ],
                     ],
                   ),
                 ),
-                Container(
+                SizedBox(
                   width: spacing,
-                  alignment: Alignment.center,
-                  child: Container(
-                    width: 0.5,
-                    color: colorScheme.outlineVariant,
+                  child: Center(
+                    child: Container(
+                      width: 0.5,
+                      color: colorScheme.outlineVariant.withOpacity(0.5),
+                    ),
                   ),
                 ),
                 SizedBox(
@@ -601,7 +537,7 @@ class _DealerDefinitionDashboardState
                           Divider(
                             height: 1,
                             thickness: 0.5,
-                            color: colorScheme.outlineVariant,
+                            color: colorScheme.outlineVariant.withOpacity(0.5),
                           ),
                       ],
                     ],
@@ -612,11 +548,8 @@ class _DealerDefinitionDashboardState
           );
         }
 
-        return ClipRRect(
-          borderRadius: const BorderRadius.only(
-            bottomLeft: Radius.circular(16),
-            bottomRight: Radius.circular(16),
-          ),
+        return Padding(
+          padding: const EdgeInsets.all(12),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -632,7 +565,7 @@ class _DealerDefinitionDashboardState
                   Divider(
                     height: 1,
                     thickness: 0.5,
-                    color: colorScheme.outlineVariant,
+                    color: colorScheme.outlineVariant.withOpacity(0.5),
                   ),
               ],
             ],
@@ -650,7 +583,7 @@ class _DealerDefinitionDashboardState
     required VoidCallback onStateChanged,
   }) {
     final dropdownlist =
-    StringToList().stringtolist('${definition?.dropdownValues}', ',');
+        StringToList().stringtolist('${definition?.dropdownValues}', ',');
 
     if (definition?.widgetTypeId == 3) {
       return buildDropdownItemStatic(
@@ -690,8 +623,11 @@ class _DealerDefinitionDashboardState
         ? (dropdownlist.isNotEmpty ? dropdownlist[0].toString() : null)
         : definition?.value;
 
+    final showDesc =
+        _shouldShowDescription(definition?.parameter, definition?.description);
+
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       child: LayoutBuilder(
         builder: (context, rowConstraints) {
           final isNarrow = rowConstraints.maxWidth < 250;
@@ -708,11 +644,10 @@ class _DealerDefinitionDashboardState
                   color: colorScheme.onSurface,
                 ),
               ),
-              if (definition?.description != null &&
-                  definition!.description.isNotEmpty) ...[
+              if (showDesc) ...[
                 const SizedBox(height: 2),
                 Text(
-                  definition.description,
+                  definition!.description,
                   style: textTheme.bodySmall?.copyWith(
                     fontSize: 11.5,
                     color: colorScheme.onSurfaceVariant,
@@ -801,8 +736,11 @@ class _DealerDefinitionDashboardState
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
+    final showDesc =
+        _shouldShowDescription(definition?.parameter, definition?.description);
+
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       child: LayoutBuilder(
         builder: (context, rowConstraints) {
           final isNarrow = rowConstraints.maxWidth < 230;
@@ -819,11 +757,10 @@ class _DealerDefinitionDashboardState
                   color: colorScheme.onSurface,
                 ),
               ),
-              if (definition?.description != null &&
-                  definition!.description.isNotEmpty) ...[
+              if (showDesc) ...[
                 const SizedBox(height: 2),
                 Text(
-                  definition.description,
+                  definition!.description,
                   style: textTheme.bodySmall?.copyWith(
                     fontSize: 11.5,
                     color: colorScheme.onSurfaceVariant,
@@ -834,7 +771,7 @@ class _DealerDefinitionDashboardState
           );
 
           final inputControl = SizedBox(
-            width: 70,
+            width: 80,
             height: 36,
             child: CustomTextField(
               key: ValueKey(
@@ -893,8 +830,11 @@ class _DealerDefinitionDashboardState
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
+    final showDesc =
+        _shouldShowDescription(definition?.parameter, definition?.description);
+
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       child: LayoutBuilder(
         builder: (context, rowConstraints) {
           final isNarrow = rowConstraints.maxWidth < 200;
@@ -911,11 +851,10 @@ class _DealerDefinitionDashboardState
                   color: colorScheme.onSurface,
                 ),
               ),
-              if (definition?.description != null &&
-                  definition!.description.isNotEmpty) ...[
+              if (showDesc) ...[
                 const SizedBox(height: 2),
                 Text(
-                  definition.description,
+                  definition!.description,
                   style: textTheme.bodySmall?.copyWith(
                     fontSize: 11.5,
                     color: colorScheme.onSurfaceVariant,
@@ -991,7 +930,7 @@ class _DealerDefinitionDashboardState
     final colorScheme = Theme.of(context).colorScheme;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
       decoration: BoxDecoration(
         color: colorScheme.surface,
         border: Border(
@@ -1003,10 +942,10 @@ class _DealerDefinitionDashboardState
         children: [
           FilledButton.icon(
             style: FilledButton.styleFrom(
-              backgroundColor: colorScheme.primary,
-              foregroundColor: colorScheme.onPrimary,
+              backgroundColor: colorScheme.secondary,
+              foregroundColor: colorScheme.onSecondary,
               padding:
-              const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  const EdgeInsets.symmetric(horizontal: 28, vertical: 12),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
               ),
@@ -1020,9 +959,9 @@ class _DealerDefinitionDashboardState
                 "createUser": widget.userId
               };
               var getUserDetails =
-              await repository.createdealerDefinition(body);
+                  await repository.createdealerDefinition(body);
               final jsonDataResponseput =
-              json.decode(getUserDetails.body);
+                  json.decode(getUserDetails.body);
               if (!mounted) return;
               GlobalSnackBar.show(
                 context,
@@ -1044,9 +983,9 @@ class _DealerDefinitionDashboardState
 
 class StringToList {
   List<String> stringtolist(
-      String name,
-      String split,
-      ) {
+    String name,
+    String split,
+  ) {
     var f = name.split(split);
     return f;
   }
@@ -1116,12 +1055,12 @@ class CustomTextField extends StatelessWidget {
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
           borderSide:
-          BorderSide(color: colorScheme.outlineVariant.withOpacity(0.5)),
+              BorderSide(color: colorScheme.outlineVariant.withOpacity(0.5)),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
           borderSide:
-          BorderSide(color: colorScheme.outlineVariant.withOpacity(0.5)),
+              BorderSide(color: colorScheme.outlineVariant.withOpacity(0.5)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),

@@ -28,10 +28,6 @@ class _LandingScreenState extends State<LandingScreen> with TickerProviderStateM
     checkAuthentication();
   }
 
-  @override
-  void dispose(){
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {

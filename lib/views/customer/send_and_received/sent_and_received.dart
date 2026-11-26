@@ -67,12 +67,14 @@ class SentAndReceived extends StatelessWidget {
         ..getSentAndReceivedData(DateFormat('yyyy-MM-dd').format(DateTime.now())),
       child: Consumer<SentAndReceivedViewModel>(
         builder: (context, viewModel, _) {
+          final theme = Theme.of(context);
+          final colorScheme = theme.colorScheme;
           final content = Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               _buildHorizontalDateSelector(context, viewModel),
-              const Divider(height: 1, thickness: 1, color: Color(0xFFE2E8F0)),
-              _buildTodayChip(viewModel),
+              Divider(height: 1, thickness: 1, color: colorScheme.outlineVariant),
+              _buildTodayChip(context, viewModel),
               Expanded(child: _buildBody(context, viewModel)),
             ],
           );
@@ -80,27 +82,27 @@ class SentAndReceived extends StatelessWidget {
           final canPop = ModalRoute.of(context)?.canPop ?? false;
           if (!isWide || canPop) {
             return Scaffold(
-              backgroundColor: Colors.white,
+              backgroundColor: colorScheme.surfaceContainerLowest,
               appBar: AppBar(
-                title: const Text(
+                title: Text(
                   'Sent & Received',
                   style: TextStyle(
-                    color: Color(0xFF0F172A),
+                    color: colorScheme.onSurface,
                     fontWeight: FontWeight.bold,
                     fontSize: 18,
                   ),
                 ),
-                backgroundColor: Colors.white,
+                backgroundColor: colorScheme.surface,
                 surfaceTintColor: Colors.transparent,
                 elevation: 0.5,
-                iconTheme: const IconThemeData(color: Color(0xFF0F172A)),
+                iconTheme: IconThemeData(color: colorScheme.onSurface),
               ),
               body: content,
             );
           }
 
           return Container(
-            color: Colors.white,
+            color: colorScheme.surfaceContainerLowest,
             child: content,
           );
         },
@@ -119,14 +121,16 @@ class SentAndReceived extends StatelessWidget {
     final isAtLatest = _isSameDay(viewModel.windowEndDate, DateTime.now()) ||
         viewModel.windowEndDate.isAfter(DateTime.now());
 
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Container(
-      color: Colors.white,
+      color: colorScheme.surface,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           IconButton(
-            icon: const Icon(Icons.chevron_left, color: Color(0xFF64748B), size: 22),
+            icon: Icon(Icons.chevron_left, color: colorScheme.onSurfaceVariant, size: 22),
             splashRadius: 18,
             tooltip: 'Previous week',
             onPressed: () => viewModel.shiftDatesBack(7),
@@ -150,7 +154,7 @@ class SentAndReceived extends StatelessWidget {
                           height: 62,
                           decoration: BoxDecoration(
                             color: isSelected
-                                ? const Color(0xFF5B22B6)
+                                ? colorScheme.primary
                                 : Colors.transparent,
                             borderRadius: BorderRadius.circular(12),
                           ),
@@ -165,8 +169,8 @@ class SentAndReceived extends StatelessWidget {
                                       ? FontWeight.w600
                                       : FontWeight.w500,
                                   color: isSelected
-                                      ? Colors.white
-                                      : const Color(0xFF64748B),
+                                      ? colorScheme.onPrimary
+                                      : colorScheme.onSurfaceVariant,
                                   letterSpacing: 0.5,
                                 ),
                               ),
@@ -177,8 +181,8 @@ class SentAndReceived extends StatelessWidget {
                                   fontSize: 15,
                                   fontWeight: FontWeight.bold,
                                   color: isSelected
-                                      ? Colors.white
-                                      : const Color(0xFF0F172A),
+                                      ? colorScheme.onPrimary
+                                      : colorScheme.onSurface,
                                 ),
                               ),
                               const SizedBox(height: 4),
@@ -186,8 +190,8 @@ class SentAndReceived extends StatelessWidget {
                                 Container(
                                   width: 4,
                                   height: 4,
-                                  decoration: const BoxDecoration(
-                                    color: Colors.white,
+                                  decoration: BoxDecoration(
+                                    color: colorScheme.onPrimary,
                                     shape: BoxShape.circle,
                                   ),
                                 )
@@ -206,7 +210,7 @@ class SentAndReceived extends StatelessWidget {
           IconButton(
             icon: Icon(
               Icons.chevron_right,
-              color: isAtLatest ? Colors.grey.shade300 : const Color(0xFF64748B),
+              color: isAtLatest ? colorScheme.outlineVariant : colorScheme.onSurfaceVariant,
               size: 22,
             ),
             splashRadius: 18,
@@ -214,9 +218,9 @@ class SentAndReceived extends StatelessWidget {
             onPressed: isAtLatest ? null : () => viewModel.shiftDatesForward(7),
           ),
           IconButton(
-            icon: const Icon(
+            icon: Icon(
               Icons.calendar_month_outlined,
-              color: Color(0xFF64748B),
+              color: colorScheme.onSurfaceVariant,
               size: 20,
             ),
             splashRadius: 18,
@@ -238,7 +242,8 @@ class SentAndReceived extends StatelessWidget {
     );
   }
 
-  Widget _buildTodayChip(SentAndReceivedViewModel viewModel) {
+  Widget _buildTodayChip(BuildContext context, SentAndReceivedViewModel viewModel) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10),
       child: Center(
@@ -248,9 +253,9 @@ class SentAndReceived extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: colorScheme.surface,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFFE2E8F0)),
+              border: Border.all(color: colorScheme.outlineVariant),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withOpacity(0.02),
@@ -261,10 +266,10 @@ class SentAndReceived extends StatelessWidget {
             ),
             child: Text(
               _getDateLabel(viewModel.selectedDay ?? DateTime.now()),
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 10,
                 fontWeight: FontWeight.w600,
-                color: Color(0xFF94A3B8),
+                color: colorScheme.onSurfaceVariant,
                 letterSpacing: 0.8,
               ),
             ),
@@ -275,14 +280,16 @@ class SentAndReceived extends StatelessWidget {
   }
 
   Widget _buildBody(BuildContext context, SentAndReceivedViewModel viewModel) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     if (viewModel.isLoading) {
-      return const Center(
+      return Center(
         child: SizedBox(
           width: 50,
           height: 50,
           child: LoadingIndicator(
             indicatorType: Indicator.ballPulse,
-            colors: [Color(0xFF5B22B6)],
+            colors: [colorScheme.primary],
           ),
         ),
       );
@@ -296,15 +303,15 @@ class SentAndReceived extends StatelessWidget {
             Icon(
               Icons.chat_bubble_outline_rounded,
               size: 44,
-              color: Colors.grey.shade300,
+              color: colorScheme.outline,
             ),
             const SizedBox(height: 10),
-            const Text(
+            Text(
               'Message not found',
               style: TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w500,
-                color: Color(0xFF94A3B8),
+                color: colorScheme.onSurfaceVariant,
               ),
             ),
           ],
@@ -343,6 +350,8 @@ class SentAndReceived extends StatelessWidget {
     SentAndReceivedViewModel viewModel,
     SentAndReceivedModel message,
   ) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final timeStr = viewModel.convertTo12hrs(message.time);
     final userName = message.sentUser.isNotEmpty ? message.sentUser : 'User';
 
@@ -365,9 +374,9 @@ class SentAndReceived extends StatelessWidget {
         ),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
-          color: const Color(0xFFEEF2FF),
+          color: colorScheme.primaryContainer,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: const Color(0xFFE0E7FF), width: 0.8),
+          border: Border.all(color: colorScheme.outlineVariant, width: 0.8),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -378,20 +387,20 @@ class SentAndReceived extends StatelessWidget {
               children: [
                 Text(
                   userName,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF5B22B6),
+                    color: colorScheme.primary,
                   ),
                 ),
                 if (message.sentMobileNumber.isNotEmpty) ...[
                   const SizedBox(width: 8),
                   Text(
                     message.sentMobileNumber,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w400,
-                      color: Color(0xFF64748B),
+                      color: colorScheme.onSurfaceVariant,
                     ),
                   ),
                 ],
@@ -400,10 +409,10 @@ class SentAndReceived extends StatelessWidget {
             const SizedBox(height: 6),
             Text(
               message.message,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
-                color: Color(0xFF0F172A),
+                color: colorScheme.onPrimaryContainer,
               ),
             ),
             const SizedBox(height: 4),
@@ -411,10 +420,10 @@ class SentAndReceived extends StatelessWidget {
               alignment: Alignment.bottomRight,
               child: Text(
                 timeStr,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 10,
                   fontWeight: FontWeight.w400,
-                  color: Color(0xFF94A3B8),
+                  color: colorScheme.onPrimaryContainer.withOpacity(0.7),
                 ),
               ),
             ),
@@ -429,6 +438,8 @@ class SentAndReceived extends StatelessWidget {
     SentAndReceivedViewModel viewModel,
     SentAndReceivedModel message,
   ) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final timeStr = viewModel.convertTo12hrs(message.time);
     final (title, subtitle) = _parseReceivedMessage(message.message);
 
@@ -451,9 +462,9 @@ class SentAndReceived extends StatelessWidget {
         ),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
-          color: const Color(0xFFDCFCE7),
+          color: colorScheme.surface,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: const Color(0xFFBBF7D0), width: 0.8),
+          border: Border.all(color: colorScheme.outlineVariant, width: 0.8),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -461,20 +472,20 @@ class SentAndReceived extends StatelessWidget {
           children: [
             Text(
               title,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF0F172A),
+                color: colorScheme.onSurface,
               ),
             ),
             if (subtitle != null && subtitle.isNotEmpty) ...[
               const SizedBox(height: 3),
               Text(
                 subtitle,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w400,
-                  color: Color(0xFF475569),
+                  color: colorScheme.onSurfaceVariant,
                 ),
               ),
             ],
@@ -483,10 +494,10 @@ class SentAndReceived extends StatelessWidget {
               alignment: Alignment.bottomRight,
               child: Text(
                 timeStr,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 10,
                   fontWeight: FontWeight.w400,
-                  color: Color(0xFF64748B),
+                  color: colorScheme.onSurfaceVariant,
                 ),
               ),
             ),

@@ -19,7 +19,7 @@ import 'package:hex/utils/helpers/log_print.dart';
 class OtpVerifyScreen extends StatefulWidget {
   String contact;
 
-  OtpVerifyScreen({required this.contact});
+  OtpVerifyScreen({super.key, required this.contact});
 
   @override
   _OtpVerifyScreenState createState() => _OtpVerifyScreenState();
@@ -64,7 +64,7 @@ class _OtpVerifyScreenState extends State<OtpVerifyScreen> {
         Navigator.pushReplacementNamed(context, '/loginOTP');
       },
       child: Scaffold(
-         backgroundColor: Colors.teal.shade50,
+         backgroundColor: Theme.of(context).colorScheme.surfaceContainerLowest,
         body: Center(
           child: SingleChildScrollView(
             child: Container(
@@ -85,9 +85,9 @@ class _OtpVerifyScreenState extends State<OtpVerifyScreen> {
                   SizedBox(
                     height: screenHeight * 0.02,
                   ),
-                  const Text(
+                  Text(
                     'Verification',
-                    style: TextStyle(fontSize: 28, color: Colors.black),
+                    style: TextStyle(fontSize: 28, color: Theme.of(context).colorScheme.onSurface),
                   ),
                   SizedBox(
                     height: screenHeight * 0.02,
@@ -95,22 +95,22 @@ class _OtpVerifyScreenState extends State<OtpVerifyScreen> {
                   Text(
                     ' Enter the 6-digit OTP that was sent to ${widget.contact}',
                     textAlign: TextAlign.center,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 18,
-                      color: Colors.black,
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
-                  const Text(
+                  Text(
                     'If you didn\'t receive the OTP, you can',
-                    style: TextStyle(fontSize: 16),
+                    style: TextStyle(fontSize: 16, color: Theme.of(context).colorScheme.onSurfaceVariant),
                   ),
                   TextButton(
                     onPressed: (){
                       generateOtp(widget.contact);
                     },
-                     child: const Text(
+                     child: Text(
                       'Resend OTP',
-                      style: TextStyle(color: Colors.blue),
+                      style: TextStyle(color: Theme.of(context).colorScheme.primary),
                     ),
                   ),
                   SizedBox(
@@ -184,9 +184,9 @@ class _OtpVerifyScreenState extends State<OtpVerifyScreen> {
 
    Future<void> generateOtp(String contact) async {
     AppLog.log("generateOtp called");
-    final PhoneCodeSent smsOTPSent = (verId, forceResendingToken) {
+    void smsOTPSent(String verId, int? forceResendingToken) {
       verificationId = verId;
-    };
+    }
     try {
       await _auth.verifyPhoneNumber(
         phoneNumber: contact,

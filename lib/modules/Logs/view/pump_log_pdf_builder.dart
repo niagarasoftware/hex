@@ -228,7 +228,7 @@ Future<Uint8List> generatePumpLogPdfBytes(PumpLogExportData data, String name) a
         crossAxisAlignment: pw.CrossAxisAlignment.start,
         children: [
           pw.Text('PUMP LOG REPORT',
-              style: pw.TextStyle(fontSize: 14, color: PdfColors.white, letterSpacing: 4)),
+              style: const pw.TextStyle(fontSize: 14, color: PdfColors.white, letterSpacing: 4)),
           pw.SizedBox(height: 14),
           pw.Text(data.deviceName.isEmpty ? 'Pump Controller' : data.deviceName,
               style: pw.TextStyle(fontSize: 40, fontWeight: pw.FontWeight.bold, color: PdfColors.white)),

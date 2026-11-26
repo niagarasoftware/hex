@@ -10,16 +10,38 @@ class ContinueButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final viewModel = Provider.of<LoginViewModel>(context);
+    final colorScheme = Theme.of(context).colorScheme;
+
     return SizedBox(
-      width: 200,
-      height: 45.0,
-      child: MaterialButton(
-        color: Theme.of(context).primaryColorLight,
-        textColor: Colors.white,
-        onPressed: viewModel.login,
-        child: viewModel.isLoading 
-            ? const LoadingIndicator(indicatorType: Indicator.ballPulse, colors: [Colors.white])
-            : const Text('CONTINUE', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+      width: double.infinity,
+      height: 52.0,
+      child: FilledButton(
+        style: FilledButton.styleFrom(
+          backgroundColor: colorScheme.primary,
+          foregroundColor: colorScheme.onPrimary,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          elevation: 2,
+        ),
+        onPressed: viewModel.isLoading ? null : viewModel.login,
+        child: viewModel.isLoading
+            ? SizedBox(
+          width: 32,
+          height: 20,
+          child: LoadingIndicator(
+            indicatorType: Indicator.ballPulse,
+            colors: [colorScheme.onPrimary],
+          ),
+        )
+            : const Text(
+          'SIGN IN',
+          style: TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 1.0,
+          ),
+        ),
       ),
     );
   }

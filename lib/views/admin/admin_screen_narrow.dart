@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../Widgets/app_logo.dart';
 import '../../Widgets/user_account_menu.dart';
 import '../../flavors.dart';
 import '../../layouts/layout_selector.dart';
@@ -19,16 +18,18 @@ class AdminScreenNarrow extends StatelessWidget {
     final viewModel = context.watch<BaseHeaderViewModel>();
     return Scaffold(
       appBar: AppBar(
-        leading: const Padding(
-          padding: EdgeInsets.only(left: 15),
-          child: AppLogo(),
-        ),
+        leading: Navigator.of(context).canPop()
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: () => Navigator.pop(context),
+              )
+            : null,
         actions: const <Widget>[
           UserAccountMenu(isNarrow: true),
         ],
         centerTitle: false,
         elevation: 10,
-        leadingWidth: F.appFlavor!.name.contains('oro') ? 75:110,
+        leadingWidth: Navigator.of(context).canPop() ? 50 : 0,
         bottom: PreferredSize(
           preferredSize: Size.fromHeight(viewModel.selectedIndex==1 ? 103 : 50),
           child: Column(

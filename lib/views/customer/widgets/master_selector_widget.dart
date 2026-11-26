@@ -16,19 +16,21 @@ class MasterSelectorWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final masterList = vm.mySiteList.data[sIndex].master;
     if (masterList.length <= 1) return const SizedBox();
     return PopupMenuButton<int>(
-      color: Theme.of(context).primaryColorLight,
+      color: colorScheme.surface,
       tooltip: 'master controller',
       child: MaterialButton(
         onPressed: null,
-        textColor: Colors.white,
+        textColor: colorScheme.onPrimary,
         child: Row(
           children: [
-            Text(masterList[mIndex].categoryName),
+            Text(masterList[mIndex].categoryName, style: TextStyle(color: colorScheme.onPrimary)),
             const SizedBox(width: 3),
-            const Icon(Icons.arrow_drop_down, color: Colors.white),
+            Icon(Icons.arrow_drop_down, color: colorScheme.onPrimary),
           ],
         ),
       ),
@@ -42,11 +44,11 @@ class MasterSelectorWidget extends StatelessWidget {
               children: [
                 Text(
                   master.categoryName,
-                  style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+                  style: TextStyle(fontWeight: FontWeight.bold, color: colorScheme.onSurface),
                 ),
                 Text(
                   master.modelName,
-                  style: const TextStyle(fontSize: 12, color: Colors.white54),
+                  style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant),
                 ),
               ],
             ),

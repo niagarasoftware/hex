@@ -14,6 +14,8 @@ class SiteSelectorWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
 
     final siteList = vm.mySiteList.data;
     if (siteList.length <= 1) return const SizedBox();
@@ -26,15 +28,25 @@ class SiteSelectorWidget extends StatelessWidget {
           value: site.groupName,
           child: Text(
             site.groupName,
-            style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+            style: TextStyle(color: colorScheme.onSurface, fontSize: 16, fontWeight: FontWeight.bold),
           ),
         );
       }).toList(),
+      selectedItemBuilder: (context) {
+        return (vm.mySiteList.data).map((site) {
+          return Center(
+            child: Text(
+              site.groupName,
+              style: TextStyle(color: colorScheme.onPrimary, fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+          );
+        }).toList();
+      },
       onChanged: (siteName) => vm.siteOnChanged(siteName!),
       value: vm.myCurrentSite,
-      dropdownColor: Theme.of(context).primaryColorLight,
-      iconEnabledColor: Colors.white,
-      iconDisabledColor: Colors.white,
+      dropdownColor: colorScheme.surface,
+      iconEnabledColor: colorScheme.onPrimary,
+      iconDisabledColor: colorScheme.onPrimary.withOpacity(0.5),
       focusColor: Colors.transparent,
     );
   }

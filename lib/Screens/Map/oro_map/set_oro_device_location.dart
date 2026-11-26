@@ -10,7 +10,7 @@ import 'getlatlong.dart';
 
 
 class SetSelectOroDeviceLocation extends StatefulWidget {
-  const SetSelectOroDeviceLocation({Key? key}) : super(key: key);
+  const SetSelectOroDeviceLocation({super.key});
 
   @override
   _SetSelectOroDeviceLocationState createState() => _SetSelectOroDeviceLocationState();
@@ -153,8 +153,10 @@ class _SetSelectOroDeviceLocationState extends State<SetSelectOroDeviceLocation>
         ));
       }
     } catch (_) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Unable to find location')));
+      }
     } finally {
       if (mounted) setState(() => _searching = false);
     }
@@ -286,7 +288,7 @@ class _SetSelectOroDeviceLocationState extends State<SetSelectOroDeviceLocation>
           if (wide) const VerticalDivider(width: 1),
           Expanded(child: Column(children: [
             if (!wide) Padding(padding: const EdgeInsets.fromLTRB(12, 8, 12, 0), child: DropdownButtonFormField<int>(
-              value: _selectedDevice != null && _selectedDeviceIndex < devices.length ? _selectedDeviceIndex : null,
+              initialValue: _selectedDevice != null && _selectedDeviceIndex < devices.length ? _selectedDeviceIndex : null,
               isExpanded: true,
               decoration: const InputDecoration(labelText: 'Select device', border: OutlineInputBorder()),
               items: List.generate(devices.length, (i) => DropdownMenuItem(value: i, child: Text(devices[i].deviceName ?? 'Device', overflow: TextOverflow.ellipsis))),

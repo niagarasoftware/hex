@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../Widgets/app_logo.dart';
 import '../../Widgets/user_account_menu.dart';
 import '../../flavors.dart';
 import '../../layouts/layout_selector.dart';
@@ -19,21 +18,21 @@ class DealerScreenWide extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: true,
-        leading: Navigator.of(context).canPop() ? IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
-        ) :
-        const Padding(
-          padding: EdgeInsets.only(left: 15),
-          child: AppLogo(),
-        ),
+        leading: Navigator.of(context).canPop()
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: () => Navigator.pop(context),
+              )
+            : null,
         title: Row(
           children: [
             MainMenu(viewModel: viewModel),
-            if(viewModel.selectedIndex==1)...[
+            if (viewModel.selectedIndex == 1) ...[
               const Spacer(),
-              SizedBox(width : 420,
-                  child: ProductSearchBar(viewModel: viewModel, barHeight: 40, barRadius: 20)),
+              SizedBox(
+                width: 420,
+                child: ProductSearchBar(viewModel: viewModel, barHeight: 40, barRadius: 20),
+              ),
               const Spacer(),
             ]
           ],
@@ -43,8 +42,7 @@ class DealerScreenWide extends StatelessWidget {
         ],
         centerTitle: false,
         elevation: 10,
-        leadingWidth: Navigator.of(context).canPop() ? 50 :
-        F.appFlavor!.name.contains('oro') ? 75:110,
+        leadingWidth: Navigator.of(context).canPop() ? 50 : 0,
       ),
       body: IndexedStack(
         index: viewModel.selectedIndex,

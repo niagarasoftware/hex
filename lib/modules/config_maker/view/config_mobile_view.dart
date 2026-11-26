@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:hex/modules/config_maker/view/product_limit.dart';
 import 'package:hex/modules/config_maker/view/site_configure.dart';
-import 'package:hex/utils/constants.dart';
 import 'package:provider/provider.dart';
 import '../../../Constants/dialog_boxes.dart';
 import '../../config_maker/model/device_object_model.dart';
@@ -9,7 +7,7 @@ import '../../config_maker/model/device_model.dart';
 import '../../config_maker/state_management/config_maker_provider.dart';
 import 'config_base_page.dart';
 import 'connection.dart';
-import 'device_list.dart';
+import 'draw_your_site.dart';
 
 class ConfigMobileView extends StatefulWidget {
   List<DeviceModel> listOfDevices;
@@ -30,14 +28,12 @@ class _ConfigMobileViewState extends State<ConfigMobileView>
     super.initState();
     configPvd = Provider.of<ConfigMakerProvider>(context, listen: false);
     _tabController = TabController(length: ConfigMakerTabs.values.length, vsync: this);
-    if(configPvd.selectedTab == ConfigMakerTabs.deviceList){
+    if (configPvd.selectedTab == ConfigMakerTabs.connection) {
       _tabController.index = 0;
-    }else if(configPvd.selectedTab == ConfigMakerTabs.productLimit){
+    } else if (configPvd.selectedTab == ConfigMakerTabs.siteConfigure) {
       _tabController.index = 1;
-    }else if(configPvd.selectedTab == ConfigMakerTabs.connection){
+    } else {
       _tabController.index = 2;
-    }else{
-      _tabController.index = 3;
     }
   }
 
@@ -67,12 +63,10 @@ class _ConfigMobileViewState extends State<ConfigMobileView>
           controller: _tabController,
           onTap: (value){
             ConfigMakerTabs selectedTab = value == 0
-                ? ConfigMakerTabs.deviceList
-                : value == 1
-                ? ConfigMakerTabs.productLimit
-                : value == 2
                 ? ConfigMakerTabs.connection
-                : ConfigMakerTabs.siteConfigure;
+                : value == 1
+                ? ConfigMakerTabs.siteConfigure
+                : ConfigMakerTabs.siteDiagram;
 
             ConfigMakerTabs previousTab = updateConfigMakerTabs(
               context: context,
@@ -81,13 +75,11 @@ class _ConfigMobileViewState extends State<ConfigMobileView>
               selectedTab: selectedTab,
             );
             setState(() {
-              _tabController.index = previousTab == ConfigMakerTabs.deviceList
+              _tabController.index = previousTab == ConfigMakerTabs.connection
                   ? 0
-                  : previousTab == ConfigMakerTabs.productLimit
+                  : previousTab == ConfigMakerTabs.siteConfigure
                   ? 1
-                  : previousTab == ConfigMakerTabs.connection
-                  ? 2
-                  : 3;
+                  : 2;
             });
           },
           tabs: ConfigMakerTabs.values.map((tab) {
@@ -99,10 +91,9 @@ class _ConfigMobileViewState extends State<ConfigMobileView>
       body: TabBarView(
         controller: _tabController,
         children: [
-          DeviceList(listOfDevices: widget.listOfDevices),
-          ProductLimit(listOfDevices: widget.listOfDevices, configPvd: configPvd,),
           Connection(configPvd: configPvd),
-          SiteConfigure(configPvd: configPvd)
+          SiteConfigure(configPvd: configPvd),
+          const DrawYourSiteScreen(),
         ],
       ),
     );
@@ -116,7 +107,7 @@ ConfigMakerTabs updateConfigMakerTabs({
   required ConfigMakerTabs selectedTab,
 }){
   bool update = true;
-  if([ConfigMakerTabs.connection, ConfigMakerTabs.siteConfigure].contains(selectedTab)){
+  if([ConfigMakerTabs.connection, ConfigMakerTabs.siteConfigure, ConfigMakerTabs.siteDiagram].contains(selectedTab)){
     final List<DeviceObjectModel> deviceObjects = configPvd.listOfSampleObjectModel;
     final pumpObject = getObjectById(deviceObjects, 5);
     final valveObject = getObjectById(deviceObjects, 13);
@@ -126,15 +117,7 @@ ConfigMakerTabs updateConfigMakerTabs({
     bool valveAvailable = valveObject.count != '0';
     bool dosingAvailable = dosingObject.count != '0';
     bool channelAvailable = channelObject.count != '0';
-    if(!pumpAvailable && ![...AppConstants.ecoGemFlowControlValveModel, ...AppConstants.omsGemList].contains(configPvd.masterData['modelId'])){
-      update = false;
-      simpleDialogBox(context: context, title: 'Alert', message: 'At least one ${!pumpAvailable ? pumpObject.objectName : ''} must be provided in the product limit.');
-      List<int> notice = [];
-      if(!pumpAvailable){
-        notice.add(pumpObject.objectId);
-      }
-      configPvd.noticeObjectForTemporary(notice);
-    }else if(dosingAvailable && !channelAvailable){
+    if(dosingAvailable && !channelAvailable){
       update = false;
       configPvd.noticeObjectForTemporary([channelObject.objectId]);
       simpleDialogBox(context: context, title: 'Alert', message: 'At least one ${channelObject.objectName} must be provided for the dosing site.');
