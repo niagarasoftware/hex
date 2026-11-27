@@ -66,8 +66,8 @@ class IrrigationProgramRepository {
   }
 
   Future<http.Response> updateProgramDetails(body) async {
-    // return await apiService.putRequest('/user/program/updateDetails', body);
-    return await apiService.putRequest('/', body);
+    return await apiService.putRequest('/user/program/updateDetails', body);
+    // return await apiService.putRequest('/', body);
   }
 
   Future<http.Response> getDayCountRtc(body) async {

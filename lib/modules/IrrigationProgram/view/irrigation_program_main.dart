@@ -12,9 +12,19 @@ import '../../../utils/constants.dart';
 import '../state_management/irrigation_program_provider.dart';
 import '../../../StateManagement/mqtt_payload_provider.dart';
 import '../widgets/custom_alert_dialog.dart';
+import 'dart:convert';
+import '../../../services/http_service.dart';
+import '../../../services/mqtt_service.dart';
+import '../../../utils/environment.dart';
+import '../../../utils/helpers/log_print.dart';
+import '../../../utils/network_utils.dart';
+import '../../SystemDefinitions/widgets/custom_snack_bar.dart';
+import '../repository/irrigation_program_repo.dart';
+import '../widgets/progress_dialog_ecogem.dart';
 import 'alarm_screen.dart';
 import 'conditions_screen.dart';
 import 'done_screen.dart';
+import 'program_library.dart';
 
 class IrrigationProgram extends StatefulWidget {
   final int userId;
@@ -60,6 +70,7 @@ class _IrrigationProgramState extends State<IrrigationProgram> with SingleTicker
   late List<IconData> icons;
   late MqttPayloadProvider mqttPayloadProvider;
   bool _isDialogShowing = false;
+  bool _isSavingProgram = false;
   String? _errorMessage;
 
   @override
@@ -179,11 +190,13 @@ class _IrrigationProgramState extends State<IrrigationProgram> with SingleTicker
         });
         _hideLoadingDialog();
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
+      debugPrint("Error fetching irrigation program data: $e");
+      debugPrint(stackTrace.toString());
       if (mounted) {
         _hideLoadingDialog();
         setState(() {
-          _errorMessage = "Failed to load irrigation program data.";
+          _errorMessage = "Failed to load irrigation program data: $e";
         });
         _showErrorDialog();
       }
@@ -253,10 +266,9 @@ class _IrrigationProgramState extends State<IrrigationProgram> with SingleTicker
 
     if (!mainProvider.isPumpStationMode && mainProvider.pump!.isNotEmpty && !mainProvider.selectedObjects!.any((element) => element.objectId == 5) && !AppConstants.ecoGemFlowControlValveModel.contains(widget.modelId)) {
       if (!mainProvider.ignoreValidation) {
-        final hasMultiplePumps = mainProvider.pump!.length > 1;
         _showValidationAlert(
           content: "Are you sure to proceed without pump selection?",
-          showConfirm: hasMultiplePumps,
+          showConfirm: true,
           onConfirm: () {
             mainProvider.ignoreValidation = true;
             _navigateToTab(targetIndex);
@@ -401,6 +413,185 @@ class _IrrigationProgramState extends State<IrrigationProgram> with SingleTicker
     );
   }
 
+  Future<void> _saveAndSendProgram(BuildContext context, {required bool isSend}) async {
+    if (_isSavingProgram) {
+      AppLog.log("[PROGRAM] Save/Send click ignored: Operation already in progress.");
+      return;
+    }
+
+    AppLog.log("[PROGRAM] ${isSend ? 'Send' : 'Save'} button clicked for serial: ${widget.serialNumber}, controller: ${widget.controllerId}, device: ${widget.deviceId}");
+
+    final mainProvider = Provider.of<IrrigationProgramMainProvider>(context, listen: false);
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+    final navigator = Navigator.of(context);
+
+    // 1. Validation
+    if (mainProvider.irrigationLine == null || mainProvider.irrigationLine!.sequence.isEmpty) {
+      AppLog.log("[PROGRAM] Validation result: FAILED (Sequence empty)");
+      _showValidationAlert(content: "Select valves to be in sequence for Irrigation Program");
+      return;
+    }
+
+    if (!_validateBeforeGoingTo(labels.length - 1, mainProvider)) {
+      AppLog.log("[PROGRAM] Validation result: FAILED (Form validation)");
+      return;
+    }
+
+    AppLog.log("[PROGRAM] Validation result: PASSED");
+
+    // 2. Check Network Connection
+    bool isOnline = await NetworkUtils.checkNow();
+    AppLog.log("[PROGRAM] MQTT connection status / Network Online: $isOnline");
+    if (!isOnline) {
+      _showValidationAlert(content: "Internet connection is unavailable. Please check network and try again.");
+      return;
+    }
+
+    setState(() {
+      _isSavingProgram = true;
+    });
+
+    final effectiveSerial = widget.serialNumber == 0 ? mainProvider.serialNumberCreation : widget.serialNumber;
+
+    try {
+      Map<String, dynamic> dataToMqtt = mainProvider.dataToMqtt(effectiveSerial, widget.programType);
+      Map<String, dynamic> dataToMqttEcoGem = {};
+      dynamic ecoGemWFPayload;
+      List<String> ecoGemWFPayloadList = [];
+
+      if (AppConstants.ecoGemAndPlusModelList.contains(widget.modelId)) {
+        dataToMqttEcoGem = mainProvider.dataToMqttForEcoGem(effectiveSerial, widget.programType);
+        ecoGemWFPayload = mainProvider.ecoGemPayloadForWF(effectiveSerial);
+        ecoGemWFPayloadList.add(jsonEncode(dataToMqttEcoGem));
+        for (int i = 0; i < ecoGemWFPayload.length; i++) {
+          final payload = {
+            "260${i + 1}": {"2501": ecoGemWFPayload[i]}
+          };
+          ecoGemWFPayloadList.add(jsonEncode(payload));
+        }
+      }
+
+      final generatedPayload = AppConstants.ecoGemAndPlusModelList.contains(widget.modelId)
+          ? ecoGemWFPayloadList
+          : dataToMqtt;
+      AppLog.log("[PROGRAM] Generated payload: $generatedPayload");
+
+      Map<String, dynamic> userData = {
+        "defaultProgramName": mainProvider.defaultProgramName,
+        "userId": widget.customerId,
+        "controllerId": widget.controllerId,
+        "createUser": widget.userId,
+        "serialNumber": effectiveSerial,
+        "sequence": mainProvider.irrigationLine!.sequence,
+        "schedule": mainProvider.sampleScheduleModel!.toJson(),
+        "conditions": mainProvider.sampleConditions != null ? mainProvider.sampleConditions!.toJson() : [],
+        "waterAndFert": mainProvider.sequenceData,
+        "selection": {
+          ...mainProvider.additionalData!.toJson(),
+          "selected": mainProvider.selectedObjects!.map((e) => e.toJson()).toList(),
+        },
+        "alarm": mainProvider.newAlarmList!.toJson(),
+        "programName": mainProvider.programName,
+        "priority": mainProvider.priority,
+        "delayBetweenZones": mainProvider.programDetails!.delayBetweenZones,
+        "adjustPercentage": mainProvider.programDetails!.adjustPercentage,
+        "cyclicOnTime": "00:00:00",
+        "cyclicOffTime": "00:00:00",
+        "isPressureEnabled": mainProvider.enablePressure ? '1' : '0',
+        "pressure": mainProvider.setPressure,
+        "incompleteRestart": mainProvider.isCompletionEnabled ? "1" : "0",
+        "controllerReadStatus": '0',
+        "programType": mainProvider.selectedProgramType,
+        "hardware": generatedPayload,
+      };
+
+      AppLog.log("[PROGRAM] Modified program data: ${jsonEncode(userData)}");
+
+      String controllerReadStatus = '0';
+
+      if (isSend) {
+        AppLog.log("[PROGRAM] MQTT publish topic: ${Environment.mqttPublishTopic}/${widget.deviceId}");
+
+        try {
+          if (AppConstants.ecoGemAndPlusModelList.contains(widget.modelId)) {
+            final result = await showDialog<String>(
+              context: context,
+              barrierDismissible: false,
+              builder: (BuildContext dialogContext) {
+                return EcoGemProgressDialog(
+                  payloads: ecoGemWFPayloadList,
+                  deviceId: widget.deviceId,
+                  mqttService: MqttService(),
+                );
+              },
+            );
+
+            if (result != null) {
+              controllerReadStatus = result;
+              AppLog.log("[PROGRAM] Hardware acknowledgement (EcoGem): $result");
+            }
+          } else {
+            await validatePayloadSent(
+              dialogContext: context,
+              context: context,
+              mqttPayloadProvider: mqttPayloadProvider,
+              acknowledgedFunction: () {
+                controllerReadStatus = "1";
+                AppLog.log("[PROGRAM] Hardware acknowledgement: SUCCESS (Code 2500)");
+              },
+              payload: dataToMqtt,
+              payloadCode: "2500",
+              deviceId: widget.deviceId,
+            );
+          }
+        } catch (error, stackTrace) {
+          AppLog.log("[PROGRAM] Exception during hardware publish: $error\n$stackTrace");
+        }
+      }
+
+      userData['controllerReadStatus'] = controllerReadStatus;
+
+      AppLog.log("[PROGRAM] API request: createUserProgram...");
+      final IrrigationProgramRepository repository = IrrigationProgramRepository(HttpService());
+      final createUserProgram = await repository.createUserProgram(userData);
+      final response = jsonDecode(createUserProgram.body);
+      AppLog.log("[PROGRAM] API response: code ${createUserProgram.statusCode}, body: ${createUserProgram.body}");
+
+      if (createUserProgram.statusCode == 200) {
+        await mainProvider.programLibraryData(widget.customerId, widget.controllerId);
+        if (mounted) {
+          scaffoldMessenger.showSnackBar(CustomSnackBar(
+            message: response['message'] ?? (isSend ? "Program saved & sent successfully!" : "Program saved successfully!"),
+            color: Colors.green.shade700,
+          ));
+          navigator.pop();
+        }
+      } else {
+        if (mounted) {
+          scaffoldMessenger.showSnackBar(CustomSnackBar(
+            message: response['message'] ?? "Failed to save program.",
+            color: Colors.red.shade700,
+          ));
+        }
+      }
+    } catch (error, stackTrace) {
+      AppLog.log("[PROGRAM] Exception and stack trace: $error\n$stackTrace");
+      if (mounted) {
+        scaffoldMessenger.showSnackBar(CustomSnackBar(
+          message: "Failed to save program: $error",
+          color: Colors.red.shade700,
+        ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSavingProgram = false;
+        });
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
@@ -512,22 +703,38 @@ class _IrrigationProgramState extends State<IrrigationProgram> with SingleTicker
                         ],
                       ),
                     ),
-                    FilledButton.icon(
-                      onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text("Program settings saved")),
-                        );
-                      },
-                      style: FilledButton.styleFrom(
-                        backgroundColor: primaryPurple,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                      ),
-                      icon: const Icon(Icons.save_outlined, size: 16, color: Colors.white),
-                      label: const Text(
-                        "Save Program",
-                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
-                      ),
+                    Row(
+                      children: [
+                        OutlinedButton.icon(
+                          onPressed: _isSavingProgram ? null : () => _saveAndSendProgram(context, isSend: false),
+                          style: OutlinedButton.styleFrom(
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                          ),
+                          icon: const Icon(Icons.save_outlined, size: 16),
+                          label: const Text("Save"),
+                        ),
+                        const SizedBox(width: 8),
+                        FilledButton.icon(
+                          onPressed: _isSavingProgram ? null : () => _saveAndSendProgram(context, isSend: true),
+                          style: FilledButton.styleFrom(
+                            backgroundColor: primaryPurple,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                          ),
+                          icon: _isSavingProgram
+                              ? const SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                )
+                              : const Icon(Icons.send_rounded, size: 16, color: Colors.white),
+                          label: Text(
+                            _isSavingProgram ? "Sending..." : "Save & Send",
+                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),

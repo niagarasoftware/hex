@@ -12,6 +12,8 @@ import '../../../StateManagement/mqtt_payload_provider.dart';
 import '../widgets/custom_alert_dialog.dart';
 import '../../SystemDefinitions/widgets/custom_snack_bar.dart';
 import '../../../services/http_service.dart';
+import '../../../utils/environment.dart';
+import '../../../utils/helpers/log_print.dart';
 import '../../../utils/network_utils.dart';
 import '../widgets/progress_dialog_ecogem.dart';
 import 'program_library.dart';
@@ -816,8 +818,12 @@ class _PreviewScreenState extends State<PreviewScreen> {
     final scaffoldMessenger = ScaffoldMessenger.of(context);
     final navigator = Navigator.of(context);
 
+    AppLog.log("[PROGRAM] Send button clicked");
+
     if (!mounted) return;
     bool isOnline = await NetworkUtils.checkNow();
+    AppLog.log("[PROGRAM] MQTT connection status / Network Online: $isOnline");
+
     if (!isOnline) {
       if (mounted) {
         showAdaptiveDialog(
@@ -841,20 +847,23 @@ class _PreviewScreenState extends State<PreviewScreen> {
 
     if (!mounted) return;
     final mainProvider = Provider.of<IrrigationProgramMainProvider>(context, listen: false);
+    final effectiveSerial = widget.serialNumber == 0 ? mainProvider.serialNumberCreation : widget.serialNumber;
+
     Map<String, dynamic> dataToMqtt = mainProvider.dataToMqtt(
-      widget.serialNumber == 0 ? mainProvider.serialNumberCreation : widget.serialNumber,
+      effectiveSerial,
       widget.programType,
     );
     Map<String, dynamic> dataToMqttEcoGem = {};
     dynamic ecoGemWFPayload;
     List<String> ecoGemWFPayloadList = [];
+
     if (AppConstants.ecoGemAndPlusModelList.contains(widget.modelId)) {
       dataToMqttEcoGem = mainProvider.dataToMqttForEcoGem(
-        widget.serialNumber == 0 ? mainProvider.serialNumberCreation : widget.serialNumber,
+        effectiveSerial,
         widget.programType,
       );
       ecoGemWFPayload = mainProvider.ecoGemPayloadForWF(
-        widget.serialNumber == 0 ? mainProvider.serialNumberCreation : widget.serialNumber,
+        effectiveSerial,
       );
       ecoGemWFPayloadList.add(jsonEncode(dataToMqttEcoGem));
       for (int i = 0; i < ecoGemWFPayload.length; i++) {
@@ -865,15 +874,22 @@ class _PreviewScreenState extends State<PreviewScreen> {
       }
     }
 
+    final generatedPayload = AppConstants.ecoGemAndPlusModelList.contains(widget.modelId)
+        ? ecoGemWFPayloadList
+        : dataToMqtt;
+    AppLog.log("[PROGRAM] Generated payload: $generatedPayload");
+
     Map<String, dynamic> userData = {
       "defaultProgramName": mainProvider.defaultProgramName,
       "userId": widget.customerId,
       "controllerId": widget.controllerId,
       "createUser": widget.userId,
-      "serialNumber": widget.serialNumber == 0 ? mainProvider.serialNumberCreation : widget.serialNumber,
+      "serialNumber": effectiveSerial,
     };
 
-    if (mainProvider.irrigationLine!.sequence.isNotEmpty) {
+    if (mainProvider.irrigationLine != null && mainProvider.irrigationLine!.sequence.isNotEmpty) {
+      AppLog.log("[PROGRAM] Validation result: PASSED");
+
       var dataToSend = {
         "sequence": mainProvider.irrigationLine!.sequence,
         "schedule": mainProvider.sampleScheduleModel!.toJson(),
@@ -895,9 +911,12 @@ class _PreviewScreenState extends State<PreviewScreen> {
         "incompleteRestart": mainProvider.isCompletionEnabled ? "1" : "0",
         "controllerReadStatus": '0',
         "programType": mainProvider.selectedProgramType,
-        "hardware": AppConstants.ecoGemAndPlusModelList.contains(widget.modelId) ? ecoGemWFPayloadList : dataToMqtt
+        "hardware": generatedPayload,
       };
       userData.addAll(dataToSend);
+
+      AppLog.log("[PROGRAM] Modified program data: ${jsonEncode(userData)}");
+      AppLog.log("[PROGRAM] MQTT publish topic: ${Environment.mqttPublishTopic}/${widget.deviceId}");
 
       try {
         if (AppConstants.ecoGemAndPlusModelList.contains(widget.modelId)) {
@@ -917,6 +936,7 @@ class _PreviewScreenState extends State<PreviewScreen> {
             setState(() {
               userData['controllerReadStatus'] = result;
             });
+            AppLog.log("[PROGRAM] Hardware acknowledgement: $result");
           }
         } else {
           await validatePayloadSent(
@@ -927,30 +947,40 @@ class _PreviewScreenState extends State<PreviewScreen> {
               setState(() {
                 userData['controllerReadStatus'] = "1";
               });
+              AppLog.log("[PROGRAM] Hardware acknowledgement: SUCCESS (1)");
             },
             payload: dataToMqtt,
             payloadCode: "2500",
             deviceId: widget.deviceId,
           );
         }
-      } catch (error) {
+      } catch (error, stackTrace) {
+        AppLog.log("[PROGRAM] Exception and stack trace: $error\n$stackTrace");
         scaffoldMessenger.showSnackBar(CustomSnackBar(message: 'Failed to update because of $error'));
       }
 
       Future.delayed(const Duration(milliseconds: 300), () async {
-        final IrrigationProgramRepository repository = IrrigationProgramRepository(HttpService());
-        final createUserProgram = await repository.createUserProgram(userData);
-        final response = jsonDecode(createUserProgram.body);
-        if (createUserProgram.statusCode == 200) {
-          await mainProvider.programLibraryData(widget.customerId, widget.controllerId);
-          scaffoldMessenger.showSnackBar(CustomSnackBar(message: response['message']));
-          if (context.mounted) {
-            navigator.pop();
+        try {
+          AppLog.log("[PROGRAM] API request: createUserProgram");
+          final IrrigationProgramRepository repository = IrrigationProgramRepository(HttpService());
+          final createUserProgram = await repository.createUserProgram(userData);
+          final response = jsonDecode(createUserProgram.body);
+          AppLog.log("[PROGRAM] API response: status ${createUserProgram.statusCode}, body: ${createUserProgram.body}");
+
+          if (createUserProgram.statusCode == 200) {
+            await mainProvider.programLibraryData(widget.customerId, widget.controllerId);
+            scaffoldMessenger.showSnackBar(CustomSnackBar(message: response['message']));
+            if (context.mounted) {
+              navigator.pop();
+            }
           }
+        } catch (e, st) {
+          AppLog.log("[PROGRAM] Exception and stack trace: $e\n$st");
         }
       });
     } else {
-      showAdaptiveDialog<Future>(
+      AppLog.log("[PROGRAM] Validation result: FAILED (Sequence empty)");
+      showAdaptiveDialog(
         context: context,
         builder: (BuildContext context) {
           return CustomAlertDialog(

@@ -19,31 +19,51 @@ class _MoistureInConstantState extends State<MoistureInConstant> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     double screenWidth = MediaQuery.of(context).size.width;
     double minWidth = (cellWidth * 2) + (widget.constPvd.defaultMoistureSetting.length * cellWidth) + 50;
-    Color borderColor = const Color(0xffE1E2E3);
+
     return DataTable2(
-      border: TableBorder(
-        top: BorderSide(color: borderColor, width: 1),
-        bottom: BorderSide(color: borderColor, width: 1),
-        left: BorderSide(color: borderColor, width: 1),
-        right: BorderSide(color: borderColor, width: 1),
+      dataRowHeight: 56.0,
+      headingRowHeight: 44.0,
+      headingRowColor: WidgetStatePropertyAll(colorScheme.surfaceContainerLow),
+      border: TableBorder.all(
+        color: colorScheme.outlineVariant,
+        width: 1,
       ),
       minWidth: minWidth,
       fixedLeftColumns: minWidth < screenWidth ? 0 : 1,
       columns: [
         ...['Moisture', 'Location'].map((title) {
           return DataColumn2(
-              headingRowAlignment: MainAxisAlignment.center,
-              fixedWidth: cellWidth,
-              label: Text(title, style: Theme.of(context).textTheme.labelLarge,textAlign: TextAlign.center, softWrap: true)
+            headingRowAlignment: MainAxisAlignment.center,
+            fixedWidth: cellWidth,
+            label: Text(
+              title,
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 13,
+                color: colorScheme.onSurface,
+              ),
+              textAlign: TextAlign.center,
+              softWrap: true,
+            ),
           );
         }),
         ...widget.constPvd.defaultMoistureSetting.map((defaultSetting) {
           return DataColumn2(
-              headingRowAlignment: MainAxisAlignment.center,
-              fixedWidth: cellWidth,
-              label: Text(defaultSetting.title, style: Theme.of(context).textTheme.labelLarge,textAlign: TextAlign.center, softWrap: true,)
+            headingRowAlignment: MainAxisAlignment.center,
+            fixedWidth: cellWidth,
+            label: Text(
+              defaultSetting.title,
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 13,
+                color: colorScheme.onSurface,
+              ),
+              textAlign: TextAlign.center,
+              softWrap: true,
+            ),
           );
         }),
       ],
@@ -51,14 +71,30 @@ class _MoistureInConstantState extends State<MoistureInConstant> {
         ObjectInConstantModel moisture = widget.constPvd.moisture[row];
         return DataRow2(
             color: WidgetStatePropertyAll(
-              row.isOdd ? Colors.white : const Color(0xffF8F8F8),
+              row.isOdd ? colorScheme.surface : colorScheme.surfaceContainerLow,
             ),
             cells: [
               DataCell(
-                  Center(child: Text(moisture.name.toString(), textAlign: TextAlign.center, style: TextStyle(color: Theme.of(context).primaryColorLight),))
+                Center(
+                  child: Text(
+                    moisture.name.toString(),
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                      color: colorScheme.onSurface,
+                    ),
+                  ),
+                ),
               ),
               DataCell(
-                  Center(child: Text(widget.constPvd.getName(moisture.location),textAlign: TextAlign.center,))
+                Center(
+                  child: Text(
+                    widget.constPvd.getName(moisture.location),
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 12.5, color: colorScheme.onSurfaceVariant),
+                  ),
+                ),
               ),
               ...moisture.setting.map((setting) {
                 return DataCell(

@@ -23,6 +23,25 @@ if (keystorePropertiesFile.exists()) {
     println "key.properties not found (Release build will fail if attempted)"
 }
 
+/* ================= SAFE GOOGLE SERVICES CONFIG ================= */
+
+gradle.taskGraph.whenReady { taskGraph ->
+    taskGraph.allTasks.each { task ->
+        if (task.name.contains("GoogleServices")) {
+            def hasJson = file("src/oroDevelopment/google-services.json").exists() ||
+                    file("src/oroDevelopment/debug/google-services.json").exists() ||
+                    file("src/oroProduction/google-services.json").exists() ||
+                    file("src/smartComm/google-services.json").exists() ||
+                    file("src/agritel/google-services.json").exists() ||
+                    file("google-services.json").exists()
+            if (!hasJson) {
+                println "google-services.json not found for ${task.name}. Skipping task for local debug run."
+                task.enabled = false
+            }
+        }
+    }
+}
+
 /* ======================================================== */
 
 android {

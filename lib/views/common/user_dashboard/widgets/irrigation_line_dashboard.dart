@@ -8,6 +8,8 @@ import '../../../../StateManagement/mqtt_payload_provider.dart';
 import '../../../../models/customer/extensions/program_extensions.dart';
 import '../../../../models/customer/fertilizer_site_live_model.dart';
 import '../../../../models/customer/site_model.dart';
+import 'package:hex/providers/user_provider.dart';
+import 'package:hex/utils/enums.dart';
 import '../../../../services/communication_service.dart';
 import '../../../../utils/constants.dart';
 import '../../../../utils/formatters.dart';
@@ -25,7 +27,10 @@ import 'aquaculture_line.dart';
 import 'irrigation_line_wide.dart';
 import 'oms_line.dart';
 import 'valve_status_legend.dart';
+import '../../../../modules/IrrigationProgram/view/program_library.dart';
 import '../../../../modules/irrigation_report/repository/irrigation_repository.dart';
+import '../../../customer/input_output_connection_details.dart';
+import '../../../customer/stand_alone/manual_control_page.dart';
 
 class _ValveDisplayData {
   final String name;
@@ -1038,6 +1043,15 @@ class _IrrigationLineDashboardState extends State<IrrigationLineDashboard> {
   // -------------------------------------------------------------
   Widget _buildTopBar(bool isMiddle) {
     final mqttProvider = context.watch<MqttPayloadProvider>();
+    final userProvider = context.watch<UserProvider>();
+    final loggedInUser = userProvider.loggedInUser;
+    final viewedCustomer = userProvider.viewedCustomer;
+
+    // Display Back button when Dealer or Admin is viewing a customer dashboard
+    final bool showBackButton =
+        (loggedInUser.role == UserRole.admin || loggedInUser.role == UserRole.dealer) &&
+        viewedCustomer != null;
+
     final vm = widget.viewModel;
     final siteList = vm.mySiteList.data;
     final currentSite = vm.myCurrentSite.isNotEmpty
@@ -1060,6 +1074,7 @@ class _IrrigationLineDashboardState extends State<IrrigationLineDashboard> {
       formattedSyncTime = 'Last sync - $_currentTime';
     }
 
+    final backButtonWidget = showBackButton ? _buildBackButton(context, userProvider) : null;
     final siteWidget = _buildSiteDropdownPill(siteList, currentSite, vm);
     final lineWidget = _buildLineDropdownPill(lineList, vm);
     final refreshWidget = _buildRefreshButton(vm);
@@ -1074,6 +1089,10 @@ class _IrrigationLineDashboardState extends State<IrrigationLineDashboard> {
         children: [
           Row(
             children: [
+              if (backButtonWidget != null) ...[
+                backButtonWidget,
+                const SizedBox(width: 10),
+              ],
               siteWidget,
               const SizedBox(width: 10),
               lineWidget,
@@ -1098,6 +1117,10 @@ class _IrrigationLineDashboardState extends State<IrrigationLineDashboard> {
 
     return Row(
       children: [
+        if (backButtonWidget != null) ...[
+          backButtonWidget,
+          const SizedBox(width: 10),
+        ],
         siteWidget,
         const SizedBox(width: 10),
         lineWidget,
@@ -1110,6 +1133,40 @@ class _IrrigationLineDashboardState extends State<IrrigationLineDashboard> {
         const SizedBox(width: 10),
         notificationWidget,
       ],
+    );
+  }
+
+  Widget _buildBackButton(BuildContext context, UserProvider userProvider) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Container(
+      width: 38,
+      height: 38,
+      decoration: BoxDecoration(
+        color: colorScheme.primary,
+        shape: BoxShape.circle,
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x1A000000),
+            blurRadius: 4,
+            offset: Offset(0, 1),
+          ),
+        ],
+      ),
+      child: IconButton(
+        padding: EdgeInsets.zero,
+        tooltip: 'Back to customer list',
+        onPressed: () {
+          if (userProvider.viewedCustomer != null) {
+            userProvider.popViewedCustomer();
+          }
+          Navigator.maybePop(context);
+        },
+        icon: Icon(
+          Icons.arrow_back_rounded,
+          size: 20,
+          color: colorScheme.onPrimary,
+        ),
+      ),
     );
   }
 
@@ -1530,6 +1587,8 @@ class _IrrigationLineDashboardState extends State<IrrigationLineDashboard> {
   // -------------------------------------------------------------
   Widget _buildGreetingAndActions(bool isMiddle) {
     final displayName = widget.userName.isNotEmpty ? widget.userName : 'Siva';
+    final userPvd = Provider.of<UserProvider>(context, listen: false);
+    final userId = userPvd.loggedInUser.id != 0 ? userPvd.loggedInUser.id : widget.customerId;
     String tabSubtitle;
     if (widget.viewModel.isNotCommunicate) {
       tabSubtitle =
@@ -1539,11 +1598,6 @@ class _IrrigationLineDashboardState extends State<IrrigationLineDashboard> {
     } else if (widget.selectedTabIndex == 2) {
       tabSubtitle =
           'Filter Backwash: Filter disc systems and differential pressure.';
-      // } else if (widget.selectedTabIndex == 3) {
-      //   tabSubtitle = 'Fertilizer System: Fertilizer tanks and dosing channels.';
-      // } else if (widget.selectedTabIndex == 5) {
-      //   tabSubtitle =
-      //       'Wireless Node Network: Field nodes reporting RF signal & battery.';
     } else {
       if (_livePrograms.isNotEmpty) {
         tabSubtitle =
@@ -1586,12 +1640,76 @@ class _IrrigationLineDashboardState extends State<IrrigationLineDashboard> {
           runSpacing: 8,
           crossAxisAlignment: WrapCrossAlignment.center,
           children: [
+            // 1. Planning Method
             _buildActionButton(
-                icon: Icons.add, label: 'Planning Method', onTap: () {}),
+              icon: Icons.list_alt_rounded,
+              label: 'Planning Method',
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => ProgramLibraryScreenNew(
+                      customerId: widget.customerId,
+                      controllerId: widget.controllerId,
+                      deviceId: widget.deviceId,
+                      userId: userId,
+                      groupId: widget.viewModel.mySiteList.data.isNotEmpty
+                          ? widget.viewModel.mySiteList.data[widget.viewModel.sIndex].groupId
+                          : 0,
+                      categoryId: widget.masterController.categoryId,
+                      modelId: widget.modelId,
+                      deviceName: widget.masterController.deviceName,
+                      categoryName: widget.masterController.categoryName,
+                      callbackFunction: (status) {},
+                      nodeList: widget.masterController.nodeList,
+                    ),
+                  ),
+                );
+              },
+            ),
+
+            // 2. Manual Run
             _buildActionButton(
-                icon: Icons.play_arrow_outlined,
-                label: 'Manual run',
-                onTap: () {}),
+              icon: Icons.touch_app_outlined,
+              label: 'Manual Run',
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => ManualControlPage(
+                      siteId: widget.viewModel.mySiteList.data.isNotEmpty
+                          ? widget.viewModel.mySiteList.data[widget.viewModel.sIndex].groupId
+                          : 0,
+                      controllerId: widget.controllerId,
+                      customerId: widget.customerId,
+                      deviceId: widget.deviceId,
+                      callbackFunction: (status) {},
+                      userId: userId,
+                      masterData: widget.masterController,
+                    ),
+                  ),
+                );
+              },
+            ),
+
+            // 3. Connections
+            _buildActionButton(
+              icon: Icons.settings_input_component_outlined,
+              label: 'Connections',
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => InputOutputConnectionDetails(
+                      masterInx: widget.viewModel.mIndex,
+                      nodes: widget.masterController.nodeList,
+                    ),
+                  ),
+                );
+              },
+            ),
+
+            // 4. Pause All Line
             _buildPauseResumeAllLineButton(),
           ],
         ),

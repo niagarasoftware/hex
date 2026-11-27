@@ -212,7 +212,7 @@ class _HexSidebarState extends State<HexSidebar> {
 
     if (confirmed == true) {
       await PreferenceHelper.clearAll();
-      const route = kIsWeb ? Routes.login : Routes.loginOtp;
+      const route = Routes.login;
       if (context.mounted) {
         Navigator.pushNamedAndRemoveUntil(
           context,
@@ -549,10 +549,7 @@ class _HexSidebarState extends State<HexSidebar> {
         children: [
           // Header: VIOM Automation Brand SVG Logo
           Padding(
-            padding: EdgeInsets.symmetric(
-              horizontal: _isExpanded ? 12.0 : 8.0,
-              vertical: 14.0,
-            ),
+            padding: EdgeInsetsGeometry.all(20),
             child: Center(
               child: SvgPicture.asset(
                 'assets/svg_images/oro_logo.svg',

@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:hex/Constants/notifications_service.dart';
 import 'package:hex/utils/Theme/agritel_theme.dart';
-import '../Screens/login_screenOTP/login_screenotp.dart';
 import '../flavors.dart';
 import '../utils/Theme/smart_comm_theme.dart';
 import '../utils/Theme/oro_theme.dart';
@@ -82,11 +81,9 @@ class _MyAppState extends State<MyApp> {
 
 /// Helper function to navigate to the appropriate screen
 Widget navigateToInitialScreen(String route) {
-  final isOro = F.appFlavor!.name.contains('oro');
-
   switch (route) {
     case Routes.login:
-      return kIsWeb ? const LoginScreen() : isOro ? LoginScreenOTP() : const LoginScreen();
+      return const LoginScreen();
     case Routes.dashboard:
       return const ScreenController();
     default:

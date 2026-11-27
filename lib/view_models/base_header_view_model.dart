@@ -90,7 +90,7 @@ class BaseHeaderViewModel extends ChangeNotifier {
 
     if (!context.mounted) return;
 
-    const route = kIsWeb ? Routes.login : Routes.loginOtp;
+    const route = Routes.login;
     Navigator.pushNamedAndRemoveUntil(
       context,
       route,
