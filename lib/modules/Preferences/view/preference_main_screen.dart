@@ -20,6 +20,7 @@ import '../state_management/preference_provider.dart';
 import '../../SystemDefinitions/widgets/custom_snack_bar.dart';
 import '../../../utils/environment.dart';
 import '../../IrrigationProgram/view/program_library.dart';
+import 'package:hex/views/customer/controller_settings/widgets/mobile_settings_app_bar.dart';
 import '../widgets/progress_dialog.dart';
 
 final otherSettingsIcons = [
@@ -292,26 +293,24 @@ class _PreferenceMainScreenState extends State<PreferenceMainScreen>
         preferenceProvider.commonPumpSettings != null) {
       return Scaffold(
         backgroundColor: colorScheme.surfaceContainerLowest,
-        appBar: (MediaQuery.of(context).size.width <= 500 && !isValveSetting)
-            ? AppBar(
-          title: const Text("Preference"),
-          backgroundColor: colorScheme.surface,
-          foregroundColor: colorScheme.onSurface,
-          elevation: 0,
-          actions: [
-            if (selectedSetting == 0)
-              FilledButton.tonal(
-                  onPressed: () {
-                    setState(() {
-                      viewConfig = !viewConfig;
-                    });
-                  },
-                  child: const Text('View')),
-            const SizedBox(width: 10)
-          ],
-        )
+        appBar: MediaQuery.of(context).size.width < 600
+            ? buildMobileSettingsAppBar(
+                context,
+                title: isValveSetting ? "Valve Settings" : "Preference",
+                actions: [
+                  if (selectedSetting == 0 && !isValveSetting)
+                    FilledButton.tonal(
+                        onPressed: () {
+                          setState(() {
+                            viewConfig = !viewConfig;
+                          });
+                        },
+                        child: const Text('View')),
+                  const SizedBox(width: 10)
+                ],
+              )
             : PreferredSize(
-            preferredSize: const Size(0, 0), child: Container()),
+                preferredSize: const Size(0, 0), child: Container()),
         body: LayoutBuilder(
             builder: (BuildContext context, BoxConstraints constraints) {
               return Container(
@@ -671,46 +670,52 @@ class _PreferenceMainScreenState extends State<PreferenceMainScreen>
   Widget _buildBottomNavigationBar(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-      decoration: BoxDecoration(
-        color: colorScheme.surface,
-        border: Border(
-          top: BorderSide(
-            color: colorScheme.outlineVariant.withOpacity(0.4),
+    return SafeArea(
+      top: false,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        decoration: BoxDecoration(
+          color: colorScheme.surface,
+          border: Border(
+            top: BorderSide(
+              color: colorScheme.outlineVariant.withOpacity(0.4),
+            ),
           ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 8,
+              offset: const Offset(0, -2),
+            ),
+          ],
         ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 8,
-            offset: const Offset(0, -2),
-          ),
-        ],
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Row(
-            children: [
-              if (selectedSetting > 0) ...[
-                OutlinedButton.icon(
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
+        child: Wrap(
+          alignment: WrapAlignment.spaceBetween,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (selectedSetting > 0) ...[
+                  OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
                     ),
+                    onPressed: () {
+                      setState(() {
+                        selectedSetting--;
+                      });
+                    },
+                    icon: const Icon(Icons.arrow_back_rounded, size: 18),
+                    label: const Text("Back"),
                   ),
-                  onPressed: () {
-                    setState(() {
-                      selectedSetting--;
-                    });
-                  },
-                  icon: const Icon(Icons.arrow_back_rounded, size: 18),
-                  label: const Text("Back"),
-                ),
-                const SizedBox(width: 12),
-              ],
+                  const SizedBox(width: 8),
+                ],
               if (!isValveSetting && _hasFailedPayloads())
                 OutlinedButton.icon(
                   style: OutlinedButton.styleFrom(
@@ -977,6 +982,7 @@ class _PreferenceMainScreenState extends State<PreferenceMainScreen>
           ),
         ],
       ),
+    ),
     );
   }
 

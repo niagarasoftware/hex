@@ -11,6 +11,7 @@ import '../../../services/http_service.dart';
 import '../../config_maker/view/config_web_view.dart';
 import '../../../utils/constants.dart';
 import '../../../utils/environment.dart';
+import 'package:hex/views/customer/controller_settings/widgets/mobile_settings_app_bar.dart';
 import '../model/calibration_object_model.dart';
 import '../model/sensor_category_model.dart';
 
@@ -159,15 +160,10 @@ class _CalibrationScreenState extends State<CalibrationScreen> {
               backgroundColor: colorScheme.surfaceContainerLowest,
               floatingActionButton: getFloatingActionButton(data),
               appBar: MediaQuery.of(context).size.width < 500
-                  ? AppBar(
-                title: const Text(
-                  'Calibration',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-                backgroundColor: colorScheme.surface,
-                foregroundColor: colorScheme.onSurface,
-                elevation: 0,
-              )
+                  ? buildMobileSettingsAppBar(
+                      context,
+                      title: 'Calibration',
+                    )
                   : null,
               body: SafeArea(
                 child: Padding(

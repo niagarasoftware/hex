@@ -9,6 +9,7 @@ import '../../../../Screens/Dealer/controllerverssionupdate.dart';
 import '../../../../StateManagement/mqtt_payload_provider.dart';
 import '../../../../models/customer/controller_context.dart';
 import '../../../../modules/bluetooth_low_energy/view/node_connection_page.dart';
+import 'package:hex/views/customer/controller_settings/widgets/mobile_settings_app_bar.dart';
 import '../../../../providers/user_provider.dart';
 import '../../../../repository/repository.dart';
 import '../../../../services/bluetooth/bluetooth_ble_service.dart';
@@ -98,35 +99,40 @@ class _GeneralSettingsNarrowState extends State<GeneralSettingsNarrow> {
           final bool isEcoMdl = [...AppConstants.ecoGemModelList, ...AppConstants.pumpList].contains(viewModel.modelId);
 
           return Scaffold(
-            appBar: AppBar(
-              title: const Text('General'),
+            appBar: buildMobileSettingsAppBar(
+              context,
+              title: 'General',
               actions: [
-                IconButton(onPressed: () async {
-                  final isAuthenticated = await Validators().verifyPassword(context);
-                  if (isAuthenticated) {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => ResetVerssion(
-                          createUser: widget.userId,
-                          userId: widget.customerId,
-                          controllerId: widget.controllerId,
-                          deviceID: viewModel.deviceId,
-                          modeID: viewModel.modelId,
+                IconButton(
+                  onPressed: () async {
+                    final isAuthenticated = await Validators().verifyPassword(context);
+                    if (isAuthenticated) {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ResetVerssion(
+                            createUser: widget.userId,
+                            userId: widget.customerId,
+                            controllerId: widget.controllerId,
+                            deviceID: viewModel.deviceId,
+                            modeID: viewModel.modelId,
+                          ),
                         ),
-                      ),
-                    );
-                  }
-                }, icon: const Icon(Icons.update)),
+                      );
+                    }
+                  },
+                  icon: const Icon(Icons.update),
+                ),
               ],
             ),
             backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-            body: viewModel.isLoading?
-            buildLoadingIndicator(true, MediaQuery.sizeOf(context).width):
-            ListView(
-              padding: const EdgeInsets.only(left: 12, right: 10),
-              children: [
-                const Padding(
+            body: SafeArea(
+              child: viewModel.isLoading
+                  ? buildLoadingIndicator(true, MediaQuery.sizeOf(context).width)
+                  : ListView(
+                      padding: const EdgeInsets.only(left: 12, right: 10),
+                      children: [
+                        const Padding(
                   padding: EdgeInsets.symmetric(vertical: 8.0),
                   child: Text('General Settings',
                     style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
@@ -325,11 +331,11 @@ class _GeneralSettingsNarrowState extends State<GeneralSettingsNarrow> {
                 ),
               ],
             ),
-          );
-        },
-      ),
+          ),
+        );
+      },
+    ),
     );
-
   }
 
   Widget buildLoadingIndicator(bool isVisible, double width) {

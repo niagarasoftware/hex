@@ -5,6 +5,7 @@ import 'package:skeletonizer/skeletonizer.dart';
 import '../../../../repository/repository.dart';
 import '../../../../services/http_service.dart';
 import '../../../../view_models/customer/condition_library_view_model.dart';
+import 'package:hex/views/customer/controller_settings/widgets/mobile_settings_app_bar.dart';
 import '../widgets/build_condition_card.dart';
 import '../widgets/build_floating_action_buttons.dart';
 import '../widgets/condition_card_skeleton.dart';
@@ -33,25 +34,30 @@ class ConditionLibraryNarrow extends StatelessWidget {
         builder: (context, vm, _) {
 
           return Scaffold(
-            appBar: AppBar(title: const Text('Condition Library')),
-            body: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Skeletonizer(
-                enabled: vm.isLoading,
-                child: ListView.builder(
-                  padding: const EdgeInsets.only(bottom: 60),
-                  itemCount: vm.isLoading ? 3 : vm.clData.cnLibrary.condition.length,
-                  itemBuilder: (context, index) {
+            appBar: buildMobileSettingsAppBar(
+              context,
+              title: 'Condition Library',
+            ),
+            body: SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Skeletonizer(
+                  enabled: vm.isLoading,
+                  child: ListView.builder(
+                    padding: const EdgeInsets.only(bottom: 60),
+                    itemCount: vm.isLoading ? 3 : vm.clData.cnLibrary.condition.length,
+                    itemBuilder: (context, index) {
 
-                    if (vm.isLoading) {
-                      return buildConditionCardSkeleton();
-                    }
-                    else if(vm.clData.cnLibrary.condition.isEmpty){
-                      return const Center(child: Text('No condition available'));
-                    }
+                      if (vm.isLoading) {
+                        return buildConditionCardSkeleton();
+                      }
+                      else if(vm.clData.cnLibrary.condition.isEmpty){
+                        return const Center(child: Text('No condition available'));
+                      }
 
-                    return buildConditionCard(context, vm, index);
-                  },
+                      return buildConditionCard(context, vm, index);
+                    },
+                  ),
                 ),
               ),
             ),
