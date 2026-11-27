@@ -17,8 +17,8 @@ class Environment {
       'subscribeTopic': 'FirmwareToApp',
       'mqttWebPort': 9001,
       'mqttMobilePort': 1883,
-      "mqttUserName": '',
-      "mqttPassword": '',
+      "mqttUserName": 'mqttuser',
+      "mqttPassword": 'Mqtt@456',
     },
     'smartComm': {
       'apiUrl': 'https://smartcomm-wms.com:5000/api/v1',
