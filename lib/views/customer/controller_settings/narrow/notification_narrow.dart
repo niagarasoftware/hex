@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:loading_indicator/loading_indicator.dart';
 import 'package:provider/provider.dart';
 
+import 'package:hex/views/customer/controller_settings/widgets/mobile_settings_app_bar.dart';
 import '../../../../repository/repository.dart';
 import '../../../../services/http_service.dart';
 import '../../../../view_models/customer/notification_view_model.dart';
@@ -30,62 +31,67 @@ class NotificationNarrow extends StatelessWidget {
           }
 
           return Scaffold(
-            appBar: AppBar(title: const Text('Notification')),
-            body: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Padding(
-                      padding: EdgeInsets.all(8.0),
-                      child: Text(
-                        "Notifications On/Off",
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            appBar: buildMobileSettingsAppBar(
+              context,
+              title: 'Notification',
+            ),
+            body: SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Padding(
+                        padding: EdgeInsets.all(8.0),
+                        child: Text(
+                          "Notifications On/Off",
+                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                        ),
                       ),
-                    ),
-                    ListView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: viewModel.notificationList.length,
-                      itemBuilder: (context, index) {
-                        final item = viewModel.notificationList[index];
-                        return  ListTile(
-                          title: Text(item.notificationName),
-                          trailing: Switch(
-                            value: item.pushNotification,
-                            onChanged: (value) =>
-                                viewModel.toggleNotification(index, value, isPush: true),
-                          ),
-                        );
-                      },
-                    ),
-                    const SizedBox(height: 20),
-                    const Padding(
-                      padding: EdgeInsets.all(8.0),
-                      child: Text(
-                        "Save to (Send & Receive)",
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      ListView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: viewModel.notificationList.length,
+                        itemBuilder: (context, index) {
+                          final item = viewModel.notificationList[index];
+                          return  ListTile(
+                            title: Text(item.notificationName),
+                            trailing: Switch(
+                              value: item.pushNotification,
+                              onChanged: (value) =>
+                                  viewModel.toggleNotification(index, value, isPush: true),
+                            ),
+                          );
+                        },
                       ),
-                    ),
-                    ListView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: viewModel.notificationList.length,
-                      itemBuilder: (context, index) {
-                        final item = viewModel.notificationList[index];
-                        return  ListTile(
-                          title: Text(item.notificationName),
-                          trailing: Switch(
-                            value: item.sendAndReceive,
-                            onChanged: (value) =>
-                                viewModel.toggleNotification(index, value, isPush: false),
-                          ),
-                        );
-                      },
-                    ),
-                    const SizedBox(height: 70),
-                  ],
+                      const SizedBox(height: 20),
+                      const Padding(
+                        padding: EdgeInsets.all(8.0),
+                        child: Text(
+                          "Save to (Send & Receive)",
+                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                      ListView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: viewModel.notificationList.length,
+                        itemBuilder: (context, index) {
+                          final item = viewModel.notificationList[index];
+                          return  ListTile(
+                            title: Text(item.notificationName),
+                            trailing: Switch(
+                              value: item.sendAndReceive,
+                              onChanged: (value) =>
+                                  viewModel.toggleNotification(index, value, isPush: false),
+                            ),
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 70),
+                    ],
+                  ),
                 ),
               ),
             ),

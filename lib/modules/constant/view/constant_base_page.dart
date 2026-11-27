@@ -21,6 +21,7 @@ import '../../SystemDefinitions/widgets/custom_snack_bar.dart';
 import 'package:hex/modules/IrrigationProgram/view/program_library.dart';
 import 'package:hex/utils/environment.dart';
 import 'package:hex/utils/helpers/log_print.dart';
+import 'package:hex/views/customer/controller_settings/widgets/mobile_settings_app_bar.dart';
 import 'channel_in_constant.dart';
 import 'filter_in_constant.dart';
 import 'filter_site_in_constant.dart';
@@ -91,6 +92,7 @@ class _ConstantBasePageState extends State<ConstantBasePage>
   @override
   void dispose() {
     tabController.dispose();
+    _stepScrollController.dispose();
     super.dispose();
   }
 
@@ -121,16 +123,11 @@ class _ConstantBasePageState extends State<ConstantBasePage>
           } else if (snapshot.hasData) {
             return Scaffold(
               backgroundColor: colorScheme.surfaceContainerLowest,
-              appBar: MediaQuery.of(context).size.width < 500
-                  ? AppBar(
-                title: const Text(
-                  'Constant Settings',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-                backgroundColor: colorScheme.surface,
-                foregroundColor: colorScheme.onSurface,
-                elevation: 0,
-              )
+              appBar: MediaQuery.of(context).size.width < 600
+                  ? buildMobileSettingsAppBar(
+                      context,
+                      title: 'Constant Settings',
+                    )
                   : null,
               body: SafeArea(
                 child: Padding(
@@ -158,6 +155,19 @@ class _ConstantBasePageState extends State<ConstantBasePage>
         });
   }
 
+  final ScrollController _stepScrollController = ScrollController();
+
+  void _scrollToStepTab(int index) {
+    if (!_stepScrollController.hasClients) return;
+    const itemWidth = 120.0;
+    final targetOffset = (index * itemWidth) - 60.0;
+    _stepScrollController.animateTo(
+      targetOffset.clamp(0.0, _stepScrollController.position.maxScrollExtent),
+      duration: const Duration(milliseconds: 220),
+      curve: Curves.easeOut,
+    );
+  }
+
   void updateTabs(int index) {
     constPvd.listOfConstantMenuModel[index].arrowTabState.value =
         ArrowTabState.onProgress;
@@ -174,6 +184,7 @@ class _ConstantBasePageState extends State<ConstantBasePage>
     setState(() {
       tabController.animateTo(index);
     });
+    _scrollToStepTab(index);
   }
 
   Widget _buildStepNavigationBar(BuildContext context) {
@@ -190,6 +201,7 @@ class _ConstantBasePageState extends State<ConstantBasePage>
         ),
       ),
       child: SingleChildScrollView(
+        controller: _stepScrollController,
         scrollDirection: Axis.horizontal,
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -372,61 +384,66 @@ class _ConstantBasePageState extends State<ConstantBasePage>
     final isLastTab =
         tabController.index == constPvd.listOfConstantMenuModel.length - 1;
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-      decoration: BoxDecoration(
-        color: colorScheme.surface,
-        border: Border(
-          top: BorderSide(
-            color: colorScheme.outlineVariant.withOpacity(0.4),
+    return SafeArea(
+      top: false,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        decoration: BoxDecoration(
+          color: colorScheme.surface,
+          border: Border(
+            top: BorderSide(
+              color: colorScheme.outlineVariant.withOpacity(0.4),
+            ),
           ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 8,
+              offset: const Offset(0, -2),
+            ),
+          ],
         ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 8,
-            offset: const Offset(0, -2),
-          ),
-        ],
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Row(
-            children: [
-              if (!isFirstTab)
-                OutlinedButton.icon(
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 20, vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
+        child: Wrap(
+          alignment: WrapAlignment.spaceBetween,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (!isFirstTab)
+                  OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 10),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
                     ),
+                    onPressed: () {
+                      setState(() {
+                        updateTabs(tabController.index - 1);
+                      });
+                    },
+                    icon: const Icon(Icons.arrow_back_rounded, size: 18),
+                    label: const Text("Back"),
                   ),
-                  onPressed: () {
-                    setState(() {
-                      updateTabs(tabController.index - 1);
-                    });
-                  },
-                  icon: const Icon(Icons.arrow_back_rounded, size: 18),
-                  label: const Text("Back"),
-                )
-              else
-                const SizedBox.shrink(),
-            ],
-          ),
-          Row(
-            children: [
-              if (!isLastTab) ...[
-                FilledButton.tonalIcon(
-                  style: FilledButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 20, vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
+              ],
+            ),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (!isLastTab) ...[
+                  FilledButton.tonalIcon(
+                    style: FilledButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 10),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
                     ),
-                  ),
-                  onPressed: () {
+                    onPressed: () {
                     setState(() {
                       updateTabs(tabController.index + 1);
                     });
@@ -466,6 +483,7 @@ class _ConstantBasePageState extends State<ConstantBasePage>
           ),
         ],
       ),
+    ),
     );
   }
 

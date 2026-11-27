@@ -1049,8 +1049,10 @@ class _IrrigationLineDashboardState extends State<IrrigationLineDashboard> {
 
     // Display Back button when Dealer or Admin is viewing a customer dashboard
     final bool showBackButton =
-        (loggedInUser.role == UserRole.admin || loggedInUser.role == UserRole.dealer) &&
-        viewedCustomer != null;
+        (loggedInUser.role == UserRole.admin ||
+            loggedInUser.role == UserRole.dealer ||
+            viewedCustomer != null) &&
+        (viewedCustomer != null || loggedInUser.role != UserRole.customer);
 
     final vm = widget.viewModel;
     final siteList = vm.mySiteList.data;
