@@ -1084,6 +1084,22 @@ class _ProgramLibraryScreenNewState extends State<ProgramLibraryScreenNew> {
                     ),
                     child: const Text("Edit", style: TextStyle(color: Color(0xFF1E293B), fontWeight: FontWeight.w600, fontSize: 13)),
                   ),
+                  if (program.active == "1") ...[
+                    const SizedBox(width: 8),
+                    OutlinedButton.icon(
+                      onPressed: () {
+                        showConfirmationDialog(program, "inactive");
+                      },
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: Color(0xFFFEE2E2)),
+                        backgroundColor: const Color(0xFFFEF2F2),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      ),
+                      icon: const Icon(Icons.block, size: 16, color: Color(0xFFDC2626)),
+                      label: const Text("Deactivate", style: TextStyle(color: Color(0xFFDC2626), fontWeight: FontWeight.w600, fontSize: 13)),
+                    ),
+                  ],
                   const SizedBox(width: 8),
                   // Copy Button
                   OutlinedButton(
