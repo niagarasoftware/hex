@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/svg.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../../../../utils/constants.dart';
 
 class OroLoginHeader extends StatelessWidget {
@@ -11,7 +11,7 @@ class OroLoginHeader extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(24, 40, 24, 32),
+      padding: const EdgeInsets.fromLTRB(24, 28, 24, 20),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
@@ -25,8 +25,27 @@ class OroLoginHeader extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-
-           const Text(
+          Container(
+            constraints: const BoxConstraints(maxWidth: 250),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.08),
+                  blurRadius: 10,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+            ),
+            child: SvgPicture.asset(
+              'assets/svg_images/oro_logo.svg',
+              fit: BoxFit.contain,
+            ),
+          ),
+          const SizedBox(height: 16),
+          const Text(
             AppConstants.appShortContent,
             style: TextStyle(
               color: Colors.white70,

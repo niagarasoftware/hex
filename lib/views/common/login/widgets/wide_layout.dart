@@ -52,7 +52,28 @@ class WideLayout extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             // Top Logo
-          const SizedBox(height: 50,),
+            if (isOro)
+              Container(
+                constraints: const BoxConstraints(maxWidth: 280),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.08),
+                      blurRadius: 10,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+                ),
+                child: SvgPicture.asset(
+                  'assets/svg_images/oro_logo.svg',
+                  fit: BoxFit.contain,
+                ),
+              )
+            else
+              const SizedBox(height: 50),
             // Center IoT Highlights
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -160,8 +181,25 @@ class WideLayout extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               if (isOro) ...[
-                SvgPicture.asset('assets/svg_images/oro_logo.svg',
-                    height: 52, fit: BoxFit.contain),
+                Container(
+                  constraints: const BoxConstraints(maxWidth: 240),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.06),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: SvgPicture.asset(
+                    'assets/svg_images/oro_logo.svg',
+                    fit: BoxFit.contain,
+                  ),
+                ),
                 const SizedBox(height: 24),
               ],
               if (isATel) ...[
