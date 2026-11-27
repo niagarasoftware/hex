@@ -18,6 +18,9 @@ import 'package:provider/provider.dart';
 
 import '../../../StateManagement/overall_use.dart';
 import '../../SystemDefinitions/widgets/custom_snack_bar.dart';
+import 'package:hex/modules/IrrigationProgram/view/program_library.dart';
+import 'package:hex/utils/environment.dart';
+import 'package:hex/utils/helpers/log_print.dart';
 import 'channel_in_constant.dart';
 import 'filter_in_constant.dart';
 import 'filter_site_in_constant.dart';
@@ -39,6 +42,7 @@ class _ConstantBasePageState extends State<ConstantBasePage>
   late Future<int> constantResponse;
   late ConstantProvider constPvd;
   late OverAllUse overAllPvd;
+  bool _isSaving = false;
 
   @override
   void initState() {
@@ -442,11 +446,20 @@ class _ConstantBasePageState extends State<ConstantBasePage>
                     borderRadius: BorderRadius.circular(10),
                   ),
                 ),
-                onPressed: () => _handleSaveConstant(context),
-                icon: const Icon(Icons.save_rounded, size: 18),
-                label: const Text(
-                  "Save Constant",
-                  style: TextStyle(fontWeight: FontWeight.bold),
+                onPressed: _isSaving ? null : () => _handleSaveConstant(context),
+                icon: _isSaving
+                    ? SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: colorScheme.onPrimary,
+                        ),
+                      )
+                    : const Icon(Icons.save_rounded, size: 18),
+                label: Text(
+                  _isSaving ? "Saving..." : "Save Constant",
+                  style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
               ),
             ],
@@ -457,73 +470,114 @@ class _ConstantBasePageState extends State<ConstantBasePage>
   }
 
   Future<void> _handleSaveConstant(BuildContext context) async {
+    if (_isSaving) {
+      AppLog.log("Save Constant click ignored: Save operation already in progress.");
+      return;
+    }
+
+    final controllerId = widget.userData['controllerId'];
+    final customerId = widget.userData['customerId'];
+    final deviceId = (widget.userData['deviceId'] ?? widget.userData['imeiNo'] ?? '').toString();
+
+    AppLog.log("Save Constant button clicked for customer: $customerId, controller: $controllerId, device: $deviceId");
+
+    setState(() {
+      _isSaving = true;
+    });
+
     try {
+      final hardwarePayload = constPvd.getConstantHardwarePayload();
+      AppLog.log("Generated Constant Hardware Payload (Code 300): $hardwarePayload");
+
       var body = {
-        "userId": widget.userData['customerId'],
-        "controllerId": widget.userData['controllerId'],
-        "general":
-        constPvd.general.map((setting) => setting.toJson()).toList(),
+        "userId": customerId,
+        "controllerId": controllerId,
+        "general": constPvd.general.map((setting) => setting.toJson()).toList(),
         "waterSource": [],
-        "levelSensor":
-        constPvd.level.map((setting) => setting.toJson()).toList(),
+        "levelSensor": constPvd.level.map((setting) => setting.toJson()).toList(),
         "pump": constPvd.pump.map((setting) => setting.toJson()).toList(),
-        "filterSite":
-        constPvd.filterSite.map((setting) => setting.toJson()).toList(),
+        "filterSite": constPvd.filterSite.map((setting) => setting.toJson()).toList(),
         "filter": constPvd.filter.map((setting) => setting.toJson()).toList(),
-        "fertilizerSite":
-        constPvd.fertilizerSite.map((setting) => setting.toJson()).toList(),
-        "fertilizerChannel":
-        constPvd.channel.map((setting) => setting.toJson()).toList(),
-        "ecPhSensor":
-        constPvd.ecPhSensor.map((setting) => setting.toJson()).toList(),
-        "waterMeter":
-        constPvd.waterMeter.map((setting) => setting.toJson()).toList(),
+        "fertilizerSite": constPvd.fertilizerSite.map((setting) => setting.toJson()).toList(),
+        "fertilizerChannel": constPvd.channel.map((setting) => setting.toJson()).toList(),
+        "ecPhSensor": constPvd.ecPhSensor.map((setting) => setting.toJson()).toList(),
+        "waterMeter": constPvd.waterMeter.map((setting) => setting.toJson()).toList(),
         "pressureSensor": [],
-        "mainValve":
-        constPvd.mainValve.map((setting) => setting.toJson()).toList(),
+        "mainValve": constPvd.mainValve.map((setting) => setting.toJson()).toList(),
         "valve": constPvd.valve.map((setting) => setting.toJson()).toList(),
-        "moistureSensor":
-        constPvd.moisture.map((setting) => setting.toJson()).toList(),
+        "moistureSensor": constPvd.moisture.map((setting) => setting.toJson()).toList(),
         "analogSensor": [],
-        "normalCriticalAlarm": constPvd.normalCriticalAlarm
-            .map((setting) => setting.toJson())
-            .toList(),
-        "commonAlarm":
-        constPvd.commonAlarm.map((setting) => setting.toJson()).toList(),
-        "globalAlarm":
-        constPvd.globalAlarm.map((setting) => setting.toJson()).toList(),
-        "hardware": {},
+        "normalCriticalAlarm": constPvd.normalCriticalAlarm.map((setting) => setting.toJson()).toList(),
+        "commonAlarm": constPvd.commonAlarm.map((setting) => setting.toJson()).toList(),
+        "globalAlarm": constPvd.globalAlarm.map((setting) => setting.toJson()).toList(),
+        "hardware": hardwarePayload,
         "controllerReadStatus": "0",
-        "createUser": widget.userData['userId']
+        "createUser": widget.userData['userId'] ?? customerId,
       };
 
+      AppLog.log("Sending Constant Settings API request to ConstantRepository...");
       var response = await ConstantRepository().createUserConstant(body);
-      if (!mounted) return;
-      if (response.statusCode == 200) {
-        final jsonData = jsonDecode(response.body);
+      AppLog.log("Constant Settings API response code: ${response.statusCode}, body: ${response.body}");
+
+      if (response.statusCode != 200) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            CustomSnackBar(
+              message: "Failed to save constant settings to server. Please try again.",
+              color: Colors.red.shade700,
+            ),
+          );
+        }
+        return;
+      }
+
+      AppLog.log("MQTT Publish Topic: ${Environment.mqttPublishTopic}/$deviceId");
+
+      await validatePayloadSent(
+        dialogContext: context,
+        context: context,
+        payload: hardwarePayload,
+        payloadCode: "300",
+        deviceId: deviceId,
+        acknowledgedFunction: () {
+          AppLog.log("Constant Settings Hardware Acknowledgement received successfully!");
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              CustomSnackBar(
+                message: "Constant settings saved and sent to hardware successfully!",
+                color: Colors.green.shade700,
+              ),
+            );
+          }
+        },
+        failedFunction: () {
+          AppLog.log("Constant Settings Hardware Acknowledgement failed or timed out.");
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              CustomSnackBar(
+                message: "Hardware confirmation failed or timed out. Please retry.",
+                color: Colors.red.shade700,
+              ),
+            );
+          }
+        },
+      );
+    } catch (error, stackTrace) {
+      AppLog.log("Exception in Constant Settings save: $error\n$stackTrace");
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           CustomSnackBar(
-            message:
-            jsonData['message'] ?? "Constant settings saved successfully!",
-            color: Colors.green.shade700,
-          ),
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          CustomSnackBar(
-            message: "Failed to save constant settings. Please try again.",
+            message: "Failed to save settings due to: $error",
             color: Colors.red.shade700,
           ),
         );
       }
-    } catch (error) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        CustomSnackBar(
-          message: "Failed to save settings due to: $error",
-          color: Colors.red.shade700,
-        ),
-      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSaving = false;
+        });
+      }
     }
   }
 
