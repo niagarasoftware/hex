@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 
 import '../../../../StateManagement/mqtt_payload_provider.dart';
 import '../../../../models/customer/extensions/program_extensions.dart';
+import '../../../../models/customer/fertilizer_site_live_model.dart';
 import '../../../../models/customer/site_model.dart';
 import '../../../../services/communication_service.dart';
 import '../../../../utils/constants.dart';
@@ -51,6 +52,24 @@ class _PumpDisplayData {
   _PumpDisplayData({
     required this.name,
     required this.status,
+  });
+}
+
+class _InjectorCardData {
+  final String name;
+  final bool isInProgress;
+  final String durationStr;
+  final double progress;
+  final int percent;
+  final String detail;
+
+  const _InjectorCardData({
+    required this.name,
+    required this.isInProgress,
+    required this.durationStr,
+    required this.progress,
+    required this.percent,
+    required this.detail,
   });
 }
 
@@ -154,6 +173,15 @@ class _IrrigationLineDashboardState extends State<IrrigationLineDashboard> {
   bool _isLoadingBackwashLogs = false;
   final Map<String, int> _filterCountdownSeconds = {};
   final Map<String, String> _lastMqttFilterTime = {};
+  String _nodeFilterStatus = 'All';
+  final Set<int> _expandedNodeIndices = {0};
+
+  // Fertilizer live state & line dropdown
+  double? _selectedFertilizerLineSNo;
+  final Map<String, int> _channelLiveElapsedSeconds = {};
+  final Map<String, String> _lastChannelMqttCompleted = {};
+  int? _fertLiveIrrigationSeconds;
+  String? _lastFertMqttIrrigationCompleted;
 
   @override
   void initState() {
@@ -334,6 +362,20 @@ class _IrrigationLineDashboardState extends State<IrrigationLineDashboard> {
         _backwashTimeLeftSeconds--;
         _backwashElapsedSeconds =
             _backwashSetTimeSeconds - _backwashTimeLeftSeconds;
+        hasChanges = true;
+      }
+
+      // Tick running fertilizer channels count up every second
+      if (_channelLiveElapsedSeconds.isNotEmpty) {
+        _channelLiveElapsedSeconds.forEach((k, v) {
+          _channelLiveElapsedSeconds[k] = v + 1;
+        });
+        hasChanges = true;
+      }
+
+      // Tick running fertilizer irrigation duration count up every second
+      if (_fertLiveIrrigationSeconds != null) {
+        _fertLiveIrrigationSeconds = _fertLiveIrrigationSeconds! + 1;
         hasChanges = true;
       }
 
@@ -979,12 +1021,12 @@ class _IrrigationLineDashboardState extends State<IrrigationLineDashboard> {
         return _buildWaterSourceTabContent(isMiddle);
       case 2:
         return _buildBackwashTabContent(isMiddle, mqttProvider);
-      // case 3:
-      //   return _buildFertilizerTabContent(isMiddle);
+      case 3:
+        return _buildFertilizerTabContent(isMiddle, mqttProvider);
       // case 4:
       //   return _buildLineDetailsTabContent(isMiddle);
-      // case 5:
-      //   return _buildNodeMonitoringTabContent(isMiddle);
+      case 5:
+        return _buildNodeMonitoringTabContent(isMiddle, mqttProvider);
       case 0:
       default:
         return _buildIrrigationLineTabContent(isMiddle, mqttProvider);
@@ -1012,19 +1054,19 @@ class _IrrigationLineDashboardState extends State<IrrigationLineDashboard> {
 
     String formattedSyncTime = _currentTime;
     if (mqttProvider.liveDateAndTime.isNotEmpty) {
-      try {
-        final dt = DateTime.parse(mqttProvider.liveDateAndTime);
-        formattedSyncTime = DateFormat('dd MMM yyyy, hh:mm a').format(dt);
-      } catch (_) {
-        formattedSyncTime = _currentTime;
-      }
+      formattedSyncTime =
+          'Last sync - ${Formatters.formatDateTime(mqttProvider.liveDateAndTime)}';
+    } else {
+      formattedSyncTime = 'Last sync - $_currentTime';
     }
 
     final siteWidget = _buildSiteDropdownPill(siteList, currentSite, vm);
     final lineWidget = _buildLineDropdownPill(lineList, vm);
-    final searchWidget = _buildSearchPill();
+    final refreshWidget = _buildRefreshButton(vm);
     final timeWidget = _buildDateTimePill(formattedSyncTime);
     final statusWidget = _buildSystemStatusPill();
+    final notificationWidget =
+        _buildNotificationButton(vm, master, mqttProvider);
 
     if (isMiddle) {
       return Column(
@@ -1035,17 +1077,19 @@ class _IrrigationLineDashboardState extends State<IrrigationLineDashboard> {
               siteWidget,
               const SizedBox(width: 10),
               lineWidget,
-              const SizedBox(width: 10),
-              Expanded(child: searchWidget),
             ],
           ),
           const SizedBox(height: 10),
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
+              refreshWidget,
+              const SizedBox(width: 10),
               timeWidget,
               const SizedBox(width: 10),
               statusWidget,
+              const SizedBox(width: 10),
+              notificationWidget,
             ],
           ),
         ],
@@ -1057,13 +1101,48 @@ class _IrrigationLineDashboardState extends State<IrrigationLineDashboard> {
         siteWidget,
         const SizedBox(width: 10),
         lineWidget,
-        const SizedBox(width: 10),
-        Expanded(child: searchWidget),
+        const Spacer(),
+        refreshWidget,
         const SizedBox(width: 10),
         timeWidget,
         const SizedBox(width: 10),
         statusWidget,
+        const SizedBox(width: 10),
+        notificationWidget,
       ],
+    );
+  }
+
+  Widget _buildRefreshButton(CustomerScreenControllerViewModel vm) {
+    return Container(
+      width: 38,
+      height: 38,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: const [
+          BoxShadow(
+              color: Color(0x05000000), blurRadius: 4, offset: Offset(0, 1)),
+        ],
+      ),
+      child: IconButton(
+        padding: EdgeInsets.zero,
+        tooltip: 'Refresh',
+        onPressed: () {
+          vm.onRefreshClicked();
+        },
+        icon: vm.onRefresh
+            ? const SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Color(0xFF10B981),
+                ),
+              )
+            : const Icon(Icons.refresh, size: 20, color: Color(0xFF475569)),
+      ),
     );
   }
 
@@ -1314,6 +1393,139 @@ class _IrrigationLineDashboardState extends State<IrrigationLineDashboard> {
   }
 
   // -------------------------------------------------------------
+  // NOTIFICATION BELL BUTTON (Near System Online)
+  // -------------------------------------------------------------
+  Widget _buildNotificationButton(
+    CustomerScreenControllerViewModel vm,
+    MasterControllerModel master,
+    MqttPayloadProvider mqttProvider,
+  ) {
+    final alarms = vm.alarmDL.isNotEmpty ? vm.alarmDL : mqttProvider.alarmDL;
+    final validAlarms = alarms.where((a) => a.trim().isNotEmpty).toList();
+    final count = validAlarms.isNotEmpty
+        ? validAlarms.length
+        : 1; // 1 active alert for sample/real
+
+    return Container(
+      height: 38,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: count > 0 ? const Color(0xFFFCA5A5) : const Color(0xFFE2E8F0),
+        ),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x05000000),
+            blurRadius: 4,
+            offset: Offset(0, 1),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(20),
+          onTap: () {
+            _showRightCornerAlarmPanel(context, vm, master, mqttProvider);
+          },
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Stack(
+                  clipBehavior: Clip.none,
+                  alignment: Alignment.center,
+                  children: [
+                    Icon(
+                      count > 0
+                          ? Icons.notifications_active_rounded
+                          : Icons.notifications_outlined,
+                      size: 20,
+                      color: count > 0
+                          ? const Color(0xFFEF4444)
+                          : const Color(0xFF64748B),
+                    ),
+                    if (count > 0)
+                      Positioned(
+                        top: -5,
+                        right: -7,
+                        child: Container(
+                          padding: const EdgeInsets.all(3),
+                          decoration: const BoxDecoration(
+                            color: Color(0xFFEF4444),
+                            shape: BoxShape.circle,
+                          ),
+                          constraints: const BoxConstraints(
+                            minWidth: 16,
+                            minHeight: 16,
+                          ),
+                          child: Text(
+                            '$count',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 9,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // -------------------------------------------------------------
+  // RIGHT CORNER ALARM POPUP PANEL
+  // -------------------------------------------------------------
+  void _showRightCornerAlarmPanel(
+    BuildContext context,
+    CustomerScreenControllerViewModel vm,
+    MasterControllerModel master,
+    MqttPayloadProvider mqttProvider,
+  ) {
+    showGeneralDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: 'AlarmPanel',
+      barrierColor: Colors.black26,
+      transitionDuration: const Duration(milliseconds: 250),
+      pageBuilder: (dialogContext, anim1, anim2) {
+        return Align(
+          alignment: Alignment.topRight,
+          child: Padding(
+            padding: const EdgeInsets.only(top: 65, right: 20),
+            child: Material(
+              color: Colors.transparent,
+              child: _AlarmRightCornerPanel(
+                vm: vm,
+                master: master,
+                mqttProvider: mqttProvider,
+              ),
+            ),
+          ),
+        );
+      },
+      transitionBuilder: (context, anim1, anim2, child) {
+        return SlideTransition(
+          position: Tween<Offset>(
+            begin: const Offset(0.2, 0),
+            end: Offset.zero,
+          ).animate(CurvedAnimation(parent: anim1, curve: Curves.easeOutCubic)),
+          child: FadeTransition(opacity: anim1, child: child),
+        );
+      },
+    );
+  }
+
+  // -------------------------------------------------------------
   // GREETING AND ACTIONS
   // -------------------------------------------------------------
   Widget _buildGreetingAndActions(bool isMiddle) {
@@ -1507,11 +1719,18 @@ class _IrrigationLineDashboardState extends State<IrrigationLineDashboard> {
 
             return InkWell(
               onTap: () {
-                // Only navigate for Irrigation Line Monitoring (0), Water Source Monitoring (1), and Backwash (2)
-                if (index == 0 || index == 1 || index == 2) {
+                // Navigate for Irrigation Line Monitoring (0), Water Source Monitoring (1), Backwash (2), Fertilizer (3), and Node Monitoring (5)
+                if (index == 0 ||
+                    index == 1 ||
+                    index == 2 ||
+                    index == 3 ||
+                    index == 5) {
                   widget.onTabChanged(index);
+                  if (index == 3) {
+                    widget.viewModel.onFertilizerLiveSync();
+                  }
                 }
-                // Commented navigation code for remaining tabs (Fertilizer, Line Details, Node Monitoring):
+                // Commented navigation code for remaining tabs (Line Details):
                 // else {
                 //   widget.onTabChanged(index);
                 // }
@@ -6142,9 +6361,8 @@ class _IrrigationLineDashboardState extends State<IrrigationLineDashboard> {
   // TOP SECTION: NOW RUNNING BANNER (Figma Backwash Top Section with Dynamic API Log Count & Live Countdown)
   Widget _buildBackwashNowRunningBanner(
       _BackwashFilterData bannerFilter, bool isRunning) {
-    final timeLeftStr = bannerFilter.countdown != '00:00:00'
-        ? bannerFilter.countdown
-        : '--:--';
+    final timeLeftStr =
+        bannerFilter.countdown != '00:00:00' ? bannerFilter.countdown : '--:--';
     final setTimeStr = bannerFilter.setDuration;
     final backwashesTodayCount =
         _totalBackwashesToday > 0 ? _totalBackwashesToday : (isRunning ? 1 : 0);
@@ -6758,134 +6976,1505 @@ class _IrrigationLineDashboardState extends State<IrrigationLineDashboard> {
     return groups;
   }
 
+  bool _isFertilizerSiteActive(
+      FertilizerSiteModel fertSite, MqttPayloadProvider mqttProvider) {
+    final sNoIntStr = fertSite.sNo.toInt().toString();
+    final sNoStr = fertSite.sNo.toString();
+    for (final entry in mqttProvider.fertilizerSiteMap.entries) {
+      if (entry.key == sNoIntStr ||
+          entry.key == sNoStr ||
+          double.tryParse(entry.key) == fertSite.sNo) {
+        final s = entry.value;
+        final bool hasRunningProg =
+            s.programSNo.isNotEmpty && s.programSNo != "0";
+        final bool hasRunningValve = s.valveStatusList.any((st) => st == "1");
+        final bool hasRunningPump = s.pumpStatusList.any((st) => st == "1");
+        return hasRunningProg || hasRunningValve || hasRunningPump;
+      }
+    }
+    return false;
+  }
+
   // =============================================================
   // TAB 3: FERTILIZER MONITORING
   // =============================================================
-  Widget _buildFertilizerTabContent(bool isMiddle) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: _buildMetricCard(_MetricCardData(
-                title: 'Fertilizer Tanks',
-                value: '6',
-                unit: ' Tanks',
-                subtitle: 'Source 5 to Source 10',
-                subtitleColor: const Color(0xFF06B6D4),
-                icon: Icons.science_outlined,
-                iconColor: const Color(0xFF06B6D4),
-                glowColor: const Color(0xFF06B6D4),
-              )),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _buildMetricCard(_MetricCardData(
-                title: 'Booster Pump',
-                value: 'Pump 5',
-                unit: '',
-                subtitle: 'Running (Main Source 4)',
-                subtitleColor: const Color(0xFF16A34A),
-                icon: Icons.power_settings_new,
-                iconColor: const Color(0xFF10B981),
-                glowColor: const Color(0xFF10B981),
-              )),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _buildMetricCard(_MetricCardData(
-                title: 'Active Injectors',
-                value: '4',
-                unit: ' Channels',
-                subtitle: 'Injectors 1, 2, 3, 4',
-                subtitleColor: const Color(0xFF8B5CF6),
-                icon: Icons.alt_route,
-                iconColor: const Color(0xFF8B5CF6),
-                glowColor: const Color(0xFF8B5CF6),
-              )),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _buildMetricCard(_MetricCardData(
-                title: 'Agitator Status',
-                value: 'Active',
-                unit: '',
-                subtitle: 'Agitator 1 Mixing',
-                subtitleColor: const Color(0xFF16A34A),
-                icon: Icons.rotate_right,
-                iconColor: const Color(0xFFF59E0B),
-                glowColor: const Color(0xFFF59E0B),
-              )),
-            ),
-          ],
-        ),
-        const SizedBox(height: 20),
-        Container(
-          padding: const EdgeInsets.all(18),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: const Color(0xFFE2E8F0)),
-          ),
+  Widget _buildFertilizerTabContent(
+      bool isMiddle, MqttPayloadProvider mqttProvider) {
+    final vm = widget.viewModel;
+
+    // Trigger live sync automatically if not yet loaded
+    if (mqttProvider.fertilizerSiteMap.isEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          widget.viewModel.onFertilizerLiveSync();
+        }
+      });
+    }
+
+    // Identify real irrigation lines
+    final realLines = widget.masterController.irrigationLine.where((l) {
+      final nameLower = l.name.toLowerCase().trim();
+      return nameLower != "all irrigation line" &&
+          nameLower != "all aquaculture line" &&
+          !nameLower.startsWith("all irrigation") &&
+          !nameLower.startsWith("all aquaculture") &&
+          nameLower != "all line";
+    }).toList();
+
+    // Filter lines that have a fertilizer site configured
+    final linesWithFertilizer = realLines.where((l) {
+      return l.centralFertilizerSite != null || l.localFertilizerSite != null;
+    }).toList();
+
+    if (linesWithFertilizer.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(40.0),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
             children: [
-              const Text('Fertilizer Tanks & Tank Valves',
-                  style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF0F172A))),
+              const Icon(Icons.science_outlined,
+                  size: 48, color: Color(0xFF94A3B8)),
               const SizedBox(height: 12),
               const Text(
-                  'Source 4 (Main Fert Source) · Pump 5 Active · Tank Valves 1 through 17 configured.',
-                  style: TextStyle(fontSize: 12, color: Color(0xFF64748B))),
-              const SizedBox(height: 14),
-              Wrap(
-                spacing: 10,
-                runSpacing: 10,
-                children: [
-                  _buildSourceTagItem(
-                      label: 'Source 5 (Tank 1)', isAlert: false),
-                  _buildSourceTagItem(
-                      label: 'Source 6 (Tank 2)', isAlert: false),
-                  _buildSourceTagItem(
-                      label: 'Source 7 (Tank 3)', isAlert: false),
-                  _buildSourceTagItem(
-                      label: 'Source 8 (Tank 4)', isAlert: false),
-                  _buildSourceTagItem(
-                      label: 'Source 9 (Tank 5)', isAlert: false),
-                  _buildSourceTagItem(
-                      label: 'Source 10 (Tank 6)', isAlert: false),
-                ],
+                'No Fertilizer System Configured',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF0F172A),
+                ),
+              ),
+              const SizedBox(height: 6),
+              const Text(
+                'None of the irrigation lines have a fertilizer site configured.',
+                style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              OutlinedButton.icon(
+                onPressed: () {
+                  widget.viewModel.onFertilizerLiveSync();
+                },
+                icon: const Icon(Icons.refresh, size: 16),
+                label: const Text('Sync Now'),
               ),
             ],
           ),
+        ),
+      );
+    }
+
+    // Select line: use dropdown state or auto-select running line
+    IrrigationLineModel selectedLine;
+    if (_selectedFertilizerLineSNo != null &&
+        linesWithFertilizer.any((l) => l.sNo == _selectedFertilizerLineSNo)) {
+      selectedLine = linesWithFertilizer
+          .firstWhere((l) => l.sNo == _selectedFertilizerLineSNo);
+    } else {
+      IrrigationLineModel? activeLine;
+      for (final line in linesWithFertilizer) {
+        final fertSite = line.centralFertilizerSite ?? line.localFertilizerSite;
+        if (fertSite != null &&
+            _isFertilizerSiteActive(fertSite, mqttProvider)) {
+          activeLine = line;
+          break;
+        }
+      }
+      selectedLine = activeLine ?? linesWithFertilizer.first;
+      _selectedFertilizerLineSNo = selectedLine.sNo;
+    }
+
+    final selectedFertSite =
+        selectedLine.centralFertilizerSite ?? selectedLine.localFertilizerSite!;
+
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildFertilizerLineSelectorToolbar(
+            lines: linesWithFertilizer,
+            selectedLine: selectedLine,
+            siteName: selectedFertSite.name,
+            mqttProvider: mqttProvider,
+          ),
+          const SizedBox(height: 16),
+          _buildLineFertilizerView(
+            line: selectedLine,
+            isMiddle: isMiddle,
+            mqttProvider: mqttProvider,
+          ),
+          const SizedBox(height: 24),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFertilizerLineSelectorToolbar({
+    required List<IrrigationLineModel> lines,
+    required IrrigationLineModel selectedLine,
+    required String siteName,
+    required MqttPayloadProvider mqttProvider,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.alt_route, size: 18, color: Color(0xFF0284C7)),
+          const SizedBox(width: 8),
+          const Text(
+            'Irrigation Line: ',
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF64748B),
+            ),
+          ),
+          if (lines.length > 1) ...[
+            DropdownButtonHideUnderline(
+              child: DropdownButton<double>(
+                value: selectedLine.sNo,
+                isDense: true,
+                icon:
+                    const Icon(Icons.arrow_drop_down, color: Color(0xFF0F172A)),
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF0F172A),
+                ),
+                items: lines.map((l) {
+                  final fSite =
+                      l.centralFertilizerSite ?? l.localFertilizerSite;
+                  final isActive = fSite != null &&
+                      _isFertilizerSiteActive(fSite, mqttProvider);
+                  return DropdownMenuItem<double>(
+                    value: l.sNo,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 8,
+                          height: 8,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: isActive
+                                ? const Color(0xFF10B981)
+                                : const Color(0xFF94A3B8),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          fSite != null ? '${l.name} (${fSite.name})' : l.name,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF0F172A),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }).toList(),
+                onChanged: (newSNo) {
+                  if (newSNo != null) {
+                    setState(() {
+                      _selectedFertilizerLineSNo = newSNo;
+                    });
+                  }
+                },
+              ),
+            ),
+          ] else ...[
+            Text(
+              '${selectedLine.name} ($siteName)',
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF0F172A),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLineFertilizerView({
+    required IrrigationLineModel line,
+    required bool isMiddle,
+    required MqttPayloadProvider mqttProvider,
+  }) {
+    final fertSite = line.centralFertilizerSite ?? line.localFertilizerSite!;
+
+    // Match live site by sNo in mqttProvider.fertilizerSiteMap
+    FertilizerSiteLiveModel? liveSite;
+    final sNoIntStr = fertSite.sNo.toInt().toString();
+    final sNoStr = fertSite.sNo.toString();
+
+    for (final entry in mqttProvider.fertilizerSiteMap.entries) {
+      if (entry.key == sNoIntStr ||
+          entry.key == sNoStr ||
+          (double.tryParse(entry.key) == fertSite.sNo)) {
+        liveSite = entry.value;
+        break;
+      }
+    }
+    if (liveSite == null && mqttProvider.fertilizerSiteMap.isNotEmpty) {
+      liveSite = mqttProvider.fertilizerSiteMap.values.first;
+    }
+
+    final configObjects = widget
+        .viewModel
+        .mySiteList
+        .data[widget.viewModel.sIndex]
+        .master[widget.viewModel.mIndex]
+        .configObjects;
+
+    final bool hasLiveActive = liveSite != null &&
+        (liveSite.programSNo.isNotEmpty && liveSite.programSNo != "0");
+
+    // Extract Program & Zone
+    String programName = '--';
+    String zoneName = '--';
+    if (hasLiveActive) {
+      try {
+        final scheduledProgram = widget
+            .viewModel
+            .mySiteList
+            .data[widget.viewModel.sIndex]
+            .master[widget.viewModel.mIndex]
+            .programList;
+        final p = scheduledProgram.getProgramName(liveSite!.programSNo);
+        final z = scheduledProgram.getSequenceName(
+            liveSite.programSNo, liveSite.zoneSNo);
+        programName = p.isNotEmpty ? p : 'Program ${liveSite.programSNo}';
+        zoneName = z.isNotEmpty ? z : 'Sequence ${liveSite.zoneSNo}';
+      } catch (_) {
+        programName = 'Program ${liveSite!.programSNo}';
+        zoneName = 'Sequence ${liveSite.zoneSNo}';
+      }
+    }
+
+    // Method and progress (Old UI logic directly from MQTT without artificial counter)
+    final bool isTimeMethod =
+        hasLiveActive ? liveSite!.irrigationMethod.toLowerCase() == "1" : true;
+
+    String progressTitle = isTimeMethod
+        ? 'Irrigation progress (Time)'
+        : 'Irrigation progress (Quantity)';
+
+    String progressRight = '';
+    double progressRatio = 0.0;
+    String remDurationHms = '';
+
+    if (hasLiveActive) {
+      if (isTimeMethod) {
+        final totSec = _parseDurationToSeconds(liveSite!.irrigationDurationQty);
+        final compSec =
+            _parseDurationToSeconds(liveSite.irrigationDurationCompleted);
+        if (_lastFertMqttIrrigationCompleted != liveSite.irrigationDurationCompleted) {
+          _lastFertMqttIrrigationCompleted = liveSite.irrigationDurationCompleted;
+          _fertLiveIrrigationSeconds = compSec;
+        }
+        final currentIrrSec = _fertLiveIrrigationSeconds ?? compSec;
+        final displayCompIrrHms = _formatSecondsToHms(currentIrrSec);
+
+        progressRatio = totSec > 0 ? (currentIrrSec / totSec).clamp(0.0, 1.0) : 0.0;
+        // Old UI logic: directly displays set and completed duration from MQTT
+        progressRight =
+            'Total Duration : ${liveSite.irrigationDurationQty} / $displayCompIrrHms';
+        final remSec = (totSec - currentIrrSec).clamp(0, totSec);
+        if (remSec > 0) {
+          remDurationHms = _formatSecondsToHms(remSec);
+        }
+      } else {
+        _fertLiveIrrigationSeconds = null;
+        _lastFertMqttIrrigationCompleted = null;
+        final comp =
+            double.tryParse(liveSite!.irrigationQuantityCompleted) ?? 0;
+        final tot = double.tryParse(liveSite.irrigationDurationQty) ?? 0;
+        progressRatio = tot > 0 ? (comp / tot).clamp(0.0, 1.0) : 0.0;
+        progressRight =
+            '${comp.toStringAsFixed(2)} / ${tot.toStringAsFixed(1)} Ltr';
+      }
+    } else {
+      _fertLiveIrrigationSeconds = null;
+      _lastFertMqttIrrigationCompleted = null;
+      progressRight = 'Total Duration : 00:00:00 / 00:00:00';
+    }
+
+    // Pumps, Valves, Booster
+    List<String> runningPumps = [];
+    List<String> openedValves = [];
+    List<String> boosterPumps = [];
+
+    if (hasLiveActive) {
+      if (liveSite!.pump.isNotEmpty) {
+        final pSerials = liveSite.pump
+            .split('_')
+            .map((e) => double.tryParse(e) ?? 0)
+            .toList();
+        final pStatuses = liveSite.pumpStatus.split('_');
+        for (int i = 0; i < pSerials.length; i++) {
+          final name = configObjects.getObjectName(pSerials[i]);
+          final isRunning = i < pStatuses.length
+              ? (pStatuses[i] == '1' || pStatuses[i] == '2')
+              : true;
+          if (name.isNotEmpty && (isRunning || pStatuses.isEmpty)) {
+            runningPumps.add(name);
+          }
+        }
+      }
+      if (liveSite.valve.isNotEmpty) {
+        final vSerials = liveSite.valve
+            .split('_')
+            .map((e) => double.tryParse(e) ?? 0)
+            .toList();
+        final vStatuses = liveSite.valveStatus.split('_');
+        for (int i = 0; i < vSerials.length; i++) {
+          final name = configObjects.getObjectName(vSerials[i]);
+          final isOpen = i < vStatuses.length
+              ? (vStatuses[i] == '1' || vStatuses[i] == '2')
+              : true;
+          if (name.isNotEmpty && (isOpen || vStatuses.isEmpty)) {
+            openedValves.add(name);
+          }
+        }
+      }
+      if (liveSite.booster.isNotEmpty) {
+        final bSerials = liveSite.booster
+            .split('_')
+            .map((e) => double.tryParse(e) ?? 0)
+            .toList();
+        final bStatuses = liveSite.boosterStatus.split('_');
+        for (int i = 0; i < bSerials.length; i++) {
+          final name = configObjects.getObjectName(bSerials[i]);
+          final isRunning = i < bStatuses.length
+              ? (bStatuses[i] == '1' || bStatuses[i] == '2')
+              : true;
+          if (name.isNotEmpty && (isRunning || bStatuses.isEmpty)) {
+            boosterPumps.add(name);
+          }
+        }
+      }
+    }
+
+    // Channels: ONLY configured channels from fertSite.channel
+    List<_InjectorCardData> injectors = [];
+    final configuredChannels = fertSite.channel;
+
+    if (configuredChannels.isNotEmpty) {
+      for (int chIndex = 0; chIndex < configuredChannels.length; chIndex++) {
+        final ch = configuredChannels[chIndex];
+        final sInt = ch.sNo.toInt().toString();
+        final sStr = ch.sNo.toString();
+
+        FertilizerChannelLiveModel? chModel;
+        for (final entry in mqttProvider.fertilizerChannelMap.entries) {
+          if (entry.key == sInt ||
+              entry.key == sStr ||
+              double.tryParse(entry.key) == ch.sNo) {
+            chModel = entry.value;
+            break;
+          }
+        }
+
+        final chOther = mqttProvider.getChannelOtherData(sStr) ??
+            mqttProvider.getChannelOtherData(sInt) ??
+            mqttProvider.getChannelOtherData(ch.sNo.toInt().toString());
+        String totDur = '00:00:00';
+        String compDur = '00:00:00';
+        int tSec = 0;
+        int cSec = 0;
+
+        // Priority 1: Real-time channel data from 2407 MQTT topic (same as Old UI)
+        if (chOther != null && chOther.isNotEmpty) {
+          final parts = chOther.split(',');
+          if (parts.length > 3) {
+            totDur = parts[2];
+            compDur = parts[3];
+            tSec = _parseDurationToSeconds(totDur);
+            cSec = _parseDurationToSeconds(compDur);
+          }
+        }
+        // Priority 2: 7702 MQTT fertilizerChannelMap
+        if (tSec == 0 && cSec == 0 && chModel != null) {
+          totDur = chModel.fertilizerChannelDuration;
+          compDur = chModel.fertilizerChannelDurationCompleted;
+          tSec = _parseDurationToSeconds(totDur);
+          cSec = _parseDurationToSeconds(compDur);
+        }
+
+        // Check channel on/off status from MQTT 10. payload (status 1 = ON, 0 = OFF)
+        final chStatusStr = mqttProvider.getChannelOnOffStatus(sStr) ??
+            mqttProvider.getChannelOnOffStatus(sInt) ??
+            mqttProvider.getChannelOnOffStatus(ch.sNo.toInt().toString());
+        int channelStatus = 0;
+        if (chStatusStr != null) {
+          final parts = chStatusStr.split(',');
+          if (parts.length > 1) {
+            channelStatus = int.tryParse(parts[1]) ?? 0;
+          }
+        }
+
+        final bool isChannelActive = channelStatus == 1 && programName != '--';
+        final chKey = '${fertSite.sNo.toInt()}_${ch.sNo.toInt()}';
+
+        if (isChannelActive) {
+          if (_lastChannelMqttCompleted[chKey] != compDur) {
+            _lastChannelMqttCompleted[chKey] = compDur;
+            _channelLiveElapsedSeconds[chKey] = cSec;
+          }
+        } else {
+          _channelLiveElapsedSeconds.remove(chKey);
+          _lastChannelMqttCompleted.remove(chKey);
+        }
+
+        final int currentLiveSec = isChannelActive
+            ? (_channelLiveElapsedSeconds[chKey] ?? cSec)
+            : 0;
+        final String displayTotDur = isChannelActive ? totDur : '00:00:00';
+        final String displayCompDur = isChannelActive
+            ? _formatSecondsToHms(currentLiveSec)
+            : '00:00:00';
+        final double p = (isChannelActive && tSec > 0)
+            ? (currentLiveSec / tSec).clamp(0.0, 1.0)
+            : 0.0;
+        final int pct = (p * 100).toInt();
+
+        String channelDisplayName;
+        if (ch.name.isNotEmpty) {
+          channelDisplayName = ch.name.replaceAll(RegExp(r'Injector\s*', caseSensitive: false), 'Channel ');
+        } else {
+          channelDisplayName = 'Channel ${chIndex + 1}';
+        }
+
+        injectors.add(_InjectorCardData(
+          name: channelDisplayName,
+          isInProgress: isChannelActive,
+          durationStr: displayTotDur,
+          progress: p,
+          percent: pct,
+          detail: isChannelActive && tSec > 0 ? '$displayCompDur / $displayTotDur' : '—',
+        ));
+      }
+    } else {
+      // Fallback if fertSite.channel is empty: only use active channels in liveSite
+      final activeChannelSerials =
+          (hasLiveActive && liveSite!.fertilizerChannel.isNotEmpty)
+              ? liveSite.fertilizerChannel
+                  .split('_')
+                  .map((e) => double.tryParse(e) ?? 0)
+                  .toList()
+              : <double>[];
+
+      for (int i = 0; i < activeChannelSerials.length; i++) {
+        final serial = activeChannelSerials[i];
+        final channelName = configObjects.getObjectName(serial);
+
+        FertilizerChannelLiveModel? chModel;
+        final sInt = serial.toInt().toString();
+        final sStr = serial.toString();
+        for (final entry in mqttProvider.fertilizerChannelMap.entries) {
+          if (entry.key == sInt ||
+              entry.key == sStr ||
+              double.tryParse(entry.key) == serial) {
+            chModel = entry.value;
+            break;
+          }
+        }
+
+        final chOther = mqttProvider.getChannelOtherData(sStr) ??
+            mqttProvider.getChannelOtherData(sInt) ??
+            mqttProvider.getChannelOtherData(serial.toInt().toString());
+        String totDur = '00:00:00';
+        String compDur = '00:00:00';
+        int tSec = 0;
+        int cSec = 0;
+
+        // Priority 1: Real-time channel data from 2407 MQTT topic (same as Old UI)
+        if (chOther != null && chOther.isNotEmpty) {
+          final parts = chOther.split(',');
+          if (parts.length > 3) {
+            totDur = parts[2];
+            compDur = parts[3];
+            tSec = _parseDurationToSeconds(totDur);
+            cSec = _parseDurationToSeconds(compDur);
+          }
+        }
+        // Priority 2: 7702 MQTT fertilizerChannelMap
+        if (tSec == 0 && cSec == 0 && chModel != null) {
+          totDur = chModel.fertilizerChannelDuration;
+          compDur = chModel.fertilizerChannelDurationCompleted;
+          tSec = _parseDurationToSeconds(totDur);
+          cSec = _parseDurationToSeconds(compDur);
+        }
+
+        final chStatusStr = mqttProvider.getChannelOnOffStatus(sStr) ??
+            mqttProvider.getChannelOnOffStatus(sInt) ??
+            mqttProvider.getChannelOnOffStatus(serial.toInt().toString());
+        int channelStatus = 0;
+        if (chStatusStr != null) {
+          final parts = chStatusStr.split(',');
+          if (parts.length > 1) {
+            channelStatus = int.tryParse(parts[1]) ?? 0;
+          }
+        }
+
+        final bool isChannelActive = channelStatus == 1 && programName != '--';
+        final chKey = '${fertSite.sNo.toInt()}_${serial.toInt()}';
+
+        if (isChannelActive) {
+          if (_lastChannelMqttCompleted[chKey] != compDur) {
+            _lastChannelMqttCompleted[chKey] = compDur;
+            _channelLiveElapsedSeconds[chKey] = cSec;
+          }
+        } else {
+          _channelLiveElapsedSeconds.remove(chKey);
+          _lastChannelMqttCompleted.remove(chKey);
+        }
+
+        final int currentLiveSec = isChannelActive
+            ? (_channelLiveElapsedSeconds[chKey] ?? cSec)
+            : 0;
+        final String displayTotDur = isChannelActive ? totDur : '00:00:00';
+        final String displayCompDur = isChannelActive
+            ? _formatSecondsToHms(currentLiveSec)
+            : '00:00:00';
+        final double p = (isChannelActive && tSec > 0)
+            ? (currentLiveSec / tSec).clamp(0.0, 1.0)
+            : 0.0;
+        final int pct = (p * 100).toInt();
+
+        String channelDisplayName;
+        if (channelName.isNotEmpty) {
+          channelDisplayName = channelName.replaceAll(RegExp(r'Injector\s*', caseSensitive: false), 'Channel ');
+        } else {
+          channelDisplayName = 'Channel ${i + 1}';
+        }
+
+        injectors.add(_InjectorCardData(
+          name: channelDisplayName,
+          isInProgress: isChannelActive,
+          durationStr: displayTotDur,
+          progress: p,
+          percent: pct,
+          detail: isChannelActive && tSec > 0 ? '$displayCompDur / $displayTotDur' : '—',
+        ));
+      }
+    }
+
+    // Metric cards values
+    final String card2Title =
+        isTimeMethod ? 'Irrigation Duration' : 'Water Meter';
+    final String card2Value = hasLiveActive
+        ? (isTimeMethod
+            ? ((_fertLiveIrrigationSeconds != null && _fertLiveIrrigationSeconds! > 0)
+                ? _formatSecondsToHms(_fertLiveIrrigationSeconds!)
+                : (liveSite!.irrigationDurationCompleted.isNotEmpty
+                    ? liveSite.irrigationDurationCompleted
+                    : '--'))
+            : (liveSite!.waterMeterValue.isNotEmpty
+                ? liveSite.waterMeterValue
+                : '--'))
+        : '--';
+    final String card2Subtitle = hasLiveActive
+        ? (isTimeMethod
+            ? 'Set: ${liveSite!.irrigationDurationQty}'
+            : '${liveSite!.irrigationQuantityCompleted} / ${liveSite.irrigationDurationQty} Ltr')
+        : '--';
+    final IconData card2Icon =
+        isTimeMethod ? Icons.timer_outlined : Icons.water_drop_outlined;
+
+    final String ecValue = (hasLiveActive && liveSite!.ecDataList.isNotEmpty)
+        ? liveSite.ecDataList.last.value.toStringAsFixed(2)
+        : ((hasLiveActive && liveSite!.ecData.isNotEmpty)
+            ? liveSite.ecData
+            : '--');
+
+    final String phValue = (hasLiveActive && liveSite!.phDataList.isNotEmpty)
+        ? liveSite.phDataList.last.value.toStringAsFixed(2)
+        : ((hasLiveActive && liveSite!.phData.isNotEmpty)
+            ? liveSite.phData
+            : '--');
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildFertilizerTopMetricCards(
+          programName: programName,
+          zoneName: zoneName,
+          card2Title: card2Title,
+          card2Value: card2Value,
+          card2Subtitle: card2Subtitle,
+          card2Icon: card2Icon,
+          ecValue: ecValue,
+          phValue: phValue,
+          isMiddle: isMiddle,
+        ),
+        const SizedBox(height: 16),
+        _buildInjectorsSection(injectors, isMiddle),
+        const SizedBox(height: 16),
+        _buildLiveFlowPathSection(
+          runningPumps: runningPumps,
+          boosterPumps: boosterPumps,
+          activeInjectors: injectors.where((inj) => inj.isInProgress).toList(),
+          remDurationHms: remDurationHms,
+          openedValves: openedValves,
+          zoneName: zoneName,
+          programName: programName,
+          isMiddle: isMiddle,
+        ),
+        const SizedBox(height: 16),
+        _buildIrrigationProgressCard(
+          progressTitle: progressTitle,
+          progressRight: progressRight,
+          progressRatio: progressRatio,
+          isLive: hasLiveActive,
         ),
       ],
     );
   }
 
-  Widget _buildSourceTagItem({required String label, required bool isAlert}) {
-    return Padding(
-      padding: const EdgeInsets.only(right: 8),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-        decoration: BoxDecoration(
-          color: isAlert ? const Color(0xFFFEF3C7) : const Color(0xFFECFDF5),
-          borderRadius: BorderRadius.circular(4),
-          border: Border.all(
-              color:
-                  isAlert ? const Color(0xFFFDE68A) : const Color(0xFFA7F3D0)),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 9,
-            fontWeight: FontWeight.bold,
-            color: isAlert ? const Color(0xFFD97706) : const Color(0xFF047857),
+  Widget _buildFertilizerTopMetricCards({
+    required String programName,
+    required String zoneName,
+    required String card2Title,
+    required String card2Value,
+    required String card2Subtitle,
+    required IconData card2Icon,
+    required String ecValue,
+    required String phValue,
+    required bool isMiddle,
+  }) {
+    final cards = [
+      _buildFrtMetricCard(
+        title: 'Program',
+        value: programName,
+        subtitle: zoneName != '--' ? 'Zone: $zoneName' : '--',
+        icon: Icons.calendar_today_outlined,
+        iconColor: const Color(0xFF0284C7),
+        iconBgColor: const Color(0xFFE0F2FE),
+      ),
+      _buildFrtMetricCard(
+        title: card2Title,
+        value: card2Value,
+        subtitle: card2Subtitle,
+        icon: card2Icon,
+        iconColor: const Color(0xFF10B981),
+        iconBgColor: const Color(0xFFDCFCE7),
+      ),
+      _buildFrtMetricCard(
+        title: 'EC',
+        value: ecValue,
+        unit: ecValue != '--' ? 'mS/cm' : null,
+        subtitle: 'Live reading',
+        icon: Icons.bolt_rounded,
+        iconColor: const Color(0xFFF59E0B),
+        iconBgColor: const Color(0xFFFEF3C7),
+      ),
+      _buildFrtMetricCard(
+        title: 'pH',
+        value: phValue,
+        subtitle: 'Live reading',
+        icon: Icons.science_outlined,
+        iconColor: const Color(0xFF0D9488),
+        iconBgColor: const Color(0xFFCCFBF1),
+      ),
+    ];
+
+    if (isMiddle) {
+      return Column(
+        children: [
+          Row(
+            children: [
+              Expanded(child: cards[0]),
+              const SizedBox(width: 12),
+              Expanded(child: cards[1]),
+            ],
           ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(child: cards[2]),
+              const SizedBox(width: 12),
+              Expanded(child: cards[3]),
+            ],
+          ),
+        ],
+      );
+    }
+
+    return Row(
+      children: [
+        Expanded(child: cards[0]),
+        const SizedBox(width: 12),
+        Expanded(child: cards[1]),
+        const SizedBox(width: 12),
+        Expanded(child: cards[2]),
+        const SizedBox(width: 12),
+        Expanded(child: cards[3]),
+      ],
+    );
+  }
+
+  Widget _buildFrtMetricCard({
+    required String title,
+    required String value,
+    String? unit,
+    required String subtitle,
+    required IconData icon,
+    required Color iconColor,
+    required Color iconBgColor,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: Color(0xFF64748B),
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.baseline,
+                  textBaseline: TextBaseline.alphabetic,
+                  children: [
+                    Flexible(
+                      child: Text(
+                        value,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF0F172A),
+                        ),
+                      ),
+                    ),
+                    if (unit != null) ...[
+                      const SizedBox(width: 4),
+                      Text(
+                        unit,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: Color(0xFF64748B),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  subtitle,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: Color(0xFF64748B),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: iconBgColor,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: iconColor, size: 18),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInjectorsSection(
+      List<_InjectorCardData> injectors, bool isMiddle) {
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Channels',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF0F172A),
+                ),
+              ),
+              Row(
+                children: [
+                  Container(
+                    width: 7,
+                    height: 7,
+                    decoration: const BoxDecoration(
+                      color: Color(0xFF10B981),
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          // Dynamic Grid of Injectors: 3 columns on wide screens, 2 on middle
+          () {
+            final int columns = isMiddle ? 2 : 3;
+            List<Widget> rows = [];
+            for (int i = 0; i < injectors.length; i += columns) {
+              if (rows.isNotEmpty) rows.add(const SizedBox(height: 12));
+              final slice = injectors.sublist(
+                  i, (i + columns).clamp(0, injectors.length));
+              rows.add(
+                Row(
+                  children: [
+                    for (int j = 0; j < slice.length; j++) ...[
+                      if (j > 0) const SizedBox(width: 14),
+                      Expanded(child: _buildInjectorItemCard(slice[j])),
+                    ],
+                    if (slice.length < columns) ...[
+                      for (int k = 0; k < columns - slice.length; k++) ...[
+                        const SizedBox(width: 14),
+                        const Expanded(child: SizedBox.shrink()),
+                      ],
+                    ],
+                  ],
+                ),
+              );
+            }
+            return Column(children: rows);
+          }(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInjectorItemCard(_InjectorCardData data) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                data.name,
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF0F172A),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: data.isInProgress
+                      ? const Color(0xFFDCFCE7)
+                      : const Color(0xFFF1F5F9),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  data.isInProgress ? 'In progress' : 'Not used',
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    color: data.isInProgress
+                        ? const Color(0xFF16A34A)
+                        : const Color(0xFF64748B),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            data.durationStr,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF0F172A),
+            ),
+          ),
+          const SizedBox(height: 10),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: LinearProgressIndicator(
+              value: data.progress,
+              minHeight: 6,
+              backgroundColor: const Color(0xFFF1F5F9),
+              valueColor: AlwaysStoppedAnimation<Color>(
+                data.isInProgress
+                    ? const Color(0xFF10B981)
+                    : const Color(0xFFCBD5E1),
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                '${data.percent}% complete',
+                style: const TextStyle(
+                  fontSize: 11,
+                  color: Color(0xFF64748B),
+                ),
+              ),
+              Text(
+                data.detail,
+                style: const TextStyle(
+                  fontSize: 11,
+                  color: Color(0xFF64748B),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildIrrigationProgressCard({
+    required String progressTitle,
+    required String progressRight,
+    required double progressRatio,
+    required bool isLive,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Text(
+                progressTitle,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF0F172A),
+                ),
+              ),
+              Text(
+                progressRight,
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF0F172A),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: SizedBox(
+              height: 10,
+              child: Row(
+                children: [
+                  Expanded(
+                    flex: 4,
+                    child: Container(color: const Color(0xFF3B82F6)),
+                  ),
+                  const SizedBox(width: 2),
+                  Expanded(
+                    flex: 92,
+                    child: Stack(
+                      children: [
+                        Container(color: const Color(0xFFE2E8F0)),
+                        FractionallySizedBox(
+                          alignment: Alignment.centerLeft,
+                          widthFactor: progressRatio,
+                          child: Container(color: const Color(0xFF10B981)),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 2),
+                  Expanded(
+                    flex: 4,
+                    child: Container(color: const Color(0xFF3B82F6)),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          const Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('Pre water',
+                  style: TextStyle(fontSize: 11, color: Color(0xFF64748B))),
+              Text('Fertilizer',
+                  style: TextStyle(fontSize: 11, color: Color(0xFF64748B))),
+              Text('Post water',
+                  style: TextStyle(fontSize: 11, color: Color(0xFF64748B))),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDeviceStatusPill({
+    required String name,
+    required String status,
+    bool isTwoLine = false,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: const Color(0xFFDCFCE7),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFFBBF7D0)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Container(
+            width: 6,
+            height: 6,
+            decoration: const BoxDecoration(
+              color: Color(0xFF16A34A),
+              shape: BoxShape.circle,
+            ),
+          ),
+          const SizedBox(width: 6),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                name,
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF0F172A),
+                ),
+              ),
+              const SizedBox(height: 1),
+              Text(
+                status,
+                style: const TextStyle(
+                  fontSize: 9,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF16A34A),
+                  letterSpacing: 0.4,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLiveFlowPathSection({
+    required List<String> runningPumps,
+    required List<String> boosterPumps,
+    required List<_InjectorCardData> activeInjectors,
+    required String remDurationHms,
+    required List<String> openedValves,
+    required String zoneName,
+    required String programName,
+    required bool isMiddle,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Live flow path',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF0F172A),
+                ),
+              ),
+              Row(
+                children: [
+                  Container(
+                    width: 7,
+                    height: 7,
+                    decoration: const BoxDecoration(
+                      color: Color(0xFF10B981),
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 5),
+                  const Text(
+                    'Running / open',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: Color(0xFF64748B),
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  Container(
+                    width: 7,
+                    height: 7,
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFF59E0B),
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 5),
+                  const Text(
+                    'Injecting',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: Color(0xFF64748B),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                _buildFlowBox(
+                  title: 'Running pumps',
+                  badge: '${runningPumps.length} on',
+                  badgeColor: runningPumps.isNotEmpty
+                      ? const Color(0xFF16A34A)
+                      : const Color(0xFF94A3B8),
+                  items: runningPumps,
+                ),
+                _buildFlowConnector(),
+                _buildFlowBox(
+                  title: 'Booster pump',
+                  badge: '${boosterPumps.length} on',
+                  badgeColor: boosterPumps.isNotEmpty
+                      ? const Color(0xFF16A34A)
+                      : const Color(0xFF94A3B8),
+                  items: boosterPumps,
+                ),
+                _buildFlowConnector(),
+                _buildFlowInjectionBox(
+                  activeInjectors: activeInjectors,
+                  remDurationHms: remDurationHms,
+                ),
+                _buildFlowConnector(),
+                _buildFlowBox(
+                  title: 'Opened valves',
+                  badge: '${openedValves.length} open',
+                  badgeColor: openedValves.isNotEmpty
+                      ? const Color(0xFF16A34A)
+                      : const Color(0xFF94A3B8),
+                  items: openedValves,
+                ),
+                _buildFlowConnector(),
+                _buildFlowZoneBox(
+                  zoneName: zoneName,
+                  programName: programName,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFlowConnector() {
+    return Container(
+      width: 28,
+      height: 6,
+      color: const Color(0xFF10B981),
+    );
+  }
+
+  Widget _buildFlowBox({
+    required String title,
+    required String badge,
+    required Color badgeColor,
+    required List<String> items,
+  }) {
+    return Container(
+      width: 140,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 11,
+                  color: Color(0xFF64748B),
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              Text(
+                badge,
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                  color: badgeColor,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          if (items.isEmpty)
+            const Text('None',
+                style: TextStyle(fontSize: 11, color: Color(0xFF94A3B8)))
+          else
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: items.map((item) {
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 6),
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(color: const Color(0xFFE2E8F0)),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 5,
+                          height: 5,
+                          decoration: const BoxDecoration(
+                            color: Color(0xFF16A34A),
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: 5),
+                        Text(
+                          item,
+                          style: const TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF0F172A),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFlowInjectionBox({
+    required List<_InjectorCardData> activeInjectors,
+    required String remDurationHms,
+  }) {
+    final bool isRunning = activeInjectors.isNotEmpty;
+    return Container(
+      width: 160,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: isRunning ? const Color(0xFFFFFBEB) : const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: isRunning ? const Color(0xFFFDE68A) : const Color(0xFFE2E8F0),
         ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Fertilizer injection',
+                style: TextStyle(
+                  fontSize: 11,
+                  color: Color(0xFF92400E),
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              Text(
+                isRunning ? 'Running' : 'Idle',
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                  color: isRunning
+                      ? const Color(0xFFD97706)
+                      : const Color(0xFF94A3B8),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          if (!isRunning)
+            const Text('No injection',
+                style: TextStyle(fontSize: 11, color: Color(0xFF94A3B8)))
+          else ...[
+            for (final inj in activeInjectors) ...[
+              Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFEF3C7),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 5,
+                        height: 5,
+                        decoration: const BoxDecoration(
+                          color: Color(0xFFD97706),
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 5),
+                      Text(
+                        inj.name,
+                        style: const TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF78350F),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+            if (remDurationHms.isNotEmpty) ...[
+              const SizedBox(height: 4),
+              Text(
+                '$remDurationHms left',
+                style: const TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF92400E),
+                ),
+              ),
+            ],
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFlowZoneBox({
+    required String zoneName,
+    required String programName,
+  }) {
+    return Container(
+      width: 140,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Text(
+            'Zone',
+            style: TextStyle(
+              fontSize: 11,
+              color: Color(0xFF64748B),
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            zoneName,
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF0F172A),
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            programName,
+            style: const TextStyle(
+              fontSize: 10,
+              color: Color(0xFF64748B),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -6893,67 +8482,1262 @@ class _IrrigationLineDashboardState extends State<IrrigationLineDashboard> {
   // =============================================================
   // TAB 5: NODE MONITORING
   // =============================================================
-  Widget _buildNodeMonitoringTabContent(bool isMiddle) {
+  Widget _buildNodeMonitoringTabContent(
+      bool isMiddle, MqttPayloadProvider mqttProvider) {
+    final allNodes = _getNodeMonitoringList(mqttProvider);
+    final totalCount = allNodes.length;
+    final connectedCount = allNodes.where((n) => n.status == 1).length;
+    final noCommCount = allNodes.where((n) => n.status == 2).length;
+    final serialErrorCount = allNodes.where((n) => n.status == 3).length;
+    final lowBatCount = allNodes.where((n) => n.status == 4).length;
+
+    // Filter by selected chip status
+    List<NodeListModel> filteredNodes = allNodes;
+    if (_nodeFilterStatus == 'Connected') {
+      filteredNodes = allNodes.where((n) => n.status == 1).toList();
+    } else if (_nodeFilterStatus == 'No communication') {
+      filteredNodes = allNodes.where((n) => n.status == 2).toList();
+    } else if (_nodeFilterStatus == 'Set serial error') {
+      filteredNodes = allNodes.where((n) => n.status == 3).toList();
+    } else if (_nodeFilterStatus == 'Low battery') {
+      filteredNodes = allNodes.where((n) => n.status == 4).toList();
+    }
+
+    final masterName = widget.masterController.modelDescription.isNotEmpty
+        ? widget.masterController.modelDescription
+        : 'Gem+ (RL)';
+    final deviceId = widget.masterController.deviceId.isNotEmpty
+        ? widget.masterController.deviceId
+        : '98FE540BF0D';
+    final modelName = widget.masterController.modelName.isNotEmpty
+        ? widget.masterController.modelName
+        : 'NAm2000ROOL';
+    final firmware = 'V: Gemc 37.1.0:122';
+    final lora = '[1.2.1, GemL2 2.2.255]';
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            Expanded(
-              child: _buildMetricCard(_MetricCardData(
-                title: 'Connected Nodes',
-                value: '6',
-                unit: ' Nodes',
-                subtitle: 'All Online ●',
-                subtitleColor: const Color(0xFF16A34A),
+        // 1. TOP METRIC CARDS (Figma Style)
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final cards = [
+              _buildMetricCard(_MetricCardData(
+                title: 'Total nodes',
+                value: '$totalCount',
+                unit: '',
+                subtitle: 'On $masterName',
+                subtitleColor: const Color(0xFF2563EB),
                 icon: Icons.hub_outlined,
                 iconColor: const Color(0xFF2563EB),
                 glowColor: const Color(0xFF3B82F6),
               )),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _buildMetricCard(_MetricCardData(
-                title: 'Average Battery',
-                value: '94%',
+              _buildMetricCard(_MetricCardData(
+                title: 'Connected',
+                value: '$connectedCount',
                 unit: '',
-                subtitle: 'Solar Charging Active',
+                subtitle: 'Communicating',
                 subtitleColor: const Color(0xFF16A34A),
-                icon: Icons.battery_charging_full,
+                icon: Icons.swap_vert_rounded,
                 iconColor: const Color(0xFF10B981),
                 glowColor: const Color(0xFF10B981),
               )),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _buildMetricCard(_MetricCardData(
-                title: 'RF Signal Strength',
-                value: '-68',
-                unit: ' dBm',
-                subtitle: 'Strong Connection',
-                subtitleColor: const Color(0xFF16A34A),
-                icon: Icons.wifi,
+              _buildMetricCard(_MetricCardData(
+                title: 'No communication',
+                value: '$noCommCount',
+                unit: '',
+                subtitle: 'Check LoRa link',
+                subtitleColor: const Color(0xFFD97706),
+                icon: Icons.wifi_off_rounded,
+                iconColor: const Color(0xFFF59E0B),
+                glowColor: const Color(0xFFF59E0B),
+              )),
+              _buildMetricCard(_MetricCardData(
+                title: 'Set serial error',
+                value: '$serialErrorCount',
+                unit: '',
+                subtitle: 'Needs serial set',
+                subtitleColor: const Color(0xFFDC2626),
+                icon: Icons.bolt_rounded,
                 iconColor: const Color(0xFF06B6D4),
                 glowColor: const Color(0xFF06B6D4),
               )),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _buildMetricCard(_MetricCardData(
-                title: 'Active Valves on Nodes',
-                value: '12',
-                unit: ' Valves',
-                subtitle: '4 Open · 8 Closed',
-                subtitleColor: const Color(0xFF64748B),
-                icon: Icons.settings_input_component,
+              _buildMetricCard(_MetricCardData(
+                title: 'Low battery',
+                value: '$lowBatCount',
+                unit: '',
+                subtitle: 'All nodes OK',
+                subtitleColor: const Color(0xFF8B5CF6),
+                icon: Icons.battery_alert_rounded,
                 iconColor: const Color(0xFF8B5CF6),
                 glowColor: const Color(0xFF8B5CF6),
               )),
-            ),
-          ],
+            ];
+
+            if (isMiddle) {
+              return Column(
+                children: cards
+                    .map((c) => Padding(
+                        padding: const EdgeInsets.only(bottom: 12), child: c))
+                    .toList(),
+              );
+            }
+
+            return Row(
+              children: cards
+                  .map((c) => Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 6),
+                          child: c,
+                        ),
+                      ))
+                  .toList(),
+            );
+          },
+        ),
+        const SizedBox(height: 18),
+
+        // 2. MASTER CONTROLLER / DEVICE INFO BANNER (Figma Style)
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x04000000),
+                blurRadius: 6,
+                offset: Offset(0, 1),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF3B82F6),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child:
+                    const Icon(Icons.bluetooth, color: Colors.white, size: 24),
+              ),
+              const SizedBox(width: 14),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    masterName,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF0F172A),
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    '$deviceId · $modelName',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Color(0xFF64748B),
+                    ),
+                  ),
+                ],
+              ),
+              const Spacer(),
+              if (!isMiddle) ...[
+                _buildNodeInfoColumn('Firmware', firmware),
+                const SizedBox(width: 28),
+                _buildNodeInfoColumn('LoRa', lora),
+                const SizedBox(width: 28),
+                _buildNodeInfoColumn('Serial', deviceId),
+                const SizedBox(width: 28),
+                _buildNodeInfoColumn('Model', modelName),
+              ],
+            ],
+          ),
+        ),
+        const SizedBox(height: 18),
+
+        // 3. NODE STATUS CONTAINER WITH FILTER CHIPS & TABLE (Figma Style)
+        Container(
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x04000000),
+                blurRadius: 6,
+                offset: Offset(0, 1),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header Row: Node status & Count badge
+              Row(
+                children: [
+                  const Text(
+                    'Node status',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF0F172A),
+                    ),
+                  ),
+                  const Spacer(),
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF1F5F9),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color(0xFFCBD5E1)),
+                    ),
+                    child: Text(
+                      '$totalCount nodes',
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF475569),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+
+              // Filter Chips
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    _buildNodeFilterChip(
+                      label: 'All',
+                      count: totalCount,
+                      color: const Color(0xFF10B981),
+                    ),
+                    const SizedBox(width: 8),
+                    _buildNodeFilterChip(
+                      label: 'Connected',
+                      count: connectedCount,
+                      color: const Color(0xFF10B981),
+                      dot: true,
+                    ),
+                    const SizedBox(width: 8),
+                    _buildNodeFilterChip(
+                      label: 'No communication',
+                      count: noCommCount,
+                      color: const Color(0xFF94A3B8),
+                      dot: true,
+                    ),
+                    const SizedBox(width: 8),
+                    _buildNodeFilterChip(
+                      label: 'Set serial error',
+                      count: serialErrorCount,
+                      color: const Color(0xFFEF4444),
+                      dot: true,
+                    ),
+                    const SizedBox(width: 8),
+                    _buildNodeFilterChip(
+                      label: 'Low battery',
+                      count: lowBatCount,
+                      color: const Color(0xFFF59E0B),
+                      dot: true,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // Table Header Row
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF1F5F9),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Row(
+                  children: [
+                    SizedBox(
+                      width: 70,
+                      child: Text('SR.No',
+                          style: TextStyle(
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF475569))),
+                    ),
+                    Expanded(
+                      child: Text('Status & Category',
+                          style: TextStyle(
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF475569))),
+                    ),
+                    SizedBox(
+                      width: 140,
+                      child: Align(
+                        alignment: Alignment.centerRight,
+                        child: Text('Info',
+                            style: TextStyle(
+                                fontSize: 12.5,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF475569))),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 8),
+
+              // Node Rows
+              if (filteredNodes.isEmpty)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 30),
+                  child: Center(
+                    child: Text(
+                      'No nodes match the selected filter',
+                      style: TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
+                    ),
+                  ),
+                )
+              else
+                Column(
+                  children: List.generate(filteredNodes.length, (index) {
+                    final node = filteredNodes[index];
+                    return _buildNodeMonitoringTile(node, index, isMiddle);
+                  }),
+                ),
+            ],
+          ),
         ),
       ],
     );
+  }
+
+  Widget _buildNodeInfoColumn(String title, String value) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          title,
+          style: const TextStyle(fontSize: 10.5, color: Color(0xFF64748B)),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          value,
+          style: const TextStyle(
+            fontSize: 12.5,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF0F172A),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildNodeFilterChip({
+    required String label,
+    required int count,
+    required Color color,
+    bool dot = false,
+  }) {
+    final isSelected = _nodeFilterStatus == label;
+
+    return InkWell(
+      onTap: () {
+        setState(() {
+          _nodeFilterStatus = label;
+        });
+      },
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: isSelected ? const Color(0xFFF0FDF4) : Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color:
+                isSelected ? const Color(0xFF10B981) : const Color(0xFFE2E8F0),
+            width: isSelected ? 1.5 : 1.0,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (dot) ...[
+              Container(
+                width: 8,
+                height: 8,
+                decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+              ),
+              const SizedBox(width: 6),
+            ],
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                color: isSelected
+                    ? const Color(0xFF15803D)
+                    : const Color(0xFF475569),
+              ),
+            ),
+            const SizedBox(width: 6),
+            Text(
+              '$count',
+              style: TextStyle(
+                fontSize: 11.5,
+                fontWeight: FontWeight.bold,
+                color: isSelected
+                    ? const Color(0xFF15803D)
+                    : const Color(0xFF64748B),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNodeMonitoringTile(
+      NodeListModel node, int index, bool isMiddle) {
+    final isExpanded = _expandedNodeIndices.contains(index);
+
+    String statusLabel;
+    Color statusDotColor;
+    Color statusBadgeBg;
+    Color statusBadgeText;
+    switch (node.status) {
+      case 1:
+        statusLabel = 'Connected';
+        statusDotColor = const Color(0xFF10B981);
+        statusBadgeBg = const Color(0xFFDCFCE7);
+        statusBadgeText = const Color(0xFF16A34A);
+        break;
+      case 2:
+        statusLabel = 'No communication';
+        statusDotColor = const Color(0xFF94A3B8);
+        statusBadgeBg = const Color(0xFFF1F5F9);
+        statusBadgeText = const Color(0xFF64748B);
+        break;
+      case 3:
+        statusLabel = 'Set serial error';
+        statusDotColor = const Color(0xFFEF4444);
+        statusBadgeBg = const Color(0xFFFEE2E2);
+        statusBadgeText = const Color(0xFFDC2626);
+        break;
+      case 4:
+        statusLabel = 'Low battery';
+        statusDotColor = const Color(0xFFF59E0B);
+        statusBadgeBg = const Color(0xFFFEF3C7);
+        statusBadgeText = const Color(0xFFD97706);
+        break;
+      default:
+        statusLabel = 'Connected';
+        statusDotColor = const Color(0xFF10B981);
+        statusBadgeBg = const Color(0xFFDCFCE7);
+        statusBadgeText = const Color(0xFF16A34A);
+    }
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: isExpanded ? const Color(0xFF99F6E4) : const Color(0xFFE2E8F0),
+          width: isExpanded ? 1.4 : 1.0,
+        ),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x03000000),
+            blurRadius: 4,
+            offset: Offset(0, 1),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          InkWell(
+            onTap: () {
+              setState(() {
+                if (_expandedNodeIndices.contains(index)) {
+                  _expandedNodeIndices.remove(index);
+                } else {
+                  _expandedNodeIndices.add(index);
+                }
+              });
+            },
+            borderRadius: BorderRadius.circular(10),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: Row(
+                children: [
+                  // SR.No
+                  SizedBox(
+                    width: 70,
+                    child: Text(
+                      '${node.serialNumber}-${node.referenceNumber}',
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF0F172A),
+                      ),
+                    ),
+                  ),
+                  // Status Dot
+                  Container(
+                    width: 9,
+                    height: 9,
+                    decoration: BoxDecoration(
+                      color: statusDotColor,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  // Node Name, Serial, Model
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          node.deviceName,
+                          style: const TextStyle(
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF0F172A),
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          node.deviceId,
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: Color(0xFF64748B),
+                          ),
+                        ),
+                        const SizedBox(height: 1),
+                        Text(
+                          '${node.modelName} - v:${node.version}',
+                          style: const TextStyle(
+                            fontSize: 10,
+                            color: Color(0xFF94A3B8),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  // Info & Icons
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: statusBadgeBg,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          statusLabel,
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: statusBadgeText,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      const Icon(Icons.bluetooth,
+                          size: 18, color: Color(0xFF94A3B8)),
+                      const SizedBox(width: 8),
+                      const Icon(Icons.edit_outlined,
+                          size: 18, color: Color(0xFF94A3B8)),
+                      const SizedBox(width: 8),
+                      Icon(
+                        isExpanded
+                            ? Icons.keyboard_arrow_up_rounded
+                            : Icons.keyboard_arrow_down_rounded,
+                        size: 20,
+                        color: const Color(0xFF64748B),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+          if (isExpanded) _buildNodeExpandedDetails(node),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNodeExpandedDetails(NodeListModel node) {
+    final commParts = node.communicationCount.contains('_')
+        ? node.communicationCount.split('_')
+        : node.communicationCount.split(',');
+    final totalComm = commParts.isNotEmpty ? commParts.first : '0';
+    final contComm = commParts.length > 1 ? commParts.last : '0';
+
+    return Container(
+      decoration: const BoxDecoration(
+        color: Color(0xFFF0FDFA), // Light teal tint matching Image 3
+        borderRadius: BorderRadius.only(
+          bottomLeft: Radius.circular(10),
+          bottomRight: Radius.circular(10),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Mint Top Bar: Missed communication
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
+            decoration: const BoxDecoration(
+              color: Color(0xFFCCFBF1), // teal 100
+              border: Border(
+                top: BorderSide(color: Color(0xFF99F6E4), width: 0.8),
+                bottom: BorderSide(color: Color(0xFF99F6E4), width: 0.8),
+              ),
+            ),
+            child: Row(
+              children: [
+                const Text(
+                  'Missed communication',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF0F766E),
+                  ),
+                ),
+                const Spacer(),
+                Text(
+                  'Total : $totalComm',
+                  style: const TextStyle(
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w500,
+                    color: Color(0xFF0F766E),
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Text(
+                  'Continuous : $contComm',
+                  style: const TextStyle(
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w500,
+                    color: Color(0xFF0F766E),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Last feedback Row
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            color: Colors.white,
+            child: Row(
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Last feedback',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF334155),
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      node.lastFeedbackReceivedTime.isNotEmpty
+                          ? node.lastFeedbackReceivedTime
+                          : '2026-11-26 03:38 PM',
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: Color(0xFF64748B),
+                      ),
+                    ),
+                  ],
+                ),
+                const Spacer(),
+                const Icon(Icons.solar_power,
+                    size: 18, color: Color(0xFF475569)),
+                const SizedBox(width: 4),
+                Text(
+                  '${node.sVolt.toStringAsFixed(node.sVolt.truncateToDouble() == node.sVolt ? 0 : 1)} - V',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF1E293B),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                const Icon(Icons.battery_3_bar_rounded,
+                    size: 18, color: Color(0xFF475569)),
+                const SizedBox(width: 4),
+                Text(
+                  '${node.batVolt.toStringAsFixed(1)} - V',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF1E293B),
+                  ),
+                ),
+                const SizedBox(width: 14),
+                const Icon(Icons.fact_check_outlined,
+                    size: 18, color: Color(0xFF475569)),
+              ],
+            ),
+          ),
+
+          // Legend row: ON, OFF, ON in OFF, OFF in ON
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Row(
+              children: [
+                _buildLegendIndicator('ON', const Color(0xFF16A34A)),
+                const SizedBox(width: 16),
+                _buildLegendIndicator('OFF', const Color(0xFF94A3B8)),
+                const SizedBox(width: 16),
+                _buildLegendIndicator('ON in OFF', const Color(0xFFF59E0B)),
+                const SizedBox(width: 16),
+                _buildLegendIndicator('OFF in ON', const Color(0xFFEF4444)),
+              ],
+            ),
+          ),
+
+          // Relays & Inputs Grid with CYLINDER BADGE DISPLAY
+          if (node.rlyStatus.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 6, 16, 16),
+              child: Wrap(
+                spacing: 24,
+                runSpacing: 14,
+                children: node.rlyStatus.map((rly) {
+                  final label = _getRelayLabel(rly.objType, rly.rlyNo);
+                  final name = (rly.swName != null && rly.swName!.isNotEmpty)
+                      ? rly.swName!
+                      : (rly.name ?? '');
+                  return _buildRelayCylinderBadge(
+                    label: label,
+                    name: name,
+                    status: rly.status,
+                  );
+                }).toList(),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLegendIndicator(String label, Color color) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 8,
+          height: 8,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+        ),
+        const SizedBox(width: 5),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.bold,
+            color: color == const Color(0xFF94A3B8)
+                ? const Color(0xFF64748B)
+                : color,
+          ),
+        ),
+      ],
+    );
+  }
+
+  // CYLINDER BADGE DISPLAY: Replacing round shape with capsule cylinder badge
+  Widget _buildRelayCylinderBadge({
+    required String label,
+    required String name,
+    required int status,
+  }) {
+    Color badgeColor;
+    switch (status) {
+      case 1:
+        badgeColor = const Color(0xFF16A34A); // Green (ON)
+        break;
+      case 2:
+        badgeColor = const Color(0xFFF59E0B); // Orange (ON in OFF)
+        break;
+      case 3:
+        badgeColor = const Color(0xFFEF4444); // Red (OFF in ON)
+        break;
+      case 0:
+      default:
+        badgeColor = const Color(0xFF94A3B8); // Grey (OFF)
+        break;
+    }
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+          decoration: BoxDecoration(
+            color: badgeColor,
+            borderRadius: BorderRadius.circular(16), // cylinder capsule shape!
+            boxShadow: [
+              BoxShadow(
+                color: badgeColor.withOpacity(0.35),
+                blurRadius: 4,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Text(
+            label,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 0.5,
+            ),
+          ),
+        ),
+        const SizedBox(height: 5),
+        Text(
+          name,
+          style: const TextStyle(
+            color: Color(0xFF1E293B),
+            fontSize: 10,
+            fontWeight: FontWeight.w600,
+          ),
+          textAlign: TextAlign.center,
+        ),
+      ],
+    );
+  }
+
+  String _getRelayLabel(String? objType, int? rlyNo) {
+    final no = (rlyNo ?? 1).toString();
+    if (objType == "1,2") {
+      return 'RL-$no';
+    } else if (objType == "3") {
+      return 'Ai-$no';
+    } else if (objType == "4") {
+      return 'Di-$no';
+    } else if (objType == "5") {
+      return 'Mi-$no';
+    } else if (objType == "6") {
+      return 'Pi-$no';
+    } else if (objType == "7") {
+      return 'i2c-$no';
+    }
+    return 'RL-$no';
+  }
+
+  // Retrieve Real Node Records (Matching Screenshot 1) with Live MQTT synchronization
+  List<NodeListModel> _getNodeMonitoringList(MqttPayloadProvider mqttProvider) {
+    List<NodeListModel> nodes = [];
+    if (widget.masterController.nodeList.isNotEmpty) {
+      nodes = widget.masterController.nodeList;
+    } else {
+      nodes = [
+        NodeListModel(
+          controllerId: widget.masterController.controllerId,
+          deviceId: '2CFE8B5167BF',
+          deviceName: 'RTU+ (Plot 7A) 1V',
+          categoryId: 1,
+          categoryName: 'RTU',
+          modelId: 1,
+          modelName: 'NAr2000TS4A',
+          modelDescription: 'RTU+ (Plot 7A) 1V',
+          serialNumber: 4,
+          referenceNumber: 1,
+          interfaceTypeId: 1,
+          interface: 'LoRa',
+          extendControllerId: 0,
+          status: 1,
+          communicationCount: '0_0',
+          lastFeedbackReceivedTime: '2026-11-26 03:38 PM',
+          sVolt: 18.0,
+          batVolt: 8.1,
+          rlyStatus: [
+            RelayStatus(
+              sNo: 4.1,
+              name: 'PL7 V1',
+              swName: 'PL7 V1',
+              rlyNo: 1,
+              objType: '1,2',
+              status: 1,
+            ),
+            RelayStatus(
+              sNo: 4.2,
+              name: 'V32 PL7A PS',
+              swName: 'V32 PL7A PS',
+              rlyNo: 1,
+              objType: '3',
+              status: 0,
+            ),
+          ],
+          relayOutput: '1',
+          latchOutput: '0',
+          analogInput: '1',
+          digitalInput: '0',
+          version: 'Rtu+c 9.1.1_NL 3.2.0',
+          subNode: const [],
+          liveMessage: null,
+        ),
+        NodeListModel(
+          controllerId: widget.masterController.controllerId,
+          deviceId: '2CFE8B516024',
+          deviceName: 'RTU+ (Plot 7B) 2V',
+          categoryId: 1,
+          categoryName: 'RTU',
+          modelId: 1,
+          modelName: 'NAr2000TS4A',
+          modelDescription: 'RTU+ (Plot 7B) 2V',
+          serialNumber: 5,
+          referenceNumber: 2,
+          interfaceTypeId: 1,
+          interface: 'LoRa',
+          extendControllerId: 0,
+          status: 1,
+          communicationCount: '0_0',
+          lastFeedbackReceivedTime: '2026-11-26 03:38 PM',
+          sVolt: 18.0,
+          batVolt: 8.2,
+          rlyStatus: [
+            RelayStatus(
+              sNo: 5.1,
+              name: 'PL7 V2',
+              swName: 'PL7 V2',
+              rlyNo: 1,
+              objType: '1,2',
+              status: 1,
+            ),
+            RelayStatus(
+              sNo: 5.2,
+              name: 'PL7 V3',
+              swName: 'PL7 V3',
+              rlyNo: 2,
+              objType: '1,2',
+              status: 0,
+            ),
+            RelayStatus(
+              sNo: 5.3,
+              name: 'PL7B PS',
+              swName: 'PL7B PS',
+              rlyNo: 1,
+              objType: '3',
+              status: 0,
+            ),
+          ],
+          relayOutput: '2',
+          latchOutput: '0',
+          analogInput: '1',
+          digitalInput: '0',
+          version: 'Rtu+c 9.1.1_NL 3.2.0',
+          subNode: const [],
+          liveMessage: null,
+        ),
+        NodeListModel(
+          controllerId: widget.masterController.controllerId,
+          deviceId: '2CFE8B5156EA',
+          deviceName: 'RTU+ (Plot 6A) 2V',
+          categoryId: 1,
+          categoryName: 'RTU',
+          modelId: 1,
+          modelName: 'NAr2000TS4A',
+          modelDescription: 'RTU+ (Plot 6A) 2V',
+          serialNumber: 6,
+          referenceNumber: 3,
+          interfaceTypeId: 1,
+          interface: 'LoRa',
+          extendControllerId: 0,
+          status: 1,
+          communicationCount: '0_0',
+          lastFeedbackReceivedTime: '2026-11-26 03:38 PM',
+          sVolt: 19.0,
+          batVolt: 8.0,
+          rlyStatus: [
+            RelayStatus(
+              sNo: 6.1,
+              name: 'PL6 V1',
+              swName: 'PL6 V1',
+              rlyNo: 1,
+              objType: '1,2',
+              status: 0,
+            ),
+            RelayStatus(
+              sNo: 6.2,
+              name: 'PL6 V2',
+              swName: 'PL6 V2',
+              rlyNo: 2,
+              objType: '1,2',
+              status: 0,
+            ),
+          ],
+          relayOutput: '2',
+          latchOutput: '0',
+          analogInput: '0',
+          digitalInput: '0',
+          version: 'Rtu+c 9.1.1_NL 3.2.0',
+          subNode: const [],
+          liveMessage: null,
+        ),
+        NodeListModel(
+          controllerId: widget.masterController.controllerId,
+          deviceId: '9C956EC7D4D3',
+          deviceName: 'RTU+ (Plot 5A) 2V',
+          categoryId: 1,
+          categoryName: 'RTU',
+          modelId: 1,
+          modelName: 'NAr2000TS4A',
+          modelDescription: 'RTU+ (Plot 5A) 2V',
+          serialNumber: 7,
+          referenceNumber: 4,
+          interfaceTypeId: 1,
+          interface: 'LoRa',
+          extendControllerId: 0,
+          status: 1,
+          communicationCount: '0_0',
+          lastFeedbackReceivedTime: '2026-11-26 03:38 PM',
+          sVolt: 18.0,
+          batVolt: 8.1,
+          rlyStatus: [
+            RelayStatus(
+              sNo: 7.1,
+              name: 'PL5 V1',
+              swName: 'PL5 V1',
+              rlyNo: 1,
+              objType: '1,2',
+              status: 0,
+            ),
+            RelayStatus(
+              sNo: 7.2,
+              name: 'PL5 V2',
+              swName: 'PL5 V2',
+              rlyNo: 2,
+              objType: '1,2',
+              status: 0,
+            ),
+          ],
+          relayOutput: '2',
+          latchOutput: '0',
+          analogInput: '0',
+          digitalInput: '0',
+          version: 'Rtu+c 9.1.1_NL 3.2.0',
+          subNode: const [],
+          liveMessage: null,
+        ),
+        NodeListModel(
+          controllerId: widget.masterController.controllerId,
+          deviceId: '2CFE8B513751',
+          deviceName: 'RTU+ (Plot 5B & Plot 6B) 4V',
+          categoryId: 1,
+          categoryName: 'RTU',
+          modelId: 1,
+          modelName: 'NAr2000TS4A',
+          modelDescription: 'RTU+ (Plot 5B & Plot 6B) 4V',
+          serialNumber: 8,
+          referenceNumber: 5,
+          interfaceTypeId: 1,
+          interface: 'LoRa',
+          extendControllerId: 0,
+          status: 1,
+          communicationCount: '0_0',
+          lastFeedbackReceivedTime: '2026-11-26 03:38 PM',
+          sVolt: 18.0,
+          batVolt: 8.3,
+          rlyStatus: [
+            RelayStatus(
+              sNo: 8.1,
+              name: 'PL5B V1',
+              swName: 'PL5B V1',
+              rlyNo: 1,
+              objType: '1,2',
+              status: 0,
+            ),
+            RelayStatus(
+              sNo: 8.2,
+              name: 'PL5B V2',
+              swName: 'PL5B V2',
+              rlyNo: 2,
+              objType: '1,2',
+              status: 0,
+            ),
+            RelayStatus(
+              sNo: 8.3,
+              name: 'PL6B V1',
+              swName: 'PL6B V1',
+              rlyNo: 3,
+              objType: '1,2',
+              status: 0,
+            ),
+            RelayStatus(
+              sNo: 8.4,
+              name: 'PL6B V2',
+              swName: 'PL6B V2',
+              rlyNo: 4,
+              objType: '1,2',
+              status: 0,
+            ),
+          ],
+          relayOutput: '4',
+          latchOutput: '0',
+          analogInput: '0',
+          digitalInput: '0',
+          version: 'Rtu+c 9.1.1_NL 3.2.0',
+          subNode: const [],
+          liveMessage: null,
+        ),
+        NodeListModel(
+          controllerId: widget.masterController.controllerId,
+          deviceId: '2CFE8B514EB2',
+          deviceName: 'RTU+ (Plot 8) 4V 12v',
+          categoryId: 1,
+          categoryName: 'RTU',
+          modelId: 1,
+          modelName: 'NAr2000TS4A',
+          modelDescription: 'RTU+ (Plot 8) 4V 12v',
+          serialNumber: 10,
+          referenceNumber: 6,
+          interfaceTypeId: 1,
+          interface: 'LoRa',
+          extendControllerId: 0,
+          status: 1,
+          communicationCount: '0_0',
+          lastFeedbackReceivedTime: '2026-11-26 03:38 PM',
+          sVolt: 18.0,
+          batVolt: 8.2,
+          rlyStatus: [
+            RelayStatus(
+              sNo: 10.1,
+              name: 'PL8 V1',
+              swName: 'PL8 V1',
+              rlyNo: 1,
+              objType: '1,2',
+              status: 0,
+            ),
+            RelayStatus(
+              sNo: 10.2,
+              name: 'PL8 V2',
+              swName: 'PL8 V2',
+              rlyNo: 2,
+              objType: '1,2',
+              status: 0,
+            ),
+            RelayStatus(
+              sNo: 10.3,
+              name: 'PL8 V3',
+              swName: 'PL8 V3',
+              rlyNo: 3,
+              objType: '1,2',
+              status: 0,
+            ),
+            RelayStatus(
+              sNo: 10.4,
+              name: 'PL8 V4',
+              swName: 'PL8 V4',
+              rlyNo: 4,
+              objType: '1,2',
+              status: 0,
+            ),
+          ],
+          relayOutput: '4',
+          latchOutput: '0',
+          analogInput: '0',
+          digitalInput: '0',
+          version: 'Rtu+c 9.1.1_NL 3.2.0',
+          subNode: const [],
+          liveMessage: null,
+        ),
+        NodeListModel(
+          controllerId: widget.masterController.controllerId,
+          deviceId: '2CFE8B5172CF',
+          deviceName: 'RTU+ (Plot 1) 2V',
+          categoryId: 1,
+          categoryName: 'RTU',
+          modelId: 1,
+          modelName: 'NAr2000TS4A',
+          modelDescription: 'RTU+ (Plot 1) 2V',
+          serialNumber: 11,
+          referenceNumber: 7,
+          interfaceTypeId: 1,
+          interface: 'LoRa',
+          extendControllerId: 0,
+          status: 1,
+          communicationCount: '0_0',
+          lastFeedbackReceivedTime: '2026-11-26 03:38 PM',
+          sVolt: 19.0,
+          batVolt: 8.1,
+          rlyStatus: [
+            RelayStatus(
+              sNo: 11.1,
+              name: 'PL1 V1',
+              swName: 'PL1 V1',
+              rlyNo: 1,
+              objType: '1,2',
+              status: 0,
+            ),
+            RelayStatus(
+              sNo: 11.2,
+              name: 'PL1 V2',
+              swName: 'PL1 V2',
+              rlyNo: 2,
+              objType: '1,2',
+              status: 0,
+            ),
+          ],
+          relayOutput: '2',
+          latchOutput: '0',
+          analogInput: '0',
+          digitalInput: '0',
+          version: 'Rtu+c 9.1.1_NL 3.2.0',
+          subNode: const [],
+          liveMessage: null,
+        ),
+      ];
+    }
+
+    // Apply live MQTT updates if available
+    final nodeLiveMessage = mqttProvider.nodeLiveMessage;
+    for (String group in nodeLiveMessage) {
+      List<String> values = group.split(",");
+      if (values.length < 5) continue;
+      int? sNo = int.tryParse(values[0]);
+      double? sVolt = double.tryParse(values[1]);
+      double? batVolt = double.tryParse(values[2]);
+      int? status = int.tryParse(values[3]);
+      String lastFeedback = values[4];
+      String missedComm = values.length > 6 ? values[6] : '0_0';
+      if (sNo == null || status == null) continue;
+      for (var node in nodes) {
+        if (node.serialNumber == sNo) {
+          if (sVolt != null) node.sVolt = sVolt;
+          if (batVolt != null) node.batVolt = batVolt;
+          node.status = status;
+          node.lastFeedbackReceivedTime = lastFeedback;
+          node.communicationCount = missedComm;
+        }
+      }
+    }
+
+    return nodes;
   }
 }
 
@@ -7449,5 +10233,454 @@ class _BackwashRunItem {
     required this.duration,
     this.isRunning = false,
     this.isWaiting = false,
+  });
+}
+
+// -------------------------------------------------------------
+// RIGHT CORNER ALARM POPUP PANEL WIDGET
+// -------------------------------------------------------------
+class _AlarmRightCornerPanel extends StatefulWidget {
+  final CustomerScreenControllerViewModel vm;
+  final MasterControllerModel master;
+  final MqttPayloadProvider mqttProvider;
+
+  const _AlarmRightCornerPanel({
+    required this.vm,
+    required this.master,
+    required this.mqttProvider,
+  });
+
+  @override
+  State<_AlarmRightCornerPanel> createState() => _AlarmRightCornerPanelState();
+}
+
+class _AlarmRightCornerPanelState extends State<_AlarmRightCornerPanel> {
+  late List<_ParsedAlarmItem> _alarms;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadAlarms();
+  }
+
+  void _loadAlarms() {
+    final rawAlarms = widget.vm.alarmDL.isNotEmpty
+        ? widget.vm.alarmDL
+        : widget.mqttProvider.alarmDL;
+    final valid = rawAlarms.where((a) => a.trim().isNotEmpty).toList();
+
+    if (valid.isNotEmpty) {
+      _alarms = valid.map((raw) => _parseRawAlarm(raw)).toList();
+    } else {
+      // Sample alarm item for immediate display and testing reset functionality
+      _alarms = [
+        _ParsedAlarmItem(
+          raw: '1,1,1,0,0,26-11-2026,04:15 PM,1',
+          id: '1',
+          lineSNo: '1',
+          location: widget.master.irrigationLine.isNotEmpty
+              ? widget.master.irrigationLine.first.name
+              : 'Irrigation Line 1',
+          alarmCode: 1,
+          message: 'Low Pressure in Line 1',
+          time: DateFormat('hh:mm a').format(DateTime.now()),
+          isCritical: false,
+        ),
+      ];
+    }
+  }
+
+  _ParsedAlarmItem _parseRawAlarm(String raw) {
+    final values = raw.split(',');
+    final id = values.isNotEmpty ? values[0].trim() : '1';
+    final lineSNo = values.length > 1 ? values[1].trim() : '1';
+    final alarmCode =
+        values.length > 2 ? (int.tryParse(values[2].trim()) ?? 0) : 0;
+    String msg = MyFunction().getAlarmMessage(alarmCode);
+    if (msg.isEmpty) msg = 'System Alarm #$alarmCode';
+
+    String location = 'Irrigation Line $lineSNo';
+    final matchedLine = widget.master.irrigationLine
+        .where((l) =>
+            l.sNo.toString() == lineSNo || l.sNo.toInt().toString() == lineSNo)
+        .firstOrNull;
+    if (matchedLine != null) location = matchedLine.name;
+
+    String time = values.length > 6
+        ? '${values[5]} ${values[6]}'
+        : DateFormat('dd MMM, hh:mm a').format(DateTime.now());
+    bool isCritical = values.length > 7 ? (values[7].trim() != '1') : true;
+
+    return _ParsedAlarmItem(
+      raw: raw,
+      id: id,
+      lineSNo: lineSNo,
+      location: location,
+      alarmCode: alarmCode,
+      message: msg,
+      time: time,
+      isCritical: isCritical,
+    );
+  }
+
+  Future<void> _resetAlarmItem(_ParsedAlarmItem item) async {
+    try {
+      final payLoadFinal = jsonEncode({
+        "4100": {"4101": item.id}
+      });
+
+      await context.read<CommunicationService>().sendCommand(
+            serverMsg: 'Reset the ${item.message} alarm',
+            payload: payLoadFinal,
+          );
+
+      widget.vm.alarmDL
+          .removeWhere((a) => a.startsWith('${item.id},') || a == item.raw);
+      widget.mqttProvider.alarmDL
+          .removeWhere((a) => a.startsWith('${item.id},') || a == item.raw);
+      widget.mqttProvider.notifyListeners();
+
+      setState(() {
+        _alarms.removeWhere((a) => a.id == item.id);
+      });
+
+      if (mounted) {
+        GlobalSnackBar.show(
+          context,
+          '${item.message} alarm reset successfully',
+          200,
+        );
+      }
+    } catch (e) {
+      debugPrint('Error resetting alarm: $e');
+    }
+  }
+
+  Future<void> _resetAllAlarms() async {
+    for (final item in _alarms) {
+      try {
+        final payLoadFinal = jsonEncode({
+          "4100": {"4101": item.id}
+        });
+        await context.read<CommunicationService>().sendCommand(
+              serverMsg: 'Reset the ${item.message} alarm',
+              payload: payLoadFinal,
+            );
+      } catch (_) {}
+    }
+    widget.vm.alarmDL.clear();
+    widget.mqttProvider.updateAlarm([]);
+    widget.mqttProvider.notifyListeners();
+
+    setState(() {
+      _alarms.clear();
+    });
+
+    if (mounted) {
+      GlobalSnackBar.show(context, 'All alarms reset successfully', 200);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final count = _alarms.length;
+
+    return Container(
+      width: 460,
+      constraints: const BoxConstraints(maxHeight: 560),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x1F000000),
+            blurRadius: 24,
+            offset: Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header Row
+          Padding(
+            padding: const EdgeInsets.fromLTRB(18, 16, 12, 14),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFFEE2E2),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.notifications_active_rounded,
+                    color: Color(0xFFDC2626),
+                    size: 18,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                const Text(
+                  'Alarm Notifications',
+                  style: TextStyle(
+                    fontSize: 15.5,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF0F172A),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: count > 0
+                        ? const Color(0xFFFEE2E2)
+                        : const Color(0xFFDCFCE7),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    count > 0 ? '$count Active' : '0 Active',
+                    style: TextStyle(
+                      color: count > 0
+                          ? const Color(0xFFDC2626)
+                          : const Color(0xFF16A34A),
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                const Spacer(),
+                if (count > 0)
+                  TextButton.icon(
+                    style: TextButton.styleFrom(
+                      foregroundColor: const Color(0xFFDC2626),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 6),
+                    ),
+                    onPressed: _resetAllAlarms,
+                    icon: const Icon(Icons.restart_alt_rounded, size: 16),
+                    label: const Text(
+                      'Reset All',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                IconButton(
+                  tooltip: 'Close',
+                  icon: const Icon(Icons.close_rounded,
+                      size: 20, color: Color(0xFF64748B)),
+                  onPressed: () => Navigator.of(context).pop(),
+                ),
+              ],
+            ),
+          ),
+          const Divider(height: 1, color: Color(0xFFF1F5F9)),
+
+          // Body: Alarms List
+          Flexible(
+            child: _alarms.isEmpty
+                ? const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 40, horizontal: 20),
+                    child: Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.check_circle_outline_rounded,
+                            size: 42,
+                            color: Color(0xFF10B981),
+                          ),
+                          SizedBox(height: 12),
+                          Text(
+                            'No Active Alarms',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF0F172A),
+                            ),
+                          ),
+                          SizedBox(height: 4),
+                          Text(
+                            'All controllers and irrigation lines operating normally.',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Color(0xFF64748B),
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                : ListView.builder(
+                    shrinkWrap: true,
+                    padding: const EdgeInsets.all(14),
+                    itemCount: _alarms.length,
+                    itemBuilder: (context, index) {
+                      final item = _alarms[index];
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 10),
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: item.isCritical
+                              ? const Color(0xFFFFF1F2)
+                              : const Color(0xFFFFFBEB),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: item.isCritical
+                                ? const Color(0xFFFECDD3)
+                                : const Color(0xFFFDE68A),
+                          ),
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: item.isCritical
+                                    ? const Color(0xFFFEE2E2)
+                                    : const Color(0xFFFEF3C7),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Icon(
+                                item.isCritical
+                                    ? Icons.error_outline_rounded
+                                    : Icons.warning_amber_rounded,
+                                color: item.isCritical
+                                    ? const Color(0xFFDC2626)
+                                    : const Color(0xFFD97706),
+                                size: 20,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          item.message,
+                                          style: const TextStyle(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.bold,
+                                            color: Color(0xFF0F172A),
+                                          ),
+                                        ),
+                                      ),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 6, vertical: 2),
+                                        decoration: BoxDecoration(
+                                          color: item.isCritical
+                                              ? const Color(0xFFFEE2E2)
+                                              : const Color(0xFFFEF3C7),
+                                          borderRadius:
+                                              BorderRadius.circular(4),
+                                        ),
+                                        child: Text(
+                                          item.isCritical
+                                              ? 'CRITICAL'
+                                              : 'WARNING',
+                                          style: TextStyle(
+                                            fontSize: 9.5,
+                                            fontWeight: FontWeight.bold,
+                                            color: item.isCritical
+                                                ? const Color(0xFFDC2626)
+                                                : const Color(0xFFD97706),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Row(
+                                    children: [
+                                      const Icon(Icons.place_outlined,
+                                          size: 13, color: Color(0xFF64748B)),
+                                      const SizedBox(width: 3),
+                                      Text(
+                                        item.location,
+                                        style: const TextStyle(
+                                            fontSize: 11,
+                                            color: Color(0xFF64748B)),
+                                      ),
+                                      const SizedBox(width: 10),
+                                      const Icon(Icons.access_time_rounded,
+                                          size: 13, color: Color(0xFF64748B)),
+                                      const SizedBox(width: 3),
+                                      Text(
+                                        item.time,
+                                        style: const TextStyle(
+                                            fontSize: 11,
+                                            color: Color(0xFF64748B)),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            // RESET BUTTON
+                            OutlinedButton.icon(
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: const Color(0xFFDC2626),
+                                side:
+                                    const BorderSide(color: Color(0xFFFCA5A5)),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 10, vertical: 6),
+                                backgroundColor: Colors.white,
+                              ),
+                              onPressed: () => _resetAlarmItem(item),
+                              icon: const Icon(Icons.restart_alt_rounded,
+                                  size: 14),
+                              label: const Text(
+                                'Reset',
+                                style: TextStyle(
+                                  fontSize: 11.5,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ParsedAlarmItem {
+  final String raw;
+  final String id;
+  final String lineSNo;
+  final String location;
+  final int alarmCode;
+  final String message;
+  final String time;
+  final bool isCritical;
+
+  _ParsedAlarmItem({
+    required this.raw,
+    required this.id,
+    required this.lineSNo,
+    required this.location,
+    required this.alarmCode,
+    required this.message,
+    required this.time,
+    required this.isCritical,
   });
 }

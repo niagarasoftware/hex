@@ -35,15 +35,19 @@ class RelayStatusAvatar extends StatelessWidget {
     return Stack(
       alignment: Alignment.center,
       children: [
-        CircleAvatar(
-          radius: 16,
-          backgroundColor: (sNo.toString().startsWith('23.') || sNo.toString().startsWith('40.')) ?
-          _getStatusColor(0) : _getStatusColor(status!),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+          decoration: BoxDecoration(
+            color: (sNo.toString().startsWith('23.') || sNo.toString().startsWith('40.')) ?
+            _getStatusColor(0) : _getStatusColor(status!),
+            borderRadius: BorderRadius.circular(12),
+          ),
           child: Text(
             getLabel(objType, rlyNo),
             style: const TextStyle(
               color: Colors.white,
               fontSize: 10,
+              fontWeight: FontWeight.bold,
             ),
           ),
         ),
