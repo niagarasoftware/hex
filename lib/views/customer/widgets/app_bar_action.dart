@@ -371,13 +371,12 @@ Widget _buildAccountMenu(
                 TextButton(
                   onPressed: () async {
                     await PreferenceHelper.clearAll();
-                    const route = kIsWeb ? Routes.login : Routes.loginOtp;
+                    const route = Routes.login;
                     Navigator.pushNamedAndRemoveUntil(
                       context,
                       route,
                       (route) => false,
                     );
-                    // Navigator.pushNamedAndRemoveUntil(context, Routes.login, (route) => false,);
                   },
                   child: SizedBox(
                     width: 100,

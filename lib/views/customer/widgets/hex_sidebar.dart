@@ -212,7 +212,7 @@ class _HexSidebarState extends State<HexSidebar> {
 
     if (confirmed == true) {
       await PreferenceHelper.clearAll();
-      const route = kIsWeb ? Routes.login : Routes.loginOtp;
+      const route = Routes.login;
       if (context.mounted) {
         Navigator.pushNamedAndRemoveUntil(
           context,

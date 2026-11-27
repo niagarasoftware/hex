@@ -1,6 +1,5 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:hex/Screens/login_screenOTP/login_screenotp.dart';
 import '../views/screen_controller.dart';
 import '../views/common/login/login_screen.dart';
 import '../views/splash_screen.dart';
@@ -8,7 +7,7 @@ import '../views/splash_screen.dart';
 class Routes {
   static const String flash = '/';
   static const String login = '/login';
-  static const String loginOtp = '/loginOtp';
+  static const String loginOtp = '/login';
   static const String dashboard = '/dashboard';
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
@@ -19,13 +18,9 @@ class Routes {
           settings: settings,
         );
       case Routes.login:
-        return MaterialPageRoute(
-          builder: (_) => const LoginScreen(),
-          settings: settings,
-        );
       case Routes.loginOtp:
         return MaterialPageRoute(
-          builder: (_) =>  LoginScreenOTP(),
+          builder: (_) => const LoginScreen(),
           settings: settings,
         );
       case Routes.dashboard:
@@ -34,15 +29,10 @@ class Routes {
           settings: settings,
         );
       default:
-     return isSkiaWeb ?   MaterialPageRoute(
-          builder: (_) => const Scaffold(
-            body: Center(child: Text('Unknown Route')),
-          ),
+        return MaterialPageRoute(
+          builder: (_) => const LoginScreen(),
           settings: settings,
-        ) :  MaterialPageRoute(
-          builder: (_) =>  LoginScreenOTP(),
-    settings: settings,
-    ) ;
+        );
     }
   }
 }

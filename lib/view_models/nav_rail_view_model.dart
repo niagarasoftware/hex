@@ -56,9 +56,8 @@ class NavRailViewModel extends ChangeNotifier {
 
   Future<void> logout(context) async {
     await PreferenceHelper.clearAll();
-    const route = kIsWeb ? Routes.login : Routes.loginOtp;
+    const route = Routes.login;
     Navigator.pushNamedAndRemoveUntil(context, route, (route) => false,);
-    // Navigator.pushNamedAndRemoveUntil(context, Routes.login, (route) => false,);
   }
 
   void clearSearch() {
