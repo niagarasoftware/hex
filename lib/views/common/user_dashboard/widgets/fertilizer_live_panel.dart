@@ -392,22 +392,6 @@ class _FertilizerLivePanelState extends State<FertilizerLivePanel> {
           );
         }
 
-        final isTimeMethod = site.irrigationMethod.toLowerCase() == "1";
-        final String card2Title =
-            isTimeMethod ? 'Irrigation Duration' : 'Water Meter';
-        final String card2Value = isTimeMethod
-            ? ((_fertLiveIrrigationSeconds != null && _fertLiveIrrigationSeconds! > 0)
-                ? formatSeconds(_fertLiveIrrigationSeconds!.toDouble())
-                : (site.irrigationDurationCompleted.isNotEmpty
-                    ? site.irrigationDurationCompleted
-                    : '--'))
-            : (site.waterMeterValue.isNotEmpty ? site.waterMeterValue : '--');
-        final String card2Subtitle = isTimeMethod
-            ? 'Set: ${site.irrigationDurationQty}'
-            : '${site.irrigationQuantityCompleted} / ${site.irrigationDurationQty} Ltr';
-        final IconData card2Icon =
-            isTimeMethod ? Icons.timer_outlined : Icons.water_drop_outlined;
-
         final String ecValue = site.ecDataList.isNotEmpty
             ? site.ecDataList.last.value.toStringAsFixed(2)
             : (site.ecData.isNotEmpty ? site.ecData : '--');
@@ -415,6 +399,7 @@ class _FertilizerLivePanelState extends State<FertilizerLivePanel> {
             ? site.phDataList.last.value.toStringAsFixed(2)
             : (site.phData.isNotEmpty ? site.phData : '--');
 
+        final bool isTimeMethod = site.irrigationMethod.toLowerCase() == "1";
         String progressTitle = isTimeMethod
             ? 'Irrigation progress (Time)'
             : 'Irrigation progress (Quantity)';
@@ -471,10 +456,6 @@ class _FertilizerLivePanelState extends State<FertilizerLivePanel> {
                       _buildTopMetricCards(
                         programName: programName,
                         zoneName: zoneName,
-                        card2Title: card2Title,
-                        card2Value: card2Value,
-                        card2Subtitle: card2Subtitle,
-                        card2Icon: card2Icon,
                         ecValue: ecValue,
                         phValue: phValue,
                       ),
@@ -523,10 +504,6 @@ class _FertilizerLivePanelState extends State<FertilizerLivePanel> {
   Widget _buildTopMetricCards({
     required String programName,
     required String zoneName,
-    required String card2Title,
-    required String card2Value,
-    required String card2Subtitle,
-    required IconData card2Icon,
     required String ecValue,
     required String phValue,
   }) {
@@ -542,17 +519,6 @@ class _FertilizerLivePanelState extends State<FertilizerLivePanel> {
                 icon: Icons.calendar_today_outlined,
                 iconColor: const Color(0xFF0284C7),
                 iconBgColor: const Color(0xFFE0F2FE),
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: _buildMetricCard(
-                title: card2Title,
-                value: card2Value,
-                subtitle: card2Subtitle,
-                icon: card2Icon,
-                iconColor: const Color(0xFF10B981),
-                iconBgColor: const Color(0xFFDCFCE7),
               ),
             ),
           ],

@@ -7686,28 +7686,6 @@ class _IrrigationLineDashboardState extends State<IrrigationLineDashboard> {
       }
     }
 
-    // Metric cards values
-    final String card2Title =
-        isTimeMethod ? 'Irrigation Duration' : 'Water Meter';
-    final String card2Value = hasLiveActive
-        ? (isTimeMethod
-            ? ((_fertLiveIrrigationSeconds != null && _fertLiveIrrigationSeconds! > 0)
-                ? _formatSecondsToHms(_fertLiveIrrigationSeconds!)
-                : (liveSite!.irrigationDurationCompleted.isNotEmpty
-                    ? liveSite.irrigationDurationCompleted
-                    : '--'))
-            : (liveSite!.waterMeterValue.isNotEmpty
-                ? liveSite.waterMeterValue
-                : '--'))
-        : '--';
-    final String card2Subtitle = hasLiveActive
-        ? (isTimeMethod
-            ? 'Set: ${liveSite!.irrigationDurationQty}'
-            : '${liveSite!.irrigationQuantityCompleted} / ${liveSite.irrigationDurationQty} Ltr')
-        : '--';
-    final IconData card2Icon =
-        isTimeMethod ? Icons.timer_outlined : Icons.water_drop_outlined;
-
     final String ecValue = (hasLiveActive && liveSite!.ecDataList.isNotEmpty)
         ? liveSite.ecDataList.last.value.toStringAsFixed(2)
         : ((hasLiveActive && liveSite!.ecData.isNotEmpty)
@@ -7726,10 +7704,6 @@ class _IrrigationLineDashboardState extends State<IrrigationLineDashboard> {
         _buildFertilizerTopMetricCards(
           programName: programName,
           zoneName: zoneName,
-          card2Title: card2Title,
-          card2Value: card2Value,
-          card2Subtitle: card2Subtitle,
-          card2Icon: card2Icon,
           ecValue: ecValue,
           phValue: phValue,
           isMiddle: isMiddle,
@@ -7761,10 +7735,6 @@ class _IrrigationLineDashboardState extends State<IrrigationLineDashboard> {
   Widget _buildFertilizerTopMetricCards({
     required String programName,
     required String zoneName,
-    required String card2Title,
-    required String card2Value,
-    required String card2Subtitle,
-    required IconData card2Icon,
     required String ecValue,
     required String phValue,
     required bool isMiddle,
@@ -7777,14 +7747,6 @@ class _IrrigationLineDashboardState extends State<IrrigationLineDashboard> {
         icon: Icons.calendar_today_outlined,
         iconColor: const Color(0xFF0284C7),
         iconBgColor: const Color(0xFFE0F2FE),
-      ),
-      _buildFrtMetricCard(
-        title: card2Title,
-        value: card2Value,
-        subtitle: card2Subtitle,
-        icon: card2Icon,
-        iconColor: const Color(0xFF10B981),
-        iconBgColor: const Color(0xFFDCFCE7),
       ),
       _buildFrtMetricCard(
         title: 'EC',
@@ -7820,7 +7782,7 @@ class _IrrigationLineDashboardState extends State<IrrigationLineDashboard> {
             children: [
               Expanded(child: cards[2]),
               const SizedBox(width: 12),
-              Expanded(child: cards[3]),
+              const Expanded(child: SizedBox.shrink()),
             ],
           ),
         ],
@@ -7834,8 +7796,6 @@ class _IrrigationLineDashboardState extends State<IrrigationLineDashboard> {
         Expanded(child: cards[1]),
         const SizedBox(width: 12),
         Expanded(child: cards[2]),
-        const SizedBox(width: 12),
-        Expanded(child: cards[3]),
       ],
     );
   }
