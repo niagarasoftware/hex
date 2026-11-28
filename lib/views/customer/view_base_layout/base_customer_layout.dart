@@ -29,11 +29,13 @@ class BaseCustomerLayout extends StatelessWidget {
       floatingActionButton: floatingActionButton,
       bottomNavigationBar: bottomNavigationBar,
       backgroundColor: Colors.grey.shade100,
-      body: Column(
-        children: [
-          if (banners != null) ...banners!,
-          Expanded(child: body),
-        ],
+      body: SafeArea(
+        child: Column(
+          children: [
+            if (banners != null) ...banners!,
+            Expanded(child: body),
+          ],
+        ),
       ),
     );
   }

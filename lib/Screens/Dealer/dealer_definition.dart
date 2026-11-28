@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:hex/utils/helpers/log_print.dart';
+import 'package:hex/views/customer/controller_settings/widgets/mobile_settings_app_bar.dart';
 import 'package:loading_indicator/loading_indicator.dart';
 import '../../models/admin_dealer/dealer_definition_model.dart';
 import '../../repository/repository.dart';
@@ -64,19 +65,12 @@ class DealerDefinitionInConfigState extends State<DealerDefinitionInConfig> {
 
     return Scaffold(
       backgroundColor: colorScheme.surfaceContainerLowest,
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        title: Text(
-          'Dealer Definition',
-          style: textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.bold,
-            color: colorScheme.onSurface,
-          ),
-        ),
-        backgroundColor: colorScheme.surface,
-        foregroundColor: colorScheme.onSurface,
-        elevation: 0,
-      ),
+      appBar: MediaQuery.of(context).size.width < 600
+          ? buildMobileSettingsAppBar(
+              context,
+              title: 'Dealer Definition',
+            )
+          : null,
       body: visibleLoading
           ? Center(
               child: SizedBox(

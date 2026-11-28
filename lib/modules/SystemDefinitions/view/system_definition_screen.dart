@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:hex/Constants/properties.dart';
 import 'package:hex/services/mqtt_service.dart';
 import 'package:provider/provider.dart';
+import 'package:hex/views/customer/controller_settings/widgets/mobile_settings_app_bar.dart';
 import '../model/system_definition_model.dart';
 import '../../../StateManagement/mqtt_payload_provider.dart';
 import '../../../StateManagement/overall_use.dart';
@@ -86,23 +87,17 @@ class _SystemDefinitionState extends State<SystemDefinition> {
       child: Scaffold(
         backgroundColor: colorScheme.surfaceContainerLowest,
         appBar: screenSize <= 600
-            ? AppBar(
-          title: const Text(
-            "System Definition",
-            style: TextStyle(fontWeight: FontWeight.bold),
-          ),
-          backgroundColor: colorScheme.surface,
-          foregroundColor: colorScheme.onSurface,
-          elevation: 0,
-          automaticallyImplyLeading: true,
-          bottom: PreferredSize(
-            preferredSize: const Size(double.maxFinite, 44),
-            child: Container(
-              color: colorScheme.surfaceContainerLow,
-              padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
+            ? buildMobileSettingsAppBar(
+                context,
+                title: "System Definition",
+                bottom: PreferredSize(
+                  preferredSize: const Size(double.maxFinite, 44),
+                  child: Container(
+                    color: colorScheme.surfaceContainerLow,
+                    padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
                   children: [
                     for (var i = 0; i < lineData.length; i++)
                       Padding(

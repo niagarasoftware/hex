@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:hex/Constants/properties.dart';
 import 'package:hex/modules/global_limit/repository/global_limit_repository.dart';
 import 'package:hex/services/mqtt_service.dart';
+import 'package:hex/views/customer/controller_settings/widgets/mobile_settings_app_bar.dart';
 import '../../../Widgets/custom_buttons.dart';
 import '../../../Widgets/status_box.dart';
 import '../../../utils/environment.dart';
@@ -85,8 +86,9 @@ class _GlobalLimitScreenState extends State<GlobalLimitScreen> {
               backgroundColor: Colors.white,
               floatingActionButton: getFloatingActionButton(),
               appBar: MediaQuery.of(context).size.width < 500
-                  ? AppBar(
-                      title: const Text('Global Limit'),
+                  ? buildMobileSettingsAppBar(
+                      context,
+                      title: 'Global Limit',
                     )
                   : null,
               body: SafeArea(

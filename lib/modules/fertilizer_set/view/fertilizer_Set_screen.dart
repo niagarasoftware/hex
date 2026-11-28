@@ -8,6 +8,7 @@ import 'package:hex/modules/fertilizer_set/model/fertilizer_site_setting_model.d
 import 'package:hex/modules/fertilizer_set/repository/fertilizer_set_repository.dart';
 import 'package:provider/provider.dart';
 import 'package:responsive_grid_list/responsive_grid_list.dart';
+import 'package:hex/views/customer/controller_settings/widgets/mobile_settings_app_bar.dart';
 import '../../../Constants/constants.dart';
 import '../../../Constants/properties.dart';
 import '../../../StateManagement/overall_use.dart';
@@ -103,9 +104,12 @@ class _FertilizerSetScreenState extends State<FertilizerSetScreen> {
             return Scaffold(
               backgroundColor: Colors.white,
               floatingActionButton: getFloatingActionButton(),
-              appBar: MediaQuery.of(context).size.width < 500 ? AppBar(
-                title: const Text('Fertilizer Set'),
-              ): null,
+              appBar: MediaQuery.of(context).size.width < 500
+                  ? buildMobileSettingsAppBar(
+                      context,
+                      title: 'Fertilizer Set',
+                    )
+                  : null,
               body: SafeArea(
                 child: Padding(
                     padding: const EdgeInsets.all(8.0),
