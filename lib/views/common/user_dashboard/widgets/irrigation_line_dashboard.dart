@@ -5281,66 +5281,89 @@ class _IrrigationLineDashboardState extends State<IrrigationLineDashboard> {
           ),
           const SizedBox(height: 14),
 
-          // Table Header
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF8FAFC),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Row(
-              children: const [
-                Expanded(
-                  flex: 3,
-                  child: Text(
-                    'Program',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF64748B),
-                    ),
-                  ),
-                ),
-                Expanded(
-                  flex: 2,
-                  child: Text(
-                    'Start',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF64748B),
-                    ),
-                  ),
-                ),
-                Expanded(
-                  flex: 2,
-                  child: Text(
-                    'Pump',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF64748B),
-                    ),
-                  ),
-                ),
-                Expanded(
-                  flex: 4,
-                  child: Text(
-                    'Status / Actions',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF64748B),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 8),
+          // Scrollable table container prevents any overflow error
+          LayoutBuilder(
+            builder: (context, constraints) {
+              const minTableWidth = 720.0;
+              final tableWidth = constraints.maxWidth < minTableWidth
+                  ? minTableWidth
+                  : constraints.maxWidth;
+              return SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                physics: const BouncingScrollPhysics(),
+                child: SizedBox(
+                  width: tableWidth,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Table Header
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF8FAFC),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          children: const [
+                            SizedBox(
+                              width: 140,
+                              child: Text(
+                                'Program',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF64748B),
+                                ),
+                              ),
+                            ),
+                            SizedBox(width: 8),
+                            SizedBox(
+                              width: 75,
+                              child: Text(
+                                'Start',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF64748B),
+                                ),
+                              ),
+                            ),
+                            SizedBox(width: 8),
+                            SizedBox(
+                              width: 110,
+                              child: Text(
+                                'Pump',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF64748B),
+                                ),
+                              ),
+                            ),
+                            SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'Status / Actions',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF64748B),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 8),
 
-          // Dynamic Program Rows
-          ...programRowWidgets,
+                      // Dynamic Program Rows
+                      ...programRowWidgets,
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
         ],
       ),
     );
@@ -5366,8 +5389,8 @@ class _IrrigationLineDashboardState extends State<IrrigationLineDashboard> {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           // Program Name
-          Expanded(
-            flex: 3,
+          SizedBox(
+            width: 140,
             child: Text(
               programName,
               style: const TextStyle(
@@ -5379,9 +5402,10 @@ class _IrrigationLineDashboardState extends State<IrrigationLineDashboard> {
               overflow: TextOverflow.ellipsis,
             ),
           ),
+          const SizedBox(width: 8),
           // Start Time
-          Expanded(
-            flex: 2,
+          SizedBox(
+            width: 75,
             child: Text(
               startTime,
               style: const TextStyle(
@@ -5390,9 +5414,10 @@ class _IrrigationLineDashboardState extends State<IrrigationLineDashboard> {
               ),
             ),
           ),
+          const SizedBox(width: 8),
           // Pump
-          Expanded(
-            flex: 2,
+          SizedBox(
+            width: 110,
             child: Text(
               pumpStr,
               style: const TextStyle(
@@ -5403,90 +5428,94 @@ class _IrrigationLineDashboardState extends State<IrrigationLineDashboard> {
               overflow: TextOverflow.ellipsis,
             ),
           ),
+          const SizedBox(width: 8),
           // Status & Action Buttons
           Expanded(
-            flex: 4,
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: isRunning
-                        ? const Color(0xFFDCFCE7)
-                        : (isPaused
-                            ? const Color(0xFFFEF3C7)
-                            : const Color(0xFFF1F5F9)),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    isRunning
-                        ? 'Running'
-                        : (isPaused ? 'Paused' : 'Planning'),
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
                       color: isRunning
-                          ? const Color(0xFF16A34A)
+                          ? const Color(0xFFDCFCE7)
                           : (isPaused
-                              ? const Color(0xFFD97706)
-                              : const Color(0xFF64748B)),
+                              ? const Color(0xFFFEF3C7)
+                              : const Color(0xFFF1F5F9)),
+                      borderRadius: BorderRadius.circular(8),
                     ),
-                  ),
-                ),
-                if (hasProgramOnOff) ...[
-                  const SizedBox(width: 6),
-                  // Start / Stop MyMaterialButton
-                  SizedBox(
-                    height: 28,
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(6),
-                      child: MyMaterialButton(
-                        buttonId: prog.serialNumber.toString() + '_2900_ss',
-                        label: buttonName.isNotEmpty ? buttonName : 'Start',
-                        payloadKey: "2900",
-                        payloadValue: prog.serialNumber.toString() + ',' + prog.prgOnOff,
-                        color: prgOnOffInt >= 0
-                            ? (isStop
-                                ? const Color(0xFFEF4444)
-                                : const Color(0xFF10B981))
-                            : Colors.black26,
-                        textColor: Colors.white,
-                        serverMsg:
-                            prog.programName + ' ' + ProgramCodeHelper.getDescription(prgOnOffInt),
+                    child: Text(
+                      isRunning
+                          ? 'Running'
+                          : (isPaused ? 'Paused' : 'Planning'),
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: isRunning
+                            ? const Color(0xFF16A34A)
+                            : (isPaused
+                                ? const Color(0xFFD97706)
+                                : const Color(0xFF64748B)),
                       ),
                     ),
                   ),
-                  const SizedBox(width: 4),
-                  // Pause / Resume MyMaterialButton
-                  SizedBox(
-                    height: 28,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(6),
-                        border: Border.all(
-                            color: const Color(0xFFF59E0B), width: 1.1),
-                      ),
+                  if (hasProgramOnOff) ...[
+                    const SizedBox(width: 6),
+                    // Start / Stop MyMaterialButton
+                    SizedBox(
+                      height: 28,
                       child: ClipRRect(
-                        borderRadius: BorderRadius.circular(5),
+                        borderRadius: BorderRadius.circular(6),
                         child: MyMaterialButton(
-                          buttonId: prog.serialNumber.toString() + '_2900_pr',
-                          label: prgPrName.isNotEmpty ? prgPrName : 'Pause',
+                          buttonId: prog.serialNumber.toString() + '_2900_ss',
+                          label: buttonName.isNotEmpty ? buttonName : 'Start',
                           payloadKey: "2900",
-                          payloadValue:
-                              prog.serialNumber.toString() + ',' + prog.prgPauseResume,
-                          color: Colors.white,
-                          textColor: const Color(0xFFD97706),
+                          payloadValue: prog.serialNumber.toString() + ',' + prog.prgOnOff,
+                          color: prgOnOffInt >= 0
+                              ? (isStop
+                                  ? const Color(0xFFEF4444)
+                                  : const Color(0xFF10B981))
+                              : Colors.black26,
+                          textColor: Colors.white,
                           serverMsg:
-                              prog.programName + ' ' + ProgramCodeHelper.getDescription(prgPauseResumeInt),
+                              prog.programName + ' ' + ProgramCodeHelper.getDescription(prgOnOffInt),
                         ),
                       ),
                     ),
-                  ),
+                    const SizedBox(width: 4),
+                    // Pause / Resume MyMaterialButton
+                    SizedBox(
+                      height: 28,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(
+                              color: const Color(0xFFF59E0B), width: 1.1),
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(5),
+                          child: MyMaterialButton(
+                            buttonId: prog.serialNumber.toString() + '_2900_pr',
+                            label: prgPrName.isNotEmpty ? prgPrName : 'Pause',
+                            payloadKey: "2900",
+                            payloadValue:
+                                prog.serialNumber.toString() + ',' + prog.prgPauseResume,
+                            color: Colors.white,
+                            textColor: const Color(0xFFD97706),
+                            serverMsg:
+                                prog.programName + ' ' + ProgramCodeHelper.getDescription(prgPauseResumeInt),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ],
-              ],
+              ),
             ),
           ),
         ],
@@ -5504,8 +5533,8 @@ class _IrrigationLineDashboardState extends State<IrrigationLineDashboard> {
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       child: Row(
         children: [
-          Expanded(
-            flex: 3,
+          SizedBox(
+            width: 140,
             child: Text(
               name,
               style: const TextStyle(
@@ -5513,10 +5542,13 @@ class _IrrigationLineDashboardState extends State<IrrigationLineDashboard> {
                 fontWeight: FontWeight.w600,
                 color: Color(0xFF0F172A),
               ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
-          Expanded(
-            flex: 2,
+          const SizedBox(width: 8),
+          SizedBox(
+            width: 75,
             child: Text(
               start,
               style: const TextStyle(
@@ -5525,18 +5557,21 @@ class _IrrigationLineDashboardState extends State<IrrigationLineDashboard> {
               ),
             ),
           ),
-          Expanded(
-            flex: 2,
+          const SizedBox(width: 8),
+          SizedBox(
+            width: 110,
             child: Text(
               pump,
               style: const TextStyle(
                 fontSize: 12,
                 color: Color(0xFF64748B),
               ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
+          const SizedBox(width: 8),
           Expanded(
-            flex: 4,
             child: Align(
               alignment: Alignment.centerLeft,
               child: statusBadge,
