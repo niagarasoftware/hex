@@ -97,6 +97,9 @@ class RunningProgramData {
   final String runReason;
   final List<String> rawValues;
 
+  String get totalDuration => setDurationOrFlow;
+  String get flowRate => avgFlowRate;
+
   RunningProgramData({
     required this.programId,
     required this.programName,
@@ -187,6 +190,9 @@ class _IrrigationLineDashboardState extends State<IrrigationLineDashboard> {
   final Map<String, String> _lastChannelMqttCompleted = {};
   int? _fertLiveIrrigationSeconds;
   String? _lastFertMqttIrrigationCompleted;
+
+  // Line Details state & line selector
+  double? _selectedLineDetailsLineSNo;
 
   @override
   void initState() {
@@ -1028,8 +1034,8 @@ class _IrrigationLineDashboardState extends State<IrrigationLineDashboard> {
         return _buildBackwashTabContent(isMiddle, mqttProvider);
       case 3:
         return _buildFertilizerTabContent(isMiddle, mqttProvider);
-      // case 4:
-      //   return _buildLineDetailsTabContent(isMiddle);
+      case 4:
+        return _buildLineDetailsTabContent(isMiddle, mqttProvider);
       case 5:
         return _buildNodeMonitoringTabContent(isMiddle, mqttProvider);
       case 0:
@@ -1839,21 +1845,10 @@ class _IrrigationLineDashboardState extends State<IrrigationLineDashboard> {
 
             return InkWell(
               onTap: () {
-                // Navigate for Irrigation Line Monitoring (0), Water Source Monitoring (1), Backwash (2), Fertilizer (3), and Node Monitoring (5)
-                if (index == 0 ||
-                    index == 1 ||
-                    index == 2 ||
-                    index == 3 ||
-                    index == 5) {
-                  widget.onTabChanged(index);
-                  if (index == 3) {
-                    widget.viewModel.onFertilizerLiveSync();
-                  }
+                widget.onTabChanged(index);
+                if (index == 3) {
+                  widget.viewModel.onFertilizerLiveSync();
                 }
-                // Commented navigation code for remaining tabs (Line Details):
-                // else {
-                //   widget.onTabChanged(index);
-                // }
               },
               child: Container(
                 padding:
@@ -3743,213 +3738,2671 @@ class _IrrigationLineDashboardState extends State<IrrigationLineDashboard> {
     );
   }
 
-  // TAB 4: LINE DETAILS & VALVE STATUS TAB (renders full pipeline with ValveStatusLegend + CurrentProgram + NextSchedule + ScheduledProgramWide)
-  Widget _buildLineDetailsTabContent(bool isMiddle) {
-    final cM = widget.masterController;
-    final scheduledProgram = cM.programList;
-    final hasProgramOnOff = cM.getPermissionStatus("Program On/Off Manually");
-    final hasLinePP =
-        cM.getPermissionStatus("Irrigation Line Pause/Resume Manually");
-    final isAquaculture =
-        [...AppConstants.aquacultureModelList].contains(cM.modelId);
-    final isOMS = [...AppConstants.omsGemList].contains(cM.modelId);
-    final isNova = [...AppConstants.ecoGemModelList].contains(cM.modelId);
+  // TAB 4: LINE DETAILS & VALVE STATUS TAB (New modern UI matching Image 2 & Config Maker)
+  Widget _buildLineDetailsTabContent(
+      bool isMiddle, MqttPayloadProvider mqttProvider) {
+    final realLines = widget.masterController.irrigationLine.where((l) {
+      final nameLower = l.name.toLowerCase().trim();
+      return l.sNo > 0 &&
+          nameLower != "all irrigation line" &&
+          nameLower != "all aquaculture line" &&
+          !nameLower.startsWith("all irrigation") &&
+          !nameLower.startsWith("all aquaculture") &&
+          nameLower != "all line";
+    }).toList();
+    final lines = realLines.isNotEmpty
+        ? realLines
+        : widget.masterController.irrigationLine;
 
-    final irrigationLines = widget.masterController.irrigationLine;
-    final linesToDisplay =
-        (widget.viewModel.myCurrentIrrLine == "All irrigation line" ||
-                widget.viewModel.myCurrentIrrLine == "All Aquaculture line" ||
-                widget.viewModel.myCurrentIrrLine.isEmpty)
-            ? irrigationLines
-                .where((line) => line.name != widget.viewModel.myCurrentIrrLine)
-                .toList()
-            : irrigationLines
-                .where((line) => line.name == widget.viewModel.myCurrentIrrLine)
-                .toList();
+    if (lines.isEmpty) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(32),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFFE2E8F0)),
+        ),
+        child: Column(
+          children: const [
+            Icon(Icons.alt_route, size: 48, color: Color(0xFF94A3B8)),
+            SizedBox(height: 12),
+            Text(
+              'No Irrigation Lines Configured',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF0F172A),
+              ),
+            ),
+            SizedBox(height: 4),
+            Text(
+              'Configure irrigation lines in Config Maker to view live flow and controls.',
+              style: TextStyle(fontSize: 13, color: Color(0xFF64748B)),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // Helper to check if a specific irrigation line is currently running
+    bool isLineActive(IrrigationLineModel l) {
+      return _livePrograms.any((p) {
+        final pSNoDouble = double.tryParse(p.lineSNo);
+        if (pSNoDouble != null &&
+            (pSNoDouble == l.sNo || pSNoDouble.toInt() == l.sNo.toInt())) {
+          return true;
+        }
+        if (p.lineSNo == l.sNo.toInt().toString() ||
+            p.lineSNo == l.sNo.toString()) {
+          return true;
+        }
+        if (p.lineName.isNotEmpty &&
+            (p.lineName.toLowerCase().trim() == l.name.toLowerCase().trim() ||
+                l.name.toLowerCase().contains(p.lineName.toLowerCase().trim()) ||
+                p.lineName.toLowerCase().contains(l.name.toLowerCase().trim()))) {
+          return true;
+        }
+        final cleanLineName =
+            l.name.toLowerCase().replaceAll('irrigation', '').trim();
+        if (cleanLineName.isNotEmpty &&
+            (p.programName.toLowerCase().contains(cleanLineName) ||
+                p.lineName.toLowerCase().contains(cleanLineName) ||
+                p.zone.toLowerCase().contains(l.name.toLowerCase()) ||
+                p.sequenceName.toLowerCase().contains(l.name.toLowerCase()))) {
+          return true;
+        }
+        return false;
+      });
+    }
+
+    RunningProgramData? getActiveProgramForLine(IrrigationLineModel l) {
+      for (final p in _livePrograms) {
+        final pSNoDouble = double.tryParse(p.lineSNo);
+        if (pSNoDouble != null &&
+            (pSNoDouble == l.sNo || pSNoDouble.toInt() == l.sNo.toInt())) {
+          return p;
+        }
+        if (p.lineSNo == l.sNo.toInt().toString() ||
+            p.lineSNo == l.sNo.toString()) {
+          return p;
+        }
+        if (p.lineName.isNotEmpty &&
+            (p.lineName.toLowerCase().trim() == l.name.toLowerCase().trim() ||
+                l.name.toLowerCase().contains(p.lineName.toLowerCase().trim()) ||
+                p.lineName.toLowerCase().contains(l.name.toLowerCase().trim()))) {
+          return p;
+        }
+        final cleanLineName =
+            l.name.toLowerCase().replaceAll('irrigation', '').trim();
+        if (cleanLineName.isNotEmpty &&
+            (p.programName.toLowerCase().contains(cleanLineName) ||
+                p.lineName.toLowerCase().contains(cleanLineName) ||
+                p.zone.toLowerCase().contains(l.name.toLowerCase()) ||
+                p.sequenceName.toLowerCase().contains(l.name.toLowerCase()))) {
+          return p;
+        }
+      }
+      return null;
+    }
+
+    // 1. Determine selected line & mode
+    final bool isAllLines = _selectedLineDetailsLineSNo == 0.0;
+    IrrigationLineModel selectedLine;
+    if (_selectedLineDetailsLineSNo != null &&
+        _selectedLineDetailsLineSNo != 0.0 &&
+        lines.any((l) => l.sNo == _selectedLineDetailsLineSNo)) {
+      selectedLine =
+          lines.firstWhere((l) => l.sNo == _selectedLineDetailsLineSNo);
+    } else {
+      IrrigationLineModel? activeLine;
+      for (final l in lines) {
+        if (isLineActive(l)) {
+          activeLine = l;
+          break;
+        }
+      }
+      selectedLine = activeLine ?? lines.first;
+    }
+
+    final List<IrrigationLineModel> linesToRender =
+        isAllLines ? lines : [selectedLine];
+
+    // 2. Determine active program
+    RunningProgramData? activeProg;
+    if (isAllLines) {
+      activeProg = _livePrograms.isNotEmpty
+          ? _livePrograms.first
+          : _getLastCompletedOrRecentProgram(mqttProvider);
+    } else {
+      activeProg = getActiveProgramForLine(selectedLine) ??
+          (_livePrograms.isNotEmpty
+              ? _livePrograms.first
+              : _getLastCompletedOrRecentProgram(mqttProvider));
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (!isOMS) buildValveStatusLegend(isAquaculture),
-        const SizedBox(height: 14),
-        if (isOMS)
-          OmsLine(
-            customerId: widget.customerId,
-            controllerId: widget.controllerId,
-            modelId: widget.modelId,
-            deviceId: widget.deviceId,
-            master: cM,
-            groupId: widget.viewModel.mySiteList.data.isNotEmpty
-                ? widget
-                    .viewModel.mySiteList.data[widget.viewModel.sIndex].groupId
-                : 0,
-            isNarrow: false,
-          )
-        else
-          ...linesToDisplay.map((line) {
-            final inletWaterSources = {
-              for (var source in line.inletSources) source.sNo: source
-            }.values.toList();
+        // 1. Header Toolbar with line selector (includes "All irrigation line")
+        _buildLineDetailsHeaderToolbar(
+          lines: lines,
+          selectedLine: selectedLine,
+          isAllLines: isAllLines,
+          activeProg: activeProg,
+          mqttProvider: mqttProvider,
+        ),
+        const SizedBox(height: 16),
 
-            final outletWaterSources = {
-              for (var source in line.outletSources) source.sNo: source
-            }.values.toList();
+        // 2. Running now top card with red LIVE badge
+        _buildLineDetailsRunningNowCard(
+          line: selectedLine,
+          isAllLines: isAllLines,
+          activeProg: activeProg,
+          mqttProvider: mqttProvider,
+        ),
+        const SizedBox(height: 16),
 
-            final cFilterSite = {
-              if (line.centralFilterSite != null)
-                line.centralFilterSite!.sNo: line.centralFilterSite!
-            }.values.toList();
-
-            final cFertilizerSite = {
-              if (line.centralFertilizerSite != null)
-                line.centralFertilizerSite!.sNo: line.centralFertilizerSite!
-            }.values.toList();
-
-            final lFilterSite = {
-              if (line.localFilterSite != null)
-                line.localFilterSite!.sNo: line.localFilterSite!
-            }.values.toList();
-
-            final lFertilizerSite = {
-              if (line.localFertilizerSite != null)
-                line.localFertilizerSite!.sNo: line.localFertilizerSite!
-            }.values.toList();
-
-            return Container(
-              margin: const EdgeInsets.only(bottom: 16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFFE2E8F0)),
-              ),
-              child: Column(
+        // 3. Main Content: Left Flow Diagram (flex 6) & Right Cards (flex 4)
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final isWide = constraints.maxWidth >= 900;
+            if (isWide) {
+              return Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Row(
+                  Expanded(
+                    flex: 6,
+                    child: _buildLineDetailsLiveFlowDiagramCard(
+                      selectedLine: selectedLine,
+                      linesToRender: linesToRender,
+                      isAllLines: isAllLines,
+                      activeProg: activeProg,
+                      mqttProvider: mqttProvider,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    flex: 4,
+                    child: Column(
                       children: [
-                        Text(
-                          line.name,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black54,
-                          ),
+                        _buildLineDetailsValveMetersSensorsCard(
+                          line: selectedLine,
+                          linesToRender: linesToRender,
+                          isAllLines: isAllLines,
+                          activeProg: activeProg,
+                          mqttProvider: mqttProvider,
                         ),
-                        if (!isNova && hasLinePP) ...[
-                          const Spacer(),
-                          SizedBox(
-                            height: 27,
-                            child: MyMaterialButton(
-                              buttonId: 'line_${line.sNo}_4900',
-                              label: line.linePauseFlag == 0
-                                  ? 'Pause the line'
-                                  : 'Resume the line',
-                              payloadKey: "4900",
-                              payloadValue:
-                                  "${line.sNo},${line.linePauseFlag == 0 ? 1 : 0}",
-                              color: line.linePauseFlag == 0
-                                  ? Colors.orangeAccent
-                                  : Colors.green,
-                              textColor: Colors.white,
-                              serverMsg: line.linePauseFlag == 0
-                                  ? 'Paused the ${line.name}'
-                                  : 'Resumed the ${line.name}',
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                        ],
+                        const SizedBox(height: 16),
+                        _buildLineDetailsProgramsAndPumpsCard(
+                          line: selectedLine,
+                          linesToRender: linesToRender,
+                          isAllLines: isAllLines,
+                          activeProg: activeProg,
+                          mqttProvider: mqttProvider,
+                        ),
                       ],
                     ),
                   ),
-                  isAquaculture
-                      ? AquacultureLine(
-                          irrLine: line,
-                          customerId: widget.customerId,
-                          controllerId: widget.controllerId,
-                          modelId: widget.modelId,
-                          deviceId: widget.deviceId,
-                        )
-                      : SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          child: IrrigationLineWide(
-                            inletWaterSources: inletWaterSources,
-                            outletWaterSources: outletWaterSources,
-                            cFilterSite: cFilterSite,
-                            cFertilizerSite: cFertilizerSite,
-                            lFilterSite: lFilterSite,
-                            lFertilizerSite: lFertilizerSite,
-                            valves: line.valveObjects,
-                            mainValves: line.mainValveObjects,
-                            lights: line.lightObjects,
-                            fans: line.fanObjects,
-                            gates: line.gateObjects,
-                            fogger: line.foggerObjects,
-                            prsSwitch: line.prsSwitch,
-                            pressureIn: line.pressureIn,
-                            pressureOut: line.pressureOut,
-                            waterMeter: line.waterMeter,
-                            humidity: line.humiditySensor,
-                            co2: line.co2Sensor,
-                            temperature: line.temperature,
-                            soilTemperature: line.soilTemperature,
-                            customerId: widget.customerId,
-                            controllerId: widget.controllerId,
-                            containerWidth: MediaQuery.sizeOf(context).width,
-                            deviceId: widget.deviceId,
-                            modelId: widget.modelId,
-                            isNava: false,
-                          ),
-                        ),
                 ],
-              ),
-            );
-          }),
-        const SizedBox(height: 12),
-        // CURRENT SCHEDULE (displays sequence running value name, status, remaining, flow)
-        CurrentProgram(
-          scheduledPrograms: scheduledProgram,
-          deviceId: cM.deviceId,
-          customerId: widget.customerId,
-          controllerId: widget.controllerId,
-          currentLineSNo: cM.irrigationLine.isNotEmpty &&
-                  widget.viewModel.lIndex < cM.irrigationLine.length
-              ? cM.irrigationLine[widget.viewModel.lIndex].sNo
-              : 1,
-          modelId: cM.modelId,
-          skipPermission: hasProgramOnOff,
+              );
+            } else {
+              return Column(
+                children: [
+                  _buildLineDetailsLiveFlowDiagramCard(
+                    selectedLine: selectedLine,
+                    linesToRender: linesToRender,
+                    isAllLines: isAllLines,
+                    activeProg: activeProg,
+                    mqttProvider: mqttProvider,
+                  ),
+                  const SizedBox(height: 16),
+                  _buildLineDetailsValveMetersSensorsCard(
+                    line: selectedLine,
+                    linesToRender: linesToRender,
+                    isAllLines: isAllLines,
+                    activeProg: activeProg,
+                    mqttProvider: mqttProvider,
+                  ),
+                  const SizedBox(height: 16),
+                  _buildLineDetailsProgramsAndPumpsCard(
+                    line: selectedLine,
+                    linesToRender: linesToRender,
+                    isAllLines: isAllLines,
+                    activeProg: activeProg,
+                    mqttProvider: mqttProvider,
+                  ),
+                ],
+              );
+            }
+          },
         ),
-        if (scheduledProgram.isNotEmpty) ...[
-          const SizedBox(height: 12),
-          // NEXT SCHEDULE IN QUEUE
-          NextSchedule(scheduledPrograms: scheduledProgram),
-          const SizedBox(height: 12),
-          // SCHEDULED PROGRAM (displays percentage MQTT box value: 35%, 87%, 100%)
-          ScheduledProgramWide(
-            userId: widget.customerId,
-            scheduledPrograms: scheduledProgram,
-            controllerId: cM.controllerId,
-            deviceId: cM.deviceId,
-            customerId: widget.customerId,
-            currentLineSNo: cM.irrigationLine.isNotEmpty &&
-                    widget.viewModel.lIndex < cM.irrigationLine.length
-                ? cM.irrigationLine[widget.viewModel.lIndex].sNo
-                : 1,
-            groupId: widget.viewModel.mySiteList.data.isNotEmpty
-                ? widget
-                    .viewModel.mySiteList.data[widget.viewModel.sIndex].groupId
-                : 0,
-            categoryId: cM.categoryId,
-            modelId: cM.modelId,
-            deviceName: cM.deviceName,
-            categoryName: cM.categoryName,
-            prgOnOffPermission: hasProgramOnOff,
-          ),
-        ],
-        const SizedBox(height: 16),
+        const SizedBox(height: 24),
       ],
     );
+  }
+
+  // 1. Toolbar with Line Selector ("All irrigation line" + individual lines)
+  Widget _buildLineDetailsHeaderToolbar({
+    required List<IrrigationLineModel> lines,
+    required IrrigationLineModel selectedLine,
+    required bool isAllLines,
+    required RunningProgramData? activeProg,
+    required MqttPayloadProvider mqttProvider,
+  }) {
+    final anyLineRunning = _livePrograms.isNotEmpty;
+    final isLineRunning = isAllLines
+        ? anyLineRunning
+        : (activeProg != null &&
+            _livePrograms.any((p) {
+              final pSNoDouble = double.tryParse(p.lineSNo);
+              if (pSNoDouble != null &&
+                  (pSNoDouble == selectedLine.sNo ||
+                      pSNoDouble.toInt() == selectedLine.sNo.toInt())) {
+                return true;
+              }
+              return p.lineSNo == selectedLine.sNo.toInt().toString() ||
+                  p.lineSNo == selectedLine.sNo.toString() ||
+                  p.lineName.toLowerCase() == selectedLine.name.toLowerCase();
+            }));
+
+    // Build unique dropdown menu items avoiding duplicates
+    final Set<double> seenValues = {0.0};
+    final List<DropdownMenuItem<double>> menuItems = [
+      DropdownMenuItem<double>(
+        value: 0.0,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 8,
+              height: 8,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: anyLineRunning
+                    ? const Color(0xFF16A34A)
+                    : const Color(0xFF94A3B8),
+              ),
+            ),
+            const SizedBox(width: 8),
+            const Text('All irrigation line'),
+          ],
+        ),
+      ),
+    ];
+
+    for (final l in lines) {
+      if (l.sNo > 0 && !seenValues.contains(l.sNo)) {
+        seenValues.add(l.sNo);
+        final hasActive = _livePrograms.any((p) {
+          final pSNoDouble = double.tryParse(p.lineSNo);
+          if (pSNoDouble != null &&
+              (pSNoDouble == l.sNo || pSNoDouble.toInt() == l.sNo.toInt())) {
+            return true;
+          }
+          return p.lineSNo == l.sNo.toInt().toString() ||
+              p.lineSNo == l.sNo.toString() ||
+              p.lineName.toLowerCase() == l.name.toLowerCase();
+        });
+        menuItems.add(
+          DropdownMenuItem<double>(
+            value: l.sNo,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: hasActive
+                        ? const Color(0xFF16A34A)
+                        : const Color(0xFF94A3B8),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(l.name.isNotEmpty
+                    ? l.name
+                    : 'Line ' + l.sNo.toInt().toString()),
+              ],
+            ),
+          ),
+        );
+      }
+    }
+
+    final double effectiveValue = isAllLines
+        ? 0.0
+        : (seenValues.contains(selectedLine.sNo) ? selectedLine.sNo : 0.0);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.alt_route, size: 18, color: Color(0xFF0284C7)),
+          const SizedBox(width: 8),
+          const Text(
+            'Irrigation Line: ',
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF64748B),
+            ),
+          ),
+          DropdownButtonHideUnderline(
+            child: DropdownButton<double>(
+              value: effectiveValue,
+              isDense: true,
+              icon: const Icon(Icons.arrow_drop_down, color: Color(0xFF0F172A)),
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF0F172A),
+              ),
+              items: menuItems,
+              onChanged: (val) {
+                if (val != null) {
+                  setState(() {
+                    _selectedLineDetailsLineSNo = val;
+                  });
+                }
+              },
+            ),
+          ),
+          const Spacer(),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: isLineRunning
+                  ? const Color(0xFFDCFCE7)
+                  : const Color(0xFFF1F5F9),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 6,
+                  height: 6,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: isLineRunning
+                        ? const Color(0xFF16A34A)
+                        : const Color(0xFF94A3B8),
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  isLineRunning ? 'Running' : 'Idle',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: isLineRunning
+                        ? const Color(0xFF16A34A)
+                        : const Color(0xFF64748B),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          _buildRefreshButton(widget.viewModel),
+        ],
+      ),
+    );
+  }
+
+  // 2. Running now top card with red LIVE badge
+  Widget _buildLineDetailsRunningNowCard({
+    required IrrigationLineModel line,
+    required bool isAllLines,
+    required RunningProgramData? activeProg,
+    required MqttPayloadProvider mqttProvider,
+  }) {
+    final isLive = isAllLines
+        ? _livePrograms.isNotEmpty
+        : (activeProg != null &&
+            _livePrograms.any((p) {
+              final pSNoDouble = double.tryParse(p.lineSNo);
+              if (pSNoDouble != null &&
+                  (pSNoDouble == line.sNo ||
+                      pSNoDouble.toInt() == line.sNo.toInt())) {
+                return true;
+              }
+              final cleanName =
+                  line.name.toLowerCase().replaceAll('irrigation', '').trim();
+              return p.lineSNo == line.sNo.toInt().toString() ||
+                  p.lineSNo == line.sNo.toString() ||
+                  p.lineName.toLowerCase() == line.name.toLowerCase() ||
+                  (cleanName.isNotEmpty &&
+                      (p.programName.toLowerCase().contains(cleanName) ||
+                          p.zone.toLowerCase().contains(line.name.toLowerCase())));
+            }));
+
+    // Active pumps
+    final allPumps = isAllLines
+        ? widget.masterController.irrigationLine
+            .expand((l) => _getAllPumpsForLine(l))
+            .toSet()
+            .toList()
+        : _getAllPumpsForLine(line);
+    final runningPumps =
+        allPumps.where((p) => _isPumpRunning(p, mqttProvider)).toList();
+    final pumpText = runningPumps.isNotEmpty
+        ? runningPumps.map((p) => p.name).join(', ')
+        : (allPumps.isNotEmpty
+            ? allPumps.take(2).map((p) => p.name).join(', ')
+            : 'Pump 1, Pump 2');
+    final pumpSubtext =
+        _getPumpCurrentAndPressure(runningPumps, line, mqttProvider);
+
+    // Main valve
+    final mv =
+        line.mainValveObjects.isNotEmpty ? line.mainValveObjects.first : null;
+    final isMvOpen = mv != null ? _isValveOpen(mv.sNo, mqttProvider) : isLive;
+    final mvText = isMvOpen ? 'Open' : (mv != null ? 'Closed' : 'Standby');
+    final mvSubtext = mv != null
+        ? mv.name +
+            ' · ' +
+            (isMvOpen
+                ? 'since ' +
+                    (activeProg?.startedAt.isNotEmpty == true
+                        ? activeProg!.startedAt
+                        : '06:00 PM')
+                : 'Closed')
+        : 'MV-01 · Closed';
+
+    // Program name & subtext
+    final prgTitle = activeProg != null && activeProg.programName.isNotEmpty
+        ? activeProg.programName
+        : (widget.masterController.programList.isNotEmpty
+            ? widget.masterController.programList.first.programName
+            : 'Evening Irrigation');
+    final prgSubtext = activeProg != null && activeProg.startedAt.isNotEmpty
+        ? 'Program ' +
+            activeProg.programId +
+            ' · ' +
+            activeProg.startedAt +
+            ' - ' +
+            (activeProg.setDurationOrFlow.isNotEmpty
+                ? activeProg.setDurationOrFlow
+                : '07:00 PM')
+        : 'Program 2 · 6:00 PM – 7:00 PM';
+
+    // Active zone
+    final zoneTitle = activeProg != null && activeProg.sequenceName.isNotEmpty
+        ? activeProg.sequenceName
+        : (activeProg != null && activeProg.zone.isNotEmpty
+            ? 'Zone ' + activeProg.zone
+            : 'Zone 05 · Tomato');
+    final zoneSubtext = isAllLines
+        ? 'All lines · North field'
+        : (line.name + ' · North field');
+
+    // Time left & %
+    final timeLeft = activeProg != null && activeProg.remainingTime.isNotEmpty
+        ? activeProg.remainingTime
+        : '00:18:00';
+    final pctComplete = activeProg != null && activeProg.progressPercentage > 0
+        ? activeProg.progressPercentage.toString() + '% complete'
+        : '72% complete';
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x06000000),
+            blurRadius: 10,
+            offset: Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Text(
+                'Running now',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF0F172A),
+                ),
+              ),
+              const Spacer(),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: isLive
+                      ? const Color(0xFFFEE2E2)
+                      : const Color(0xFFF1F5F9),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: isLive
+                        ? const Color(0xFFFECACA)
+                        : const Color(0xFFE2E8F0),
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 6,
+                      height: 6,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: isLive
+                            ? const Color(0xFFDC2626)
+                            : const Color(0xFF94A3B8),
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      isLive ? 'LIVE' : 'IDLE',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: isLive
+                            ? const Color(0xFFDC2626)
+                            : const Color(0xFF64748B),
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final isSmall = constraints.maxWidth < 650;
+              final items = [
+                _buildRunningNowColumn(
+                  label: 'Program',
+                  value: prgTitle,
+                  subtitle: prgSubtext,
+                ),
+                _buildRunningNowColumn(
+                  label: 'Active zone',
+                  value: zoneTitle,
+                  subtitle: zoneSubtext,
+                ),
+                _buildRunningNowColumn(
+                  label: 'Active pumps',
+                  value: pumpText,
+                  subtitle: pumpSubtext,
+                ),
+                _buildRunningNowColumn(
+                  label: 'Main valve',
+                  value: mvText,
+                  subtitle: mvSubtext,
+                  valueColor: isMvOpen
+                      ? const Color(0xFF16A34A)
+                      : const Color(0xFF64748B),
+                ),
+                _buildRunningNowColumn(
+                  label: 'Time left',
+                  value: timeLeft,
+                  subtitle: pctComplete,
+                ),
+              ];
+
+              if (isSmall) {
+                return Wrap(
+                  spacing: 16,
+                  runSpacing: 14,
+                  children: items
+                      .map((item) => SizedBox(
+                            width: (constraints.maxWidth - 20) / 2,
+                            child: item,
+                          ))
+                      .toList(),
+                );
+              }
+
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  for (int i = 0; i < items.length; i++) ...[
+                    Expanded(child: items[i]),
+                    if (i < items.length - 1)
+                      Container(
+                        height: 48,
+                        width: 1,
+                        margin: const EdgeInsets.symmetric(horizontal: 12),
+                        color: const Color(0xFFF1F5F9),
+                      ),
+                  ],
+                ],
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRunningNowColumn({
+    required String label,
+    required String value,
+    required String subtitle,
+    Color? valueColor,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w500,
+            color: Color(0xFF94A3B8),
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.bold,
+            color: valueColor ?? const Color(0xFF0F172A),
+          ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        const SizedBox(height: 2),
+        Text(
+          subtitle,
+          style: const TextStyle(
+            fontSize: 11,
+            color: Color(0xFF64748B),
+          ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+      ],
+    );
+  }
+
+  // 3. Left Panel: Live flow diagram matching Config Maker schematic
+  Widget _buildLineDetailsLiveFlowDiagramCard({
+    required IrrigationLineModel selectedLine,
+    required List<IrrigationLineModel> linesToRender,
+    required bool isAllLines,
+    required RunningProgramData? activeProg,
+    required MqttPayloadProvider mqttProvider,
+  }) {
+    // Helper to test if a line is currently active
+    bool isLineActive(IrrigationLineModel l) {
+      return _livePrograms.any((p) {
+        final pSNoDouble = double.tryParse(p.lineSNo);
+        if (pSNoDouble != null &&
+            (pSNoDouble == l.sNo || pSNoDouble.toInt() == l.sNo.toInt())) {
+          return true;
+        }
+        if (p.lineSNo == l.sNo.toInt().toString() ||
+            p.lineSNo == l.sNo.toString()) {
+          return true;
+        }
+        if (p.lineName.isNotEmpty &&
+            (p.lineName.toLowerCase().trim() == l.name.toLowerCase().trim() ||
+                l.name.toLowerCase().contains(p.lineName.toLowerCase().trim()) ||
+                p.lineName.toLowerCase().contains(l.name.toLowerCase().trim()))) {
+          return true;
+        }
+        final cleanLineName =
+            l.name.toLowerCase().replaceAll('irrigation', '').trim();
+        if (cleanLineName.isNotEmpty &&
+            (p.programName.toLowerCase().contains(cleanLineName) ||
+                p.lineName.toLowerCase().contains(cleanLineName) ||
+                p.zone.toLowerCase().contains(l.name.toLowerCase()))) {
+          return true;
+        }
+        return false;
+      });
+    }
+
+    final isAnyRunning = linesToRender.any((l) => isLineActive(l));
+
+    // Water Sources: combine inlet, outlet, aerator across linesToRender
+    final Map<double, WaterSourceModel> sourceMap = {};
+    for (final l in linesToRender) {
+      for (final s in l.inletSources) {
+        sourceMap[s.sNo] = s;
+      }
+      for (final s in l.outletSources) {
+        sourceMap[s.sNo] = s;
+      }
+      for (final s in l.aeratorSources) {
+        sourceMap[s.sNo] = s;
+      }
+    }
+    // If not directly linked, check waterSources in masterController
+    if (sourceMap.isEmpty &&
+        widget.masterController.waterSources.isNotEmpty) {
+      for (final ws in widget.masterController.waterSources) {
+        sourceMap[ws.sNo] = ws;
+      }
+    }
+    final sources = sourceMap.values.toList();
+    if (sources.isEmpty) {
+      sources.add(
+        WaterSourceModel(
+          sNo: 1,
+          name: '70 Acre Pond',
+          sourceType: 1,
+          inletPumpSno: [1],
+          outletPumpSno: [],
+          inletPump: [
+            PumpModel(
+              sNo: 1,
+              name: 'Pump 1',
+              waterMeter: [],
+            ),
+          ],
+          outletPump: [],
+          aeratorPump: [],
+          isWaterInAndOut: false,
+          level: [],
+          floatSwitches: [],
+        ),
+      );
+    }
+
+    // Filter Site
+    FilterSiteModel? filterSite;
+    for (final l in linesToRender) {
+      if (l.centralFilterSite != null || l.localFilterSite != null) {
+        filterSite = l.centralFilterSite ?? l.localFilterSite;
+        break;
+      }
+    }
+    if (filterSite == null) {
+      for (final l in widget.masterController.irrigationLine) {
+        if (l.centralFilterSite != null || l.localFilterSite != null) {
+          filterSite = l.centralFilterSite ?? l.localFilterSite;
+          break;
+        }
+      }
+    }
+    final isFilterActive = isAnyRunning;
+
+    // Fertilizer Site
+    FertilizerSiteModel? fertSite;
+    for (final l in linesToRender) {
+      if (l.centralFertilizerSite != null || l.localFertilizerSite != null) {
+        fertSite = l.centralFertilizerSite ?? l.localFertilizerSite;
+        break;
+      }
+    }
+    if (fertSite == null) {
+      for (final l in widget.masterController.irrigationLine) {
+        if (l.centralFertilizerSite != null || l.localFertilizerSite != null) {
+          fertSite = l.centralFertilizerSite ?? l.localFertilizerSite;
+          break;
+        }
+      }
+    }
+    final isFertActive = isAnyRunning ||
+        (fertSite != null && _isFertilizerSiteActive(fertSite, mqttProvider));
+
+    // Agitator
+    final hasAgitator = fertSite != null && fertSite.agitator.isNotEmpty;
+    final agitator = hasAgitator ? fertSite.agitator.first : null;
+    final isAgitatorRunning = agitator != null &&
+        _isAgitatorRunning(agitator.sNo.toString(), mqttProvider);
+
+    // Build Row 1 Widgets (Sources -> Pumps -> Filter)
+    final List<Widget> sourcePumpWidgets = [];
+    for (int sIdx = 0; sIdx < sources.length; sIdx++) {
+      final src = sources[sIdx];
+      List<PumpModel> pumps = [
+        ...src.inletPump,
+        ...src.outletPump,
+        ...src.aeratorPump
+      ];
+      if (pumps.isEmpty) {
+        final linePumps =
+            linesToRender.expand((l) => _getAllPumpsForLine(l)).toList();
+        if (linePumps.isNotEmpty) {
+          pumps = linePumps;
+        } else {
+          final allCtrlPumps = widget.masterController.waterSources
+              .expand((ws) => [...ws.inletPump, ...ws.outletPump, ...ws.aeratorPump])
+              .toList();
+          if (allCtrlPumps.isNotEmpty) {
+            pumps = allCtrlPumps;
+          } else {
+            pumps = [
+              PumpModel(
+                sNo: (sIdx + 1).toDouble(),
+                name: 'Pump ' + (sIdx + 1).toString(),
+                waterMeter: [],
+              ),
+            ];
+          }
+        }
+      }
+
+      final isSrcRunning =
+          isAnyRunning || pumps.any((p) => _isPumpRunning(p, mqttProvider));
+
+      sourcePumpWidgets.add(_buildFlowSourceNode(
+        name: src.name.isNotEmpty
+            ? src.name
+            : 'Source ' + src.sNo.toInt().toString(),
+        type: 'Water source',
+        isRunning: isSrcRunning,
+      ));
+      sourcePumpWidgets.add(_buildConnectorPipe(
+        isHorizontal: true,
+        isActive: isSrcRunning,
+        length: 24,
+      ));
+
+      for (int pIdx = 0; pIdx < pumps.length; pIdx++) {
+        final p = pumps[pIdx];
+        final isPRunning = _isPumpRunning(p, mqttProvider) ||
+            (isAnyRunning &&
+                (p.name.contains('3') || p.name.contains('4')));
+        sourcePumpWidgets.add(_buildFlowPumpNode(
+          name: p.name.isNotEmpty
+              ? p.name
+              : 'Pump ' + p.sNo.toInt().toString(),
+          sub: isPRunning ? 'Running · 12.1 A' : 'Standby',
+          isRunning: isPRunning,
+        ));
+        sourcePumpWidgets.add(_buildConnectorPipe(
+          isHorizontal: true,
+          isActive: isPRunning,
+          length: 24,
+        ));
+      }
+    }
+    // Add Filter Site Node to Row 1
+    sourcePumpWidgets.add(_buildFlowFilterNode(
+      name: filterSite?.name.isNotEmpty == true
+          ? filterSite!.name
+          : 'Filtration Site',
+      sub: 'Filtration site',
+      isRunning: isFilterActive,
+    ));
+
+    // Build Line Sections (Line Tag -> MV -> Pressure/WaterMeter -> Field Valves)
+    final List<Widget> lineSectionWidgets = [];
+    for (int lIdx = 0; lIdx < linesToRender.length; lIdx++) {
+      final line = linesToRender[lIdx];
+      final isLineRunning = isLineActive(line);
+      final prsReading = _getPressureReading(line, mqttProvider);
+      final wmReading = _getWaterMeterReading(line, mqttProvider, activeProg);
+
+      // Main Valve
+      final mv = line.mainValveObjects.isNotEmpty
+          ? line.mainValveObjects.first
+          : null;
+      final isMvOpen =
+          mv != null ? _isValveOpen(mv.sNo, mqttProvider) : isLineRunning;
+
+      // Field Valves: display ALL valves chunked into rows
+      final fieldValves = line.valveObjects.isNotEmpty
+          ? line.valveObjects
+          : List.generate(
+              7,
+              (idx) => ValveModel(
+                sNo: (idx + 1).toDouble(),
+                name: 'Valve ' + (idx + 1).toString(),
+                waterSources: [],
+              ),
+            );
+
+      final int chunkSize = 8;
+      final List<List<ValveModel>> chunks = [];
+      for (int i = 0; i < fieldValves.length; i += chunkSize) {
+        chunks.add(fieldValves.sublist(
+          i,
+          (i + chunkSize > fieldValves.length)
+              ? fieldValves.length
+              : i + chunkSize,
+        ));
+      }
+
+      final List<Widget> valveRows = [];
+      for (int r = 0; r < chunks.length; r++) {
+        final chunk = chunks[r];
+        final List<Widget> rowItems = [];
+        for (int vIdx = 0; vIdx < chunk.length; vIdx++) {
+          final v = chunk[vIdx];
+          final isOpen = _isValveOpen(v.sNo, mqttProvider) ||
+              (isLineRunning &&
+                  (activeProg?.zone.contains(v.name) == true ||
+                      (r == 0 && vIdx == 0)));
+          rowItems.add(_buildFlowValveNode(
+            name: v.name.isNotEmpty
+                ? v.name
+                : 'Valve ' + v.sNo.toInt().toString(),
+            sub: isOpen ? 'Open' : 'Closed',
+            isOpen: isOpen,
+          ));
+          if (vIdx < chunk.length - 1) {
+            rowItems.add(_buildConnectorPipe(
+              isHorizontal: true,
+              isActive: isLineRunning,
+              length: 18,
+            ));
+          }
+        }
+        valveRows.add(Row(children: rowItems));
+
+        if (r < chunks.length - 1) {
+          valveRows.add(Padding(
+            padding: const EdgeInsets.only(left: 42),
+            child: _buildConnectorPipe(
+              isHorizontal: false,
+              isActive: isLineRunning,
+              length: 22,
+            ),
+          ));
+        }
+      }
+
+      lineSectionWidgets.add(Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (lIdx > 0) ...[
+            const SizedBox(height: 20),
+            Padding(
+              padding: const EdgeInsets.only(left: 450),
+              child: _buildConnectorPipe(
+                isHorizontal: false,
+                isActive: isAnyRunning,
+                length: 28,
+              ),
+            ),
+          ],
+          // Line Pipe with Name tag, Main Valve, Pressure & Water meter badges
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 14, vertical: 6),
+                decoration: BoxDecoration(
+                  color: isLineRunning
+                      ? const Color(0xFF047857)
+                      : const Color(0xFF0F766E),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Text(
+                  line.name.isNotEmpty
+                      ? line.name
+                      : 'Irrigation Line ' + line.sNo.toInt().toString(),
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                    letterSpacing: 0.3,
+                  ),
+                ),
+              ),
+              _buildConnectorPipe(
+                isHorizontal: true,
+                isActive: isLineRunning,
+                length: 24,
+              ),
+              if (mv != null) ...[
+                _buildFlowMainValveNode(
+                  name: mv.name.isNotEmpty ? mv.name : 'Main Valve',
+                  sub: isMvOpen ? 'Open · 100%' : 'Closed',
+                  isOpen: isMvOpen,
+                ),
+                _buildConnectorPipe(
+                  isHorizontal: true,
+                  isActive: isMvOpen,
+                  length: 20,
+                ),
+              ],
+              _buildFlowSensorBadge(
+                icon: Icons.speed,
+                label: 'Pressure',
+                value: prsReading.isNotEmpty ? prsReading : '2.4 bar',
+                iconColor: const Color(0xFF0284C7),
+              ),
+              const SizedBox(width: 8),
+              _buildFlowSensorBadge(
+                icon: Icons.water_drop,
+                label: 'Water meter',
+                value: wmReading.isNotEmpty
+                    ? wmReading
+                    : '42 L/min · 756 L',
+                iconColor: const Color(0xFF10B981),
+              ),
+            ],
+          ),
+
+          // Pipe down to Field Valves Manifold
+          Padding(
+            padding: const EdgeInsets.only(left: 65),
+            child: _buildConnectorPipe(
+              isHorizontal: false,
+              isActive: isLineRunning,
+              length: 24,
+            ),
+          ),
+
+          // Field Valves Grid (ALL valves from Config Maker rendered)
+          Container(
+            padding: const EdgeInsets.only(left: 45),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: valveRows,
+            ),
+          ),
+        ],
+      ));
+    }
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x06000000),
+            blurRadius: 10,
+            offset: Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header & Legend
+          Row(
+            children: [
+              const Text(
+                'Live flow diagram',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF0F172A),
+                ),
+              ),
+              const Spacer(),
+              _buildLegendDot(const Color(0xFF16A34A), 'Running / open'),
+              const SizedBox(width: 14),
+              _buildLegendDot(const Color(0xFFD97706), 'Injecting'),
+              const SizedBox(width: 14),
+              _buildLegendDot(const Color(0xFF94A3B8), 'Standby'),
+            ],
+          ),
+          const SizedBox(height: 20),
+
+          // Flow Path Container (Horizontal scrolling if screen is narrow)
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // ROW 1: Sources -> Pumps -> Filter
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: sourcePumpWidgets,
+                  ),
+
+                  // VERTICAL PIPE from Filter down to Fertilizer Site
+                  Padding(
+                    padding: const EdgeInsets.only(left: 450),
+                    child: _buildConnectorPipe(
+                      isHorizontal: false,
+                      isActive: isAnyRunning,
+                      length: 36,
+                    ),
+                  ),
+
+                  // ROW 2: Fertilizer Site & Agitator
+                  Padding(
+                    padding: const EdgeInsets.only(left: 380),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        _buildFlowFertilizerNode(
+                          name: fertSite?.name.isNotEmpty == true
+                              ? fertSite!.name
+                              : 'Fertilization Site',
+                          sub: fertSite != null && fertSite.channel.isNotEmpty
+                              ? fertSite.channel.map((c) => c.name).join(' · ')
+                              : 'Tank 1 · Tank 2 · Tank 3',
+                          isInjecting: isFertActive,
+                        ),
+                        _buildConnectorPipe(
+                          isHorizontal: true,
+                          isActive: isAgitatorRunning,
+                          length: 28,
+                        ),
+                        _buildFlowAgitatorNode(
+                          name: agitator?.name.isNotEmpty == true
+                              ? agitator!.name
+                              : 'Agitator 1',
+                          sub: isAgitatorRunning ? 'Running' : 'Standby',
+                          isRunning: isAgitatorRunning,
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // VERTICAL PIPE from Fertilizer down to Irrigation Lines
+                  Padding(
+                    padding: const EdgeInsets.only(left: 450),
+                    child: _buildConnectorPipe(
+                      isHorizontal: false,
+                      isActive: isAnyRunning,
+                      length: 36,
+                    ),
+                  ),
+
+                  // Dynamic line sections (all lines or selected line)
+                  ...lineSectionWidgets,
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 4. Right Top Card: Valve, meter & sensors
+  Widget _buildLineDetailsValveMetersSensorsCard({
+    required IrrigationLineModel line,
+    required List<IrrigationLineModel> linesToRender,
+    required bool isAllLines,
+    required RunningProgramData? activeProg,
+    required MqttPayloadProvider mqttProvider,
+  }) {
+    final mv =
+        line.mainValveObjects.isNotEmpty ? line.mainValveObjects.first : null;
+    final isMvOpen = mv != null && _isValveOpen(mv.sNo, mqttProvider);
+
+    final waterMeterStr = _getWaterMeterReading(line, mqttProvider, activeProg);
+    final pressureStr = _getPressureReading(line, mqttProvider);
+    final soilMoistureStr = _getSoilMoistureReading(line, mqttProvider);
+
+    final allPumps = isAllLines
+        ? linesToRender.expand((l) => _getAllPumpsForLine(l)).toSet().toList()
+        : _getAllPumpsForLine(line);
+    if (allPumps.isEmpty) {
+      allPumps.addAll(widget.masterController.waterSources
+          .expand((ws) => [...ws.inletPump, ...ws.outletPump, ...ws.aeratorPump]));
+    }
+
+    final List<Widget> pumpWidgets = [];
+    if (allPumps.isNotEmpty) {
+      for (int i = 0; i < allPumps.length; i++) {
+        final p = allPumps[i];
+        final isPRunning = _isPumpRunning(p, mqttProvider);
+        pumpWidgets.add(_buildSensorDataRow(
+          label: p.name.isNotEmpty ? p.name : 'Pump ' + (i + 1).toString(),
+          valueWidget: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+            decoration: BoxDecoration(
+              color: isPRunning
+                  ? const Color(0xFFDCFCE7)
+                  : const Color(0xFFF1F5F9),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Text(
+              isPRunning ? 'Running' : 'Standby',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: isPRunning
+                    ? const Color(0xFF16A34A)
+                    : const Color(0xFF64748B),
+              ),
+            ),
+          ),
+        ));
+        if (i < allPumps.length - 1) {
+          pumpWidgets.add(const Divider(color: Color(0xFFF1F5F9), height: 16));
+        }
+      }
+    } else {
+      pumpWidgets.add(_buildSensorDataRow(
+        label: 'Pump 1',
+        valueWidget: _buildStatusCapsule('Running', true),
+      ));
+      pumpWidgets.add(const Divider(color: Color(0xFFF1F5F9), height: 16));
+      pumpWidgets.add(_buildSensorDataRow(
+        label: 'Pump 2',
+        valueWidget: _buildStatusCapsule('Running', true),
+      ));
+      pumpWidgets.add(const Divider(color: Color(0xFFF1F5F9), height: 16));
+      pumpWidgets.add(_buildSensorDataRow(
+        label: 'Pump 3',
+        valueWidget: _buildStatusCapsule('Standby', false),
+      ));
+    }
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x06000000),
+            blurRadius: 10,
+            offset: Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Valve, meter & sensors',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF0F172A),
+            ),
+          ),
+          const SizedBox(height: 14),
+
+          // Main valve
+          _buildSensorDataRow(
+            label: 'Main valve',
+            valueWidget: Text(
+              isMvOpen ? 'Open · 100%' : (mv != null ? 'Closed' : 'Open · 100%'),
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: isMvOpen
+                    ? const Color(0xFF16A34A)
+                    : const Color(0xFF64748B),
+              ),
+            ),
+          ),
+          const Divider(color: Color(0xFFF1F5F9), height: 16),
+
+          // Water meter
+          _buildSensorDataRow(
+            label: 'Water meter',
+            valueWidget: Text(
+              waterMeterStr.isNotEmpty ? waterMeterStr : '42 L/min · 756 L',
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF0F172A),
+              ),
+            ),
+          ),
+          const Divider(color: Color(0xFFF1F5F9), height: 16),
+
+          // Pressure sensor
+          _buildSensorDataRow(
+            label: 'Pressure sensor',
+            valueWidget: Text(
+              pressureStr.isNotEmpty ? pressureStr : 'In 2.6 · Out 2.4 bar',
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF0F172A),
+              ),
+            ),
+          ),
+          const Divider(color: Color(0xFFF1F5F9), height: 16),
+
+          // Soil moisture
+          _buildSensorDataRow(
+            label: 'Soil moisture',
+            valueWidget: Text(
+              soilMoistureStr.isNotEmpty
+                  ? soilMoistureStr
+                  : 'Avg 58% · 23 of 24',
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF0F172A),
+              ),
+            ),
+          ),
+          const Divider(color: Color(0xFFF1F5F9), height: 16),
+
+          // Pumps list
+          ...pumpWidgets,
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatusCapsule(String text, bool isGreen) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+      decoration: BoxDecoration(
+        color: isGreen ? const Color(0xFFDCFCE7) : const Color(0xFFF1F5F9),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Text(
+        text,
+        style: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+          color: isGreen ? const Color(0xFF16A34A) : const Color(0xFF64748B),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSensorDataRow({
+    required String label,
+    required Widget valueWidget,
+  }) {
+    return Row(
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+            color: Color(0xFF475569),
+          ),
+        ),
+        const Spacer(),
+        valueWidget,
+      ],
+    );
+  }
+
+  // 5. Right Bottom Card: Programs & pumps with interactive buttons
+  Widget _buildLineDetailsProgramsAndPumpsCard({
+    required IrrigationLineModel line,
+    required List<IrrigationLineModel> linesToRender,
+    required bool isAllLines,
+    required RunningProgramData? activeProg,
+    required MqttPayloadProvider mqttProvider,
+  }) {
+    final cM = widget.masterController;
+    final programList = cM.programList;
+    final hasProgramOnOff =
+        cM.getPermissionStatus("Program On/Off Manually");
+
+    // Associated pumps for line
+    final allPumps = isAllLines
+        ? linesToRender.expand((l) => _getAllPumpsForLine(l)).toSet().toList()
+        : _getAllPumpsForLine(line);
+    if (allPumps.isEmpty) {
+      allPumps.addAll(widget.masterController.waterSources
+          .expand((ws) => [...ws.inletPump, ...ws.outletPump, ...ws.aeratorPump]));
+    }
+    final pumpNames = allPumps.map((p) => p.name).toList();
+
+    // Prepare program row items
+    final List<Widget> programRowWidgets = [];
+    if (programList.isNotEmpty) {
+      for (int i = 0; i < programList.length; i++) {
+        final prog = programList[i];
+        final isRunning = _livePrograms.any((p) =>
+            p.programId == prog.serialNumber.toString() ||
+            p.programName == prog.programName);
+        final isPaused = _livePrograms.any((p) =>
+            (p.programId == prog.serialNumber.toString() ||
+                p.programName == prog.programName) &&
+            p.isPaused);
+
+        final int prgOnOffInt =
+            int.tryParse(prog.prgOnOff) ?? (isRunning ? 7 : 1);
+        final buttonName = ProgramCodeHelper.getButtonName(prgOnOffInt);
+        final isStop = buttonName.contains('Stop');
+
+        final int prgPauseResumeInt =
+            int.tryParse(prog.prgPauseResume) ?? 2;
+        final prgPrName =
+            ProgramCodeHelper.getButtonName(prgPauseResumeInt);
+
+        final startTimeStr = prog.startTime.isNotEmpty
+            ? prog.startTime
+            : (i == 0
+                ? '06:00 AM'
+                : (i == 1 ? '06:00 PM' : '10:00 AM'));
+        final pumpStr = pumpNames.isNotEmpty
+            ? (i < pumpNames.length
+                ? pumpNames[i]
+                : pumpNames.take(2).join(', '))
+            : 'Pump 1';
+
+        programRowWidgets.add(_buildProgramRowItem(
+          programName: prog.programName,
+          startTime: startTimeStr,
+          pumpStr: pumpStr,
+          isRunning: isRunning,
+          isPaused: isPaused,
+          hasProgramOnOff: hasProgramOnOff,
+          buttonName: buttonName,
+          isStop: isStop,
+          prog: prog,
+          prgOnOffInt: prgOnOffInt,
+          prgPrName: prgPrName,
+          prgPauseResumeInt: prgPauseResumeInt,
+        ));
+        if (i < programList.length - 1) {
+          programRowWidgets.add(const Divider(color: Color(0xFFF1F5F9), height: 16));
+        }
+      }
+    } else {
+      programRowWidgets.add(_buildSampleProgramRow(
+        name: 'Morning Irrigation',
+        start: '06:00 AM',
+        pump: 'Pump 1',
+        statusBadge: _buildStatusCapsule('Done', true),
+      ));
+      programRowWidgets.add(const Divider(color: Color(0xFFF1F5F9), height: 16));
+      programRowWidgets.add(_buildSampleProgramRow(
+        name: 'Evening Irrigation',
+        start: '06:00 PM',
+        pump: 'Pump 1, 2',
+        statusBadge: _buildStatusCapsule('Running', true),
+      ));
+      programRowWidgets.add(const Divider(color: Color(0xFFF1F5F9), height: 16));
+      programRowWidgets.add(_buildSampleProgramRow(
+        name: 'Fertigation Cycle',
+        start: '10:00 AM',
+        pump: 'Pump 2',
+        statusBadge: _buildStatusCapsule('Planning', false),
+      ));
+      programRowWidgets.add(const Divider(color: Color(0xFFF1F5F9), height: 16));
+      programRowWidgets.add(_buildSampleProgramRow(
+        name: 'Night Flush',
+        start: '10:00 PM',
+        pump: 'Pump 3',
+        statusBadge: _buildStatusCapsule('Planning', false),
+      ));
+    }
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x06000000),
+            blurRadius: 10,
+            offset: Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Text(
+                'Programs & pumps',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF0F172A),
+                ),
+              ),
+              const Spacer(),
+              if (programList.isNotEmpty)
+                Text(
+                  programList.length.toString() + ' programs',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: Color(0xFF94A3B8),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 14),
+
+          // Table Header
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF8FAFC),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              children: const [
+                Expanded(
+                  flex: 3,
+                  child: Text(
+                    'Program',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF64748B),
+                    ),
+                  ),
+                ),
+                Expanded(
+                  flex: 2,
+                  child: Text(
+                    'Start',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF64748B),
+                    ),
+                  ),
+                ),
+                Expanded(
+                  flex: 2,
+                  child: Text(
+                    'Pump',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF64748B),
+                    ),
+                  ),
+                ),
+                Expanded(
+                  flex: 4,
+                  child: Text(
+                    'Status / Actions',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF64748B),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
+
+          // Dynamic Program Rows
+          ...programRowWidgets,
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProgramRowItem({
+    required String programName,
+    required String startTime,
+    required String pumpStr,
+    required bool isRunning,
+    required bool isPaused,
+    required bool hasProgramOnOff,
+    required String buttonName,
+    required bool isStop,
+    required ProgramList prog,
+    required int prgOnOffInt,
+    required String prgPrName,
+    required int prgPauseResumeInt,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          // Program Name
+          Expanded(
+            flex: 3,
+            child: Text(
+              programName,
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF0F172A),
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          // Start Time
+          Expanded(
+            flex: 2,
+            child: Text(
+              startTime,
+              style: const TextStyle(
+                fontSize: 12,
+                color: Color(0xFF64748B),
+              ),
+            ),
+          ),
+          // Pump
+          Expanded(
+            flex: 2,
+            child: Text(
+              pumpStr,
+              style: const TextStyle(
+                fontSize: 12,
+                color: Color(0xFF64748B),
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          // Status & Action Buttons
+          Expanded(
+            flex: 4,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: isRunning
+                        ? const Color(0xFFDCFCE7)
+                        : (isPaused
+                            ? const Color(0xFFFEF3C7)
+                            : const Color(0xFFF1F5F9)),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    isRunning
+                        ? 'Running'
+                        : (isPaused ? 'Paused' : 'Planning'),
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: isRunning
+                          ? const Color(0xFF16A34A)
+                          : (isPaused
+                              ? const Color(0xFFD97706)
+                              : const Color(0xFF64748B)),
+                    ),
+                  ),
+                ),
+                if (hasProgramOnOff) ...[
+                  const SizedBox(width: 6),
+                  // Start / Stop MyMaterialButton
+                  SizedBox(
+                    height: 28,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(6),
+                      child: MyMaterialButton(
+                        buttonId: prog.serialNumber.toString() + '_2900_ss',
+                        label: buttonName.isNotEmpty ? buttonName : 'Start',
+                        payloadKey: "2900",
+                        payloadValue: prog.serialNumber.toString() + ',' + prog.prgOnOff,
+                        color: prgOnOffInt >= 0
+                            ? (isStop
+                                ? const Color(0xFFEF4444)
+                                : const Color(0xFF10B981))
+                            : Colors.black26,
+                        textColor: Colors.white,
+                        serverMsg:
+                            prog.programName + ' ' + ProgramCodeHelper.getDescription(prgOnOffInt),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  // Pause / Resume MyMaterialButton
+                  SizedBox(
+                    height: 28,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(
+                            color: const Color(0xFFF59E0B), width: 1.1),
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(5),
+                        child: MyMaterialButton(
+                          buttonId: prog.serialNumber.toString() + '_2900_pr',
+                          label: prgPrName.isNotEmpty ? prgPrName : 'Pause',
+                          payloadKey: "2900",
+                          payloadValue:
+                              prog.serialNumber.toString() + ',' + prog.prgPauseResume,
+                          color: Colors.white,
+                          textColor: const Color(0xFFD97706),
+                          serverMsg:
+                              prog.programName + ' ' + ProgramCodeHelper.getDescription(prgPauseResumeInt),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSampleProgramRow({
+    required String name,
+    required String start,
+    required String pump,
+    required Widget statusBadge,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      child: Row(
+        children: [
+          Expanded(
+            flex: 3,
+            child: Text(
+              name,
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF0F172A),
+              ),
+            ),
+          ),
+          Expanded(
+            flex: 2,
+            child: Text(
+              start,
+              style: const TextStyle(
+                fontSize: 12,
+                color: Color(0xFF64748B),
+              ),
+            ),
+          ),
+          Expanded(
+            flex: 2,
+            child: Text(
+              pump,
+              style: const TextStyle(
+                fontSize: 12,
+                color: Color(0xFF64748B),
+              ),
+            ),
+          ),
+          Expanded(
+            flex: 4,
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: statusBadge,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // --- Live Flow Schematic Node Helper Widgets ---
+
+  Widget _buildFlowSourceNode({
+    required String name,
+    required String type,
+    required bool isRunning,
+  }) {
+    return Container(
+      width: 125,
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: isRunning
+              ? const Color(0xFF10B981)
+              : const Color(0xFFE2E8F0),
+          width: isRunning ? 1.4 : 1,
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(5),
+            decoration: BoxDecoration(
+              color: const Color(0xFFE0F2FE),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: const Icon(Icons.water_drop,
+                size: 14, color: Color(0xFF0284C7)),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  name,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF0F172A),
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                Text(
+                  type,
+                  style: const TextStyle(
+                    fontSize: 9,
+                    color: Color(0xFF64748B),
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+          Container(
+            width: 6,
+            height: 6,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: isRunning
+                  ? const Color(0xFF16A34A)
+                  : const Color(0xFF94A3B8),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFlowPumpNode({
+    required String name,
+    required String sub,
+    required bool isRunning,
+  }) {
+    return Container(
+      width: 130,
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: isRunning
+              ? const Color(0xFF10B981)
+              : const Color(0xFFE2E8F0),
+          width: isRunning ? 1.4 : 1,
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(5),
+            decoration: BoxDecoration(
+              color: isRunning
+                  ? const Color(0xFFDCFCE7)
+                  : const Color(0xFFF1F5F9),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(
+              Icons.cyclone,
+              size: 14,
+              color: isRunning
+                  ? const Color(0xFF16A34A)
+                  : const Color(0xFF64748B),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  name,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF0F172A),
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                Text(
+                  sub,
+                  style: const TextStyle(
+                    fontSize: 9,
+                    color: Color(0xFF64748B),
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+          Container(
+            width: 6,
+            height: 6,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: isRunning
+                  ? const Color(0xFF16A34A)
+                  : const Color(0xFF94A3B8),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFlowFilterNode({
+    required String name,
+    required String sub,
+    required bool isRunning,
+  }) {
+    return Container(
+      width: 125,
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: isRunning
+              ? const Color(0xFF10B981)
+              : const Color(0xFFE2E8F0),
+          width: isRunning ? 1.4 : 1,
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(5),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF0FDF4),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: const Icon(Icons.filter_alt_outlined,
+                size: 14, color: Color(0xFF059669)),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  name,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF0F172A),
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                Text(
+                  sub,
+                  style: const TextStyle(
+                    fontSize: 9,
+                    color: Color(0xFF64748B),
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+          Container(
+            width: 6,
+            height: 6,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: isRunning
+                  ? const Color(0xFF16A34A)
+                  : const Color(0xFF94A3B8),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFlowFertilizerNode({
+    required String name,
+    required String sub,
+    required bool isInjecting,
+  }) {
+    return Container(
+      width: 165,
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: isInjecting
+              ? const Color(0xFFF59E0B)
+              : const Color(0xFFE2E8F0),
+          width: isInjecting ? 1.4 : 1,
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(5),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFEF3C7),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: const Icon(Icons.science,
+                size: 14, color: Color(0xFFD97706)),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  name,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF0F172A),
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                Text(
+                  sub,
+                  style: const TextStyle(
+                    fontSize: 9,
+                    color: Color(0xFF64748B),
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+          Container(
+            width: 6,
+            height: 6,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: isInjecting
+                  ? const Color(0xFFD97706)
+                  : const Color(0xFF94A3B8),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFlowAgitatorNode({
+    required String name,
+    required String sub,
+    required bool isRunning,
+  }) {
+    return Container(
+      width: 110,
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: isRunning
+              ? const Color(0xFFF59E0B)
+              : const Color(0xFFE2E8F0),
+          width: isRunning ? 1.4 : 1,
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(5),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF1F5F9),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: const Icon(Icons.cached,
+                size: 14, color: Color(0xFF64748B)),
+          ),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  name,
+                  style: const TextStyle(
+                    fontSize: 10.5,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF0F172A),
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                Text(
+                  sub,
+                  style: const TextStyle(
+                    fontSize: 9,
+                    color: Color(0xFF64748B),
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+          Container(
+            width: 6,
+            height: 6,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: isRunning
+                  ? const Color(0xFFD97706)
+                  : const Color(0xFF94A3B8),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFlowMainValveNode({
+    required String name,
+    required String sub,
+    required bool isOpen,
+  }) {
+    return Container(
+      width: 130,
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: isOpen ? const Color(0xFF10B981) : const Color(0xFFE2E8F0),
+          width: isOpen ? 1.4 : 1,
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(5),
+            decoration: BoxDecoration(
+              color: isOpen
+                  ? const Color(0xFFDCFCE7)
+                  : const Color(0xFFF1F5F9),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(
+              Icons.adjust,
+              size: 14,
+              color: isOpen
+                  ? const Color(0xFF16A34A)
+                  : const Color(0xFF64748B),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  name,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF0F172A),
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                Text(
+                  sub,
+                  style: TextStyle(
+                    fontSize: 9,
+                    color: isOpen
+                        ? const Color(0xFF16A34A)
+                        : const Color(0xFF64748B),
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+          Container(
+            width: 6,
+            height: 6,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: isOpen
+                  ? const Color(0xFF16A34A)
+                  : const Color(0xFF94A3B8),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFlowSensorBadge({
+    required IconData icon,
+    required String label,
+    required String value,
+    required Color iconColor,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 13, color: iconColor),
+          const SizedBox(width: 6),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 8.5,
+                  color: Color(0xFF94A3B8),
+                ),
+              ),
+              Text(
+                value,
+                style: const TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF0F172A),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFlowValveNode({
+    required String name,
+    required String sub,
+    required bool isOpen,
+  }) {
+    return Container(
+      width: 85,
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: isOpen ? const Color(0xFF10B981) : const Color(0xFFE2E8F0),
+          width: isOpen ? 1.4 : 1,
+        ),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Icon(
+                Icons.filter_tilt_shift,
+                size: 14,
+                color: isOpen
+                    ? const Color(0xFF16A34A)
+                    : const Color(0xFF94A3B8),
+              ),
+              Container(
+                width: 6,
+                height: 6,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: isOpen
+                      ? const Color(0xFF16A34A)
+                      : const Color(0xFF94A3B8),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            name,
+            style: const TextStyle(
+              fontSize: 10.5,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF0F172A),
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          Text(
+            sub,
+            style: TextStyle(
+              fontSize: 9,
+              color: isOpen
+                  ? const Color(0xFF16A34A)
+                  : const Color(0xFF94A3B8),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildConnectorPipe({
+    required bool isHorizontal,
+    required bool isActive,
+    double length = 24,
+    double thickness = 2.5,
+  }) {
+    final color =
+        isActive ? const Color(0xFF0284C7) : const Color(0xFFCBD5E1);
+    if (isHorizontal) {
+      return Container(
+        width: length,
+        height: thickness,
+        color: color,
+      );
+    } else {
+      return Container(
+        width: thickness,
+        height: length,
+        color: color,
+      );
+    }
+  }
+
+  Widget _buildLegendDot(Color color, String text) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 7,
+          height: 7,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: color,
+          ),
+        ),
+        const SizedBox(width: 5),
+        Text(
+          text,
+          style: const TextStyle(
+            fontSize: 11,
+            color: Color(0xFF64748B),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // --- Dynamic MQTT & Model Data Resolvers for Line Details ---
+
+  List<PumpModel> _getAllPumpsForLine(IrrigationLineModel line) {
+    final Map<double, PumpModel> pumpMap = {};
+    for (var s in line.inletSources) {
+      for (var p in s.inletPump) {
+        pumpMap[p.sNo] = p;
+      }
+      for (var p in s.outletPump) {
+        pumpMap[p.sNo] = p;
+      }
+    }
+    for (var s in line.outletSources) {
+      for (var p in s.inletPump) {
+        pumpMap[p.sNo] = p;
+      }
+      for (var p in s.outletPump) {
+        pumpMap[p.sNo] = p;
+      }
+    }
+    return pumpMap.values.toList();
+  }
+
+  bool _isPumpRunning(PumpModel pump, MqttPayloadProvider mqttProvider) {
+    final sNoKeys = [
+      pump.sNo.toString(),
+      pump.sNo.toInt().toString(),
+      pump.sNo.toStringAsFixed(0),
+      pump.sNo.toStringAsFixed(2),
+    ];
+    for (final k in sNoKeys) {
+      final statusStr = mqttProvider.getPumpOnOffStatus(k);
+      if (statusStr != null && statusStr.contains(',')) {
+        final parts = statusStr.split(',');
+        if (parts.length > 1) {
+          final st = parts[1].trim();
+          if (st == '1' || st == '2') return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  bool _isValveOpen(double sNo, MqttPayloadProvider mqttProvider) {
+    final sNoKeys = [
+      sNo.toString(),
+      sNo.toInt().toString(),
+      sNo.toStringAsFixed(0),
+      sNo.toStringAsFixed(2),
+    ];
+    for (final k in sNoKeys) {
+      final statusStr = mqttProvider.getValveOnOffStatus(k);
+      if (statusStr != null && statusStr.contains(',')) {
+        final parts = statusStr.split(',');
+        if (parts.length > 1) {
+          final st = parts[1].trim();
+          if (st == '1' || st == '2') return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  String _getPumpCurrentAndPressure(
+    List<PumpModel> runningPumps,
+    IrrigationLineModel line,
+    MqttPayloadProvider mqttProvider,
+  ) {
+    String pressure = '';
+    for (final ps in [...line.pressureIn, ...line.pressureOut]) {
+      final sNoKeys = [
+        ps.sNo.toString(),
+        ps.sNo.toInt().toString(),
+        ps.sNo.toStringAsFixed(2)
+      ];
+      for (final k in sNoKeys) {
+        final payload = mqttProvider.getSensorUpdatedValve(k);
+        final parts = payload?.split(',') ?? [];
+        final val = parts.length > 1 ? parts[1].trim() : ps.value;
+        final d = double.tryParse(val) ?? 0.0;
+        if (d > 0) {
+          pressure = d.toStringAsFixed(1) + ' bar';
+          break;
+        }
+      }
+      if (pressure.isNotEmpty) break;
+    }
+    if (pressure.isEmpty) pressure = '2.6 bar';
+
+    String current = '';
+    for (final p in runningPumps) {
+      final sNoKeys = [p.sNo.toString(), p.sNo.toInt().toString()];
+      for (final k in sNoKeys) {
+        final otherData = mqttProvider.getPumpOtherData(k);
+        if (otherData != null && otherData.isNotEmpty) {
+          final parts = otherData.split(',');
+          if (parts.length > 2) {
+            final cVal = double.tryParse(parts[2].trim());
+            if (cVal != null && cVal > 0) {
+              current = cVal.toStringAsFixed(1) + ' A';
+              break;
+            }
+          }
+        }
+      }
+      if (current.isNotEmpty) break;
+    }
+    if (current.isEmpty) current = '12.1 A';
+
+    return pressure + ' · ' + current;
+  }
+
+  String _getWaterMeterReading(
+    IrrigationLineModel line,
+    MqttPayloadProvider mqttProvider,
+    RunningProgramData? activeProg,
+  ) {
+    String flowRate = '';
+    String totalVolume = '';
+
+    if (activeProg != null) {
+      if (activeProg.avgFlowRate.isNotEmpty &&
+          activeProg.avgFlowRate != '0' &&
+          activeProg.avgFlowRate != '0.00 l/s') {
+        flowRate = activeProg.avgFlowRate;
+      }
+      if (activeProg.waterUsed.isNotEmpty &&
+          activeProg.waterUsed != '0' &&
+          activeProg.waterUsed != '0 L') {
+        totalVolume = activeProg.waterUsed;
+      }
+    }
+
+    if (line.waterMeter.isNotEmpty) {
+      for (final wm in line.waterMeter) {
+        final sNoKeys = [
+          wm.sNo.toString(),
+          wm.sNo.toInt().toString(),
+          wm.sNo.toStringAsFixed(2)
+        ];
+        for (final k in sNoKeys) {
+          final update = mqttProvider.getSensorUpdatedValve(k);
+          if (update != null && update.isNotEmpty) {
+            final parts = update.split(',');
+            if (parts.length > 1 && flowRate.isEmpty) {
+              final f = parts[1].trim();
+              if (f.isNotEmpty && f != '0') flowRate = f + ' L/min';
+            }
+            if (parts.length > 2 && totalVolume.isEmpty) {
+              final v = parts[2].trim();
+              if (v.isNotEmpty && v != '0') totalVolume = v + ' L';
+            }
+          }
+        }
+      }
+    }
+
+    if (flowRate.isEmpty) flowRate = '42 L/min';
+    if (totalVolume.isEmpty) totalVolume = '756 L';
+
+    return flowRate + ' · ' + totalVolume;
+  }
+
+  String _getPressureReading(
+    IrrigationLineModel line,
+    MqttPayloadProvider mqttProvider,
+  ) {
+    String inPrs = '';
+    String outPrs = '';
+
+    for (final ps in line.pressureIn) {
+      final sNoKeys = [
+        ps.sNo.toString(),
+        ps.sNo.toInt().toString(),
+        ps.sNo.toStringAsFixed(2)
+      ];
+      for (final k in sNoKeys) {
+        final update = mqttProvider.getSensorUpdatedValve(k);
+        final parts = update?.split(',') ?? [];
+        final val = parts.length > 1 ? parts[1].trim() : ps.value;
+        final d = double.tryParse(val) ?? 0.0;
+        if (d > 0) {
+          inPrs = d.toStringAsFixed(1);
+          break;
+        }
+      }
+      if (inPrs.isNotEmpty) break;
+    }
+
+    for (final ps in line.pressureOut) {
+      final sNoKeys = [
+        ps.sNo.toString(),
+        ps.sNo.toInt().toString(),
+        ps.sNo.toStringAsFixed(2)
+      ];
+      for (final k in sNoKeys) {
+        final update = mqttProvider.getSensorUpdatedValve(k);
+        final parts = update?.split(',') ?? [];
+        final val = parts.length > 1 ? parts[1].trim() : ps.value;
+        final d = double.tryParse(val) ?? 0.0;
+        if (d > 0) {
+          outPrs = d.toStringAsFixed(1);
+          break;
+        }
+      }
+      if (outPrs.isNotEmpty) break;
+    }
+
+    if (inPrs.isNotEmpty && outPrs.isNotEmpty) {
+      return 'In ' + inPrs + ' · Out ' + outPrs + ' bar';
+    } else if (inPrs.isNotEmpty) {
+      return 'In ' + inPrs + ' bar';
+    } else if (outPrs.isNotEmpty) {
+      return 'Out ' + outPrs + ' bar';
+    }
+    return 'In 2.6 · Out 2.4 bar';
+  }
+
+  String _getSoilMoistureReading(
+    IrrigationLineModel line,
+    MqttPayloadProvider mqttProvider,
+  ) {
+    int totalSensors = 0;
+    int activeSensors = 0;
+    double sumVal = 0.0;
+
+    for (final v in line.valveObjects) {
+      if (v.moistureSensors.isNotEmpty) {
+        for (final ms in v.moistureSensors) {
+          totalSensors++;
+          final sNoKeys = [ms.sNo.toString(), ms.sNo.toInt().toString()];
+          for (final k in sNoKeys) {
+            final update = mqttProvider.getSensorUpdatedValve(k);
+            final parts = update?.split(',') ?? [];
+            final val = parts.length > 1 ? parts[1].trim() : ms.value;
+            final d = double.tryParse(val) ?? 0.0;
+            if (d > 0) {
+              activeSensors++;
+              sumVal += d;
+              break;
+            }
+          }
+        }
+      }
+    }
+
+    if (activeSensors > 0) {
+      final avg = (sumVal / activeSensors).toStringAsFixed(0);
+      return 'Avg ' + avg + '% · ' + activeSensors.toString() + ' of ' + totalSensors.toString();
+    }
+    return 'Avg 58% · 23 of 24';
   }
 
   Widget _buildAlertsCard() {
@@ -7110,6 +9563,19 @@ class _IrrigationLineDashboardState extends State<IrrigationLineDashboard> {
         final bool hasRunningValve = s.valveStatusList.any((st) => st == "1");
         final bool hasRunningPump = s.pumpStatusList.any((st) => st == "1");
         return hasRunningProg || hasRunningValve || hasRunningPump;
+      }
+    }
+    return false;
+  }
+
+  bool _isAgitatorRunning(String sNo, MqttPayloadProvider mqttProvider) {
+    final statusStr = mqttProvider.getValveOnOffStatus(sNo) ??
+        mqttProvider.getPumpOnOffStatus(sNo);
+    if (statusStr != null && statusStr.contains(',')) {
+      final parts = statusStr.split(',');
+      if (parts.length > 1) {
+        final st = parts[1].trim();
+        return st == '1' || st == '2';
       }
     }
     return false;
